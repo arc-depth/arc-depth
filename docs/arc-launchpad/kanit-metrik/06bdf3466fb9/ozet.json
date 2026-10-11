@@ -1,0 +1,71 @@
+{
+ "uretildi": "2026-10-08T05:19:16.332Z",
+ "uyari": "Benim cektigim bir arsiv, durust cektigimin kaniti DEGILDIR. Yaptigi sey iddiayi kontrol edilebilir kilmak: manifest ozetleri dosyalarla tutmak zorunda, makbuzlar blockHash tasiyor ve bloklar kendi hash/parentHash'ini tasiyor, kapsam pencere pencere kayitli. Her kalem, uc throttle etmedigi bir anda tek cagriyla yeniden dogrulanabilir.",
+ "amac": "ARC PULSE gereksinim 6: bir USDC havuzunun fiyat, islem, farkli islemci, likidite hareketi, fiyat etkisi ve ucret metriklerinin GERCEK olaylardan cikarilmasi. Hicbiri modellenmedi.",
+ "arcRpc": "https://rpc.mainnet.arc.io",
+ "poolManager": "0x8366a39CC670B4001A1121B8F6A443A643e40951",
+ "havuzId": "0x06bdf3466fb9f017bf3e68bedfbc220d3c0bee3f73f584de897106f33a388f59",
+ "token": "0x8c2016b8DbB9034c2Fe173000639A9a1380b26AE",
+ "hook": "0x72fd3c2eE8A499E97D87e2a642B7DFd908D58A44",
+ "usdc": "0x3600000000000000000000000000000000000000",
+ "kapsamBaslangic": "24757010",
+ "kapsamSonBlok": "24849939",
+ "metrikler": {
+  "islem": 1,
+  "alim": 1,
+  "satim": 0,
+  "farkliSender": 1,
+  "farkliOdeyen": 1,
+  "lpOlayi": 3,
+  "likiditeEklenen": "15899753660569966322",
+  "likiditeCikarilan": "0",
+  "okunamayanPencere": 0
+ },
+ "kayitlar": [
+  {
+   "dosya": "nokta/zincir.json",
+   "uc": "https://rpc.mainnet.arc.io",
+   "yontem": "eth_chainId",
+   "parametreler": [],
+   "alindi": "2026-10-08T05:19:14.724Z",
+   "sha256": "4fb42ee9dd42952297e1b444899a02aba62ba817f7440b00eb76c7eb896516e5",
+   "basarili": true
+  },
+  {
+   "dosya": "nokta/son-blok.json",
+   "uc": "https://rpc.mainnet.arc.io",
+   "yontem": "eth_blockNumber",
+   "parametreler": [],
+   "alindi": "2026-10-08T05:19:14.789Z",
+   "sha256": "4a4bdf604944e43756b9c3ef3f36946cb598e63dbab09961f15c9ac86f3da70c",
+   "basarili": true
+  },
+  {
+   "dosya": "nokta/makbuz-fcec67fe61e8.json",
+   "uc": "https://rpc.mainnet.arc.io",
+   "yontem": "eth_getTransactionReceipt",
+   "parametreler": [
+    "0xfcec67fe61e81f437655f1e9ee9a9fbfaf1d032ee1dadda45ac0ee58368b31d2"
+   ],
+   "alindi": "2026-10-08T05:19:16.267Z",
+   "sha256": "476c4dadc2b18b69ea4c511e7114e4c7444bdc2d04556520234cace053002ae9",
+   "basarili": true
+  },
+  {
+   "dosya": "nokta/slot0-24759027.json",
+   "uc": "https://rpc.mainnet.arc.io",
+   "yontem": "eth_call",
+   "parametreler": [
+    {
+     "to": "0x8366a39CC670B4001A1121B8F6A443A643e40951",
+     "data": "0x1e2eaeafb0d171fc496d900e82d25b8a5130afbcdfeab06061a4df770ff482a83fdaa9a5"
+    },
+    "0x179caf3"
+   ],
+   "alindi": "2026-10-08T05:19:16.332Z",
+   "sha256": "6059d50e2ffe49d29881de001ad87a0860d2d3b559961ad93a94187c5a44e017",
+   "basarili": true,
+   "not": "islem oncesi durum, blok 24759027"
+  }
+ ]
+}

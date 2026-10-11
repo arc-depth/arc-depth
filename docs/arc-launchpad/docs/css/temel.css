@@ -1,0 +1,253 @@
+/* ===========================================================================
+ * temel.css — the design tokens, and nothing else
+ *
+ * Every colour, size, weight and spacing in this interface resolves to a
+ * token declared here. Nothing downstream writes a raw hex value or a
+ * pixel gap, because the old page did exactly that and the result was
+ * thirty slightly different greys and six slightly different card paddings
+ * — which is what "amateur layout" actually looks like up close.
+ *
+ * SCALES, NOT PREFERENCES
+ *   Spacing is a 4px-based scale, type is a 1.2 ratio, and radii come in
+ *   four sizes. A value that is not on a scale is a value somebody guessed,
+ *   and inconsistent guesses are visible even when no single one is wrong.
+ *
+ * DARK IS THE ONLY THEME
+ *   This is a trading surface. It is read for hours, often at night, and
+ *   green-on-white costs money because a red number has to be unmistakable
+ *   at a glance. The dark palette is anchored on a neutral anthracite so
+ *   the two signal colours have nothing to compete with.
+ * =========================================================================== */
+
+:root {
+  /* ---- surfaces ---------------------------------------------------
+     Five steps, each a real step. A panel that is 3% lighter than its
+     background reads as a rendering artifact rather than a panel. */
+  --yuzey-0: #0a0b0d;        /* page */
+  --yuzey-1: #101216;        /* cards, panels */
+  --yuzey-2: #171a20;        /* raised: inputs, hovered rows */
+  --yuzey-3: #1f232b;        /* highest: menus, tooltips, active tabs */
+  --yuzey-ust: #262b35;      /* borders that need to be seen */
+
+  /* ---- hairlines --------------------------------------------------
+     Borders carry the layout here instead of shadows, because shadow on
+     near-black is mud. Two weights: one that separates, one that frames. */
+  --cizgi: #1c2027;
+  --cizgi-guclu: #2a3039;
+
+  /* ---- text -------------------------------------------------------
+     Four levels. Anything below the fourth is unreadable on this
+     background and would be decoration pretending to be information. */
+  --yazi-1: #e8eaed;         /* primary */
+  --yazi-2: #a4abb6;         /* secondary */
+  --yazi-3: #6f7784;         /* tertiary: labels, units */
+  --yazi-4: #4a515c;         /* disabled, placeholders */
+
+  /* ---- signal -----------------------------------------------------
+     Buy green and sell red, and they are NOT the brand colour. A brand
+     accent that looks like a buy is a brand accent that gets misread in
+     the one place misreading costs money. */
+  --alis: #26c281;
+  --alis-zemin: rgba(38, 194, 129, 0.12);
+  --alis-cizgi: rgba(38, 194, 129, 0.35);
+  --satis: #f0484b;
+  --satis-zemin: rgba(240, 72, 75, 0.12);
+  --satis-cizgi: rgba(240, 72, 75, 0.35);
+
+  /* ---- brand ------------------------------------------------------
+     Violet, deliberately far from both signals on the hue wheel. */
+  --marka: #7c5cff;
+  --marka-parlak: #9a80ff;
+  --marka-zemin: rgba(124, 92, 255, 0.12);
+  --marka-cizgi: rgba(124, 92, 255, 0.38);
+
+  /* ---- status -----------------------------------------------------
+     `uyari` is for a thing that needs attention; `bilgi` for a thing that
+     is merely true. They are different colours because a page that warns
+     about everything warns about nothing. */
+  --uyari: #f5a524;
+  --uyari-zemin: rgba(245, 165, 36, 0.12);
+  --bilgi: #3b9eff;
+  --bilgi-zemin: rgba(59, 158, 255, 0.12);
+
+  /* ---- type -------------------------------------------------------
+     One sans for the interface, one mono for anything a reader might
+     compare digit by digit: prices, amounts, addresses, hashes. A price in
+     a proportional font cannot be scanned down a column, which is most of
+     what anybody does on this page. */
+  --yazi-tipi: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+               "Helvetica Neue", Arial, sans-serif;
+  --yazi-tipi-mono: "JetBrains Mono", "SF Mono", "Cascadia Mono", Menlo,
+                    Consolas, monospace;
+
+  /* 1.2 ratio from 13px. Small sizes are tight because this interface is
+     dense on purpose; a trading table with 16px rows shows four tokens. */
+  --boy-xs: 10.5px;
+  --boy-s: 12px;
+  --boy-m: 13px;          /* body */
+  --boy-l: 15.5px;
+  --boy-xl: 18.5px;
+  --boy-2xl: 22px;
+  --boy-3xl: 27px;
+  --boy-4xl: 32px;
+
+  --kalin-normal: 450;
+  --kalin-orta: 540;
+  --kalin-yari: 620;
+  --kalin-kalin: 700;
+
+  /* ---- space ------------------------------------------------------ */
+  --bosluk-1: 4px;
+  --bosluk-2: 8px;
+  --bosluk-3: 12px;
+  --bosluk-4: 16px;
+  --bosluk-5: 20px;
+  --bosluk-6: 24px;
+  --bosluk-8: 32px;
+  --bosluk-10: 40px;
+  --bosluk-12: 48px;
+  --bosluk-16: 64px;
+
+  /* ---- radius ----------------------------------------------------- */
+  --yuvarlak-s: 6px;
+  --yuvarlak-m: 10px;
+  --yuvarlak-l: 14px;
+  --yuvarlak-tam: 999px;
+
+  /* ---- layout -----------------------------------------------------
+     The gutter is a token because the single most common mobile defect is
+     an element that forgets it. 16px on a phone, and the page never
+     scrolls sideways. */
+  --oluk: 16px;
+  --en-genis: 1600px;
+  --ust-bar: 56px;
+  --alt-bar: 60px;          /* mobile tab bar */
+  --yan-genis: 232px;
+
+  /* ---- motion -----------------------------------------------------
+     Short. A trading interface that animates for 400ms feels broken, not
+     polished. */
+  --gecis-hizli: 90ms;
+  --gecis: 150ms;
+  --egri: cubic-bezier(0.2, 0, 0.2, 1);
+
+  /* ---- depth ------------------------------------------------------ */
+  --golge-menu: 0 8px 28px rgba(0, 0, 0, 0.55);
+  --golge-panel: 0 2px 12px rgba(0, 0, 0, 0.35);
+
+  --z-yapisma: 40;
+  --z-ustbar: 60;
+  --z-menu: 80;
+  --z-ortu: 100;
+}
+
+/* The interface is dark-only, and saying so stops the browser from
+   rendering form controls and scrollbars in light chrome. */
+:root { color-scheme: dark; }
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--yuzey-0);
+  color: var(--yazi-1);
+  font-family: var(--yazi-tipi);
+  font-size: var(--boy-m);
+  font-weight: var(--kalin-normal);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* The one line that prevents the defect the brief names first: no
+     horizontal overflow, ever, on any screen. */
+  overflow-x: hidden;
+  text-size-adjust: 100%;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Tabular figures everywhere by default. A column of prices whose digits
+   are different widths cannot be read as a column. */
+body { font-variant-numeric: tabular-nums; }
+
+h1, h2, h3, h4 {
+  margin: 0;
+  font-weight: var(--kalin-yari);
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+}
+h1 { font-size: var(--boy-2xl); }
+h2 { font-size: var(--boy-xl); }
+h3 { font-size: var(--boy-l); }
+h4 { font-size: var(--boy-m); }
+
+p { margin: 0; }
+
+a {
+  color: var(--marka-parlak);
+  text-decoration: none;
+  transition: color var(--gecis-hizli) var(--egri);
+}
+a:hover { color: var(--yazi-1); }
+
+button, input, select, textarea {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+}
+button { cursor: pointer; }
+button:disabled { cursor: not-allowed; }
+
+/* Focus is visible and consistent. Removing it is an accessibility
+   regression that also makes keyboard testing impossible. */
+:focus-visible {
+  outline: 2px solid var(--marka);
+  outline-offset: 2px;
+  border-radius: var(--yuvarlak-s);
+}
+
+/* Anything a reader compares digit by digit. */
+.mono {
+  font-family: var(--yazi-tipi-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+/* Signal colour as a utility, so a number's meaning and its colour are set
+   in the same place. */
+.artis { color: var(--alis); }
+.dusus { color: var(--satis); }
+.sabit { color: var(--yazi-3); }
+
+.ikincil { color: var(--yazi-2); }
+.ucuncul { color: var(--yazi-3); }
+
+/* Screen-reader-only, for icon buttons that still need a name. */
+.gizli-okunur {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Scrollbars, dark. Left visible rather than hidden: a scrollable panel
+   with no scrollbar is a panel nobody knows to scroll. */
+* { scrollbar-width: thin; scrollbar-color: var(--yuzey-ust) transparent; }
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb {
+  background: var(--yuzey-ust);
+  border-radius: var(--yuvarlak-tam);
+  border: 2px solid var(--yuzey-0);
+}
+*::-webkit-scrollbar-thumb:hover { background: var(--cizgi-guclu); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

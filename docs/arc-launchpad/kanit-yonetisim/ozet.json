@@ -1,0 +1,287 @@
+{
+ "uretildi": "2026-10-08T09:13:35.193Z",
+ "uyari": "Benim cektigim bir arsiv, durust cektigimin kaniti DEGILDIR. Yaptigi sey iddiayi kontrol edilebilir kilmak: manifest ozetleri dosyalarla tutmak zorunda, makbuzlar blockHash tasiyor ve bloklar kendi hash/parentHash'ini tasiyor, kapsam pencere pencere kayitli. Her kalem, uc throttle etmedigi bir anda tek cagriyla yeniden dogrulanabilir.",
+ "amac": "Canli kuyrugun teminat listesinin gercekten degistirilebilir olup olmadiginin zincirden olculmesi. wNVDA karsiliksiz oldugu zincirden dogrulandi; soru listeden cikarmanin MUMKUN olup olmadigi.",
+ "arcRpc": "https://rpc.mainnet.arc.io",
+ "kuyruk": "0x98C2760E4514430b00325B4eeD92543aB80a0860",
+ "governor": "0x20d2E53172D2BD4b010E90fa6ce8f09972343CeB",
+ "staking": "0xE0fE4664417Fc7DE9f35a5c55bb490105Ed589f2",
+ "govToken": "0xFeA8F85B9020dAD8d1bbad0E0CC991564c1e2D41",
+ "bot": "0x89189C84DC95d0520AEeC9c8cF3BA5B9d42611D0",
+ "teminatlar": {
+  "wNVDA": "0xA3cd6fD4316DB70C06931A233FDddC48c2879DC4",
+  "wAAPL": "0xCfDbc078E513930bF6A4B4DDB7eD6123E8A7d342"
+ },
+ "kayitlar": [
+  {
+   "dosya": "nokta/zincir-arc.json",
+   "uc": "https://rpc.mainnet.arc.io",
+   "yontem": "eth_chainId",
+   "parametreler": [],
+   "alindi": "2026-10-08T09:13:34.103Z",
+   "sha256": "4fb42ee9dd42952297e1b444899a02aba62ba817f7440b00eb76c7eb896516e5",
+   "basarili": true
+  },
+  {
+   "dosya": "nokta/kuyruk-governor.json",
+   "uc": "https://rpc.mainnet.arc.io",
+   "yontem": "eth_call",
+   "parametreler": [
+    {
+     "to": "0x98C2760E4514430b00325B4eeD92543aB80a0860",
+     "data": "0x0c340a24"
+    },
+    "latest"
+   ],
+   "alindi": "2026-10-08T09:13:34.170Z",
+   "sha256": "6ebe2319e07ce03f2afd7b147f52e1c317858d12496049302af54389ecd8ad9e",
+   "basarili": true
+  },
+  {
+   "dosya": "nokta/kuyruk-talep-sayisi.json",
+   "uc": "https://rpc.mainnet.arc.io",
+   "yontem": "eth_call",
+   "parametreler": [
+    {
+     "to": "0x98C2760E4514430b00325B4eeD92543aB80a0860",
+     "data": "0x1489248b"
+    },
+    "latest"
+   ],
+   "alindi": "2026-10-08T09:13:34.234Z",
+   "sha256": "46e1bec104b29080ce1e8c6d9a624883777d1f81c373bed4aa4a9537d1c24bb1",
+   "basarili": true
+  },
+  {
+   "dosya": "nokta/kuyruk-ucret-ppm.json",
+   "uc": "https://rpc.mainnet.arc.io",
+   "yontem": "eth_call",
+   "parametreler": [
+    {
+     "to": "0x98C2760E4514430b00325B4eeD92543aB80a0860",
+     "data": "0x401b45d2"
+    },
+    "latest"
+   ],
+   "alindi": "2026-10-08T09:13:34.294Z",
+   "sha256": "cc97711c32416607ce1da9891050d1ab6ee13a89b28ab03d69053cc488e153ac",
+   "basarili": true
+  },
+  {
+   "dosya": "nokta/kuyruk-hisse-sayisi.json",
+   "uc": "https://rpc.mainnet.arc.io",
+   "yontem": "eth_call",
+   "parametreler": [
+    {
+     "to": "0x98C2760E4514430b00325B4eeD92543aB80a0860",
+     "data": "0x51c2e542"
+    },
+    "latest"
+   ],
+   "alindi": "2026-10-08T09:13:34.357Z",
+   "sha256": "2e727c877eb91ea23545f44d7fb196132f940ee011e169fae3611d63f248368c",
+   "basarili": true
+  },
+  {
+   "dosya": "nokta/kuyruk-hisse-0.json",
+   "uc": "https://rpc.mainnet.arc.io",
+   "yontem": "eth_call",
+   "parametreler": [
+    {
+     "to": "0x98C2760E4514430b00325B4eeD92543aB80a0860",
+     "data": "0x78bc69300000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "latest"
+   ],
+   "alindi": "2026-10-08T09:13:34.421Z",
+   "sha256": "bf2cfd865890b7f52bb4361234010c04003c1dccd75848db55bbc4a8070e00d7",
+   "basarili": true,
+   "indeks": 0
+  },
+  {
+   "dosya": "nokta/kuyruk-sarmalof-0.json",
+   "uc": "https://rpc.mainnet.arc.io",
+   "yontem": "eth_call",
+   "parametreler": [
+    {
+     "to": "0x98C2760E4514430b00325B4eeD92543aB80a0860",
+     "data": "0x82f337244141504c00000000000000000000000000000000000000000000000000000000"
+    },
+    "latest"
+   ],
+   "alindi": "2026-10-08T09:13:34.486Z",
+   "sha256": "9b85ead166d6e4157ad30ac0b381048a67f43f6aa48897bc51dc8337ab7cb9f6",
+   "basarili": true,
+   "indeks": 0
+  },
+  {
+   "dosya": "nokta/kuyruk-hisse-1.json",
+   "uc": "https://rpc.mainnet.arc.io",
+   "yontem": "eth_call",
+   "parametreler": [
+    {
+     "to": "0x98C2760E4514430b00325B4eeD92543aB80a0860",
+     "data": "0x78bc69300000000000000000000000000000000000000000000000000000000000000001"
+    },
+    "latest"
+   ],
+   "alindi": "2026-10-08T09:13:34.547Z",
+   "sha256": "c7eabe0ea6e53870e6fed2032664d5f5243a244fc4294dc702c6ea1174078fc9",
+   "basarili": true,
+   "indeks": 1
+  },
+  {
+   "dosya": "nokta/kuyruk-sarmalof-1.json",
+   "uc": "https://rpc.mainnet.arc.io",
+   "yontem": "eth_call",
+   "parametreler": [
+    {
+     "to": "0x98C2760E4514430b00325B4eeD92543aB80a0860",
+     "data": "0x82f337244e56444100000000000000000000000000000000000000000000000000000000"
+    },
+    "latest"
+   ],
+   "alindi": "2026-10-08T09:13:34.609Z",
+   "sha256": "ca2d2a1524275a17122170ba7a87417bd762b9836739dd8988b27141536727e0",
+   "basarili": true,
+   "indeks": 1
+  },
+  {
+   "dosya": "nokta/gov-min-oy-gucu.json",
+   "uc": "https://rpc.mainnet.arc.io",
+   "yontem": "eth_call",
+   "parametreler": [
+    {
+     "to": "0x20d2E53172D2BD4b010E90fa6ce8f09972343CeB",
+     "data": "0xc4d9667d"
+    },
+    "latest"
+   ],
+   "alindi": "2026-10-08T09:13:34.679Z",
+   "sha256": "3b3a1f073ad54cae08ee017ba40ddeedc03a4b65f2e9fe5053b905d5a2a7451b",
+   "basarili": true
+  },
+  {
+   "dosya": "nokta/gov-esik-bps.json",
+   "uc": "https://rpc.mainnet.arc.io",
+   "yontem": "eth_call",
+   "parametreler": [
+    {
+     "to": "0x20d2E53172D2BD4b010E90fa6ce8f09972343CeB",
+     "data": "0xa7d54d3f"
+    },
+    "latest"
+   ],
+   "alindi": "2026-10-08T09:13:34.742Z",
+   "sha256": "1f8087141a8391bd2e163766a738d99faddd53ac7774059d5a26a32619975271",
+   "basarili": true
+  },
+  {
+   "dosya": "nokta/gov-kuorum-bps.json",
+   "uc": "https://rpc.mainnet.arc.io",
+   "yontem": "eth_call",
+   "parametreler": [
+    {
+     "to": "0x20d2E53172D2BD4b010E90fa6ce8f09972343CeB",
+     "data": "0xa8b21c1b"
+    },
+    "latest"
+   ],
+   "alindi": "2026-10-08T09:13:34.804Z",
+   "sha256": "7a8b5c2d7a2c7f10862ab2cdb5ec9bb97ec44e37c4efde64e2da7e1c4b0caf75",
+   "basarili": true
+  },
+  {
+   "dosya": "nokta/gov-oy-periyodu.json",
+   "uc": "https://rpc.mainnet.arc.io",
+   "yontem": "eth_call",
+   "parametreler": [
+    {
+     "to": "0x20d2E53172D2BD4b010E90fa6ce8f09972343CeB",
+     "data": "0xb1610d7e"
+    },
+    "latest"
+   ],
+   "alindi": "2026-10-08T09:13:34.874Z",
+   "sha256": "b3dada450b4f00d331f84e650cc57b10433b8f9218c8b9a0a757709886f84abf",
+   "basarili": true
+  },
+  {
+   "dosya": "nokta/gov-timelock.json",
+   "uc": "https://rpc.mainnet.arc.io",
+   "yontem": "eth_call",
+   "parametreler": [
+    {
+     "to": "0x20d2E53172D2BD4b010E90fa6ce8f09972343CeB",
+     "data": "0x7aadef8b"
+    },
+    "latest"
+   ],
+   "alindi": "2026-10-08T09:13:34.937Z",
+   "sha256": "5b6eb4b6628e761d86e30cd8832106e74ac44b4a139656c3b2600b59c5ffa895",
+   "basarili": true
+  },
+  {
+   "dosya": "nokta/gov-staking.json",
+   "uc": "https://rpc.mainnet.arc.io",
+   "yontem": "eth_call",
+   "parametreler": [
+    {
+     "to": "0x20d2E53172D2BD4b010E90fa6ce8f09972343CeB",
+     "data": "0x4cf088d9"
+    },
+    "latest"
+   ],
+   "alindi": "2026-10-08T09:13:35.001Z",
+   "sha256": "516a803d36161a13598129f439cc94487ebbdc727a9dd45c23fe5354090df85c",
+   "basarili": true
+  },
+  {
+   "dosya": "nokta/stake-toplam.json",
+   "uc": "https://rpc.mainnet.arc.io",
+   "yontem": "eth_call",
+   "parametreler": [
+    {
+     "to": "0xE0fE4664417Fc7DE9f35a5c55bb490105Ed589f2",
+     "data": "0x817b1cd2"
+    },
+    "latest"
+   ],
+   "alindi": "2026-10-08T09:13:35.064Z",
+   "sha256": "46e1bec104b29080ce1e8c6d9a624883777d1f81c373bed4aa4a9537d1c24bb1",
+   "basarili": true
+  },
+  {
+   "dosya": "nokta/stake-bot-oy.json",
+   "uc": "https://rpc.mainnet.arc.io",
+   "yontem": "eth_call",
+   "parametreler": [
+    {
+     "to": "0xE0fE4664417Fc7DE9f35a5c55bb490105Ed589f2",
+     "data": "0xc07473f600000000000000000000000089189c84dc95d0520aeec9c8cf3ba5b9d42611d0"
+    },
+    "latest"
+   ],
+   "alindi": "2026-10-08T09:13:35.129Z",
+   "sha256": "46e1bec104b29080ce1e8c6d9a624883777d1f81c373bed4aa4a9537d1c24bb1",
+   "basarili": true,
+   "adres": "0x89189C84DC95d0520AEeC9c8cF3BA5B9d42611D0"
+  },
+  {
+   "dosya": "nokta/jeton-bot-bakiye.json",
+   "uc": "https://rpc.mainnet.arc.io",
+   "yontem": "eth_call",
+   "parametreler": [
+    {
+     "to": "0xFeA8F85B9020dAD8d1bbad0E0CC991564c1e2D41",
+     "data": "0x70a0823100000000000000000000000089189c84dc95d0520aeec9c8cf3ba5b9d42611d0"
+    },
+    "latest"
+   ],
+   "alindi": "2026-10-08T09:13:35.193Z",
+   "sha256": "51e31e36e153818a1656322ef93bcd3fd121d3b2f0cde39e0b020b6f8d762ee2",
+   "basarili": true,
+   "adres": "0x89189C84DC95d0520AEeC9c8cF3BA5B9d42611D0"
+  }
+ ]
+}

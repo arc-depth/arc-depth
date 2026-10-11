@@ -1,0 +1,271 @@
+/* ===========================================================================
+ * duzen.css — the page architecture
+ *
+ * This file decides where things are. It does not decide what they look
+ * like; bilesen.css does that. Keeping them apart is why a layout change
+ * does not become a restyling job.
+ *
+ * THE SHAPE
+ *   Desktop is a three-zone shell: a fixed top bar, a persistent left rail
+ *   for module navigation, and a content column. The rail is why sixteen
+ *   modules are reachable without a menu that hides fifteen of them.
+ *
+ *   Mobile drops the rail and gains a bottom tab bar with the four things
+ *   anybody opens the app to do. The remaining modules live behind the
+ *   fourth tab rather than being crammed into a bar that would need eight
+ *   targets of 40px.
+ *
+ * THE MOBILE RULES, WHICH ARE REQUIREMENTS AND NOT PREFERENCES
+ *   No horizontal overflow. No overlapping text. The bottom bar never
+ *   covers content — the content column reserves its height instead of
+ *   sliding under it. Tap targets are 44px, which is the smallest size a
+ *   thumb hits reliably.
+ * =========================================================================== */
+
+/* ---- the shell ------------------------------------------------------ */
+
+.kabuk {
+  min-height: 100vh;
+  min-height: 100dvh;      /* dvh, so mobile browser chrome cannot clip it */
+  display: grid;
+  grid-template-rows: var(--ust-bar) 1fr;
+}
+
+/* ---- top bar -------------------------------------------------------- */
+
+.ustbar {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-ustbar);
+  height: var(--ust-bar);
+  display: flex;
+  align-items: center;
+  gap: var(--bosluk-4);
+  padding: 0 var(--oluk);
+  background: rgba(10, 11, 13, 0.88);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--cizgi);
+}
+
+.ustbar__marka {
+  display: flex;
+  align-items: center;
+  gap: var(--bosluk-2);
+  flex: 0 0 auto;
+  font-size: var(--boy-l);
+  font-weight: var(--kalin-kalin);
+  letter-spacing: -0.02em;
+  color: var(--yazi-1);
+}
+.ustbar__marka:hover { color: var(--yazi-1); }
+
+.ustbar__nabiz {
+  width: 22px; height: 22px;
+  flex: 0 0 auto;
+  display: block;
+}
+
+/* The primary nav sits in the top bar on desktop and disappears on mobile,
+   where the tab bar takes over. */
+.ustbar__yol {
+  display: flex;
+  align-items: center;
+  gap: var(--bosluk-1);
+  margin-left: var(--bosluk-4);
+}
+
+.ustbar__ara {
+  flex: 1 1 auto;
+  max-width: 420px;
+  margin-left: auto;
+}
+
+.ustbar__sag {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: var(--bosluk-2);
+}
+
+/* ---- body: rail + content ------------------------------------------ */
+
+.govde {
+  display: grid;
+  grid-template-columns: var(--yan-genis) minmax(0, 1fr);
+  align-items: start;
+  /* minmax(0, 1fr) and not 1fr: a grid child with long content otherwise
+     refuses to shrink and pushes the page sideways. That single keyword is
+     the difference between a responsive column and a horizontal scrollbar. */
+}
+
+.ray {
+  position: sticky;
+  top: var(--ust-bar);
+  height: calc(100vh - var(--ust-bar));
+  height: calc(100dvh - var(--ust-bar));
+  overflow-y: auto;
+  padding: var(--bosluk-4) var(--bosluk-3) var(--bosluk-8);
+  border-right: 1px solid var(--cizgi);
+  display: flex;
+  flex-direction: column;
+  gap: var(--bosluk-5);
+}
+
+.ray__grup { display: flex; flex-direction: column; gap: 2px; }
+
+.ray__baslik {
+  padding: 0 var(--bosluk-3) var(--bosluk-2);
+  font-size: var(--boy-xs);
+  font-weight: var(--kalin-yari);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--yazi-4);
+}
+
+.icerik {
+  min-width: 0;             /* same reason as minmax(0, 1fr) above */
+  padding: var(--bosluk-6) var(--oluk) var(--bosluk-16);
+  max-width: var(--en-genis);
+}
+
+/* ---- page header inside the content column -------------------------- */
+
+.sayfa-ust {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--bosluk-4);
+  flex-wrap: wrap;
+  margin-bottom: var(--bosluk-6);
+}
+
+.sayfa-ust__yazi { min-width: 0; display: flex; flex-direction: column; gap: var(--bosluk-1); }
+.sayfa-ust__alt { font-size: var(--boy-s); color: var(--yazi-3); }
+.sayfa-ust__eylem { display: flex; align-items: center; gap: var(--bosluk-2); flex-wrap: wrap; }
+
+/* ---- generic grids -------------------------------------------------- */
+
+/* auto-fit with a floor, so a row reflows instead of being given a
+   breakpoint per count. */
+.izgara { display: grid; gap: var(--bosluk-3); }
+.izgara--kart   { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+.izgara--olcum  { grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
+.izgara--genis  { grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+
+.yigin { display: flex; flex-direction: column; gap: var(--bosluk-4); }
+.yigin--sik { gap: var(--bosluk-2); }
+.satir { display: flex; align-items: center; gap: var(--bosluk-2); flex-wrap: wrap; }
+.satir--arasi { justify-content: space-between; }
+
+/* ---- the trading terminal ------------------------------------------- */
+
+/* Desktop: chart and trade history on the left, the trade panel and token
+   facts on the right, holders and reserve underneath. The trade panel is
+   the narrow column because its width is fixed by its content while the
+   chart can use whatever is left. */
+.terminal {
+  display: grid;
+  gap: var(--bosluk-3);
+  grid-template-columns: minmax(0, 1fr) 340px;
+  grid-template-areas:
+    "grafik  panel"
+    "islem   bilgi"
+    "alt     alt";
+}
+.terminal__grafik { grid-area: grafik; min-width: 0; }
+.terminal__panel  { grid-area: panel; }
+.terminal__islem  { grid-area: islem; min-width: 0; }
+.terminal__bilgi  { grid-area: bilgi; }
+.terminal__alt    { grid-area: alt; min-width: 0; }
+
+@media (max-width: 1240px) {
+  .terminal {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "grafik" "panel" "islem" "bilgi" "alt";
+  }
+}
+
+/* ---- mobile tab bar -------------------------------------------------- */
+
+.sekmebar { display: none; }
+
+/* ---- breakpoints ---------------------------------------------------- */
+
+@media (max-width: 1100px) {
+  :root { --yan-genis: 196px; }
+}
+
+/* The rail goes away and the bottom bar arrives together: a layout with
+   neither, or both, is the bug. */
+@media (max-width: 860px) {
+  .govde { grid-template-columns: minmax(0, 1fr); }
+  .ray { display: none; }
+  .ustbar__yol { display: none; }
+  .ustbar__ara { max-width: none; }
+
+  .icerik {
+    padding: var(--bosluk-4) var(--oluk);
+    /* The bar's height PLUS the safe area, so content ends above it rather
+       than under it. The brief names this defect explicitly. */
+    padding-bottom: calc(var(--alt-bar) + env(safe-area-inset-bottom, 0px) + var(--bosluk-6));
+  }
+
+  .sekmebar {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    z-index: var(--z-ustbar);
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    height: calc(var(--alt-bar) + env(safe-area-inset-bottom, 0px));
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    background: rgba(10, 11, 13, 0.94);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-top: 1px solid var(--cizgi);
+  }
+
+  .sayfa-ust { margin-bottom: var(--bosluk-5); }
+  h1 { font-size: var(--boy-xl); }
+}
+
+@media (max-width: 480px) {
+  .izgara--kart  { grid-template-columns: minmax(0, 1fr); }
+  .izgara--olcum { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .izgara--genis { grid-template-columns: minmax(0, 1fr); }
+  .ustbar { gap: var(--bosluk-2); }
+}
+
+/* ---- a mobile terminal is a different layout, not a narrower one ----- */
+
+/* Token facts and price on top, then tabs for chart / trades / holders,
+   and a trade panel pinned to the bottom above the tab bar. Scrolling to
+   reach Buy on a phone is how a trade gets missed. */
+@media (max-width: 860px) {
+  .terminal { gap: var(--bosluk-3); }
+  .terminal__panel { display: none; }          /* replaced by the dock */
+
+  .islem-dock {
+    position: fixed;
+    left: 0; right: 0;
+    bottom: calc(var(--alt-bar) + env(safe-area-inset-bottom, 0px));
+    z-index: var(--z-yapisma);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--bosluk-2);
+    padding: var(--bosluk-3) var(--oluk);
+    background: rgba(16, 18, 22, 0.97);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-top: 1px solid var(--cizgi-guclu);
+  }
+  /* And the content reserves room for the dock as well as the bar. */
+  .terminal-sayfa .icerik,
+  body.terminal-acik .icerik {
+    padding-bottom: calc(var(--alt-bar) + 76px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+@media (min-width: 861px) {
+  .islem-dock { display: none; }
+}

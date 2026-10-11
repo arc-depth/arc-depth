@@ -1,0 +1,21 @@
+node_modules/
+build/
+*.log
+.env
+
+# chain scan progress: regenerates, and large
+arc-havuz-durum.json
+tarama.log
+
+# scratch for one-off reads; nothing here is part of the project
+.tmp/
+
+# the other agent owns this tree
+pulse/
+
+# internal: ties addresses to what they are for; not for publication
+ADRESLER.md
+# the index: derived from the chain, so it regenerates — and it is a binary
+# database that would churn on every commit. The SCHEMA and the code are
+# tracked; the data is not.
+indeksleyici/veri/

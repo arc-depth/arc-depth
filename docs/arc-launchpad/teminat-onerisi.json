@@ -1,0 +1,498 @@
+{
+ "olculdu": "2026-10-10T17:39:43.892Z",
+ "not": "ONERI listesi, kapi degil. Launch yapan CA yapistirip baska bir token secebilir.",
+ "adet": 50,
+ "liste": [
+  {
+   "simge": "WETH",
+   "ad": "Ethereum",
+   "zincirler": [
+    "ethereum",
+    "base",
+    "optimism",
+    "polygon",
+    "avalanche",
+    "unichain"
+   ],
+   "havuz": 23,
+   "ondalik": 18
+  },
+  {
+   "simge": "USDT",
+   "ad": "Tether USD",
+   "zincirler": [
+    "ethereum",
+    "base",
+    "optimism",
+    "polygon",
+    "avalanche"
+   ],
+   "havuz": 20,
+   "ondalik": 6
+  },
+  {
+   "simge": "WBTC",
+   "ad": "Bitcoin",
+   "zincirler": [
+    "ethereum",
+    "optimism",
+    "polygon",
+    "avalanche",
+    "unichain"
+   ],
+   "havuz": 18,
+   "ondalik": 8
+  },
+  {
+   "simge": "AAVE",
+   "ad": "Aave",
+   "zincirler": [
+    "ethereum",
+    "base",
+    "optimism",
+    "polygon",
+    "avalanche"
+   ],
+   "havuz": 14,
+   "ondalik": 18
+  },
+  {
+   "simge": "DAI",
+   "ad": "DAI",
+   "zincirler": [
+    "ethereum",
+    "base",
+    "optimism",
+    "polygon"
+   ],
+   "havuz": 14,
+   "ondalik": 18
+  },
+  {
+   "simge": "UNI",
+   "ad": "Uniswap",
+   "zincirler": [
+    "ethereum",
+    "optimism",
+    "polygon",
+    "unichain"
+   ],
+   "havuz": 12,
+   "ondalik": 18
+  },
+  {
+   "simge": "LINK",
+   "ad": "Chainlink",
+   "zincirler": [
+    "ethereum",
+    "optimism",
+    "polygon",
+    "avalanche"
+   ],
+   "havuz": 11,
+   "ondalik": 18
+  },
+  {
+   "simge": "SNX",
+   "ad": "Synthetix Network",
+   "zincirler": [
+    "ethereum",
+    "base",
+    "optimism",
+    "polygon"
+   ],
+   "havuz": 10,
+   "ondalik": 18
+  },
+  {
+   "simge": "CRV",
+   "ad": "Curve DAO",
+   "zincirler": [
+    "ethereum",
+    "optimism",
+    "polygon"
+   ],
+   "havuz": 10,
+   "ondalik": 18
+  },
+  {
+   "simge": "EURC",
+   "ad": "Circle EUR",
+   "zincirler": [
+    "ethereum",
+    "base",
+    "avalanche"
+   ],
+   "havuz": 10,
+   "ondalik": 6
+  },
+  {
+   "simge": "COMP",
+   "ad": "Compound",
+   "zincirler": [
+    "ethereum",
+    "base",
+    "polygon"
+   ],
+   "havuz": 9,
+   "ondalik": 18
+  },
+  {
+   "simge": "cbBTC",
+   "ad": "Coinbase Wrapped BTC",
+   "zincirler": [
+    "ethereum",
+    "base"
+   ],
+   "havuz": 8,
+   "ondalik": 8
+  },
+  {
+   "simge": "AUSD",
+   "ad": "AUSD",
+   "zincirler": [
+    "ethereum",
+    "avalanche"
+   ],
+   "havuz": 5,
+   "ondalik": 6
+  },
+  {
+   "simge": "GRT",
+   "ad": "The Graph",
+   "zincirler": [
+    "ethereum",
+    "polygon"
+   ],
+   "havuz": 5,
+   "ondalik": 18
+  },
+  {
+   "simge": "LUSD",
+   "ad": "Liquity USD",
+   "zincirler": [
+    "ethereum",
+    "optimism"
+   ],
+   "havuz": 5,
+   "ondalik": 18
+  },
+  {
+   "simge": "RSR",
+   "ad": "Reserve Rights",
+   "zincirler": [
+    "ethereum",
+    "base"
+   ],
+   "havuz": 3,
+   "ondalik": 18
+  },
+  {
+   "simge": "tBTC",
+   "ad": "tBTC",
+   "zincirler": [
+    "ethereum",
+    "base"
+   ],
+   "havuz": 3,
+   "ondalik": 18
+  },
+  {
+   "simge": "1INCH",
+   "ad": "1inch",
+   "zincirler": [
+    "ethereum"
+   ],
+   "havuz": 4,
+   "ondalik": 18
+  },
+  {
+   "simge": "AERO",
+   "ad": "Aerodrome Finance",
+   "zincirler": [
+    "base"
+   ],
+   "havuz": 4,
+   "ondalik": 18
+  },
+  {
+   "simge": "AVNT",
+   "ad": "Avantis",
+   "zincirler": [
+    "base"
+   ],
+   "havuz": 4,
+   "ondalik": 18
+  },
+  {
+   "simge": "cbETH",
+   "ad": "Coinbase Wrapped Staked ETH",
+   "zincirler": [
+    "base"
+   ],
+   "havuz": 4,
+   "ondalik": 18
+  },
+  {
+   "simge": "CVX",
+   "ad": "Convex Finance",
+   "zincirler": [
+    "ethereum"
+   ],
+   "havuz": 4,
+   "ondalik": 18
+  },
+  {
+   "simge": "DEGEN",
+   "ad": "Degen (Base)",
+   "zincirler": [
+    "base"
+   ],
+   "havuz": 4,
+   "ondalik": 18
+  },
+  {
+   "simge": "HOME",
+   "ad": "HOME",
+   "zincirler": [
+    "base"
+   ],
+   "havuz": 4,
+   "ondalik": 18
+  },
+  {
+   "simge": "MORPHO",
+   "ad": "Morpho",
+   "zincirler": [
+    "base"
+   ],
+   "havuz": 4,
+   "ondalik": 18
+  },
+  {
+   "simge": "OP",
+   "ad": "Optimism",
+   "zincirler": [
+    "optimism"
+   ],
+   "havuz": 4,
+   "ondalik": 18
+  },
+  {
+   "simge": "PAXG",
+   "ad": "Pax Gold",
+   "zincirler": [
+    "ethereum"
+   ],
+   "havuz": 4,
+   "ondalik": 18
+  },
+  {
+   "simge": "PYUSD",
+   "ad": "PayPal USD",
+   "zincirler": [
+    "ethereum"
+   ],
+   "havuz": 4,
+   "ondalik": 6
+  },
+  {
+   "simge": "USDP",
+   "ad": "Pax Dollar",
+   "zincirler": [
+    "ethereum"
+   ],
+   "havuz": 4,
+   "ondalik": 18
+  },
+  {
+   "simge": "VIRTUAL",
+   "ad": "Virtuals Protocol",
+   "zincirler": [
+    "base"
+   ],
+   "havuz": 4,
+   "ondalik": 18
+  },
+  {
+   "simge": "WAVAX",
+   "ad": "Avalanche",
+   "zincirler": [
+    "avalanche"
+   ],
+   "havuz": 4,
+   "ondalik": 18
+  },
+  {
+   "simge": "APE",
+   "ad": "APECoin",
+   "zincirler": [
+    "ethereum"
+   ],
+   "havuz": 3,
+   "ondalik": 18
+  },
+  {
+   "simge": "BAL",
+   "ad": "Balancer",
+   "zincirler": [
+    "polygon"
+   ],
+   "havuz": 3,
+   "ondalik": 18
+  },
+  {
+   "simge": "DOLO",
+   "ad": "Dolomite",
+   "zincirler": [
+    "ethereum"
+   ],
+   "havuz": 3,
+   "ondalik": 18
+  },
+  {
+   "simge": "FRAX",
+   "ad": "FRAX",
+   "zincirler": [
+    "ethereum"
+   ],
+   "havuz": 3,
+   "ondalik": 18
+  },
+  {
+   "simge": "GMX",
+   "ad": "GMX",
+   "zincirler": [
+    "avalanche"
+   ],
+   "havuz": 3,
+   "ondalik": 18
+  },
+  {
+   "simge": "LDO",
+   "ad": "Lido DAO",
+   "zincirler": [
+    "optimism"
+   ],
+   "havuz": 3,
+   "ondalik": 18
+  },
+  {
+   "simge": "MIM",
+   "ad": "Magic Internet Money",
+   "zincirler": [
+    "avalanche"
+   ],
+   "havuz": 3,
+   "ondalik": 18
+  },
+  {
+   "simge": "MKR",
+   "ad": "Maker",
+   "zincirler": [
+    "ethereum"
+   ],
+   "havuz": 3,
+   "ondalik": 18
+  },
+  {
+   "simge": "SOL",
+   "ad": "Solana",
+   "zincirler": [
+    "ethereum"
+   ],
+   "havuz": 3,
+   "ondalik": 9
+  },
+  {
+   "simge": "SPELL",
+   "ad": "Spell Token",
+   "zincirler": [
+    "ethereum"
+   ],
+   "havuz": 3,
+   "ondalik": 18
+  },
+  {
+   "simge": "STG",
+   "ad": "Stargate Finance",
+   "zincirler": [
+    "ethereum"
+   ],
+   "havuz": 3,
+   "ondalik": 18
+  },
+  {
+   "simge": "sUSD",
+   "ad": "SUSD",
+   "zincirler": [
+    "optimism"
+   ],
+   "havuz": 3,
+   "ondalik": 18
+  },
+  {
+   "simge": "USDS",
+   "ad": "USDS",
+   "zincirler": [
+    "ethereum"
+   ],
+   "havuz": 3,
+   "ondalik": 18
+  },
+  {
+   "simge": "VVV",
+   "ad": "Venice Token",
+   "zincirler": [
+    "base"
+   ],
+   "havuz": 3,
+   "ondalik": 18
+  },
+  {
+   "simge": "WLD",
+   "ad": "Worldcoin",
+   "zincirler": [
+    "optimism"
+   ],
+   "havuz": 3,
+   "ondalik": 18
+  },
+  {
+   "simge": "YFI",
+   "ad": "Yearn Finance",
+   "zincirler": [
+    "ethereum"
+   ],
+   "havuz": 3,
+   "ondalik": 18
+  },
+  {
+   "simge": "ZRO",
+   "ad": "LayerZero",
+   "zincirler": [
+    "base"
+   ],
+   "havuz": 3,
+   "ondalik": 18
+  },
+  {
+   "simge": "ARB",
+   "ad": "Arbitrum",
+   "zincirler": [
+    "ethereum"
+   ],
+   "havuz": 2,
+   "ondalik": 18
+  },
+  {
+   "simge": "BAT",
+   "ad": "Basic Attention Token",
+   "zincirler": [
+    "ethereum"
+   ],
+   "havuz": 2,
+   "ondalik": 18
+  }
+ ]
+}

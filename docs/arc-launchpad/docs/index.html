@@ -1,0 +1,713 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<title>Arc Launchpad — tabanı olan meme coin</title>
+<meta name="description" content="Arc üzerinde teminatla desteklenmiş meme coin launchpad'i. Teminat kilitli bir kasada durur ve kimse çekemez; kasada çekme fonksiyonu yok ve sonradan eklenemez. Likidite kalıcı kilitli, her işlemin ücreti tabana gider.">
+<meta property="og:title" content="Arc Launchpad">
+<meta property="og:description" content="Tabanı olan meme coin: teminat kilitli kasada, likidite kalıcı kilitli, her işlemin ücreti tabana.">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#090a0c; --panel:#12141a; --panel2:#171a21; --raise:#1d212a;
+  --line:#242934; --line2:#2f3542;
+  --tx:#e9ebf0; --dim:#8d95a4; --dim2:#646c7a;
+  --acc:#4fe3a3; --acc-dim:#1d7a58; --acc-bg:rgba(79,227,163,.10);
+  --vio:#7d8cff; --vio-bg:rgba(125,140,255,.10);
+  --warn:#ffb65c; --bad:#ff6f6f;
+  --r:16px; --r2:11px;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--tx);
+  font:400 16px/1.65 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased; overflow-x:hidden;
+}
+a{color:var(--acc);text-decoration:none}
+a:hover{text-decoration:underline}
+.mono{font-family:var(--mono);font-size:.9em}
+.arabaslik{font:600 19px Inter,sans-serif;margin:38px 0 8px}
+.sub.kisa{margin-top:0}
+.bgov u{text-decoration-color:var(--acc);text-underline-offset:3px}
+.iptal{background:rgba(255,111,111,.08);border:1px solid rgba(255,111,111,.3);
+  border-radius:var(--r);padding:16px 18px;margin:0 0 22px;line-height:1.6}
+.iptal b{color:#ffb3b3;display:block;font:700 15px Inter,sans-serif;margin-bottom:6px}
+.iptal p{color:var(--dim);font-size:13.5px;margin:0 0 7px}
+.iptal a{color:var(--acc)}
+.boru{display:flex;flex-direction:column;gap:0;margin-top:26px}
+.bas{display:grid;grid-template-columns:30px 1fr;gap:14px;align-items:start}
+.bno{width:30px;height:30px;border-radius:50%;border:1px solid var(--line);background:var(--panel);
+  display:flex;align-items:center;justify-content:center;font:600 12px Inter,sans-serif;color:var(--dim)}
+.bas.son .bno{border-color:var(--acc);color:var(--acc)}
+.bgov{padding-bottom:20px}
+.bgov b{display:block;font:600 15px Inter,sans-serif}
+.bgov .ne{color:var(--dim);font-size:13.5px;margin-top:3px}
+.bgov .kim{display:inline-block;margin-top:7px;font-family:var(--mono);font-size:11.5px;
+  color:var(--dim2);background:var(--panel);border:1px solid var(--line);
+  border-radius:6px;padding:3px 8px}
+.bgov .kim a{color:var(--dim2);text-decoration:none}
+.bgov .kim a:hover{color:var(--acc)}
+.zin{display:inline-block;font:600 10px Inter,sans-serif;letter-spacing:.04em;
+  text-transform:uppercase;padding:2px 7px;border-radius:5px;margin-left:8px;vertical-align:1px}
+.zin.arc{background:rgba(110,168,254,.12);color:#6ea8fe}
+.zin.rhc{background:rgba(120,220,160,.12);color:#78dca0}
+.cizgi{grid-column:1;width:1px;background:var(--line);margin:0 auto;height:100%}
+.ca{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:18px 0 6px;
+  padding:13px 15px;border:1px solid var(--line);border-radius:11px;background:var(--panel)}
+.ca code{font-family:var(--mono);font-size:13px;word-break:break-all;color:var(--tx)}
+.ca .et{font:600 10.5px Inter,sans-serif;letter-spacing:.05em;text-transform:uppercase;
+  color:var(--dim);white-space:nowrap}
+.ca button{background:var(--raise);border:1px solid var(--line);color:var(--tx);
+  font:500 12px Inter,sans-serif;padding:6px 11px;border-radius:7px;cursor:pointer;white-space:nowrap}
+.ca button:hover{border-color:var(--acc)}
+.arz{display:flex;flex-direction:column;gap:9px;margin-top:16px;font-size:13.5px}
+.arz .a{display:flex;justify-content:space-between;gap:14px;align-items:baseline;
+  padding-bottom:9px;border-bottom:1px solid var(--line)}
+.arz .a:last-child{border-bottom:0;padding-bottom:0}
+.arz .a > span{color:var(--dim)}
+.arz .a b{font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.arz .note{display:block;color:var(--dim2);font-size:12px;font-weight:400;margin-top:2px}
+.num{font-variant-numeric:tabular-nums}
+.wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+@media(max-width:600px){.wrap{padding:0 16px}}
+
+/* ---------------- header ---------------- */
+header{
+  position:sticky;top:0;z-index:40;
+  background:rgba(9,10,12,.82);backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--line);
+}
+.hin{display:flex;align-items:center;gap:14px;height:62px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:16.5px;letter-spacing:-.02em}
+.mark{width:27px;height:27px;border-radius:9px;flex:0 0 auto;
+  background:linear-gradient(135deg,var(--acc),var(--vio));
+  box-shadow:0 0 0 1px rgba(255,255,255,.08) inset,0 0 24px rgba(79,227,163,.25)}
+nav.top{display:flex;gap:4px;margin-left:10px}
+nav.top a{color:var(--dim);font:500 14.5px Inter,sans-serif;padding:8px 12px;border-radius:9px;text-decoration:none}
+nav.top a:hover{color:var(--tx);background:var(--panel);text-decoration:none}
+.sp{flex:1}
+.cta{background:var(--acc);color:#04120c;border:0;border-radius:10px;
+  font:600 14px Inter,sans-serif;padding:10px 17px;cursor:pointer;text-decoration:none;white-space:nowrap}
+.cta:hover{filter:brightness(1.08);text-decoration:none}
+.cta.ghost{background:var(--panel2);color:var(--tx);border:1px solid var(--line2)}
+.cta.ghost:hover{background:var(--raise)}
+@media(max-width:780px){nav.top{display:none}}
+
+/* ---------------- hero ---------------- */
+.hero{position:relative;padding:76px 0 56px;overflow:hidden}
+.hero::before{
+  content:"";position:absolute;inset:-200px 0 auto;height:560px;pointer-events:none;
+  background:radial-gradient(ellipse 60% 50% at 50% 50%,rgba(79,227,163,.11),transparent 70%),
+             radial-gradient(ellipse 40% 40% at 78% 30%,rgba(125,140,255,.10),transparent 70%);
+}
+.tag{display:inline-flex;align-items:center;gap:7px;
+  font:600 11.5px Inter,sans-serif;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--acc);background:var(--acc-bg);border:1px solid rgba(79,227,163,.22);
+  padding:6px 12px;border-radius:99px;margin-bottom:22px}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--acc);box-shadow:0 0 8px var(--acc)}
+h1{font:800 clamp(34px,6.4vw,58px)/1.06 Inter,sans-serif;letter-spacing:-.035em;margin:0 0 20px;max-width:19ch}
+h1 em{font-style:normal;background:linear-gradient(100deg,var(--acc),var(--vio));
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+.lead{font-size:clamp(16.5px,2.1vw,19px);color:var(--dim);max-width:60ch;margin:0 0 30px;line-height:1.6}
+.lead strong{color:var(--tx);font-weight:600}
+.btns{display:flex;gap:11px;flex-wrap:wrap}
+.btns .cta{padding:13px 22px;font-size:15px}
+
+/* ---------------- strip ---------------- */
+.strip{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:52px}
+@media(max-width:860px){.strip{grid-template-columns:repeat(2,1fr)}}
+.sbox{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:17px 18px}
+.sbox b{display:block;font:700 23px/1.15 Inter,sans-serif;letter-spacing:-.025em;font-variant-numeric:tabular-nums}
+.sbox span{display:block;color:var(--dim);font-size:12.5px;margin-top:5px;line-height:1.45}
+
+/* ---------------- sections ---------------- */
+section{padding:72px 0;border-top:1px solid var(--line)}
+section:first-of-type{border-top:0}
+.eyebrow{font:600 11.5px Inter,sans-serif;letter-spacing:.09em;text-transform:uppercase;color:var(--acc);margin:0 0 12px}
+h2{font:700 clamp(25px,3.4vw,34px)/1.18 Inter,sans-serif;letter-spacing:-.028em;margin:0 0 14px;max-width:24ch}
+.sub{color:var(--dim);font-size:16.5px;max-width:64ch;margin:0 0 36px;line-height:1.62}
+
+/* flow */
+.flow{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media(max-width:860px){.flow{grid-template-columns:1fr}}
+.step{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:22px;position:relative}
+.step .n{font:700 12px var(--mono);color:var(--acc);background:var(--acc-bg);
+  width:28px;height:28px;border-radius:9px;display:flex;align-items:center;justify-content:center;margin-bottom:14px}
+.step h3{font:600 17px Inter,sans-serif;margin:0 0 8px;letter-spacing:-.015em}
+.step p{margin:0;color:var(--dim);font-size:14.5px;line-height:1.6}
+.step p em{font-style:normal;color:var(--tx)}
+
+/* guarantees */
+.gs{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:860px){.gs{grid-template-columns:1fr}}
+.g{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:22px}
+.g h3{font:600 17px Inter,sans-serif;margin:0 0 9px;letter-spacing:-.015em;display:flex;gap:9px;align-items:baseline}
+.g h3 svg{width:17px;height:17px;flex:0 0 auto;color:var(--acc);margin-top:3px}
+.g p{margin:0;color:var(--dim);font-size:14.5px;line-height:1.62}
+.g .why{display:block;margin-top:11px;padding-top:11px;border-top:1px solid var(--line);
+  font-size:13px;color:var(--dim2)}
+.g .why b{color:var(--tx);font-weight:600}
+
+/* fee */
+.fee{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:26px;max-width:620px}
+.bar{display:flex;height:40px;border-radius:10px;overflow:hidden;margin:18px 0 16px}
+.bar div{display:flex;align-items:center;justify-content:center;font:600 12.5px Inter,sans-serif;color:#04120c}
+.bar .h{background:var(--acc);flex:30}
+.bar .d{background:#3fc98f;flex:30}
+.bar .p{background:var(--vio);flex:40;color:#0b0d18}
+.leg{display:flex;flex-direction:column;gap:9px;font-size:14px}
+.leg div{display:flex;justify-content:space-between;gap:12px}
+.leg span{color:var(--dim)}
+.leg b{font-variant-numeric:tabular-nums}
+
+/* table */
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;
+  border:1px solid var(--line);border-radius:var(--r);background:var(--panel)}
+table{width:100%;border-collapse:collapse;font-size:14px;min-width:460px}
+th{text-align:left;font:600 11px Inter,sans-serif;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--dim2);padding:13px 16px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:13px 16px;border-bottom:1px solid var(--line)}
+tr:last-child td{border-bottom:0}
+td.r,th.r{text-align:right;font-variant-numeric:tabular-nums}
+.ok{color:var(--acc)}
+
+/* faq */
+details{background:var(--panel);border:1px solid var(--line);border-radius:var(--r2);
+  margin-bottom:10px;overflow:hidden}
+details[open]{border-color:var(--line2)}
+summary{padding:17px 20px;cursor:pointer;font:600 15.5px Inter,sans-serif;
+  letter-spacing:-.01em;list-style:none;display:flex;justify-content:space-between;gap:14px;align-items:center}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"+";color:var(--dim);font-weight:400;font-size:20px;line-height:1}
+details[open] summary::after{content:"−"}
+details p{margin:0;padding:0 20px 18px;color:var(--dim);font-size:14.5px;line-height:1.65}
+details p + p{padding-top:0}
+
+/* notice */
+.notice{background:rgba(255,182,92,.07);border:1px solid rgba(255,182,92,.24);
+  border-radius:var(--r);padding:20px 22px;color:#ffd49b;font-size:14.5px;line-height:1.62}
+.notice b{color:#ffe3bd}
+
+.zincirler{display:grid;grid-template-columns:1fr auto 1fr;gap:16px;align-items:stretch;margin-bottom:22px}
+@media(max-width:820px){.zincirler{grid-template-columns:1fr}}
+.zblok{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:22px}
+.zbas{display:flex;align-items:center;gap:8px;font:600 12px Inter,sans-serif;
+  letter-spacing:.07em;text-transform:uppercase;color:var(--dim2);margin-bottom:12px}
+.znok{width:8px;height:8px;border-radius:50%}
+.znok.rh{background:var(--vio);box-shadow:0 0 8px var(--vio)}
+.znok.arc{background:var(--acc);box-shadow:0 0 8px var(--acc)}
+.zad{font:600 17px Inter,sans-serif;letter-spacing:-.015em;margin-bottom:8px}
+.zblok p{margin:0;color:var(--dim);font-size:14.5px;line-height:1.6}
+.zblok p strong{color:var(--tx);font-weight:600}
+.zok{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:7px;color:var(--dim2);font:600 11px Inter,sans-serif;letter-spacing:.07em;text-transform:uppercase}
+.zok svg{width:26px;height:26px}
+@media(max-width:820px){.zok{flex-direction:row;padding:4px 0}.zok svg{transform:rotate(90deg)}}
+.ornek{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:20px 22px}
+.obas{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;
+  color:var(--dim);font-size:13.5px}
+.pill-rwa{font:600 10.5px Inter,sans-serif;letter-spacing:.04em;text-transform:uppercase;
+  padding:4px 9px;border-radius:7px;background:var(--vio-bg);color:var(--vio)}
+.orows{display:flex;flex-direction:column;gap:7px;font-size:13.5px}
+.orow{display:flex;justify-content:space-between;gap:12px;align-items:baseline}
+.orow span{color:var(--dim)}
+.orow b{font-variant-numeric:tabular-nums;text-align:right;word-break:break-all}
+.orow .ok{color:var(--acc)}
+.onot{margin-top:14px;padding-top:13px;border-top:1px solid var(--line);
+  color:var(--dim2);font-size:12.5px;line-height:1.55}
+.onot strong{color:var(--dim)}
+footer{border-top:1px solid var(--line);padding:40px 0 56px;color:var(--dim2);font-size:13.5px}
+.fl{display:flex;gap:20px;flex-wrap:wrap;margin-bottom:14px}
+.fl a{color:var(--dim)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap hin">
+    <div class="brand"><div class="mark"></div>Arc Launchpad</div>
+    <nav class="top">
+      <a href="#amac">Ne yapıyor</a>
+      <a href="#nasil">Nasıl işliyor</a>
+      <a href="#guvence">Güvenceler</a>
+      <a href="#ucret">Ücret</a>
+      <a href="#teminat">Teminat</a>
+      <a href="#sayilar">Sayılar</a>
+      <a href="#kontratlar">Kontratlar</a>
+      <a href="#sss">SSS</a>
+    </nav>
+    <div class="sp"></div>
+    <a class="cta" href="app.html">Uygulamayı aç</a>
+  </div>
+</header>
+
+
+<div class="hero">
+  <div class="wrap">
+    <div class="tag"><span class="dot"></span>Arc ana ağında canlı</div>
+    <h1>Dibi olan <em>meme coin</em>.</h1>
+    <p class="lead">
+      Sıradan bir meme coin sıfıra gidebilir. Buradakiler gidemez:
+      <strong>her birinin arkasında kilitli gerçek teminat var ve o teminatı
+      kimse çekemez</strong> — ne kurucu, ne biz, ne bir oylama. Kasada
+      çekme fonksiyonu yok, sahibi yok, yükseltme yolu yok. İstediğin an
+      tokenini yakıp teminattan payını alırsın; izin istemeden, kuyruğa
+      girmeden.
+    </p>
+    <div class="btns">
+      <a class="cta" href="app.html">Launch yap</a>
+      <a class="cta ghost" href="#nasil">Nasıl işliyor</a>
+    </div>
+
+    <div class="strip" id="strip">
+      <div class="sbox"><b>%0,5</b><span>işlem ücreti, tamamı tabana</span></div>
+      <div class="sbox"><b id="s-launch">—</b><span>yapılmış launch</span></div>
+      <div class="sbox"><b id="s-kasa">—</b><span>kasalardaki teminat</span></div>
+      <div class="sbox"><b>515</b><span>geçen otomatik kontrol</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- =============== AMAC =============== -->
+<section id="amac">
+  <div class="wrap">
+    <p class="eyebrow">Proje ne yapıyor</p>
+    <h2>Taban bir söz değil, bir fonksiyon.</h2>
+    <p class="sub">
+      Her launch'ın kendi kasası var. Teminat oraya girer ve oradan tek bir
+      yolla çıkar: <strong>token yakarak</strong>. Yakma arzı, ödeme de
+      teminatı aynı oranda azalttığı için kalanların oranı hiç bozulmaz —
+      çıkan biri geride kalanın tabanını düşürmez.
+    </p>
+
+    <div class="g">
+      <div class="bgov">
+        <div class="bno">01</div>
+        <h3>Çıkış yolu bir tane</h3>
+        <p><code>redeem()</code> herkese açık ve ücretsiz:
+        <em>ödeme = teminat × miktar ÷ arz</em>. Kurtarma fonksiyonu,
+        süpürme, acil çekme, alıcı adresi parametresi — hiçbiri yok.
+        Böyle bir fonksiyon iyi niyetle yazılır, sonra ya kullanılır ya
+        çalınır.</p>
+      </div>
+      <div class="bgov">
+        <div class="bno">02</div>
+        <h3>Fiyat tabanın altına inemez</h3>
+        <p>İnerse orada alıp kasada daha pahalıya bozmak serbesttir.
+        Kimsenin tabanı savunması gerekmiyor; <u>savunmak kârlı</u>.
+        Geri alımda hiç ücret yoktur, çünkü çıkıştaki bir ücret fiyatın
+        tabanın o kadar altında durmasına izin verirdi.</p>
+      </div>
+      <div class="bgov">
+        <div class="bno">03</div>
+        <h3>Likidite geri çekilemez</h3>
+        <p>Launch'ın havuz pozisyonu doğduğu anda yakılır. Çekme isteği
+        kontrat seviyesinde reddediliyor, ama reddedecek bir sahip de
+        yok: <u>pozisyonun sahibi hiç kimse</u>. Rug pull teknik olarak
+        imkânsız, sözle engellenmiş değil.</p>
+      </div>
+      <div class="bgov">
+        <div class="bno">04</div>
+        <h3>Sonradan da eklenemez</h3>
+        <p>Kasanın bytecode'unda <code>DELEGATECALL</code>,
+        <code>CALLCODE</code> ve <code>SELFDESTRUCT</code> <u>geçmiyor</u> —
+        yani kodunu değiştirebilecek tek bir komut taşımıyor. "Eklemeyiz"
+        bir söz; "ekleyemeyiz" ölçülebilir bir özellik. Bu sayfadaki her
+        kontrat için ayrı ayrı taranıyor.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =============== NASIL =============== -->
+<section id="nasil">
+  <div class="wrap">
+    <p class="eyebrow">Nasıl işliyor</p>
+    <h2>Bir işlem. Dört şey aynı anda olur.</h2>
+    <p class="sub">
+      Teminatı sen getirirsin, gerisi tek transaction içinde biter. Bekleme
+      yok, operatör yok, teslim edilmeyi beklediğin bir şey yok.
+    </p>
+
+    <div class="flow">
+      <div class="step">
+        <div class="n">1</div>
+        <h3>Teminatı seç ve yatır</h3>
+        <p>USDC, cirBTC, WETH, EURC — ya da adresini yazdığın başka bir
+        token. İzin listesi yok. Ücret: teminat USDC ise <em>%2</em>,
+        başka bir şeyse <em>%3</em>.</p>
+      </div>
+      <div class="step">
+        <div class="n">2</div>
+        <h3>Kasa dolar, taban doğar</h3>
+        <p>Teminatın tamamı kasaya girer. <em>Taban fiyat = kasa ÷ arz</em>
+        ve bu sayı hiç düşmez: geri alım iki tarafı aynı oranda
+        küçültür.</p>
+      </div>
+      <div class="step">
+        <div class="n">3</div>
+        <h3>Havuz tek yönlü açılır</h3>
+        <p>Arzın <em>%40'ı</em> Uniswap v4'te tabanın üstüne konur.
+        Karşı tarafa para koymak <em>gerekmiyor</em> — ölçtük, havuzun
+        istediği nakit sıfır. Ve bir daha çekilemez.</p>
+      </div>
+      <div class="step">
+        <div class="n">4</div>
+        <h3>Senin payın</h3>
+        <p>Kalanın <em>%70'i</em> hemen senin, <em>%30'u</em> vesting ile
+        kilitli. Kilit adresi zincirden okunabiliyor, yani alıcı bize
+        güvenmek zorunda değil.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =============== UCRET =============== -->
+<section id="ucret">
+  <div class="wrap">
+    <p class="eyebrow">Ücret</p>
+    <h2>%0,5, ve tamamı tabana.</h2>
+    <p class="sub">
+      Kimseye ödül yok: ne tutucuya, ne geliştiriciye, ne bize. Ödül kovası
+      diye bir şey kodda <strong>yok</strong> — sıfırlanmış değil,
+      <strong>silinmiş</strong>, çünkü var olan bir kova sonradan birine
+      ödeme yapılabilecek bir kovadır.
+    </p>
+
+    <div class="g">
+      <div class="fee">
+        <h3>Alımda</h3>
+        <p>Ücret meme token olarak gelir ve <strong>yakılır</strong>. Arz
+        düşer, teminat sabit kalır — yani token başına teminat yükselir.
+        Kalan herkesin tabanı yükselir ve bunun için kimsenin bir şey
+        satması gerekmez.</p>
+      </div>
+      <div class="fee">
+        <h3>Satışta</h3>
+        <p>Ücret para olarak gelir ve <strong>doğrudan kasaya</strong>
+        girer. Teminat artar. Dönüştürme yok, fiyat sorgusu yok, köprü
+        yok. Teminat USDC değilse araya bir dönüştürücü girer ve işi
+        yapan %2 fark alır — tabanın anaparasından değil, ücretten.</p>
+      </div>
+      <div class="fee">
+        <h3>İlk 5 saniye</h3>
+        <p>Açılışta sniper'a <strong>%99'a kadar</strong> sürşarj, her
+        saniye dörde bölünerek. O da tabana gider: ilk bloğu kapmaya
+        çalışanın kârı, kalanların zemini olur.</p>
+      </div>
+      <div class="fee">
+        <h3>Hangi yoldan gelirse</h3>
+        <p>Hook, havuz kimliğinin bir parçası — <em>keccak(PoolKey)</em>
+        hook adresini de içerir. Yani Uniswap arayüzü, bir aggregator,
+        bir relay ya da zincirler arası bir router: hepsi aynı ücreti
+        öder. Girişi sabitleyip kaçmak da yok, ikisi de ölçülü.</p>
+      </div>
+    </div>
+
+    <p class="sub kisa" style="margin-top:22px">
+      Bunun bedeli şu: <strong>protokol işlemden hiçbir şey kazanmıyor.</strong>
+      Gelir launch ücretinden gelmek zorunda, ki doğru yer orası — kendi
+      havuzlarının takasından pay alan bir protokol, çok işlem olmasını
+      <em>istemek</em> için sebebi olan bir protokoldür.
+    </p>
+  </div>
+</section>
+
+<!-- =============== TEMINAT =============== -->
+<section id="teminat">
+  <div class="wrap">
+    <p class="eyebrow">Teminat</p>
+    <h2>Yasaklı bir şey yok. Kutsanmış bir şey de yok.</h2>
+    <p class="sub">
+      Teminat bir izin listesinden seçilmiyor, <strong>ölçülüyor</strong>.
+      Launch anında teminatın karnesi zincire bir kez yazılır ve bir daha
+      değişmez — alıcı söz değil ölçüm okur.
+    </p>
+
+    <div class="g">
+      <div class="bgov">
+        <div class="bno">?</div>
+        <h3>Neden liste değil</h3>
+        <p>Liste bakımı için bir <u>sahip</u> ister, ve bu projede
+        hiçbir yerde sahip yok. Ayrıca dürüst yazılamaz: "USDC çifti var"
+        Arc'ta <em>31.787</em> token için doğru. "İlk 100" zincirin
+        göremediği bir veri. "Havuzu derin" ise oynanabilir — bir blok
+        için konan likidite sonraki blokta çekilir.</p>
+      </div>
+      <div class="bgov">
+        <div class="bno">!</div>
+        <h3>Karne ne söylüyor</h3>
+        <p>Ondalık, arz, kod boyutu; sahibi var mı, basabilir mi,
+        dondurabilir mi, duraklatılabilir mi, yükseltilebilir mi. Hepsi
+        <code>staticcall</code> ile — yani <u>vekilin arkasındaki gerçek
+        kodu</u> sorarak, bytecode'a bakarak değil.</p>
+      </div>
+      <div class="bgov">
+        <div class="bno">⚠</div>
+        <h3>Sembole güvenilmiyor</h3>
+        <p>Arc'ta sembolü <code>USDC</code>, adı "Unconditional Support
+        Dog Coin" olan <strong>canlı bir token var</strong>: 18 basamak,
+        1 milyar arz, 26 USDC havuzu. Sembole bakan bir ekran onunla
+        teminatlandırılmış bir launch'ı "dolar destekli" diye yazardı.
+        Karne sembole değil <u>adrese</u> bakıyor.</p>
+      </div>
+      <div class="bgov">
+        <div class="bno">=</div>
+        <h3>Karne bir değer yargısı değil</h3>
+        <p>Bunlar kontrat hakkında olgular, varlık hakkında hüküm değil.
+        Arc'ın dört büyük varlığının <strong>dördü de</strong> sahibi ve
+        duraklatması olan yükseltilebilir vekiller — bunu kırmızıya
+        boyayan bir ekran USDC'ye güvenilmez demiş olurdu. Olgu yazılır,
+        kararı okuyan verir.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =============== GUVENCE =============== -->
+<section id="guvence">
+  <div class="wrap">
+    <p class="eyebrow">Güvenceler</p>
+    <h2>Neden söz değil, yapı.</h2>
+    <p class="sub">
+      Aşağıdakilerin hiçbiri bir taahhüt değil. Her biri ya kontratta
+      olmayan bir fonksiyon, ya bytecode'da geçmeyen bir komut, ya da
+      zincirden okunabilen bir sayı.
+    </p>
+
+    <div class="g">
+      <div class="bgov">
+        <div class="bno">01</div>
+        <h3>Anahtar yok</h3>
+        <p>Kasada sadece iki yazan fonksiyon var: <code>fund</code> ve
+        <code>redeem</code>. Sahip, yönetici, duraklatma, yükseltme,
+        kurtarma — hiçbiri ABI'de bile geçmiyor.</p>
+      </div>
+      <div class="bgov">
+        <div class="bno">02</div>
+        <h3>Kod değişemez</h3>
+        <p>Altı kontratın bytecode'u komut komut taranıyor ve
+        değiştirebilecek bir opcode taşımadıkları her testte yeniden
+        doğrulanıyor.</p>
+      </div>
+      <div class="bgov">
+        <div class="bno">03</div>
+        <h3>Kurucu kilidi okunabilir</h3>
+        <p>Vesting kontratının adresi launchpad'den okunur, içindeki
+        miktar da. Kurucunun ne kadarının kilitli olduğunu bize sormak
+        zorunda değilsin.</p>
+      </div>
+      <div class="bgov">
+        <div class="bno">04</div>
+        <h3>Taban ölçülerek yazılıyor</h3>
+        <p>Taban fiyat 1e36 ölçekle hesaplanıyor. Daha önce 1e18'di ve
+        altı basamaklı teminatı <em>1</em>'e yuvarlıyordu — her anlamlı
+        hanesi gitmişti. Bunu bir test yakaladı, bir kullanıcı değil.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =============== SAYILAR =============== -->
+<section id="sayilar">
+  <div class="wrap">
+    <p class="eyebrow">Sayılar</p>
+    <h2>Ölçülmüş, varsayılmamış.</h2>
+    <p class="sub">
+      Aşağısı sayfa açılırken Arc'tan okunuyor. Yazılmış bir sayı değil;
+      okunamazsa "okunamadı" yazar, tahmin etmez.
+    </p>
+    <div class="scroll"><table class="ornek" id="orows"></table></div>
+  </div>
+</section>
+
+<!-- =============== KONTRATLAR =============== -->
+<section id="kontratlar">
+  <div class="wrap">
+    <p class="eyebrow">Kontratlar</p>
+    <h2>Hepsi açık, hepsi okunabilir.</h2>
+    <p class="sub">
+      Hiçbirinin sahibi yok ve hiçbiri yükseltilemez. Son sütun, o
+      kontratın <strong>yapabildiği</strong> şeyi söylüyor.
+    </p>
+    <div class="scroll"><table class="ornek" id="adresler"></table></div>
+  </div>
+</section>
+
+<!-- =============== SSS =============== -->
+<section id="sss">
+  <div class="wrap">
+    <p class="eyebrow">SSS</p>
+    <h2>Dürüst cevaplar.</h2>
+
+    <div class="g">
+      <div class="bgov">
+        <h3>Parayı siz çekebilir misiniz?</h3>
+        <p>Hayır, ve bu bir söz değil: kasada çekme fonksiyonu yok.
+        Fonksiyon olmadığı için çağıracak bir şey de yok, ve kodu
+        değiştirip eklemek mümkün değil çünkü kasa kodunu değiştirebilecek
+        bir komut taşımıyor.</p>
+      </div>
+      <div class="bgov">
+        <h3>Token sıfıra gidebilir mi?</h3>
+        <p>Teminat sıfıra giderse gider. Taban teminatın değeri kadardır;
+        USDC teminatlı bir launch'ın tabanı dolardır, cirBTC teminatlı
+        birinin tabanı BTC'dir ve BTC düşerse taban da düşer. Garanti
+        edilen şey <em>oranın bozulmaması</em>, teminatın fiyatı değil.</p>
+      </div>
+      <div class="bgov">
+        <h3>Kurucu her şeyi satıp kaçabilir mi?</h3>
+        <p>Payının %30'u vesting'de kilitli ve havuza verdiği kısım hiç
+        geri gelmiyor. Kalanını satabilir — ama satış havuza baskı
+        yaparken ücreti tabana gider, ve taban zaten kasada duruyor.
+        Satışı tabanı düşürmez.</p>
+      </div>
+      <div class="bgov">
+        <h3>Denetlendi mi?</h3>
+        <p>Dışarıdan <strong>denetlenmedi</strong>. 515 otomatik kontrol
+        gerçek Arc zincirine karşı koşuyor, ve bulunan kusurlar koda
+        yorum olarak yazılı — neyin yanlış olduğu ve neden. Bu bir
+        denetim raporunun yerine geçmez.</p>
+      </div>
+      <div class="bgov">
+        <h3>Ücreti bir aggregator'dan kaçabilir miyim?</h3>
+        <p>Hayır. Hook havuz kimliğinin parçası, o yüzden hangi arayüzden
+        gelirsen gel <code>afterSwap</code> çalışır. Girişi sabitleyip
+        (exact-output) kaçmak da kapatıldı — bir süre açıktı, ölçüldü ve
+        kapandı.</p>
+      </div>
+      <div class="bgov">
+        <h3>Bu bir yatırım tavsiyesi mi?</h3>
+        <p>Değil. Meme coin'dir ve tabanı olması onu iyi bir yatırım
+        yapmaz — yalnızca sıfırın nerede olduğunu bilinir yapar.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="fl">
+      <a href="app.html">Uygulama</a>
+      <a href="https://explorer.arc.io" target="_blank" rel="noopener">Arc Explorer</a>
+      <a href="#kontratlar">Kontratlar</a>
+      <a href="#sss">SSS</a>
+    </div>
+    <div>
+      Arc · zincir 5042. Kontratlar denetlenmedi ve yükseltilemez. Bu bir
+      yatırım tavsiyesi değildir.
+    </div>
+  </div>
+</footer>
+
+<script type="module">
+import { JsonRpcProvider, Contract, formatUnits } from "https://esm.sh/ethers@6.13.4";
+
+/* Everything below is read from Arc when the page opens. Nothing here is
+   typed in: a number written into a marketing page is a number that goes
+   stale quietly, and the whole claim of this project is that you do not
+   have to take our word for anything.
+
+   The bridge reader and the governance-token supply map that used to live
+   here are gone with the designs they belonged to. */
+const ARC = { chainId:5042, rpc:"https://rpc.mainnet.arc.io", explorer:"https://explorer.arc.io" };
+const A = {
+  launchpad:"0x46E14d98a0597B4D65259F24608625f58d68e2C0",
+  hook:     "0x0577943F610609747096fD380aAb69e978630a44",
+  router:   "0x7550058C3F4D8839eBc8AcCB96959Fe69C109581",
+  poolManager:"0x8366a39CC670B4001A1121B8F6A443A643e40951",
+  usdc:     "0x3600000000000000000000000000000000000000",
+  testCol:  "0x018ce43Bf0241b7A1fb0433FE13b22A761969Ee9"
+};
+
+const read = new JsonRpcProvider(ARC.rpc,{chainId:ARC.chainId,name:"arc"},{staticNetwork:true,batchMaxCount:1});
+const $ = (id) => document.getElementById(id);
+const kisa = (a) => a ? a.slice(0,6)+"…"+a.slice(-4) : "";
+const nk = (x) => Number(x).toLocaleString("tr-TR",{maximumFractionDigits:2});
+
+const LP = [
+  "function launchCount() view returns (uint256)",
+  "function launches(uint256) view returns (address token,address vault,address rewards,address founder,uint256 collateral,uint256 liquidity)",
+  "function karne() view returns (address)"
+];
+const ERC = ["function symbol() view returns (string)","function decimals() view returns (uint8)"];
+const VAULT = ["function backing() view returns (uint256)","function collateral() view returns (address)","function floorPrice() view returns (uint256)"];
+
+/* Arc's endpoint throttles and answers erratically, so each read gets a
+   few attempts with a pause between. A page that shows "—" because it
+   asked too fast has measured nothing. */
+async function oku(fn, deneme = 3){
+  let son;
+  for (let i=0;i<deneme;i++){
+    try{ return await fn(); }
+    catch(e){ son = e; await new Promise((r)=>setTimeout(r, 400*(i+1))); }
+  }
+  throw son;
+}
+
+async function canli(){
+  try{
+    const lp = new Contract(A.launchpad, LP, read);
+    const n = Number(await oku(()=>lp.launchCount()));
+    $("s-launch").textContent = String(n);
+
+    let satirlar = "<tr><th>token</th><th>kasa</th><th>teminat</th><th class='r'>kasadaki</th></tr>";
+    let toplamUsd = 0, okunan = 0;
+    /* Newest first, and only a handful: this is a summary, and thirty
+       sequential reads against a throttling endpoint is not one. */
+    for (let i = n-1; i >= 0 && n-1-i < 6; i--){
+      try{
+        const L = await oku(()=>lp.launches(i));
+        const tem = await oku(()=>(new Contract(L.vault, VAULT, read)).collateral());
+        const c = new Contract(tem, ERC, read);
+        let sem = "?", ond = 18;
+        try{ sem = await oku(()=>c.symbol()); }catch(e){}
+        try{ ond = Number(await oku(()=>c.decimals())); }catch(e){}
+        const bak = await oku(()=>(new Contract(L.vault, VAULT, read)).backing());
+        const miktar = Number(formatUnits(bak, ond));
+        okunan++;
+        if (tem.toLowerCase() === A.usdc.toLowerCase()) toplamUsd += miktar;
+        satirlar += "<tr><td class='mono'><a href='"+ARC.explorer+"/address/"+L.token+"' target='_blank' rel='noopener'>"+
+          kisa(L.token)+"</a></td><td class='mono'>"+kisa(L.vault)+"</td><td>"+sem+
+          "</td><td class='r'>"+nk(miktar)+"</td></tr>";
+      }catch(e){
+        satirlar += "<tr><td colspan='4'>launch #"+i+" okunamadı</td></tr>";
+      }
+    }
+    $("orows").innerHTML = okunan ? satirlar
+      : "<tr><td>zincirden okunamadı — ağ yanıt vermiyor</td></tr>";
+    /* Only the dollar-denominated vaults are summed. Adding a BTC balance
+       to a dollar balance would produce a number with no unit, which is
+       worse than no number. */
+    $("s-kasa").textContent = toplamUsd > 0 ? "$"+nk(toplamUsd) : "—";
+  }catch(e){
+    $("orows").innerHTML = "<tr><td>zincirden okunamadı: "+String(e.message||e).slice(0,80)+"</td></tr>";
+  }
+}
+
+function adresler(){
+  const r = (ad,a,not) => "<tr><td>"+ad+"</td><td class='mono'><a href='"+ARC.explorer+"/address/"+a+
+    "' target='_blank' rel='noopener'>"+kisa(a)+"</a></td><td>"+not+"</td></tr>";
+  $("adresler").innerHTML = "<tr><th>kontrat</th><th>adres</th><th>ne yapabilir</th></tr>"+
+    r("Launchpad",A.launchpad,"token, kasa ve havuzu kurar — sahibi yok") +
+    r("Hook",A.hook,"ücreti keser ve tabana yazar — ödeme adresi yok") +
+    r("Swap router",A.router,"al/sat yönlendirir — para tutmaz") +
+    r("PoolManager",A.poolManager,"Uniswap v4, bize ait değil") +
+    r("USDC",A.usdc,"Arc'ın yerel parası ve gazı") +
+    r("Test teminatı",A.testCol,"değersiz, mekanizmayı denemek için");
+}
+
+adresler();
+canli();
+</script>
+
+</body>
+</html>

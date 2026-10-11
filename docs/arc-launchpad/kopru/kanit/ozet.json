@@ -1,0 +1,207 @@
+{
+ "uretildi": "2026-10-07T23:57:48.240Z",
+ "amac": "wNVDA karsilik iddiasinin ham dayanagi. Her kayit, sonucu ureten yontem ve parametrelerle birlikte duruyor; makbuzlardaki blockHash ile bloklarin hash/parentHash alanlari dosyalardan, cevrimdisi, kimseye guvenmeden karsilastirilabilir.",
+ "uyari": "Benim cektigim bir arsiv, durust cektigimin kaniti degildir. Yaptigi sey iddiayi kontrol edilebilir kilmak: her kalem tek bir cagriyla yeniden dogrulanabilir ve Released taramasinin araligi gercekten kapatip kapatmadigi dosyanin kendi ozelligi.",
+ "arcRpc": "https://rpc.mainnet.arc.io",
+ "rhcRpc": "https://rpc.mainnet.chain.robinhood.com",
+ "wrapped": "0xA3cd6fD4316DB70C06931A233FDddC48c2879DC4",
+ "kasa": "0x7D706B5743D6d72AA0B4aA14EaB3793aba4544F1",
+ "hisse": "0xd0601CE157Db5bdC3162BbaC2a2C8aF5320D9EEC",
+ "kayitlar": [
+  {
+   "dosya": "nokta/zincir-arc.json",
+   "uc": "https://rpc.mainnet.arc.io",
+   "yontem": "eth_chainId",
+   "parametreler": [],
+   "alindi": "2026-10-07T23:57:42.602Z",
+   "sha256": "4fb42ee9dd42952297e1b444899a02aba62ba817f7440b00eb76c7eb896516e5",
+   "basarili": true
+  },
+  {
+   "dosya": "nokta/zincir-rhc.json",
+   "uc": "https://rpc.mainnet.chain.robinhood.com",
+   "yontem": "eth_chainId",
+   "parametreler": [],
+   "alindi": "2026-10-07T23:57:42.909Z",
+   "sha256": "8380f2d4ae8a5c032e772805b8ef87bc647ef4fa7f7e0e946392d0b31a19b73e",
+   "basarili": true
+  },
+  {
+   "dosya": "nokta/makbuz-arc-mint-a.json",
+   "uc": "https://rpc.mainnet.arc.io",
+   "yontem": "eth_getTransactionReceipt",
+   "parametreler": [
+    "0x742fbe4294b6ccfe3209dabcf700d8c4c37c1b05135eaaeba36e5e3ac360b7ec"
+   ],
+   "alindi": "2026-10-07T23:57:42.968Z",
+   "sha256": "3787f7ef256bc17d36fa17843a985a215915879fd864732e3c5380b42ee1b9a0",
+   "basarili": true
+  },
+  {
+   "dosya": "nokta/makbuz-arc-mint-b.json",
+   "uc": "https://rpc.mainnet.arc.io",
+   "yontem": "eth_getTransactionReceipt",
+   "parametreler": [
+    "0x67888679bf274c158a3c35fbf2f006f5ba14110b3a1fe3268aa2c35914d85ba9"
+   ],
+   "alindi": "2026-10-07T23:57:43.233Z",
+   "sha256": "49742e8760ff4a303a652d6ad39ee3dcf7c3f47c1ff8c66066a4c0b60c1c26d6",
+   "basarili": true
+  },
+  {
+   "dosya": "nokta/makbuz-arc-yakma.json",
+   "uc": "https://rpc.mainnet.arc.io",
+   "yontem": "eth_getTransactionReceipt",
+   "parametreler": [
+    "0x88bd43e93220239ac8ae369252b02deff19cb134cbc165f2015cf28fe4f5a42a"
+   ],
+   "alindi": "2026-10-07T23:57:44.261Z",
+   "sha256": "ed77b96b694b787ee1dcc27598149bf6ec231e21398b2bd56a7725df149d3edd",
+   "basarili": true
+  },
+  {
+   "dosya": "nokta/makbuz-rhc-kilit-a.json",
+   "uc": "https://rpc.mainnet.chain.robinhood.com",
+   "yontem": "eth_getTransactionReceipt",
+   "parametreler": [
+    "0xdd4478ba9b348698c6cf725b5171a5a9a25997128ca55574b58d68b50f7a0c1d"
+   ],
+   "alindi": "2026-10-07T23:57:44.636Z",
+   "sha256": "958ccb170e745f6acea82b12c59475c1cd9186fc4a7587d8b3a4e73188924658",
+   "basarili": true
+  },
+  {
+   "dosya": "nokta/makbuz-rhc-kilit-b.json",
+   "uc": "https://rpc.mainnet.chain.robinhood.com",
+   "yontem": "eth_getTransactionReceipt",
+   "parametreler": [
+    "0x2872a7fdf04d6d396742ff12507c08fd003657117e631616d078cae06ab7cfde"
+   ],
+   "alindi": "2026-10-07T23:57:45.006Z",
+   "sha256": "20c956f89e71b8369ececc57574f75a28f23d8f2392ec9580319ce7020d98852",
+   "basarili": true
+  },
+  {
+   "dosya": "nokta/blok-arc-24517044.json",
+   "uc": "https://rpc.mainnet.arc.io",
+   "yontem": "eth_getBlockByNumber",
+   "parametreler": [
+    "0x17619b4",
+    false
+   ],
+   "alindi": "2026-10-07T23:57:45.268Z",
+   "sha256": "664e3834dfe555982b6c71fff01d805c0e675f5f4ae7064c3c9fe7090e12191a",
+   "basarili": true
+  },
+  {
+   "dosya": "nokta/blok-arc-24579965.json",
+   "uc": "https://rpc.mainnet.arc.io",
+   "yontem": "eth_getBlockByNumber",
+   "parametreler": [
+    "0x1770f7d",
+    false
+   ],
+   "alindi": "2026-10-07T23:57:45.532Z",
+   "sha256": "d88c74fd04cc0c610dfb484958370e79adec5f6d9ec2089821c2faf62e836bd2",
+   "basarili": true
+  },
+  {
+   "dosya": "nokta/blok-arc-24580553.json",
+   "uc": "https://rpc.mainnet.arc.io",
+   "yontem": "eth_getBlockByNumber",
+   "parametreler": [
+    "0x17711c9",
+    false
+   ],
+   "alindi": "2026-10-07T23:57:45.795Z",
+   "sha256": "e3865061f3e37fc53db6cca52e67a28b0b71ad684ac6d0ce0f3b7d8145c62ae5",
+   "basarili": true
+  },
+  {
+   "dosya": "nokta/blok-rhc-81417696.json",
+   "uc": "https://rpc.mainnet.chain.robinhood.com",
+   "yontem": "eth_getBlockByNumber",
+   "parametreler": [
+    "0x4da55e0",
+    false
+   ],
+   "alindi": "2026-10-07T23:57:46.165Z",
+   "sha256": "a47c3cfd2b0f1612fea929baf25e9b72e5bb2962deab59a7ec8502f0a168b209",
+   "basarili": true
+  },
+  {
+   "dosya": "nokta/blok-rhc-81728947.json",
+   "uc": "https://rpc.mainnet.chain.robinhood.com",
+   "yontem": "eth_getBlockByNumber",
+   "parametreler": [
+    "0x4df15b3",
+    false
+   ],
+   "alindi": "2026-10-07T23:57:46.533Z",
+   "sha256": "4610afb76848cbac1a4a8497ea0cf6e9c2111d6b1ac346f70adbc2e1f9968e7e",
+   "basarili": true
+  },
+  {
+   "dosya": "nokta/arz-wnvda.json",
+   "uc": "https://rpc.mainnet.arc.io",
+   "yontem": "eth_call",
+   "parametreler": [
+    {
+     "to": "0xA3cd6fD4316DB70C06931A233FDddC48c2879DC4",
+     "data": "0x18160ddd"
+    },
+    "latest"
+   ],
+   "alindi": "2026-10-07T23:57:47.561Z",
+   "sha256": "bbaf2c1b93f02e662edcc3dcc068ea31ad1c5342241e4bb68d26a9de66d6c8ff",
+   "basarili": true
+  },
+  {
+   "dosya": "nokta/kasa-bakiye.json",
+   "uc": "https://rpc.mainnet.chain.robinhood.com",
+   "yontem": "eth_call",
+   "parametreler": [
+    {
+     "to": "0xd0601CE157Db5bdC3162BbaC2a2C8aF5320D9EEC",
+     "data": "0x70a082310000000000000000000000007d706b5743d6d72aa0b4aa14eab3793aba4544f1"
+    },
+    "latest"
+   ],
+   "alindi": "2026-10-07T23:57:47.735Z",
+   "sha256": "bbaf2c1b93f02e662edcc3dcc068ea31ad1c5342241e4bb68d26a9de66d6c8ff",
+   "basarili": true
+  },
+  {
+   "dosya": "nokta/son-blok-rhc.json",
+   "uc": "https://rpc.mainnet.chain.robinhood.com",
+   "yontem": "eth_blockNumber",
+   "parametreler": [],
+   "alindi": "2026-10-07T23:57:47.901Z",
+   "sha256": "921c42670db676491d1f22caa5a5af096339cba876c7ee1379e89923200dbf79",
+   "basarili": true
+  },
+  {
+   "dosya": "released-rhc.jsonl",
+   "uc": "https://rpc.mainnet.chain.robinhood.com",
+   "yontem": "eth_getLogs",
+   "parametreler": {
+    "address": "0x7D706B5743D6d72AA0B4aA14EaB3793aba4544F1",
+    "topics": [
+     "0xbaa21fb6000fbb6d014fac9cd1b0726799e6f352a967157a59f4b2da8ef32211"
+    ],
+    "aralik": "81397164-82876856",
+    "pencere": "2000"
+   },
+   "alindi": "2026-10-07T23:57:48.239Z",
+   "sha256": "bf9a742cb096f8c6a3e12423efccb48f48468f53ae8104a035e9e2850b98449c",
+   "basarili": true,
+   "pencere": 740,
+   "buKosudaPencere": 2,
+   "eksikPencere": 0,
+   "bulunanOlay": 0,
+   "bosluk": [],
+   "kapsamSonBlok": "82876856",
+   "kapsamZamani": "2026-10-07T23:57:48.239Z"
+  }
+ ]
+}

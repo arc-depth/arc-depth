@@ -1,0 +1,110 @@
+{
+ "token": "0x8c2016b8DbB9034c2Fe173000639A9a1380b26AE",
+ "stake": "0xAbD31A537E089D8a12b928aF7837C148dE2Bd2de",
+ "acici": "0x0EEE2d24a18ad48960935D08862059Ac07171281",
+ "governor": "0x1084AD3162afC8A62736D604598377D8e6Be8D95",
+ "vesting": "0x386968f036cbc0d0965C81bf1fCEd0b40EE11E14",
+ "hook": "0x72fd3c2eE8A499E97D87e2a642B7DFd908D58A44",
+ "hookSalt": "0x0000000000000000000000000000000000000000000000000000000000003327",
+ "zincir": "arc",
+ "chainId": 5042,
+ "ad": "Fathom",
+ "sembol": "FTHM",
+ "usdc": "0x3600000000000000000000000000000000000000",
+ "poolManager": "0x8366a39CC670B4001A1121B8F6A443A643e40951",
+ "kurucu": "0x89189C84DC95d0520AEeC9c8cF3BA5B9d42611D0",
+ "arz": "1000000000000000000000000000",
+ "piyasa": "500000000000000000000000000",
+ "stakeEmisyon": "400000000000000000000000000",
+ "kurucuSerbest": "50000000000000000000000000",
+ "kurucuVesting": "50000000000000000000000000",
+ "acilisTick": 387420,
+ "acilisFdv": 15000,
+ "fee": 0,
+ "spacing": 60,
+ "merdiven": [
+  {
+   "ad": "ic",
+   "tick": 385620,
+   "token": "300000000000000000000000000"
+  },
+  {
+   "ad": "orta",
+   "tick": 380460,
+   "token": "100000000000000000000000000"
+  },
+  {
+   "ad": "dis",
+   "tick": -887220,
+   "token": "100000000000000000000000000"
+  }
+ ],
+ "not": "Egri yok: piyasa payi dogrudan Uniswap v4'te uc kademeli, tek yonlu, kalici kilitli merdiven olarak duruyor. Havuza hicbir dolar konmadi.",
+ "zaman": "2026-10-07T16:12:51.893Z",
+ "havuzId": "0x06bdf3466fb9f017bf3e68bedfbc220d3c0bee3f73f584de897106f33a388f59",
+ "likidite": "15899753660569966322",
+ "acilisSqrtPriceX96": "20472806647018456626737738907313543050",
+ "merdivenZamani": "2026-10-07T16:15:15.725Z",
+ "islemler": {
+  "token": {
+   "tx": "0x8744c177a8a3f016d57ac589322947a26933ee3868b1c8fef1e2c407871125e7",
+   "blok": 24756900,
+   "gaz": 604593,
+   "fabrika": false
+  },
+  "stake": {
+   "tx": "0xaa5fea544d33b76f72ddf101fdcbabcb74f911052da6e9bd1d5fa0646216ffa9",
+   "blok": 24756917,
+   "gaz": 1163999,
+   "fabrika": false
+  },
+  "acici": {
+   "tx": "0x920cf55fde9a4e9e9f26e62a6859722d1add551f5069646a5e7b2ff706948d65",
+   "blok": 24756923,
+   "gaz": 2056424,
+   "fabrika": false
+  },
+  "hook": {
+   "tx": "0xcd8d6c703233fce594def58669c2e3fa792a5986a6c8c464ed8fc07da2496936",
+   "blok": 24756928,
+   "gaz": 777912,
+   "fabrika": true
+  },
+  "governor": {
+   "tx": "0x98eb53db25372f72fc165a0a9aed0808a2cf1b0dece4e497687af74fad35d4b0",
+   "blok": 24756934,
+   "gaz": 1240748,
+   "fabrika": false
+  },
+  "vesting": {
+   "tx": "0xeb15b942ab18c7d6f9b4dd6090a267b8dc0a6fc297ee9b422231f31ad4b3f224",
+   "blok": 24756945,
+   "gaz": 316237,
+   "fabrika": false
+  }
+ },
+ "merdivenIslemleri": [
+  {
+   "kademe": "ic",
+   "tx": "0x42c34fe783f33ec6b3eda53f0326cd6095e1b2a50b8d3376cb39618ff3e9d263",
+   "blok": 24757010
+  },
+  {
+   "kademe": "orta",
+   "tx": "0xf237bca4674caa7509e7546c005d12905ccf5a6fba8abcddce88d4fa7d00f67b",
+   "blok": 24757015
+  },
+  {
+   "kademe": "dis",
+   "tx": "0x4915a260c2c30ee3b49e61aee43966d3db7036c7f5db8c049eaa0d215bba3a0e",
+   "blok": 24757019
+  }
+ ],
+ "ilkAlim": {
+  "tx": "0xfcec67fe61e81f437655f1e9ee9a9fbfaf1d032ee1dadda45ac0ee58368b31d2",
+  "blok": 24759028,
+  "loglar": 7
+ },
+ "ilkBlok": 24756900,
+ "kanitNotu": "Her adres kendi olusturma isleminin makbuzuyla eslestirildi: makbuz var, durum basarili, ve uretilen adres manifesttekiyle ayni. Tarama gerekmez. ilkBlok, FTHM ile ilgili hicbir olayin daha once olamayacagi blok."
+}

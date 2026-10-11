@@ -1,0 +1,40 @@
+{
+ "olculdu": "2026-10-10T19:52:51.610Z",
+ "zincir": 5042,
+ "dagitici": "0x89189C84DC95d0520AEeC9c8cF3BA5B9d42611D0",
+ "nonce": 1236,
+ "not": "Bu kayit ZINCIRDEN dogrulanarak yazildi. Dagitim betigi hiz siniri yuzunden kaydi yazamadan cokmustu, ve dogrulanmamis bir dosyadan kurmak o dosyanin yanlis olabilecegi durumu kaydetmek olurdu.",
+ "uygulandiMi": true,
+ "arc": {
+  "egriFabrika": "0xCd898DBbc557c4d301AE0F84861B793e40dF245A",
+  "aciciFabrika": "0x9BE01aEDB8fd4fCeaA12ecdc7d0b826325dB8D8A",
+  "yoneticiFabrika": "0xEcB57eDDf0830aa76ee8E5eCeFcf4A3F6ACE5a95",
+  "kasaFabrika": "0x66a3ab2AC43445B91c61B98631Be14886ab45F40",
+  "kayit": "0xaAD7Fb1bCeE3c78108f8d093fa3a0bFd6C87780c",
+  "gelistiriciFonu": "0x63e3C95fF9f78891F5e9F214346DC5eEA82f1a13",
+  "likiditeKasasi": "0x926325b92f959697F3e3f45d7E6535eC85AFB123",
+  "launchpad": "0x23950C71D0dACF30320b869f3908FfAe7D875eB6",
+  "hook": "0x0B55FC926106C0472cbF7e0c40DC825100C34A44",
+  "poolManager": "0x8366a39CC670B4001A1121B8F6A443A643e40951",
+  "quote": "0x3600000000000000000000000000000000000000"
+ },
+ "uzak": {
+  "ethereum": {
+   "zincirId": 1,
+   "cctpDomain": 0,
+   "fabrika": "0x5928768E5f9339c24Ca1723B24c7F1e2bBf73473",
+   "havuzFiyat": "0x9e4bC111F0fec70Fb6F9b24b3F084750c5E94AD0",
+   "usdc": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+   "v3Fabrika": "0x1F98431c8aD98523631AE4a59f267346ea31F984"
+  },
+  "base": {
+   "zincirId": 8453,
+   "cctpDomain": 6,
+   "fabrika": "0xC89eE170F0f78269Cba5ADF560645238c9976BE4",
+   "havuzFiyat": "0x5928768E5f9339c24Ca1723B24c7F1e2bBf73473",
+   "usdc": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+   "v3Fabrika": "0x33128a8fC17869897dcE68Ed026d694621f6FDfD"
+  }
+ },
+ "initKodHash": "0x7d184cc1e6bbb210b2fd8aca173f66023b92b5d0dfa37862177599e99af62da7"
+}

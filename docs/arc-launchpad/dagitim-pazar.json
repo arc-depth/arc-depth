@@ -1,0 +1,17 @@
+{
+ "olculdu": "2026-10-11T13:13:54.166Z",
+ "zincir": 5042,
+ "dagitici": "0x89189C84DC95d0520AEeC9c8cF3BA5B9d42611D0",
+ "nonce": 1257,
+ "arc": {
+  "pazar": "0x3b6fb718DC0529645B20F10CC3013f14af2Ad68E",
+  "quote": "0x3600000000000000000000000000000000000000",
+  "isletme": "0x89189C84DC95d0520AEeC9c8cF3BA5B9d42611D0"
+ },
+ "platformPpm": 200000,
+ "tx": "0x36eb0c06cd3689360125c05737e1b5f9207f9c97bddf46cb0e1b31aa1ff34502",
+ "blok": 25416920,
+ "gaz": "1374450",
+ "not": "Pazar tek sozlesme ve hic para tutmuyor: odeme ile bolusme ayni islemde. Bu yuzden cekme fonksiyonu yok ve sahibi yok.",
+ "uygulandiMi": true
+}

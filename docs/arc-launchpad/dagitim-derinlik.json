@@ -1,0 +1,21 @@
+{
+ "zincir": "arc",
+ "chainId": 5042,
+ "terkEdilen": {
+  "acici": "0x8b742066f158f6D6Eaa8a4d603C22b3354a6f035",
+  "hook": "0xAA4F44dad4abF19BddBE891FD393c5b7c530CA44",
+  "hookSalt": "0x0000000000000000000000000000000000000000000000000000000000003cd0",
+  "zaman": "2026-10-07T13:42:21.941Z",
+  "gazMaliyeti": "~0.0526 USDC"
+ },
+ "not": "Tek yonlu yogunlasmis DEPTH havuzu. Ilk havuz tam aralik ve $6 oldugu icin cuzdan swap'i -%76,96 gosteriyordu; bu havuz ayni fiyattan, sadece token konarak, sifir dolarla aciliyor.",
+ "acici": "0xB298d4D11463e6026444b8Bd4C6d37CCd73c04B6",
+ "hook": "0x860C19111985A2486C826cec740f3A2e766D8a44",
+ "hookSalt": "0x000000000000000000000000000000000000000000000000000000000000dcb7",
+ "token": "0xF67Eea3A140305dBC243e611CFa421c76F3C608B",
+ "usdc": "0x3600000000000000000000000000000000000000",
+ "poolManager": "0x8366a39CC670B4001A1121B8F6A443A643e40951",
+ "fee": 0,
+ "spacing": 60,
+ "zaman": "2026-10-07T14:28:51.816Z"
+}

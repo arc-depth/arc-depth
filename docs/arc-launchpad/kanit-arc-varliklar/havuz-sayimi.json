@@ -1,0 +1,12 @@
+{
+ "not": "arc-havuz-durum.json icindeki yerel kataloğun sayimi; ag cagrisi yok",
+ "ustBlok": 21855696,
+ "toplamHavuz": 54339,
+ "usdcliHavuz": 38231,
+ "varlikBasinaHavuz": {
+  "usdc": 38231,
+  "cirbtc": 331,
+  "eurc": 229,
+  "weth": 68
+ }
+}

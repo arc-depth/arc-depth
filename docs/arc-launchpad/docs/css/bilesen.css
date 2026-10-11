@@ -1,0 +1,560 @@
+/* ===========================================================================
+ * bilesen.css — what things look like
+ *
+ * Every component here is built out of temel.css tokens. None of them picks
+ * its own colour or spacing, which is the only reason sixteen modules can
+ * look like one product.
+ *
+ * ONE RULE WORTH STATING
+ *   There is a component for "this does not exist yet" (`.yok`) and a
+ *   component for "this exists and has no data" (`.bos`). They look
+ *   different on purpose. An empty table and an unbuilt module are not the
+ *   same claim, and a product that renders them identically is lying about
+ *   one of them.
+ * =========================================================================== */
+
+/* ---- buttons -------------------------------------------------------- */
+
+.dugme {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--bosluk-2);
+  height: 36px;
+  padding: 0 var(--bosluk-4);
+  border: 1px solid var(--cizgi-guclu);
+  border-radius: var(--yuvarlak-s);
+  background: var(--yuzey-2);
+  color: var(--yazi-1);
+  font-size: var(--boy-m);
+  font-weight: var(--kalin-orta);
+  white-space: nowrap;
+  transition: background var(--gecis-hizli) var(--egri),
+              border-color var(--gecis-hizli) var(--egri),
+              color var(--gecis-hizli) var(--egri);
+}
+.dugme:hover:not(:disabled) { background: var(--yuzey-3); border-color: var(--yuzey-ust); }
+.dugme:active:not(:disabled) { transform: translateY(1px); }
+
+.dugme--marka {
+  background: var(--marka);
+  border-color: var(--marka);
+  color: #fff;
+  font-weight: var(--kalin-yari);
+}
+.dugme--marka:hover:not(:disabled) { background: var(--marka-parlak); border-color: var(--marka-parlak); }
+
+.dugme--alis { background: var(--alis); border-color: var(--alis); color: #04150e; font-weight: var(--kalin-kalin); }
+.dugme--satis { background: var(--satis); border-color: var(--satis); color: #1a0405; font-weight: var(--kalin-kalin); }
+
+.dugme--sade { background: transparent; border-color: transparent; color: var(--yazi-2); }
+.dugme--sade:hover:not(:disabled) { background: var(--yuzey-2); color: var(--yazi-1); }
+
+.dugme--buyuk { height: 44px; padding: 0 var(--bosluk-5); font-size: var(--boy-l); }
+.dugme--kucuk { height: 28px; padding: 0 var(--bosluk-3); font-size: var(--boy-s); }
+.dugme--tam { width: 100%; }
+
+/* Disabled means "not now". A control that is permanently disabled because
+   the feature does not exist should not be rendered at all — use .yok. */
+.dugme:disabled { opacity: 0.4; }
+
+/* Mobile: every tappable control reaches 44px. */
+@media (max-width: 860px) {
+  .dugme { height: 42px; }
+  .dugme--kucuk { height: 34px; }
+}
+
+/* ---- nav items (top bar and rail) ----------------------------------- */
+
+.yol-oge {
+  display: flex;
+  align-items: center;
+  gap: var(--bosluk-2);
+  height: 34px;
+  padding: 0 var(--bosluk-3);
+  border-radius: var(--yuvarlak-s);
+  color: var(--yazi-2);
+  font-size: var(--boy-m);
+  font-weight: var(--kalin-orta);
+  white-space: nowrap;
+  transition: background var(--gecis-hizli) var(--egri), color var(--gecis-hizli) var(--egri);
+}
+.yol-oge:hover { background: var(--yuzey-2); color: var(--yazi-1); }
+.yol-oge[aria-current="page"] {
+  background: var(--marka-zemin);
+  color: var(--yazi-1);
+  box-shadow: inset 0 0 0 1px var(--marka-cizgi);
+}
+.yol-oge__ikon { width: 16px; height: 16px; flex: 0 0 auto; opacity: 0.9; }
+.yol-oge__etiket { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+
+/* The rail marks a module that is not built yet, rather than hiding it —
+   the architecture is the promise, the badge is the honesty. */
+.yol-oge--yapim { color: var(--yazi-4); }
+.yol-oge--yapim:hover { color: var(--yazi-3); }
+
+.sekme-oge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  color: var(--yazi-3);
+  font-size: var(--boy-xs);
+  font-weight: var(--kalin-orta);
+  background: none;
+  border: 0;
+  min-height: 44px;
+}
+.sekme-oge[aria-current="page"] { color: var(--marka-parlak); }
+.sekme-oge__ikon { width: 20px; height: 20px; }
+
+/* ---- cards and panels ----------------------------------------------- */
+
+.panel {
+  background: var(--yuzey-1);
+  border: 1px solid var(--cizgi);
+  border-radius: var(--yuvarlak-l);
+  overflow: hidden;
+}
+.panel__ust {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--bosluk-3);
+  padding: var(--bosluk-3) var(--bosluk-4);
+  border-bottom: 1px solid var(--cizgi);
+  min-height: 44px;
+}
+.panel__baslik {
+  font-size: var(--boy-m);
+  font-weight: var(--kalin-yari);
+  color: var(--yazi-1);
+  display: flex;
+  align-items: center;
+  gap: var(--bosluk-2);
+}
+.panel__govde { padding: var(--bosluk-4); }
+.panel__govde--sifir { padding: 0; }
+
+/* ---- metric ---------------------------------------------------------
+   A label, a number, and optionally a change. The number is mono and the
+   label is above it, because a reader scanning five metrics reads the
+   numbers first and the labels only when one surprises them. */
+
+.olcum {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: var(--bosluk-3) var(--bosluk-4);
+  background: var(--yuzey-1);
+  border: 1px solid var(--cizgi);
+  border-radius: var(--yuvarlak-m);
+  min-width: 0;
+}
+.olcum__etiket {
+  font-size: var(--boy-xs);
+  font-weight: var(--kalin-orta);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--yazi-3);
+}
+.olcum__deger {
+  font-family: var(--yazi-tipi-mono);
+  font-size: var(--boy-l);
+  font-weight: var(--kalin-yari);
+  color: var(--yazi-1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.olcum__deger--buyuk { font-size: var(--boy-2xl); }
+.olcum__alt { font-size: var(--boy-s); color: var(--yazi-3); }
+
+/* ---- token row / card ----------------------------------------------- */
+
+.jeton {
+  display: flex;
+  align-items: center;
+  gap: var(--bosluk-3);
+  min-width: 0;
+}
+.jeton__logo {
+  width: 34px; height: 34px;
+  flex: 0 0 auto;
+  border-radius: var(--yuvarlak-tam);
+  background: var(--yuzey-3);
+  object-fit: cover;
+  border: 1px solid var(--cizgi-guclu);
+}
+.jeton__logo--bos {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--boy-s);
+  font-weight: var(--kalin-kalin);
+  color: var(--yazi-3);
+}
+.jeton__yazi { min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.jeton__sembol {
+  font-size: var(--boy-m);
+  font-weight: var(--kalin-yari);
+  color: var(--yazi-1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.jeton__ad {
+  font-size: var(--boy-s);
+  color: var(--yazi-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.jeton-kart {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bosluk-3);
+  padding: var(--bosluk-4);
+  background: var(--yuzey-1);
+  border: 1px solid var(--cizgi);
+  border-radius: var(--yuvarlak-l);
+  transition: border-color var(--gecis) var(--egri), background var(--gecis) var(--egri);
+  min-width: 0;
+}
+.jeton-kart:hover { border-color: var(--cizgi-guclu); background: var(--yuzey-2); }
+.jeton-kart__olcumler {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--bosluk-2);
+  padding-top: var(--bosluk-3);
+  border-top: 1px solid var(--cizgi);
+}
+.jeton-kart__olcum { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.jeton-kart__olcum .et { font-size: var(--boy-xs); color: var(--yazi-3); text-transform: uppercase; letter-spacing: 0.05em; }
+.jeton-kart__olcum .dg {
+  font-family: var(--yazi-tipi-mono);
+  font-size: var(--boy-m);
+  font-weight: var(--kalin-orta);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ---- tables ---------------------------------------------------------
+   A dense table is the right shape for a token list on desktop. It is the
+   wrong shape on a phone, so the narrow layout turns each row into a card
+   via data attributes rather than shipping a second markup tree. */
+
+.tablo-sarmal { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+.tablo {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--boy-m);
+}
+.tablo thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: var(--bosluk-2) var(--bosluk-3);
+  background: var(--yuzey-1);
+  border-bottom: 1px solid var(--cizgi-guclu);
+  font-size: var(--boy-xs);
+  font-weight: var(--kalin-yari);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--yazi-3);
+  text-align: right;
+  white-space: nowrap;
+}
+.tablo thead th:first-child { text-align: left; }
+.tablo tbody td {
+  padding: var(--bosluk-3);
+  border-bottom: 1px solid var(--cizgi);
+  text-align: right;
+  white-space: nowrap;
+  color: var(--yazi-1);
+}
+.tablo tbody td:first-child { text-align: left; white-space: normal; }
+.tablo tbody tr { transition: background var(--gecis-hizli) var(--egri); }
+.tablo tbody tr:hover { background: var(--yuzey-2); }
+.tablo tbody tr:last-child td { border-bottom: 0; }
+.tablo .sayi { font-family: var(--yazi-tipi-mono); font-variant-numeric: tabular-nums; }
+
+@media (max-width: 760px) {
+  .tablo--kart thead { display: none; }
+  .tablo--kart tbody tr {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--bosluk-2);
+    padding: var(--bosluk-3);
+    margin-bottom: var(--bosluk-2);
+    background: var(--yuzey-1);
+    border: 1px solid var(--cizgi);
+    border-radius: var(--yuvarlak-m);
+  }
+  .tablo--kart tbody td {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: var(--bosluk-2);
+    padding: 0;
+    border: 0;
+    text-align: right;
+    white-space: normal;
+  }
+  /* The header text comes back as a label on each cell. */
+  .tablo--kart tbody td::before {
+    content: attr(data-et);
+    font-size: var(--boy-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--yazi-3);
+    flex: 0 0 auto;
+  }
+  .tablo--kart tbody td:first-child {
+    grid-column: 1 / -1;
+    padding-bottom: var(--bosluk-2);
+    border-bottom: 1px solid var(--cizgi);
+  }
+  .tablo--kart tbody td:first-child::before { content: none; }
+}
+
+/* ---- badges --------------------------------------------------------- */
+
+.etiket {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 20px;
+  padding: 0 var(--bosluk-2);
+  border-radius: var(--yuvarlak-s);
+  background: var(--yuzey-3);
+  color: var(--yazi-2);
+  font-size: var(--boy-xs);
+  font-weight: var(--kalin-yari);
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+.etiket--alis  { background: var(--alis-zemin);  color: var(--alis);  box-shadow: inset 0 0 0 1px var(--alis-cizgi); }
+.etiket--satis { background: var(--satis-zemin); color: var(--satis); box-shadow: inset 0 0 0 1px var(--satis-cizgi); }
+.etiket--marka { background: var(--marka-zemin); color: var(--marka-parlak); box-shadow: inset 0 0 0 1px var(--marka-cizgi); }
+.etiket--uyari { background: var(--uyari-zemin); color: var(--uyari); }
+.etiket--bilgi { background: var(--bilgi-zemin); color: var(--bilgi); }
+
+/* ---- inputs --------------------------------------------------------- */
+
+.alan { display: flex; flex-direction: column; gap: var(--bosluk-2); min-width: 0; }
+.alan__etiket {
+  font-size: var(--boy-s);
+  font-weight: var(--kalin-orta);
+  color: var(--yazi-2);
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--bosluk-2);
+}
+.alan__ipucu { font-size: var(--boy-s); color: var(--yazi-3); }
+
+.girdi {
+  width: 100%;
+  height: 42px;
+  padding: 0 var(--bosluk-3);
+  background: var(--yuzey-2);
+  border: 1px solid var(--cizgi-guclu);
+  border-radius: var(--yuvarlak-s);
+  color: var(--yazi-1);
+  transition: border-color var(--gecis-hizli) var(--egri), background var(--gecis-hizli) var(--egri);
+}
+.girdi::placeholder { color: var(--yazi-4); }
+.girdi:hover { border-color: var(--yuzey-ust); }
+.girdi:focus { outline: none; border-color: var(--marka); background: var(--yuzey-1); }
+textarea.girdi { height: auto; min-height: 84px; padding: var(--bosluk-3); resize: vertical; line-height: 1.55; }
+.girdi--sayi { font-family: var(--yazi-tipi-mono); text-align: right; }
+
+/* A field with a unit or a token symbol attached. */
+.girdi-grup { display: flex; align-items: stretch; }
+.girdi-grup .girdi { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+.girdi-grup__son {
+  display: flex;
+  align-items: center;
+  padding: 0 var(--bosluk-3);
+  background: var(--yuzey-3);
+  border: 1px solid var(--cizgi-guclu);
+  border-left: 0;
+  border-radius: 0 var(--yuvarlak-s) var(--yuvarlak-s) 0;
+  font-size: var(--boy-s);
+  font-weight: var(--kalin-orta);
+  color: var(--yazi-2);
+  white-space: nowrap;
+}
+
+/* ---- tabs ----------------------------------------------------------- */
+
+.sekmeler {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  background: var(--yuzey-2);
+  border: 1px solid var(--cizgi);
+  border-radius: var(--yuvarlak-s);
+  overflow-x: auto;
+}
+.sekmeler__oge {
+  flex: 1 1 auto;
+  min-height: 32px;
+  padding: 0 var(--bosluk-3);
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--yazi-3);
+  font-size: var(--boy-s);
+  font-weight: var(--kalin-orta);
+  white-space: nowrap;
+  transition: background var(--gecis-hizli) var(--egri), color var(--gecis-hizli) var(--egri);
+}
+.sekmeler__oge:hover { color: var(--yazi-1); }
+.sekmeler__oge[aria-selected="true"] { background: var(--yuzey-ust); color: var(--yazi-1); }
+@media (max-width: 860px) { .sekmeler__oge { min-height: 38px; } }
+
+/* ---- states ---------------------------------------------------------
+   Three different things, three different components, because conflating
+   them is a way of lying:
+     .bos   — this works, there is nothing in it right now
+     .yok   — this is not built yet, and nothing here is live
+     .hata  — this should have worked and did not
+*/
+
+.bos, .yok, .hata {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--bosluk-3);
+  padding: var(--bosluk-10) var(--bosluk-5);
+  text-align: center;
+  border-radius: var(--yuvarlak-l);
+}
+
+.bos {
+  background: var(--yuzey-1);
+  border: 1px solid var(--cizgi);
+  color: var(--yazi-3);
+}
+.bos__baslik { font-size: var(--boy-l); font-weight: var(--kalin-orta); color: var(--yazi-2); }
+.bos__yazi { font-size: var(--boy-m); color: var(--yazi-3); max-width: 46ch; }
+
+.yok {
+  background: var(--yuzey-1);
+  /* Dashed, so "unbuilt" is legible before a single word is read. */
+  border: 1px dashed var(--cizgi-guclu);
+  color: var(--yazi-3);
+}
+.yok__baslik { font-size: var(--boy-l); font-weight: var(--kalin-yari); color: var(--yazi-2); }
+.yok__yazi { font-size: var(--boy-m); color: var(--yazi-3); max-width: 56ch; }
+.yok__liste {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--bosluk-2);
+  text-align: left;
+  font-size: var(--boy-s);
+  color: var(--yazi-3);
+  max-width: 56ch;
+}
+.yok__liste li { display: flex; gap: var(--bosluk-2); }
+.yok__liste li::before { content: "—"; color: var(--yazi-4); flex: 0 0 auto; }
+
+.hata {
+  background: var(--satis-zemin);
+  border: 1px solid var(--satis-cizgi);
+  color: var(--yazi-2);
+}
+.hata__baslik { font-size: var(--boy-l); font-weight: var(--kalin-yari); color: var(--satis); }
+
+/* ---- notice --------------------------------------------------------- */
+
+.not {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--bosluk-3);
+  padding: var(--bosluk-3) var(--bosluk-4);
+  border-radius: var(--yuvarlak-m);
+  font-size: var(--boy-s);
+  line-height: 1.55;
+  background: var(--yuzey-2);
+  border: 1px solid var(--cizgi);
+  color: var(--yazi-2);
+}
+.not--uyari { background: var(--uyari-zemin); border-color: rgba(245, 165, 36, 0.3); }
+.not--bilgi { background: var(--bilgi-zemin); border-color: rgba(59, 158, 255, 0.3); }
+.not__ikon { flex: 0 0 auto; width: 16px; height: 16px; margin-top: 2px; }
+
+/* ---- skeleton -------------------------------------------------------
+   For data that is on its way. Never for data that does not exist — a
+   skeleton that never resolves is a fake loading state. */
+
+.iskelet {
+  background: linear-gradient(90deg, var(--yuzey-2) 25%, var(--yuzey-3) 50%, var(--yuzey-2) 75%);
+  background-size: 200% 100%;
+  border-radius: var(--yuvarlak-s);
+  animation: kayma 1.4s ease-in-out infinite;
+}
+@keyframes kayma {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+.iskelet--satir { height: 14px; }
+.iskelet--baslik { height: 22px; width: 40%; }
+
+/* ---- chart host ------------------------------------------------------ */
+
+.grafik {
+  width: 100%;
+  height: 420px;
+  min-width: 0;
+}
+@media (max-width: 860px) { .grafik { height: 300px; } }
+
+/* ---- address ---------------------------------------------------------
+   Truncation happens in CSS, not by slicing the string in JS: the full
+   value stays selectable and copyable. */
+
+.adres {
+  font-family: var(--yazi-tipi-mono);
+  font-size: var(--boy-s);
+  color: var(--yazi-3);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--bosluk-2);
+  max-width: 100%;
+}
+.adres__deger { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; direction: ltr; }
+
+/* ---- segmented buy/sell switch -------------------------------------- */
+
+.yon {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3px;
+  padding: 3px;
+  background: var(--yuzey-2);
+  border: 1px solid var(--cizgi);
+  border-radius: var(--yuvarlak-s);
+}
+.yon__oge {
+  min-height: 36px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--yazi-3);
+  font-size: var(--boy-m);
+  font-weight: var(--kalin-yari);
+  transition: background var(--gecis-hizli) var(--egri), color var(--gecis-hizli) var(--egri);
+}
+.yon__oge[aria-selected="true"][data-yon="al"]  { background: var(--alis-zemin);  color: var(--alis); }
+.yon__oge[aria-selected="true"][data-yon="sat"] { background: var(--satis-zemin); color: var(--satis); }
+@media (max-width: 860px) { .yon__oge { min-height: 42px; } }

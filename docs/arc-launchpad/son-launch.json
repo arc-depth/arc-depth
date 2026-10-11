@@ -1,0 +1,11 @@
+{
+ "token": "0x417a3E23cc66c52f02CF0B9cF0b4d49d745e98d2",
+ "vault": "0x94247Ecb30AEF732460841cAe8785B27Caef6DB9",
+ "rewards": "0xB097090913e977E0bb84b49a39732b3442154D21",
+ "floorStart": "9800000",
+ "floorAfterSwap": "9800000",
+ "floorAfterRedeem": "9800000",
+ "teminat": "0xA3cd6fD4316DB70C06931A233FDddC48c2879DC4",
+ "yatirim": 0.01,
+ "zaman": "2026-10-06T06:39:25.314Z"
+}

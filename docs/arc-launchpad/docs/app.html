@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ARC PULSE</title>
+<meta name="description" content="Teminatlı memecoin launchpad ve işlem terminali. Arc üzerinde.">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#0a0b0d">
+
+<!--
+  THE SHELL, AND ONLY THE SHELL
+
+  There is no content in this file. The top bar, the rail, the tab bar and
+  every view are rendered by js/ana.js from the module registry in js/yol.js,
+  which means the navigation cannot drift from the modules that exist — the
+  old page listed its sections in markup and the two disagreed.
+
+  No build step, and no CDN. Both libraries are vendored under docs/vendor/
+  with their licences, so this page works with no network beyond the Arc RPC
+  and keeps working if any subscription lapses.
+-->
+
+<link rel="preconnect" href="https://rpc.mainnet.arc.io" crossorigin>
+<link rel="stylesheet" href="css/temel.css">
+<link rel="stylesheet" href="css/duzen.css">
+<link rel="stylesheet" href="css/bilesen.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%237c5cff'/%3E%3Cpath d='M6 17h5l3-7 4 14 3-7h5' stroke='%23fff' stroke-width='2.4' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+</head>
+<body>
+
+<div class="kabuk">
+
+  <header class="ustbar">
+    <a class="ustbar__marka" href="#/kesfet" aria-label="ARC PULSE ana sayfa">
+      <svg class="ustbar__nabiz" viewBox="0 0 32 32" aria-hidden="true">
+        <rect width="32" height="32" rx="8" fill="var(--marka)"></rect>
+        <path d="M6 17h5l3-7 4 14 3-7h5" stroke="#fff" stroke-width="2.4"
+              fill="none" stroke-linecap="round" stroke-linejoin="round"></path>
+      </svg>
+      <span>ARC&nbsp;PULSE</span>
+    </a>
+
+    <nav class="ustbar__yol" id="ust-yol" aria-label="Ana gezinme"></nav>
+
+    <div class="ustbar__ara" id="ust-ara"></div>
+
+    <div class="ustbar__sag">
+      <button class="dugme dugme--marka" id="cuzdan-dugme" type="button">Cüzdan bağla</button>
+    </div>
+  </header>
+
+  <div class="govde">
+    <aside class="ray" id="ray" aria-label="Modüller"></aside>
+    <main class="icerik" id="icerik" tabindex="-1"></main>
+  </div>
+
+</div>
+
+<nav class="sekmebar" id="sekmebar" aria-label="Alt gezinme"></nav>
+
+<!--
+  A page that fails to boot must say so. Without this, a syntax error in a
+  module leaves a blank dark rectangle and no way to tell it apart from a
+  slow load — which is the single most confusing failure a static app has.
+-->
+<noscript>
+  <div style="padding:24px;color:#e8eaed;font:14px system-ui">
+    Bu arayüz zincirden canlı veri okuyor ve JavaScript olmadan çalışamaz.
+    Gösterilecek önbelleğe alınmış bir fiyat yok — olmayan veriyi
+    göstermemeyi tercih ediyoruz.
+  </div>
+</noscript>
+
+<script type="module">
+  /* Boot errors surface in the page, not only in the console. */
+  window.addEventListener("error", (e) => {
+    const k = document.getElementById("icerik");
+    if (!k || k.dataset.cizildi === "1") return;
+    k.innerHTML =
+      '<div class="hata"><div class="hata__baslik">Arayüz başlatılamadı</div>' +
+      '<div class="bos__yazi">' + String(e.message || e.error || "bilinmeyen hata")
+        .replace(/[<>&]/g, "") + "</div></div>";
+  });
+</script>
+<script type="module" src="js/ana.js"></script>
+
+</body>
+</html>

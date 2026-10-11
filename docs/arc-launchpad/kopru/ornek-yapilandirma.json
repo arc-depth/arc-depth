@@ -1,0 +1,44 @@
+{
+ "_not": "Ornek. Kopyalayip yapilandirma.json yap ve adresleri doldur. Bu dosya anahtar ICERMEZ ve icermemeli; anahtar yalnizca ortam degiskeninden okunur.",
+ "_yon": "Bu ornek Robinhood Chain uzerindeki StockVault'un Lock olayini izleyip Arc uzerindeki WrappedStock'a mint bildirimi imzalar. Ters yon icin kaynak/hedef ve olayImzasi degisir, hedefFonksiyon 'release' olur.",
+
+ "ad": "imzaci-1",
+ "anahtarDegiskeni": "KOPRU_IMZACI_ANAHTARI",
+
+ "kaynakRpc": "https://rpc.mainnet.chain.robinhood.com",
+ "kaynakZincir": 4663,
+ "_kaynakZincir": "Robinhood Chain. Bu ornekte daha once 0 ve calismayan bir RPC yaziliydi; gercek degerler relayer/ayar.json ile dogrulandi. Imzaci artik iki ucun zincir kimligini de okuyup karsilastiriyor, yani yanlis bir deger sessizce gecmez, programi durdurur.",
+ "kaynakKontrat": "0x0000000000000000000000000000000000000000",
+ "_kaynakKontrat": "StockVault. Bu adresten gelmeyen hicbir log imzalanmaz.",
+
+ "hedefRpc": "https://rpc.mainnet.arc.io",
+ "hedefZincir": 5042,
+ "hedefKontrat": "0x0000000000000000000000000000000000000000",
+ "_hedefKontrat": "WrappedStock. Esik ve tavanlar BU kontrattan okunur, bu dosyadan degil.",
+ "hedefFonksiyon": "mint",
+
+ "olayImzasi": "Locked(address,address,uint256,uint256)",
+ "aliciTopic": 2,
+ "_aliciTopic": "Locked(from indexed, arcRecipient indexed, ...) — alici ikinci indexed konu.",
+ "miktarKelime": 1,
+ "_miktarKelime": "data icindeki ikinci kelime: (amount, shares) -> shares.",
+
+ "_olayId": "Kimligin NEREDEN geldigi yone gore degisir ve yanlis secmek iki zinciri karsilastirilamaz hale getirir. Locked olayi kimlik tasimaz: ikisini de bos birak, imzaci kaynak tx + log sirasindan turetir (cıplak tx hash'i iki kilidi tek bildirime cokertirdi). Burned olayi burnId TASIYOR — o yon icin olayIdKelime: 1 koy ki kasa, yakmanin zincirde urettigi kimligi kaydetsin.",
+
+ "onay": 64,
+ "_onay": "Bu kadar blok gomulmeden imzalanmaz. Kaynak zincirin yeniden duzenlenme davranisina gore secilir; dusuk tutmak imzayi ucuzlatmaz, sadece geri alinabilir bir olayi imzalatir. DIKKAT: bu bir DERINLIK sayisidir, rollup uzerinde L1 finality DEGIL.",
+
+ "finalitePolitikasi": "sadece-derinlik",
+ "_finalitePolitikasi": "Robinhood belgeleri uc ayri seyi ayiriyor: sequencer makbuzu, partinin L1 uzerine gonderilmesi, ve o L1 blogunun finalize olmasi — ustune yedi gunluk canonical cekilme suresi. 64 sequencer blogu altinda kalmis bir olay, hic gonderilmemis ya da farkli gonderilmis bir partiye ait olabilir; derinlik bunu kapatmiyor. Bu kod L1 parti baglamasini YAPMIYOR. Iki deger taniniyor: 'sadece-derinlik' (riski acikca ve yazili olarak sen kabul ediyorsun) ve 'l1-parti' (gercek baglama; HENUZ UYGULANMADI, imzaci bu degerle calismayi reddeder). Alan bos birakilirsa da reddeder, cunku cevaplanmamis bir soruyu sessizce zayif tarafa yormasi en kotu secenek.",
+
+ "blokPenceresi": 2000,
+ "baslangicBlok": 0,
+ "_baslangicBlok": "Kopru kontratinin dagitildigi blok. Sifir birakmak ilk turu zincirin basindan taratir.",
+
+ "imzaDizini": "C:/arc-launchpad/kopru/imzalar",
+ "_imzaDizini": "Imzalarin yazildigi yer. Iki imzaci AYRI makinelerde calismali; bu dizin paylasilan bir klasor, bir depo ya da bir uc nokta olabilir. Ayni makinede iki surec calistirmak esigi suse cevirir.",
+
+ "araSaniye": 20,
+ "gonderenAnahtarDegiskeni": "KOPRU_GONDERICI_ANAHTARI",
+ "_gonderen": "Gonderici yetki tasimaz; sadece gaz oder. Isterse ucuncu bir cuzdan olabilir, imzacilardan biri olmasi gerekmez."
+}

@@ -1,0 +1,36 @@
+{
+ "olculdu": "2026-10-11T13:40:30.440Z",
+ "zincir": 5042,
+ "dagitici": "0x89189C84DC95d0520AEeC9c8cF3BA5B9d42611D0",
+ "nonce": 1251,
+ "not": "Bu kayit ZINCIRDEN dogrulanarak yazildi. Paylasilan altyapi bu turda dagitilmadi ve kendi dagitiminda dogrulanmis durumda; uzak taraf da oyle.",
+ "uygulandiMi": true,
+ "arc": {
+  "fabrika": "0x065B318A624275bFF6833d0408DC572482BBF227",
+  "devPool": "0xA110b71c3f0748536f10C9e71A6E9F96999F6CD0",
+  "likiditeKasasi": "0x0a35cfe06Ead3858375690993280Aff1f9aFbF69",
+  "launchpad": "0xB6AC82F391FD6A7f59af804e3BE1C4753f832300",
+  "hook": "0xE6cc37D2467aAA05BED35D0E667170015E680Acc",
+  "poolManager": "0x8366a39CC670B4001A1121B8F6A443A643e40951",
+  "quote": "0x3600000000000000000000000000000000000000"
+ },
+ "fthm": {
+  "governor": "0x1084AD3162afC8A62736D604598377D8e6Be8D95",
+  "stake": "0xAbD31A537E089D8a12b928aF7837C148dE2Bd2de",
+  "not": "DevPool'un governor'i. totalStaked su an 0, yani dilim birikir ama bir teklif gececek kadar oy yok."
+ },
+ "paylasilan": {
+  "kasaFabrika": "0x66a3ab2AC43445B91c61B98631Be14886ab45F40",
+  "kayit": "0xaAD7Fb1bCeE3c78108f8d093fa3a0bFd6C87780c",
+  "gelistiriciFonu": "0x63e3C95fF9f78891F5e9F214346DC5eEA82f1a13",
+  "likiditeKasasi": "0x926325b92f959697F3e3f45d7E6535eC85AFB123",
+  "isletme": "0x89189C84DC95d0520AEeC9c8cF3BA5B9d42611D0"
+ },
+ "emekliGelistiriciFonu": {
+  "adres": "0x63e3C95fF9f78891F5e9F214346DC5eEA82f1a13",
+  "neden": "tahsisci ISLETME CUZDANI ve immutable — DAO ona hic dokunamazdi; %0,30 artik DevPool'a gidiyor"
+ },
+ "hookSalt": "0x00000000000000000000000000000000000000000000000000000000000016c7",
+ "oncekiTurRetNedeni": "Gelistirici payinin %0,30'u tahsiscisi ISLETME CUZDANI olan bir fona gidiyordu; DAO ona dokunamiyordu ve tahsisci immutable. Yeni DevPool'un governor'i FTHM DAO'su.",
+ "emekliTur": null
+}

@@ -1,0 +1,20 @@
+{
+ "NVDA:3": {
+  "kopruTx": "0x0c7fdb967b4e18e12540c53527f9d7358165db6bf4b52fa87c90ea23dfd7ecc1",
+  "beklenenEth": "1102143622102707",
+  "durum": "/intents/status?requestId=0x179126769359adb01a0a67c730fc7e976d8b4544109f0f7caad8588669bff17b",
+  "varis": "1102421499264162",
+  "alimTx": "0xa83d8e39c1973b166942520a6872a2906812447ead6346b3d4c88217c639e2ac",
+  "kilitTx": "0xdd4478ba9b348698c6cf725b5171a5a9a25997128ca55574b58d68b50f7a0c1d",
+  "basimTamam": true
+ },
+ "NVDA:2.9": {
+  "kopruTx": "0xd43169deceb4621815b1a65900233f05eae65476bce3a9f78801d2a9b0e9b50e",
+  "beklenenEth": "1053814620930214",
+  "durum": "/intents/status?requestId=0x1791299743e6332e98648b597d71d77456e25889bb23e93f5457e5bd0d26d940",
+  "varis": "1054082408761783",
+  "alimTx": "0x942bb109cb11cfbfd437bd1aa4e3a4225771875c945645283a6a8b86a7f9fac9",
+  "kilitTx": "0x2872a7fdf04d6d396742ff12507c08fd003657117e631616d078cae06ab7cfde",
+  "basimTamam": true
+ }
+}
