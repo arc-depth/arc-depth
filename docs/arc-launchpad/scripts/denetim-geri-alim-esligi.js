@@ -1,28 +1,29 @@
 "use strict";
 /* ===========================================================================
- * denetim-geri-alim-esligi.js — iki kasanın geri alım sabitleri ve
- *                               aritmetiği hâlâ aynı mı
+ * denetim-geri-alim-esligi.js — are the two vaults' buyback constants and
+ *                               arithmetic still the same
  *
  *   node scripts/denetim-geri-alim-esligi.js
  *
- * NEDEN VAR
- *   KopruKasasi geri alım tabanını TeminatKasasi'ndan kopyaladı: aynı iki
- *   tavan, aynı ödül payı, aynı pencere. Kopyalanan ve kimsenin
- *   karşılaştırmadığı bir sabit, ücret tablosunun haftalarca kendisiyle
- *   uyuşurken aritmetiğin her satışta taşmasının tam olarak yoludur. O
- *   sefer kaçıran şey, tabloyu karşılaştıran ama ARİTMETİĞİ hiç
- *   çalıştırmayan bir denetimdi.
+ * WHY IT EXISTS
+ *   KopruKasasi copied its buyback floor from TeminatKasasi: the same two
+ *   ceilings, the same reward share, the same window. A constant that is
+ *   copied and that nobody compares is exactly how a fee table agrees with
+ *   itself for weeks while the arithmetic overflows on every sale. What
+ *   missed it that time was an audit that compared the TABLE but never ran
+ *   the ARITHMETIC.
  *
- *   Bu yüzden burada iki şey birden kontrol ediliyor: sayılar eşit mi, ve
- *   her sabit gerçekten kullanılıyor mu. Kullanılmayan bir sabit, uyuşan
- *   ama hiçbir şey yapmayan bir sayıdır.
+ *   So two things are checked here at once: are the numbers equal, and is
+ *   every constant actually used. An unused constant is a number that
+ *   agrees and does nothing.
  *
- * NE KONTROL EDİLMİYOR
- *   Tavanların DAYANAĞI kasıtlı olarak farklı: TeminatKasasi token
- *   bakiyesini, KopruKasasi harcanabilir tutarı ölçek alıyor. Rezervin bir
- *   kısmı başka zincirdeyken ikincisi daha sıkıdır ve bu tercih
- *   KopruKasasi'nde gerekçesiyle yazılı. Burada o fark bir ihlal değil,
- *   beklenen bir ayrım olarak listelenmiştir.
+ * WHAT IS NOT CHECKED
+ *   The ceilings' BASIS is deliberately different: TeminatKasasi scales
+ *   from the token balance, KopruKasasi from the spendable amount. While
+ *   part of the reserve is on another chain the second is stricter, and
+ *   that choice is written down with its reason in KopruKasasi. Here that
+ *   difference is listed not as a violation but as an expected
+ *   distinction.
  * =========================================================================== */
 const fs = require("fs");
 const path = require("path");

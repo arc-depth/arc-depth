@@ -5,7 +5,7 @@ import {CrossChainAccounting} from "./CrossChainAccounting.sol";
 import {CrossChainAssetRegistry} from "./CrossChainAssetRegistry.sol";
 import {CrossChainCollateralManager, IKopruKasasi} from "./CrossChainCollateralManager.sol";
 
-/// @title YoneticiFabrika — zincirler arası yöneticiyi kurar, başka hiçbir şey
+/// @title YoneticiFabrika — builds the cross-chain manager, nothing else
 ///
 /// WHY A SEPARATE FACTORY FOR ONE `new`
 ///   Because one factory holding both pieces of creation code came to

@@ -1,28 +1,31 @@
 "use strict";
 /* ===========================================================================
- * olc-asenkron-iade.js — AŞAMA 8: asenkron iade ve geri alım muhasebesi
+ * olc-asenkron-iade.js — STAGE 8: asynchronous redemption and buyback
+ *                        accounting
  *
  *   node scripts/olc-asenkron-iade.js
  *
- * ÖLÇÜLEN ÜÇ ŞEY, HEPSİ AYNI ANDA
- *   Rezervin bir kısmı başka zincirdeyken biri hakkını talep ediyor. Üç
- *   şeyin birlikte doğru olması gerekiyor ve herhangi bir protokol ikisini
- *   tutturabilir:
+ * THREE THINGS MEASURED, ALL AT ONCE
+ *   Somebody claims their share while part of the reserve is on another
+ *   chain. Three things have to be true together, and any protocol can get
+ *   two of them right:
  *
- *     1. iadeci eksik ödenmiyor — tamamı hak ediliyor, ödenmeyen kısım
- *        kayıp değil ALACAK oluyor;
- *     2. KALAN sahiplerin hakkı oynamıyor — iadecinin çıkışı onu
- *        yükseltmemeli de, ki cömert yön hatanın kolay olduğu yön;
- *     3. geri alım, borçlu olunan parayı harcayamıyor.
+ *     1. the redeemer is not underpaid — the whole amount is earned, and
+ *        the unpaid part becomes a CLAIM, not a loss;
+ *     2. the REMAINING holders' claim does not move — the redeemer leaving
+ *        must not raise it either, and the generous direction is the one
+ *        where the mistake is easy;
+ *     3. the buyback cannot spend money that is owed.
  *
- *   Eski kasa 1'i açıkça kaybediyordu: ölçüldü, %60'ı köprüdeyken iadeci
- *   $5,00 yerine $2,00 aldı — geç değil, EKSİK ve kalıcı olarak.
+ *   The old vault clearly lost the first: measured, with 60% on the bridge
+ *   the redeemer received $2.00 instead of $5.00 — not late, SHORT, and
+ *   permanently.
  *
- * NEDEN HAK EŞİTLİĞİ BİR TEMENNİ DEĞİL
- *   w = d·E/D borcu yakma anında yazılıyor, dolayısıyla sonrasında
- *   (E−w)/(D−d) = E/D oluyor — birebir. Tam sayı kırpması w'yi aşağı
- *   yuvarladığı için artık kalan sahiplere gidiyor, yani güvenli yön.
- *   Aşağıda bu, yorum olarak değil SAV olarak duruyor.
+ * WHY EQUAL CLAIMS ARE NOT A HOPE
+ *   w = d*E/D is written at the moment the debt is burned, so afterwards
+ *   (E-w)/(D-d) = E/D — exactly. Integer truncation rounds w down, so the
+ *   remainder goes to the remaining holders, which is the safe direction.
+ *   Below, this stands as an ASSERTION and not as a comment.
  * =========================================================================== */
 const { Interface } = require("ethers");
 const fs = require("fs");

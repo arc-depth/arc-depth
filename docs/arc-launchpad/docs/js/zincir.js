@@ -46,7 +46,7 @@ export async function cagri(method, params) {
 
   const j = await hamIstek({ jsonrpc: "2.0", id: sayac++, method, params });
   if (j.error) {
-    const e = new Error(j.error.message || "RPC hatası");
+    const e = new Error(j.error.message || "RPC error");
     e.data = j.error.data;
     throw e;
   }
@@ -253,20 +253,21 @@ export const ABI = {
   /* The marketplace. Read side only — nothing here can move money. */
   pazar: [
     "function urunSayisi() view returns (uint256)",
-    /* urunler(), urunAt() DEGIL — ve bunu denetim yakaladi.
-         urunAt() TEK bir struct donduruyor. Icinde string oldugu icin o
-         struct DINAMIK, yani ABI kodlamasi yedi deger degil, tuple'a bir
-         OFFSET. Yedi duz alan diye tanimlamak sessizce yanlis veri
-         cozerdi: fiyat sanilan sey bir offset olurdu.
+    /* urunler(), NOT urunAt() — and the audit caught this.
+         urunAt() returns ONE struct. Because there is a string inside it,
+         that struct is DYNAMIC, so the ABI encoding is not seven values but
+         an OFFSET to a tuple. Declaring it as seven flat fields would have
+         decoded the wrong data silently: what was taken for the price would
+         be an offset.
 
-         urunler() ise public dizinin getter'i ve ayni veriyi YEDI AYRI
-         donus olarak veriyor. Ayni bilgi, cozmesi belirsizlik tasimayan
-         sekil.
+         urunler(), on the other hand, is the public array's getter and
+         gives the same data as SEVEN SEPARATE returns. The same
+         information, in a shape whose decoding carries no ambiguity.
 
-         Bu projede ayni sinifta iki kez yanildim — launchAt on alana
-         cikti, DepthGovernor'in teklifi on ikiye — ikisi de sessizce
-         yanlis alani okuyordu. Bu ucuncusunu kod yazilirken denetim
-         yakaladi, calistirilmadan once. */
+         I got this class of thing wrong twice in this project — launchAt
+         grew to ten fields, DepthGovernor's proposal to twelve — and both
+         were silently reading the wrong field. The audit caught this third
+         one while the code was being written, before it ever ran. */
     "function urunler(uint256) view returns (address,uint256,uint64,bool,string,uint256,uint256)",
     "function gelistirici(address) view returns (bool,uint64,string)",
     "function lisans(uint256,address) view returns (bool,uint64,bool)",
@@ -302,18 +303,18 @@ export const ABI = {
   devPoolYaz: [
     "function register(string) returns (uint256)"
   ],
-  /* pay() SADECE KODLAMAK ICIN — sayfa bunu hic GONDERMIYOR.
+  /* pay() IS HERE ONLY TO BE ENCODED — the page never SENDS it.
    *
-   * DevPool.pay yalnizca FTHM Governor'dan kabul ediliyor, yani bir
-   * cuzdandan cagrilirsa NotGovernor ile doner (olculdu). Burada
-   * olmasinin tek sebebi, bir TEKLIFIN icine konacak cagri verisini
-   * uretmek: teklif gecer, timelock dolar, execute() Governor adina
-   * cagirir.
+   * DevPool.pay is accepted only from the FTHM Governor, so called from a
+   * wallet it reverts with NotGovernor (measured). The only reason it is
+   * here is to produce the calldata that goes INSIDE A PROPOSAL: the
+   * proposal passes, the timelock runs out, and execute() calls it on the
+   * Governor's behalf.
    *
-   * Ayri bir tabloda duruyor cunku digerleri "bu sayfa bunu gonderir"
-   * demek; bu tablo "bu sayfa bunu yazar, gonderen DAO" demek. Ikisini
-   * ayni yere koymak, kimin ne gonderebildigini bir bakista okunamaz
-   * yapardi. */
+   * It sits in a separate table because the others mean "this page sends
+   * this", while this table means "this page writes this, the DAO sends
+   * it". Putting both in one place would make who can send what unreadable
+   * at a glance. */
   devPoolTeklif: [
     "function pay(address,address,uint256,uint256)"
   ],
@@ -450,7 +451,7 @@ export async function launchListesi() {
   if (!canli(PULSE.launchpad)) return { dagitildiMi: false, liste: [] };
 
   const sayi = await oku(PULSE.launchpad, ABI.launchpad, "launchCount");
-  if (sayi == null) return { dagitildiMi: true, liste: [], hata: "launchCount okunamadı" };
+  if (sayi == null) return { dagitildiMi: true, liste: [], hata: "launchCount could not be read" };
 
   const n = Number(sayi);
   if (n === 0) return { dagitildiMi: true, liste: [] };

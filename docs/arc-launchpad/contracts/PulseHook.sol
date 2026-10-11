@@ -26,56 +26,57 @@ interface IPulseKayit {
         returns (address token, address acici, address kurucu, address kasa, uint256 vergiPpm);
 }
 
-/// @title PulseHook — her alım ve satımda ücret, yönü ne olursa olsun
+/// @title PulseHook — a fee on every buy and sell, whichever way it goes
 ///
-/// EGRIHOOK'TAN DÖRT FARK
+/// FOUR DIFFERENCES FROM EGRIHOOK
 ///
-/// 1. EXACT-OUTPUT TAKASLAR DA ÖDÜYOR — ASIL DELİK BURADAYDI
-///      `EgriHook` ücreti yalnızca BELİRTİLMEYEN taraf pozitifken alıyor:
+/// 1. EXACT-OUTPUT SWAPS PAY TOO — THIS WAS THE REAL HOLE
+///      `EgriHook` only takes a fee while the UNSPECIFIED side is
+///      positive:
 ///
-///        if (unspecified <= 0) return (selector, 0);
+///      On an exact-input swap the unspecified side is the output and it
+///      is positive, so the fee is taken. On an exact-OUTPUT swap the
+///      unspecified side is the INPUT and it is negative — the trader
+///      owes it — and that line returns zero. So an aggregator saying
+///      "give me exactly 1,000 tokens" PAYS NO TAX AT ALL.
 ///
-///      Exact-input'ta belirtilmeyen taraf çıktıdır ve pozitiftir, yani
-///      ücret alınır. Exact-OUTPUT'ta belirtilmeyen taraf GİRDİdir ve
-///      negatiftir — trader borçludur — ve o satır sıfır döndürüyor.
-///      Yani "bana tam 1.000 token ver" diyen bir aggregator HİÇ VERGİ
-///      ÖDEMİYOR.
+///      Item 7 of the spec is aimed at exactly this: "the same fees are
+///      taken whether the user trades directly on Uniswap or through an
+///      aggregator."
 ///
-///      Spec'in madde 7'si tam olarak bunu kapatmak istiyor: "kullanıcı
-///      doğrudan Uniswap'tan veya aggregator üzerinden alım-satım yapsa
-///      bile aynı ücretler kesilecek."
+///      How it is closed: on exact-output the fee comes out of the
+///      INPUT. The trader gets exactly the output they asked for and pays
+///      a little more for it — which is how every taxed token behaves,
+///      and the alternative would be trimming the output, which would
+///      break the promise of "exactly N tokens".
 ///
-///      Kapatma şekli: exact-output'ta ücret GİRDİDEN alınıyor. Trader
-///      tam istediği çıktıyı alıyor ve karşılığında biraz daha fazla
-///      ödüyor — vergili her tokenin davranışı bu, ve alternatifi
-///      çıktıyı kısmak olurdu ki o zaman "tam N token" sözü bozulurdu.
+/// 2. NO HOLDER REWARD
+///      Six slices became five and that 0.30% went to depth: 0.40% ->
+///      0.70%. The 2% total did not change. Sent to a wallet it would be
+///      a wallet collecting money; sent nowhere it would evaporate.
 ///
-/// 2. HOLDER ÖDÜLÜ YOK
-///      Altı dilim beşe indi ve o %0,30 derinliğe gitti: %0,40 -> %0,70.
-///      Toplam %2 değişmedi. Bir cüzdana gitse para toplayan bir cüzdan
-///      olurdu; hiçbir yere gitmese buharlaşırdı.
+/// 3. THE SNIPE TAX NOW LIVES IN THE POOL
+///      In the previous generation the snipe was on the curve, and the
+///      curve is gone. Here it applies for the first 5 seconds from the
+///      pool's opening, at a falling rate, and to BUYS ONLY.
 ///
-/// 3. SNIPE VERGİSİ ARTIK HAVUZDA
-///      Önceki nesilde snipe eğrideydi ve eğri kalktı. Burada havuzun
-///      açılış anından itibaren ilk 5 saniye, azalan oranla, YALNIZCA
-///      ALIMLARA uygulanıyor.
+///      The founder's first buy is exempt automatically — because it is
+///      not a swap. The launchpad sends the tokens straight to the
+///      wallet without touching the pool, so this hook never sees it.
+///      The exemption is not a special case but a consequence; and the
+///      rule that it "does not carry into later trades" holds by itself,
+///      because there is no flag to carry.
 ///
-///      Kurucunun ilk alımı otomatik olarak muaf — çünkü o bir takas
-///      değil. Launchpad tokenleri doğrudan cüzdana gönderiyor, havuza
-///      hiç uğramıyor, yani bu kanca onu hiç görmüyor. Muafiyet bir
-///      istisna değil, bir sonuç; ve "sonraki işlemlere taşınmaz" kuralı
-///      da kendiliğinden sağlanıyor, taşınacak bir bayrak yok.
+/// 4. A 60% DRAWDOWN FROM THE PEAK OPENS THE DEFENCE
+///      `EgriHook`'s shield was a per-block SELL VOLUME shield — an extra
+///      fee on a sale above 0.5% of circulating. Leaving that protection
+///      in place was right, but the spec asks for something else: the
+///      collateral stepping in on a 60% drawdown from the peak.
 ///
-/// 4. TEPEDEN %60 DÜŞÜŞ SAVUNMAYI AÇIYOR
-///      `EgriHook`'un kalkanı blok başına SATIŞ HACMİ kalkanıydı —
-///      dolaşımın %0,5'ini aşan satışa ek ücret. O korumayı yerinde
-///      bırakmak doğru olurdu ama spec'in istediği şey farklı: tepeden
-///      %60 düşüşte teminatın devreye girmesi.
-///
-///      İkisi aynı şey değil ve ikisi de burada. Hacim kalkanı tek blokta
-///      inen büyük satışı pahalılaştırıyor; düşüş tetiği uzun süreli bir
-///      çöküşte geri alımı açıyor. Biri hızı, diğeri derinliği
-///      savunuyor.
+///      They are not the same thing and both are here. The volume shield
+///      makes a large sale in one block expensive; the drawdown trigger
+///      opens the buyback during a sustained collapse. One defends
+///      speed, the other defends depth.
 contract PulseHook {
     using PoolIdLibrary for PoolKey;
 

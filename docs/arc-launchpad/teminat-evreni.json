@@ -1,5 +1,5 @@
 {
- "olculdu": "2026-10-11T14:40:28.070Z",
+ "olculdu": "2026-10-11T20:17:05.540Z",
  "zincir": 5042,
  "not": "proxy adresleri; aggregator DEGIL. olc-besleyiciler.js uretir.",
  "varliklar": [
@@ -9,7 +9,7 @@
    "proxy": "0x84EA90AC252Dc437031461836DB5164219147905",
    "feedOndalik": 8,
    "heartbeat": 86400,
-   "fiyat": 0.99987879
+   "fiyat": 0.99988629
   },
   {
    "besleyiciAdi": "BTC / USD",
@@ -17,7 +17,7 @@
    "proxy": "0xa109B535C70C8Be9995be64Bb6751AcDB27e03De",
    "feedOndalik": 8,
    "heartbeat": 86400,
-   "fiyat": 83049.98888979
+   "fiyat": 83514.9089923
   },
   {
    "besleyiciAdi": "ETH / USD",
@@ -25,7 +25,7 @@
    "proxy": "0x50FCDD99D6762D1C170DC6A9111db944AEE6D364",
    "feedOndalik": 8,
    "heartbeat": 86400,
-   "fiyat": 2501.86398264
+   "fiyat": 2528.49261111
   },
   {
    "besleyiciAdi": "EURC / USD",

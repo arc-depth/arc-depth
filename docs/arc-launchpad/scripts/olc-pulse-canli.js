@@ -1,26 +1,29 @@
 "use strict";
 /* ===========================================================================
- * olc-pulse-canli.js — DAĞITILMIŞ launchpad işe yarıyor mu
+ * olc-pulse-canli.js — does the DEPLOYED launchpad work
  *
  *   node scripts/olc-pulse-canli.js
  *
- * NEDEN BU KOŞUM AYRI
- *   `olc-pulse-launch.js` launchpad'i harness içinde kuruyor ve bu, hiçbir
- *   şey dağıtılmamışken doğru olan şeydi: ölçülen KODdu. Artık zincirde bir
- *   tane var ve üç iddia farklı:
+ * WHY THIS RUN IS SEPARATE
+ *   `olc-pulse-launch.js` builds the launchpad inside the harness, and that
+ *   was the right thing while nothing was deployed: what was measured was
+ *   the CODE. There is one on chain now, and three claims differ:
  *
- *     "bu kod doğru"                     601 sav + launch ölçümü
- *     "zincirdeki bu adres doğru"        denetim-dagitim-pulse2, 34 sav
- *     "zincirdeki bu adres İŞE YARIYOR"  ← burası
+ *     "this code is correct"            601 assertions + the launch
+ *                                        measurement
+ *     "this address on chain is right"  denetim-dagitim-pulse2, 34
+ *                                        assertions
+ *     "this address on chain WORKS"     <- here
  *
- *   Hiçbir şey dağıtmıyor. Dağıtılmış launchpad'i çağırıyor, DAĞITILMIŞ
- *   kancayla, gerçek PoolManager'a karşı. Enjekte edilen tek şey harness'ın
- *   kendisi ve bakiyesi — kanca zincirde, yani ölçülen kanca gerçekten
- *   kullanıcıların karşılaşacağı kanca.
+ *   It deploys nothing. It calls the deployed launchpad, with the DEPLOYED
+ *   hook, against the real PoolManager. The only thing injected is the
+ *   harness itself and its balance — the hook is on chain, so the hook
+ *   measured is really the hook users will meet.
  *
- * VE HİÇBİR ŞEY HARCAMIYOR
- *   Tek bir `eth_call`. Sonunda durum atılıyor, zincire tek bayt
- *   yazılmıyor. Ölçemediği tek şey kalıcılık.
+ * AND IT SPENDS NOTHING
+ *   A single `eth_call`. The state is discarded at the end and not one byte
+ *   is written to the chain. The only thing it cannot measure is
+ *   persistence.
  * =========================================================================== */
 const fs = require("fs");
 const path = require("path");

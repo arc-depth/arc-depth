@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>ARC PULSE</title>
-<meta name="description" content="Teminatlı memecoin launchpad ve işlem terminali. Arc üzerinde.">
+<meta name="description" content="Collateral-backed memecoin launchpad and trading terminal, on Arc.">
 <meta name="color-scheme" content="dark">
 <meta name="theme-color" content="#0a0b0d">
 
@@ -46,12 +46,12 @@
     <div class="ustbar__ara" id="ust-ara"></div>
 
     <div class="ustbar__sag">
-      <button class="dugme dugme--marka" id="cuzdan-dugme" type="button">Cüzdan bağla</button>
+      <button class="dugme dugme--marka" id="cuzdan-dugme" type="button">Connect wallet</button>
     </div>
   </header>
 
   <div class="govde">
-    <aside class="ray" id="ray" aria-label="Modüller"></aside>
+    <aside class="ray" id="ray" aria-label="Modules"></aside>
     <main class="icerik" id="icerik" tabindex="-1"></main>
   </div>
 
@@ -66,9 +66,9 @@
 -->
 <noscript>
   <div style="padding:24px;color:#e8eaed;font:14px system-ui">
-    Bu arayüz zincirden canlı veri okuyor ve JavaScript olmadan çalışamaz.
-    Gösterilecek önbelleğe alınmış bir fiyat yok — olmayan veriyi
-    göstermemeyi tercih ediyoruz.
+    This interface reads live data from the chain and cannot run without
+    JavaScript. There is no cached price to show — we would rather show
+    nothing than show data we do not have.
   </div>
 </noscript>
 
@@ -78,7 +78,7 @@
     const k = document.getElementById("icerik");
     if (!k || k.dataset.cizildi === "1") return;
     k.innerHTML =
-      '<div class="hata"><div class="hata__baslik">Arayüz başlatılamadı</div>' +
+      '<div class="hata"><div class="hata__baslik">The interface failed to start</div>' +
       '<div class="bos__yazi">' + String(e.message || e.error || "bilinmeyen hata")
         .replace(/[<>&]/g, "") + "</div></div>";
   });

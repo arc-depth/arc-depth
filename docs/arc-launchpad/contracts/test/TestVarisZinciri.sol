@@ -74,7 +74,7 @@ contract KotuYurutucuV {
        where nothing the attacker does can shape the answer. */
 }
 
-/// @notice AŞAMA 5-10 — the destination side, on ANY verified chain
+/// @notice STAGES 5-10 — the destination side, on ANY verified chain
 ///
 /// WHY THIS IS ONE HARNESS AND NOT ONE PER CHAIN
 ///   The first version of this was Ethereum-only, with every address a

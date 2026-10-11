@@ -1,47 +1,50 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-/// @title TestCanliYasamDongusu — DAĞITILMIŞ launchpad'in tam yaşam döngüsü
+/// @title TestCanliYasamDongusu — the DEPLOYED launchpad's full life cycle
 ///
-/// NEDEN BU HARNESS VAR, ÖTEKİLERDEN FARKI NE
-///   Bu projedeki her harness kendi launchpad'ini kuruyor ve bu doğru:
-///   test edilen şey KOD olmalı, bir dağıtım değil. Ama o testlerin hiçbiri
-///   zincirde duran launchpad'e dokunmuyor, ve iki şey farklı:
+/// WHY THIS HARNESS EXISTS AND HOW IT DIFFERS FROM THE OTHERS
+///   Every harness in this project builds its own launchpad, and that is
+///   right: what gets tested should be the CODE, not a deployment. But
+///   none of those tests touches the launchpad that sits on chain, and two
+///   things are different:
 ///
-///     "bu kod doğru"              -> 601 sav bunu söylüyor
-///     "zincirdeki bu adres doğru" -> denetim-dagitim-pulse.js bunu söylüyor
-///     "zincirdeki bu adres İŞE YARIYOR" -> hiçbir şey söylemiyordu
+///     "this code is correct"            -> 601 assertions say so
+///     "this address on chain is right"  -> denetim-dagitim-pulse.js does
+///     "this address on chain WORKS"     -> nothing said anything
 ///
-///   Üçüncüsü bu harness. Kendi launchpad'ini kurmuyor; dağıtılmış olanı
-///   ÇAĞIRIYOR, gerçek PoolManager'a karşı, gerçek kancayla, gerçek USDC
-///   ile. Tek sahte şey bu sözleşmenin bakiyesi, ve o durum geçersiz
-///   kılmayla veriliyor.
+///   The third one is this harness. It does not build its own launchpad; it
+///   CALLS the deployed one, against the real PoolManager, with the real
+///   hook and real USDC. The only fake thing is this contract's balance,
+///   and that is supplied by a state override.
 ///
-/// NEDEN GERÇEK PARA HARCANMIYOR
-///   Kullanıcının sorusu: *"simülasyon da yap, niye gerçek para
-///   kullanacaksın ki."* Doğru soru. `eth_call` durum geçersiz kılmayla
-///   bu sözleşmeye USDC bakiyesi veriyor ve bütün döngü tek çağrıda
-///   dönüyor — zincire hiçbir şey yazılmıyor, hiçbir şey harcanmıyor.
+/// WHY NO REAL MONEY IS SPENT
+///   The user's question: *"simulate it too, why would you use real
+///   money."* The right question. `eth_call` with a state override gives
+///   this contract a USDC balance and the whole cycle runs in a single
+///   call — nothing is written to the chain and nothing is spent.
 ///
-///   Simülasyonun ölçemediği tek şey kalıcılık: EVM semantiği aynı ama
-///   `eth_call` sonunda durum atılıyor. Yani bu harness "ürün çalışıyor"
-///   sorusunu cevaplıyor, "zincirde bir token var" sorusunu cevaplamıyor.
-///   İkincisi bir doğrulama değil ürün kararı.
+///   The one thing a simulation cannot measure is persistence: the EVM
+///   semantics are identical, but at the end of an `eth_call` the state is
+///   discarded. So this harness answers "the product works", not "there is
+///   a token on chain". The second is not a verification but a product
+///   decision.
 ///
-/// NEDEN HEPSİ TEK ÇAĞRIDA
-///   `eth_call` durumu çağrılar arasında taşımıyor. Launch, alım, vergi ve
-///   iade ayrı çağrılarda yapılsa ikincisi birincinin tokenini göremezdi.
-///   O yüzden akışın tamamı tek fonksiyonda ve ara ölçümler struct'ta
-///   dönüyor.
+/// WHY IT IS ALL IN ONE CALL
+///   `eth_call` does not carry state between calls. If the launch, the buy,
+///   the tax and the redemption happened in separate calls, the second
+///   could not see the first one's token. So the whole flow is in one
+///   function and the intermediate measurements come back in a struct.
 ///
-/// DÖRT ŞEY ÖLÇÜLÜYOR
-///   1. Launch gerçekten oluyor mu — token, eğri, kasa, havuz
-///   2. Bir yabancı sırf USDC ile alabiliyor mu
-///   3. O alımın VERGİSİ kasaya ulaşıyor mu
-///   4. Token yakan biri kasadan parasını alabiliyor mu
+/// FOUR THINGS ARE MEASURED
+///   1. Does a launch really happen — token, curve, vault, pool
+///   2. Can a stranger buy with nothing but USDC
+///   3. Does the TAX on that buy reach the vault
+///   4. Can somebody who burns the token get their money out of the vault
 ///
-///   Dördü sırayla ve aynı para üzerinde. Ayrı ayrı ölçülse, aradaki
-///   bağlantının koptuğu bir sistem de dört testi geçerdi.
+///   All four in sequence and on the same money. Measured separately, a
+///   system whose links between them were broken would also pass four
+///   tests.
 interface IERC20C {
     function transfer(address to, uint256 v) external returns (bool);
     function approve(address who, uint256 v) external returns (bool);

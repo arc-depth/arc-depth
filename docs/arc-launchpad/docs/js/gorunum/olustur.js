@@ -10,8 +10,8 @@
  *   The form itself is real: every field validates, and the payment
  *   breakdown is computed from the contract's own constants, so a creator
  *   can see exactly what $100 buys before anything is deployed. What is
- *   NOT offered is a button that would fail — "çalışmayan özellikleri
- *   aktif buton olarak sunma", taken literally.
+ *   NOT offered is a button that would fail — "do not offer features that
+ *   do not work as active buttons", taken literally.
  * =========================================================================== */
 
 import { el, sayfaUst, panel, not, dagitimBekliyor, temizle } from "../ui.js";
@@ -24,7 +24,7 @@ import { oneriTablosu, caAlani, zincirEtiketi, tutarYaz } from "./teminat-sec.js
 
 export async function ciz({ kayit, param }) {
   const kap = el("div", { sinif: "yigin" });
-  kap.append(sayfaUst("Token oluştur", "Teminatlı, sabit arzlı, kurucu payı olmayan"));
+  kap.append(sayfaUst("Create a token", "Collateral-backed, fixed supply, no free founder share"));
 
   /* State for the live payment summary.
      TWO AMOUNTS, AND THEY ARE NOT THE OLD ONES
@@ -60,7 +60,7 @@ export async function ciz({ kayit, param }) {
      the DOM by selector would find the wrong input the day a second
      text field is added. */
   const adGirdi = el("input", {
-    sinif: "girdi", attr: { type: "text", placeholder: "Örnek Coin", maxlength: "32" }
+    sinif: "girdi", attr: { type: "text", placeholder: "Example Coin", maxlength: "32" }
   });
   const sembolGirdi = el("input", {
     sinif: "girdi mono", attr: { type: "text", placeholder: "ORNEK", maxlength: "8" }
@@ -70,19 +70,19 @@ export async function ciz({ kayit, param }) {
     el("div", { sinif: "alan" }, [
       el("label", { sinif: "alan__etiket", yazi: "Logo" }),
       el("input", { sinif: "girdi", attr: { type: "file", accept: "image/*" } }),
-      el("div", { sinif: "alan__ipucu", yazi: "Kare, en az 256×256. Zincire yazılmaz." })
+      el("div", { sinif: "alan__ipucu", yazi: "Square, at least 256x256. Not written to the chain." })
     ]),
     el("div", { sinif: "izgara izgara--genis" }, [
-      alan("Token adı", adGirdi),
+      alan("Token name", adGirdi),
       alan("Sembol", sembolGirdi)
     ]),
-    alan("Açıklama", el("textarea", {
-      sinif: "girdi", attr: { placeholder: "Bu token ne?", maxlength: "500" }
+    alan("Description", el("textarea", {
+      sinif: "girdi", attr: { placeholder: "What is this token?", maxlength: "500" }
     })),
     el("div", { sinif: "izgara izgara--genis" }, [
       alan("X (Twitter)", el("input", { sinif: "girdi", attr: { type: "url", placeholder: "https://x.com/…" } })),
       alan("Telegram", el("input", { sinif: "girdi", attr: { type: "url", placeholder: "https://t.me/…" } })),
-      alan("Web sitesi", el("input", { sinif: "girdi", attr: { type: "url", placeholder: "https://…" } }))
+      alan("Website", el("input", { sinif: "girdi", attr: { type: "url", placeholder: "https://…" } }))
     ])
   ])));
 
@@ -95,8 +95,8 @@ export async function ciz({ kayit, param }) {
 
     if (!v) {
       teminatKap.append(not(
-        "Henüz teminat seçilmedi. Aşağıdaki " + ONERILEN.length +
-        " öneriden birini seç ya da kendi kontrat adresini yapıştır.",
+        "No collateral chosen yet. Pick one of the " + ONERILEN.length +
+        " suggestions below, or paste your own contract address.",
         "uyari"
       ));
     } else {
@@ -108,14 +108,14 @@ export async function ciz({ kayit, param }) {
           el("div", { sinif: "jeton__yazi" }, [
             el("div", { sinif: "jeton__sembol", yazi: v.simge }),
             el("div", { sinif: "jeton__ad",
-              yazi: v.ad + " · " + v.ondalik + " ondalık · " +
+              yazi: v.ad + " · " + v.ondalik + " decimals · " +
                 zincirler.map(zincirEtiketi).join(", ") }),
             el("div", { sinif: "yazi yazi--kucuk yazi--sessiz",
-              yazi: "ölçülen en büyük dönüşüm " + tutarYaz(v.azamiTutar) })
+              yazi: "largest measured conversion " + tutarYaz(v.azamiTutar) })
           ])
         ]),
         el("button", {
-          sinif: "dugme dugme--sessiz", attr: { type: "button" }, yazi: "Değiştir",
+          sinif: "dugme dugme--sessiz", attr: { type: "button" }, yazi: "Change",
           on: { click: () => { durum.teminatVarlik = null; teminatiCiz(); ozetiCiz(); } }
         })
       ]));
@@ -125,9 +125,9 @@ export async function ciz({ kayit, param }) {
       }));
       if (v.caIle) {
         teminatKap.append(not(
-          "Önerilen listeden değil — kontrat adresiyle seçildi ve aynı " +
-          "kontrolü geçti: en derin USDC havuzu bulundu, likiditesi ve " +
-          "gözlem geçmişi okundu.", "bilgi"));
+          "Not from the suggested list — chosen by contract address " +
+          "and passed the same check: the deepest USDC pool was found " +
+          "and its liquidity and observation history were read.", "bilgi"));
       }
     }
   };
@@ -153,19 +153,19 @@ export async function ciz({ kayit, param }) {
 
   kap.append(panel("Teminat", [
     el("div", { sinif: "ikincil", attr: { style: "margin-bottom:12px" }, yazi:
-      "Tokenin arkasında hangi varlığın birikeceğini seç. Her işlemin " +
-      "vergisi bu varlığa akar ve fiyat teminatın token başına değerinin " +
-      "altına düştüğünde geri alım devreye girer." }),
+      "Choose which asset accumulates behind the token. The tax on " +
+      "every trade flows into it, and when the price falls below the " +
+      "collateral's value per token the buyback engages." }),
     teminatKap
   ]));
 
   kap.append(panel("Kendi tokenini kullan", caAlani(teminatSecildi)));
 
   kap.append(panel(
-    "Önerilen " + ONERILEN.length,
+    ONERILEN.length + " suggested",
     oneriTablosu(teminatSecildi),
     el("span", { sinif: "yazi yazi--kucuk yazi--sessiz",
-      yazi: "liste bir kapı değil — kısayol" }),
+      yazi: "the list is a shortcut, not a gate" }),
     true
   ));
 
@@ -173,7 +173,7 @@ export async function ciz({ kayit, param }) {
   const vergiEtiket = el("span", { sinif: "mono", yazi: ppmYuzde(durum.vergiPpm) });
   kap.append(panel("Teminat vergisi", el("div", { sinif: "yigin" }, [
     el("div", { sinif: "satir satir--arasi" }, [
-      el("span", { sinif: "ikincil", yazi: "Her işlemden kasaya gidecek pay" }),
+      el("span", { sinif: "ikincil", yazi: "The share of every trade that goes to the vault" }),
       vergiEtiket
     ]),
     el("input", {
@@ -195,14 +195,15 @@ export async function ciz({ kayit, param }) {
       }
     }),
     el("div", { sinif: "alan__ipucu", yazi:
-      ppmYuzde(EKONOMI.vergiAsgariPpm) + " ile " + ppmYuzde(EKONOMI.vergiAzamiPpm) +
-      " arası. Bir kez seçilir, sonra kimse değiştiremez — sen de değil." })
+      "Between " + ppmYuzde(EKONOMI.vergiAsgariPpm) + " and " +
+      ppmYuzde(EKONOMI.vergiAzamiPpm) + ". Chosen once, and after that " +
+      "nobody can change it — not even you." })
   ])));
 
   /* ---- 4. payment and optional first buy ----------------------------- */
-  kap.append(panel("Ödeme", el("div", { sinif: "yigin" }, [
+  kap.append(panel("Payment", el("div", { sinif: "yigin" }, [
     el("div", { sinif: "izgara izgara--genis" }, [
-      alan("Toplam ödeme", el("div", { sinif: "girdi-grup" }, [
+      alan("Total payment", el("div", { sinif: "girdi-grup" }, [
         el("input", {
           sinif: "girdi girdi--sayi",
           attr: { type: "number", min: String(EKONOMI.asgariOdeme), step: "10", value: String(durum.odeme) },
@@ -210,7 +211,7 @@ export async function ciz({ kayit, param }) {
         }),
         el("span", { sinif: "girdi-grup__son", yazi: "USDC" })
       ]), "En az " + para(EKONOMI.asgariOdeme)),
-      alan("Kasaya ayrılan", el("div", { sinif: "girdi-grup" }, [
+      alan("Set aside for the vault", el("div", { sinif: "girdi-grup" }, [
         el("input", {
           sinif: "girdi girdi--sayi",
           attr: { type: "number", min: String(EKONOMI.asgariTeminat), step: "5", value: String(durum.teminat) },
@@ -218,28 +219,28 @@ export async function ciz({ kayit, param }) {
         }),
         el("span", { sinif: "girdi-grup__son", yazi: "USDC" })
       ]), "En az " + para(EKONOMI.asgariTeminat)),
-      alan("İsteğe bağlı ilk alım", el("div", { sinif: "girdi-grup" }, [
+      alan("Optional first buy", el("div", { sinif: "girdi-grup" }, [
         el("input", {
           sinif: "girdi girdi--sayi",
           attr: { type: "number", min: "0", step: "10", value: String(durum.ilkAlim) },
           on: { input: (ev) => { durum.ilkAlim = Number(ev.target.value) || 0; ozetiCiz(); } }
         }),
         el("span", { sinif: "girdi-grup__son", yazi: "USDC" })
-      ]), "Boş bırakabilirsin")
+      ]), "You can leave this empty")
     ])
   ])));
 
   /* ---- 5. summary ---------------------------------------------------- */
   ozetiCiz();
-  kap.append(panel("Özet", ozetKap));
+  kap.append(panel("Summary", ozetKap));
 
   /* ---- the submit ---------------------------------------------------- */
   /* A BUTTON WITH NO HANDLER IS THE RULE THIS BREAKS
        This rendered a large brand button the moment launchpadCanli()
        became true — and the button did nothing. The page audit passed
        because it checks that the view CONSULTS canli(), not that the
-       control acts. "Çalışmayan özellikleri aktif buton olarak sunma"
-       was broken by the check that exists to enforce it.
+       control acts. "Do not offer features that do not work as active
+       buttons" was broken by the very check that exists to enforce it.
 
        An assertion for exactly this now lives in denetim-sayfa.js: a
        large brand button must carry a click handler. */
@@ -248,7 +249,7 @@ export async function ciz({ kayit, param }) {
   if (launchpadCanli()) {
     const dugme = el("button", {
       sinif: "dugme dugme--marka dugme--buyuk dugme--tam",
-      yazi: "TOKEN OLUŞTUR",
+      yazi: "CREATE TOKEN",
       attr: { type: "button" }
     });
 
@@ -261,21 +262,21 @@ export async function ciz({ kayit, param }) {
          the reason, rather than letting the chain answer with a selector
          nobody can read. */
       if (!ad || !sembol) {
-        durumSatiri.textContent = "Ad ve sembol boş olamaz.";
+        durumSatiri.textContent = "Name and symbol cannot be empty.";
         return;
       }
       if (!v) {
-        durumSatiri.textContent = "Teminat varlığı seçilmedi.";
+        durumSatiri.textContent = "No collateral asset chosen.";
         return;
       }
       if (durum.alim < PULSE_KURAL.asgariAlim || durum.alim > PULSE_KURAL.azamiAlim) {
-        durumSatiri.textContent = "Alım " + PULSE_KURAL.asgariAlim + "–" +
-          PULSE_KURAL.azamiAlim + " USDC arası olmalı.";
+        durumSatiri.textContent = "The buy has to be between " +
+          PULSE_KURAL.asgariAlim + " and " + PULSE_KURAL.azamiAlim + " USDC.";
         return;
       }
       if (durum.teminat < PULSE_KURAL.asgariTeminat) {
-        durumSatiri.textContent = "Teminat en az " + PULSE_KURAL.asgariTeminat +
-          " USDC olmalı.";
+        durumSatiri.textContent = "Collateral has to be at least " +
+          PULSE_KURAL.asgariTeminat + " USDC.";
         return;
       }
 
@@ -287,7 +288,7 @@ export async function ciz({ kayit, param }) {
 
       try {
         durumSatiri.className = "yazi yazi--kucuk yazi--sessiz";
-        durumSatiri.textContent = "USDC izni isteniyor…";
+        durumSatiri.textContent = "Asking for the USDC allowance…";
         /* Exactly what this launch needs, not an unlimited allowance: a
            standing allowance on a contract that moves money is a liability
            for no benefit. */
@@ -296,7 +297,7 @@ export async function ciz({ kayit, param }) {
           data: cagriVerisi(ABI.erc20Yaz, "approve", [PULSE.launchpad, alim + teminat])
         });
 
-        durumSatiri.textContent = "Launch gönderiliyor…";
+        durumSatiri.textContent = "Sending the launch…";
         const hash = await cuzdan.gonder({
           to: PULSE.launchpad,
           data: cagriVerisi(ABI.launchpadYaz, "launch",
@@ -306,10 +307,10 @@ export async function ciz({ kayit, param }) {
         /* The hash and nothing else. Saying "your token is live" here
            would be claiming something only the chain can say, and it says
            it on the next read. */
-        durumSatiri.textContent = "Gönderildi: " + hash;
+        durumSatiri.textContent = "Sent: " + hash;
       } catch (e) {
         durumSatiri.className = "yazi yazi--kucuk yazi--hata";
-        durumSatiri.textContent = (e && e.message) || "İşlem gönderilemedi.";
+        durumSatiri.textContent = (e && e.message) || "The transaction could not be sent.";
       }
     });
 
@@ -365,14 +366,14 @@ function odemeOzeti(d) {
   const bin = (x) => Math.round(x).toLocaleString("tr-TR");
 
   const satirlar = [
-    ["Alım", para(d.alim)],
-    ["— protokol ücreti (%2)", "−" + para(ucret)],
-    ["— sana token olarak", para(net)],
-    ["Alacağın token", bin(kurucuToken) + "  (%" + pay.toFixed(2) + " arz)"],
-    ["Havuza gerçek teklif", para(net)],
+    ["Buy", para(d.alim)],
+    ["— protocol fee (2%)", "−" + para(ucret)],
+    ["— to you as tokens", para(net)],
+    ["Tokens you receive", bin(kurucuToken) + "  (" + pay.toFixed(2) + "% of supply)"],
+    ["Real bid in the pool", para(net)],
     ["Havuza token merdiveni", bin(merdiven)],
-    ["Teminat kasasına", para(d.teminat)],
-    ["Bedava token", "0 — payını açılış fiyatından satın alıyorsun"]
+    ["To the collateral vault", para(d.teminat)],
+    ["Free tokens", "0 — you buy your share at the opening price"]
   ];
 
   const t = el("table", { sinif: "tablo tablo--kart" });
@@ -388,15 +389,16 @@ function odemeOzeti(d) {
   return el("div", { sinif: "yigin yigin--sik" }, [
     el("div", { sinif: "tablo-sarmal" }, [t]),
     gecerli
-      ? not("Açılış piyasa değeri " + para(PULSE_KURAL.acilisMcap) + " ve " +
-            "arzın tamamı " + bin(PULSE_KURAL.arz) + ". Ne kadar ödersen " +
-            "aynı fiyattan açıyor — fazlası daha yüksek fiyat değil, daha " +
-            "derin bir teklif satın alıyor. Havuza giden " + para(net) +
-            " KİLİTLİ ve kimse çekemez; kasadaki " + para(d.teminat) +
-            " token sahiplerinin ve token yakılarak geri alınabilir.")
-      : not("Alım " + para(PULSE_KURAL.asgariAlim) + "–" +
-            para(PULSE_KURAL.azamiAlim) + " arası, teminat en az " +
-            para(PULSE_KURAL.asgariTeminat) + " olmalı ve bir teminat " +
-            "varlığı seçilmeli.", "uyari")
+      ? not("The opening market cap is " + para(PULSE_KURAL.acilisMcap) +
+            " and the whole supply is " + bin(PULSE_KURAL.arz) + ". " +
+            "Whatever you pay, it opens at the same price — paying more " +
+            "does not buy a higher price, it buys a deeper bid. The " +
+            para(net) + " that goes into the pool is LOCKED and nobody " +
+            "can withdraw it; the " + para(d.teminat) + " in the vault " +
+            "belongs to the holders and can be redeemed by burning.")
+      : not("The buy has to be between " + para(PULSE_KURAL.asgariAlim) +
+            " and " + para(PULSE_KURAL.azamiAlim) + ", the collateral at " +
+            "least " + para(PULSE_KURAL.asgariTeminat) + ", and a " +
+            "collateral asset has to be chosen.", "uyari")
   ]);
 }

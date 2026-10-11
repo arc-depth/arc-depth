@@ -1,33 +1,36 @@
 "use strict";
 /* ===========================================================================
- * olc-teminat-secimi.js — teminat ekranı gerçekten çalışıyor mu
+ * olc-teminat-secimi.js — does the collateral screen really work
  *
  *   node scripts/olc-teminat-secimi.js
  *
- * NE ÖLÇÜYOR
- *   Sayfanın teminat seçimi için yaptığı HER ŞEYİ, sayfanın kendi kodunu
- *   çağırarak. `docs/js/teminat.js` bir ES modülü ve burada doğrudan import
- *   ediliyor — yani test edilen şey tarifi değil, kodun kendisi.
+ * WHAT IT MEASURES
+ *   EVERYTHING the page does for collateral selection, by calling the
+ *   page's own code. `docs/js/teminat.js` is an ES module and it is
+ *   imported directly here — so what is tested is the code itself, not a
+ *   description of it.
  *
- *   Bir tarayıcıda açıp gözle bakmak bunu ölçmez: gözle bakmak "bir şey
- *   göründü" der, bu koşum "gösterilen sayı zincirle aynı" der.
+ *   Opening it in a browser and looking does not measure this: looking says
+ *   "something appeared", this run says "the number shown matches the
+ *   chain".
  *
- * NEDEN HEM GEÇMESİ HEM REDDETMESİ ÖLÇÜLÜYOR
- *   Yalnızca çalışan varlıklarla test etmek, her şeye "çalışıyor" diyen bir
- *   ekranı da geçirirdi. O yüzden kümede kasıtlı olarak reddedilmesi
- *   gerekenler var:
+ * WHY BOTH PASSING AND REFUSING ARE MEASURED
+ *   Testing only with assets that work would also pass a screen that says
+ *   "it works" about everything. So the set deliberately contains things
+ *   that have to be refused:
  *
- *     PEPE (Base)      havuzu var, likiditesi SIFIR
- *     uydurma adres    Base'de gerçekten bir havuzu var (Uniswap'te herkes
- *                      havuz açabilir) ve o da boş
+ *     PEPE (Base)      has a pool, with ZERO liquidity
+ *     a made-up address  really does have a pool on Base (anyone can open a
+ *                        pool on Uniswap) and it is empty too
  *
- *   İkisi de reddedilmek zorunda. Reddetmezse taban, kimsenin işlem
- *   yapamayacağı bir fiyattan hesaplanır.
+ *   Both have to be refused. If they are not, the floor gets computed from
+ *   a price nobody can trade at.
  *
- * ÖNERİLEN 50 DE ÖLÇÜLÜYOR
- *   Liste `teminat-adaylari.json`'dan üretiliyor ve üretim bozulabilir:
- *   adres kayması, ondalık karışması, zincir eşlemesinin boşalması. O yüzden
- *   listenin kendisi de kontrol ediliyor — ve örneklem zincirden doğrulanıyor.
+ * THE SUGGESTED 50 ARE MEASURED TOO
+ *   The list is generated from `teminat-adaylari.json`, and generation can
+ *   break: an address shifting, decimals getting confused, the chain map
+ *   emptying out. So the list itself is checked as well — and the sample is
+ *   verified against the chain.
  * =========================================================================== */
 const path = require("path");
 const fs = require("fs");

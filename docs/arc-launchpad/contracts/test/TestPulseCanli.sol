@@ -52,32 +52,37 @@ contract KurucuC2 {
     }
 }
 
-/// @title TestPulseCanli — DAĞITILMIŞ launchpad'e karşı tam yaşam döngüsü
+/// @title TestPulseCanli — the full life cycle against the DEPLOYED
+///        launchpad
 ///
-/// NEDEN AYRI BİR HARNESS
-///   `TestPulseLaunch` launchpad'i KENDİ kuruyor ve bu, hiçbir şey
-///   dağıtılmamışken doğru olan şeydi: ölçülen KODdu. Artık zincirde bir
-///   tane var ve iki iddia farklı:
+/// WHY A SEPARATE HARNESS
+///   `TestPulseLaunch` builds the launchpad ITSELF, and that was the right
+///   thing while nothing was deployed: what was measured was the CODE.
+///   There is one on chain now, and the two claims differ:
 ///
-///     "bu kod doğru"              -> 601 sav + launch ölçümü
-///     "zincirdeki bu adres doğru" -> denetim-dagitim-pulse2, 34 sav
-///     "zincirdeki bu adres İŞE YARIYOR" -> hiçbir şey söylemiyor
+///     "this code is correct"            -> 601 assertions + the launch
+///                                          measurement
+///     "this address on chain is right"  -> denetim-dagitim-pulse2, 34
+///                                          assertions
+///     "this address on chain WORKS"     -> nothing says anything
 ///
-///   Üçüncüsü bu. Hiçbir şey dağıtmıyor; dağıtılmış launchpad'i ÇAĞIRIYOR,
-///   gerçek PoolManager'a, gerçek kancayla, gerçek USDC ile. Tek sahte şey
-///   bu sözleşmenin bakiyesi.
+///   This is the third. It deploys nothing; it CALLS the deployed
+///   launchpad, against the real PoolManager, with the real hook and real
+///   USDC. The only fake thing is this contract's balance.
 ///
-/// ALTI ŞEY ÖLÇÜLÜYOR, SIRAYLA VE AYNI PARA ÜZERİNDE
-///   1. Launch gerçekten oluyor mu — kurucu payı, teminat, havuz
-///   2. dolasim() havuzu dışlıyor mu  (yanlış olsa REVERT ETMEZDİ)
-///   3. exact-input alım USDC vergisi kasaya ulaştırıyor mu  (beforeSwap)
-///   4. exact-output alım ücret ödüyor mu  (eski kancanın deliği)
-///   5. Satış vergisi kasaya ulaşıyor mu
-///   6. Token yakan biri parasını alabiliyor mu, ve hak sabit kalıyor mu
+/// SIX THINGS ARE MEASURED, IN SEQUENCE AND ON THE SAME MONEY
+///   1. Does a launch really happen — the founder's share, collateral, pool
+///   2. Does dolasim() exclude the pool  (if wrong it WOULD NOT REVERT)
+///   3. Does an exact-input buy get its USDC tax to the vault  (beforeSwap)
+///   4. Does an exact-output buy pay the fee  (the old hook's hole)
+///   5. Does the sell tax reach the vault
+///   6. Can somebody who burns tokens get their money, and does the claim
+///      stay constant
 ///
-///   Ayrı ayrı ölçülse aradaki bağlantının koptuğu bir sistem de altısını
-///   geçerdi: kasa dolabilir ama hak o parayı görmeyebilir, hak doğru
-///   olabilir ama iade ödememiş olabilir.
+///   Measured separately, a system whose links between them were broken
+///   would also pass all six: the vault can fill while the claim does not
+///   see that money, and the claim can be right while the redemption does
+///   not pay.
 contract TestPulseCanli {
     using PoolIdLibrary for PoolKey;
 

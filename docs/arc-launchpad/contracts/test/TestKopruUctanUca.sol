@@ -12,7 +12,7 @@ interface IERC20U {
     function balanceOf(address who) external view returns (uint256);
 }
 
-/// @notice AŞAMA 4, giden bacağın tamamı: yönetici -> kasa -> GERÇEK CCTP
+/// @notice STAGE 4, the whole outbound leg: manager -> vault -> REAL CCTP
 ///
 /// WHAT THE EARLIER TEST LEFT OPEN
 ///   olc-gercek-cctp.js proved Arc's real TokenMessenger accepts the call.

@@ -28,73 +28,78 @@ interface IV3Havuz {
     function increaseObservationCardinalityNext(uint16 observationCardinalityNext) external;
 }
 
-/// @title HavuzFiyat — bir kontrat adresinden fiyat türeten kaynak
+/// @title HavuzFiyat — deriving a price from nothing but a contract address
 ///
-/// NEDEN BU SÖZLEŞME VAR
-///   Teminat olarak kullanılabilecek varlıkların bir LİSTESİ yok ve
-///   olmayacak. Kullanıcı yalnızca kontrat adresini veriyor; hangi havuzda
-///   işlem göreceği, fiyatının ne olduğu ve "çalışıp çalışmadığı" buradan
-///   TÜRETİLİYOR.
+/// WHY THIS CONTRACT EXISTS
+///   There is no LIST of assets that may serve as collateral, and there
+///   will not be one. The user supplies only a contract address; which
+///   pool it trades in, what its price is and whether it "works" are all
+///   DERIVED here.
 ///
-///   Bu, uzak kasanın adresini CREATE2 ile türetip kimseden almamakla aynı
-///   desen. Kullanıcıdan alınan tek şey hangi tokeni istediği; havuz
-///   adresi, kademe ve fiyat alınmıyor.
+///   This is the same pattern as deriving the remote vault's address with
+///   CREATE2 instead of being told it. The only thing taken from the user
+///   is which token they mean: not the pool address, not the fee tier, not
+///   the price.
 ///
-/// NEDEN BESLEYİCİ ADRESİ KULLANICIDAN ALINAMAZ
-///   Alınsa şu olurdu: X tokenini ekler, "besleyici" olarak kendi yazdığı
-///   sözleşmeyi gösterir, o da X'i bir milyon dolar sayar. Kasanın taban
-///   hesabı o fiyattan yapılır ve $2.000'lık teminat karşılığında 0,002 X
-///   kabul edilir — rezerv boşalır, taban dekoratif kalır.
+/// WHY A FEED ADDRESS CANNOT COME FROM THE USER
+///   If it could, this would happen: someone adds token X, points at a
+///   "feed" they wrote themselves, and it values X at a million dollars.
+///   The vault's floor is computed from that price and 0.002 X is accepted
+///   as $2,000 of collateral — the reserve empties and the floor becomes
+///   decorative.
 ///
-///   Burada hiçbir adres kullanıcıdan alınmıyor. Fabrika adresi değişmez,
-///   `getPool` saf bir fonksiyon, fiyat o havuzun kendi geçmişinden
+///   No address here comes from the user. The factory address is fixed,
+///   `getPool` is a pure function, and the price comes from that pool's
 ///   okunuyor.
 ///
-/// EN DERİN HAVUZ, ÇÜNKÜ FARK 160 KAT
-///   Ölçüldü — DEGEN'in Base'deki dört kademesi:
+/// THE DEEPEST POOL, BECAUSE THE GAP IS 160x
+///   Measured — DEGEN's four fee tiers on Base:
 ///
 ///     kademe   100                      0
 ///     kademe   500      26.884.250.352.574
 ///     kademe  3000   4.305.542.504.445.202   <- en derin
 ///     kademe 10000     445.022.291.174.402
 ///
-///   Yanlış kademeyi seçmek 160 kat daha ince bir havuzda fiyat okumak
-///   demek. O yüzden kademe verilmiyor, taranıp en likit olan bulunuyor.
+///   Picking the wrong tier means reading a price from a pool 160 times
+///   thinner. So the tier is not supplied; they are scanned and the most
+///   liquid one is found.
 ///
-/// ÜÇ ŞART, VE HİÇBİRİ VARLIĞA KALİTE KAPISI DEĞİL
-///   Kullanıcının kuralı net: eleme yok, likidite tabanı gibi vekil
-///   ölçütler yok, meme coin de dahil çalışan her şey girer. Buradaki üç
-///   şart varlığı yargılamıyor — fiyatının ÖLÇÜLEBİLİR olmasını istiyor:
+/// THREE CONDITIONS, AND NONE OF THEM IS A QUALITY GATE
+///   The user's rule is explicit: no filtering, no proxy criteria such as
+///   a liquidity floor, and anything that works gets in, meme coins
+///   included. The three conditions here do not judge the asset — they ask
+///   that its price be MEASURABLE:
 ///
-///     1. Havuz var mı          yoksa alınıp satılacak bir şey yok
-///     2. Likidite sıfır değil  ölçüldü: PEPE'nin Base'deki iki havuzunun
-///                              da likiditesi sıfır ama observe() yine bir
-///                              fiyat döndürüyor — kimsenin işlem
-///                              yapamayacağı bir fiyat
-///     3. Gözlem geçmişi var    kardinalite 1 ise TWAP anlık fiyatın
-///                              kendisidir ve tek işlemde oynatılabilir
+///     1. A pool exists       otherwise there is nothing to trade
+///     2. Liquidity is not    measured: both of PEPE's pools on Base have
+///        zero                zero liquidity and observe() still returns a
+///                            price — a price nobody could trade at
+///     3. Observation         with cardinality 1 the TWAP is the spot
+///        history exists      price itself, and one trade can move it
 ///
-///   Üçüncüsü kalıcı bir ret değil: `gecmisiAc` ile HERKES bir havuzun
-///   gözlem geçmişini açabilir, bir kerelik gaz. Yani bir tokeni teminat
-///   olarak isteyen kişi, eksikse kendisi tamamlar.
+///   The third is not a permanent refusal: ANYONE can open a pool's
+///   observation history with `gecmisiAc`, for one transaction's gas. So
+///   whoever wants a token as collateral can supply what is missing.
 contract HavuzFiyat {
-    /// Uniswap v3'ün kanonik fabrikası. Değişmez: ayarlanabilir olsa,
-    /// ayarlayan kişi kendi "fabrikasını" gösterip her fiyatı uydurabilirdi.
+    /// Uniswap v3's canonical factory. Immutable: if it were settable,
+    /// whoever set it could point at their own "factory" and invent any
+    /// price.
     IV3Fabrika public immutable fabrika;
 
-    /// Fiyatın ölçüldüğü para birimi — USDC. Değişmez, aynı sebeple.
+    /// The unit the price is measured in — USDC. Immutable, same reason.
     address public immutable quote;
 
-    /* Taranan kademeler. Uniswap v3'ün kanonik dördü; bir havuz bunların
-       dışında bir kademede olamaz.
+    /* The fee tiers that get scanned. Uniswap v3's canonical four; a pool
+       cannot exist at any other tier.
 
-       BİR FONKSİYON, DEVİL BİR DIZI — ve bu fark ölçülerek bulundu.
-       State dizisi olarak yazıldığında değer KURUCUDA storage'a
-       yazılıyor. Bu sözleşme ise testlerde `eth_call` durum geçersiz
-       kılmasıyla enjekte ediliyor ve o yolda kurucunun storage yazmaları
-       ATILIYOR. Sonuç: dizi sıfır kalıyor, getPool(varlik, quote, 0)
-       çağrılıyor ve her varlık için "havuz yok" dönüyor — WETH dahil.
-       Kodun içinde durduğu için artık enjeksiyonda da aynı. */
+       A FUNCTION, NOT AN ARRAY — and the difference was found by
+       measurement. Written as a state array, the values are written to
+       storage BY THE CONSTRUCTOR. This contract is injected in tests
+       through an `eth_call` state override, and on that path the
+       constructor's storage writes are DISCARDED. The result: the array
+       stays zero, getPool(asset, quote, 0) is called, and every asset
+       comes back as "no pool" — WETH included. Held inside the code, it
+       now behaves the same under injection. */
     function _kademe(uint256 i) internal pure returns (uint24) {
         if (i == 0) return 100;
         if (i == 1) return 500;
@@ -102,13 +107,13 @@ contract HavuzFiyat {
         return 10000;
     }
 
-    /// TWAP penceresi. Otuz dakika, çünkü bir kademeyi otuz dakika boyunca
-    /// oynatmak likiditeyle doğru orantılı gerçek para gerektiriyor; anlık
-    /// fiyat ise tek işlemde oynatılabilir.
+    /// The TWAP window. Thirty minutes, because moving a tier for thirty
+    /// minutes costs real money in proportion to its liquidity, while a
+    /// spot price can be moved in a single transaction.
     uint32 public constant TWAP_PENCERE = 1800;
 
-    /// Gözlem geçmişi için istenen asgari. İkiden küçükse `observe` bir
-    /// ortalama değil anlık fiyat döndürür.
+    /// The minimum observation history required. Below two, `observe`
+    /// returns a spot price rather than an average.
     uint16 public constant ASGARI_KARDINALITE = 2;
 
     error FabrikaYok();
@@ -216,20 +221,23 @@ contract HavuzFiyat {
     /**
      * How much of `varlik` `quoteMiktari` buys at the average price.
      *
-     * ONDALIK DUZELTMESI YOK — VE OLMAMASI GEREKIYOR
-     *   Bu bir kez yanlis yazildi ve olcum yakaladi: tetikten turetilen
-     *   fiyat ZATEN ham birimde, yani "bir ham token basina kac ham
-     *   quote". Ustune bir de 10^(varlikOndalik - quoteOndalik) carpani
-     *   uygulaninca sonuc 10^12 kat sapti — olculdu, VIRTUAL icin
-     *   2.715 yerine 2.725.437.764.577.311 cikti.
+     * NO DECIMAL CORRECTION — AND THERE SHOULD NOT BE ONE
+     *   This was written wrongly once and measurement caught it: the price
+     *   derived from the tick is ALREADY in raw units, that is, "how much
+     *   raw quote per raw token". Applying a further factor of
+     *   10^(assetDecimals - quoteDecimals) on top of it put the result off
+     *   by 10^12 — measured, for VIRTUAL it came out as
+     *   2,725,437,764,577,311 instead of 2,715.
      *
-     *   O yuzden varlik ondaligi bu hesaba HIC girmiyor; girmemesi
-     *   gerektigi icin fonksiyon onu parametre olarak da almiyor.
-     *   Alsaydi, cagiran dogru deger verdiginde bile yanlis sonuc
-     *   uretirdi ve yanlisligi cagirana yuklenmis gorunurdu.
+     *   So the asset's decimals do NOT enter this calculation at all; and
+     *   because they should not, the function does not even take them as a
+     *   parameter. If it did, it would produce a wrong result even when
+     *   the caller passed the right value, and the wrongness would look
+     *   like the caller's fault.
      *
-     *   Gosterilecek fiyat baska bir sey: orada olcek gerekiyor ve
-     *   arayuzdeki `fiyatCevir` onu uyguluyor. Burasi miktar hesabi.
+     *   The price to DISPLAY is a different thing: scale is needed there,
+     *   and `fiyatCevir` in the interface applies it. This is the amount
+     *   calculation.
      */
     function quoteIleAlinabilir(address varlik, uint256 quoteMiktari)
         external

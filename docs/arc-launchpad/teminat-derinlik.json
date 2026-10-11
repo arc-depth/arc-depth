@@ -1,5 +1,5 @@
 {
- "olculdu": "2026-10-11T14:43:45.170Z",
+ "olculdu": "2026-10-11T19:46:20.953Z",
  "tutar": "20000000000",
  "azamiKaymaBps": 300,
  "not": "Olcut: bu tutar bu havuzda donusturulebiliyor mu. Likidite tabani ya da piyasa degeri gibi vekil kalite kapisi kullanilmadi.",
@@ -24,12 +24,12 @@
      "havuzSayisi": 4,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 3.024,
+     "ittirme": 3.0027,
      "boyutlar": {
-      "20000000": 1.0303,
-      "200000000": 1.2118,
-      "2000000000": 2.397,
-      "20000000000": 3.024
+      "20000000": 1.0302,
+      "200000000": 1.211,
+      "2000000000": 2.3863,
+      "20000000000": 3.0027
      },
      "azamiTutar": "20000000",
      "donusturulebilir": true
@@ -46,12 +46,12 @@
      "havuzSayisi": 3,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 1.1052,
+     "ittirme": 1.0963,
      "boyutlar": {
       "20000000": 1.0033,
       "200000000": 1.0062,
-      "2000000000": 1.0347,
-      "20000000000": 1.1052
+      "2000000000": 1.0345,
+      "20000000000": 1.0963
      },
      "azamiTutar": "200000000",
      "donusturulebilir": true
@@ -136,17 +136,17 @@
      "ondalik": 18,
      "kademe": 3000,
      "havuz": "0x62e0d3fd804dfbf02d08ee632e9634dba5c00d03",
-     "likidite": "5307890938673452880",
+     "likidite": "5358888185743983267",
      "kardinalite": 300,
      "havuzSayisi": 2,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 1.0262,
+     "ittirme": 1.026,
      "boyutlar": {
       "20000000": 1.003,
       "200000000": 1.0032,
       "2000000000": 1.0053,
-      "20000000000": 1.0262
+      "20000000000": 1.026
      },
      "azamiTutar": "20000000000",
      "donusturulebilir": true
@@ -163,12 +163,12 @@
      "havuzSayisi": 3,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 1.1356,
+     "ittirme": 1.1369,
      "boyutlar": {
       "20000000": 1.0002,
       "200000000": 1.001,
       "2000000000": 1.0095,
-      "20000000000": 1.1356
+      "20000000000": 1.1369
      },
      "azamiTutar": "2000000000",
      "donusturulebilir": true
@@ -980,17 +980,22 @@
      "ad": "Binance USD",
      "token": "0x4Fabb145d64652a948d72533023f6E7A623C7C53",
      "ondalik": 18,
-     "kademe": 100,
-     "havuz": "0x5e35c4eba72470ee1177dcb14dddf4d9e6d915f4",
-     "likidite": "46494274160069678",
-     "kardinalite": 1,
+     "kademe": 500,
+     "havuz": "0x00cef0386ed94d738c8f8a74e8bfd0376926d24c",
+     "likidite": "1793321023556041129",
+     "kardinalite": 180,
      "havuzSayisi": 4,
-     "olculebilir": false,
-     "sebep": "gozlem gecmisi yok",
-     "ittirme": null,
-     "boyutlar": null,
-     "azamiTutar": null,
-     "donusturulebilir": false
+     "olculebilir": true,
+     "sebep": "",
+     "ittirme": 13.9751,
+     "boyutlar": {
+      "20000000": 1.0005,
+      "200000000": 1.0006,
+      "2000000000": 1.3975,
+      "20000000000": 13.9751
+     },
+     "azamiTutar": "200000000",
+     "donusturulebilir": true
     },
     {
      "simge": "CAP",
@@ -1021,12 +1026,12 @@
      "havuzSayisi": 4,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 1.0264,
+     "ittirme": 1.0269,
      "boyutlar": {
-      "20000000": 1.0031,
+      "20000000": 1.003,
       "200000000": 1.0032,
       "2000000000": 1.0053,
-      "20000000000": 1.0264
+      "20000000000": 1.0269
      },
      "azamiTutar": "20000000000",
      "donusturulebilir": true
@@ -1162,12 +1167,12 @@
      "havuzSayisi": 4,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 1.3383,
+     "ittirme": 1.313,
      "boyutlar": {
       "20000000": 1.0112,
-      "200000000": 1.0208,
-      "2000000000": 1.08,
-      "20000000000": 1.3383
+      "200000000": 1.0206,
+      "2000000000": 1.0676,
+      "20000000000": 1.313
      },
      "azamiTutar": "200000000",
      "donusturulebilir": true
@@ -1308,12 +1313,12 @@
      "havuzSayisi": 3,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 1.1272,
+     "ittirme": 1.129,
      "boyutlar": {
       "20000000": 1.0031,
       "200000000": 1.0041,
       "2000000000": 1.0138,
-      "20000000000": 1.1272
+      "20000000000": 1.129
      },
      "azamiTutar": "2000000000",
      "donusturulebilir": true
@@ -1381,12 +1386,12 @@
      "havuzSayisi": 2,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 1.8999,
+     "ittirme": 2.2008,
      "boyutlar": {
       "20000000": 1.0103,
-      "200000000": 1.0123,
-      "2000000000": 1.0316,
-      "20000000000": 1.8999
+      "200000000": 1.0122,
+      "2000000000": 1.031,
+      "20000000000": 2.2008
      },
      "azamiTutar": "200000000",
      "donusturulebilir": true
@@ -1515,12 +1520,12 @@
      "havuzSayisi": 3,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 80.9489,
+     "ittirme": 78.7404,
      "boyutlar": {
-      "20000000": 1.2227,
-      "200000000": 2.0677,
-      "2000000000": 8.6945,
-      "20000000000": 80.9489
+      "20000000": 1.2095,
+      "200000000": 2.0196,
+      "2000000000": 8.46,
+      "20000000000": 78.7404
      },
      "azamiTutar": null,
      "donusturulebilir": false
@@ -1549,7 +1554,7 @@
      "ondalik": 6,
      "kademe": 500,
      "havuz": "0x95dbb3c7546f22bce375900abfdd64a4e5bd73d6",
-     "likidite": "107369689873863",
+     "likidite": "107421059915786",
      "kardinalite": 51,
      "havuzSayisi": 3,
      "olculebilir": true,
@@ -1593,12 +1598,12 @@
      "havuzSayisi": 2,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 4.3868,
+     "ittirme": 4.5186,
      "boyutlar": {
-      "20000000": 1.0114,
-      "200000000": 1.0228,
-      "2000000000": 1.1368,
-      "20000000000": 4.3868
+      "20000000": 1.0113,
+      "200000000": 1.0226,
+      "2000000000": 1.1337,
+      "20000000000": 4.5186
      },
      "azamiTutar": "200000000",
      "donusturulebilir": true
@@ -1700,12 +1705,12 @@
      "havuzSayisi": 3,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 1.0028,
+     "ittirme": 1.0034,
      "boyutlar": {
       "20000000": 1.0006,
       "200000000": 1.0012,
-      "2000000000": 1.0026,
-      "20000000000": 1.0028
+      "2000000000": 1.003,
+      "20000000000": 1.0034
      },
      "azamiTutar": "20000000000",
      "donusturulebilir": true
@@ -1875,12 +1880,12 @@
      "havuzSayisi": 2,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 9.6818,
+     "ittirme": 9.5446,
      "boyutlar": {
-      "20000000": 1.0185,
-      "200000000": 1.1566,
-      "2000000000": 2.5282,
-      "20000000000": 9.6818
+      "20000000": 1.0183,
+      "200000000": 1.1548,
+      "2000000000": 2.5124,
+      "20000000000": 9.5446
      },
      "azamiTutar": "20000000",
      "donusturulebilir": true
@@ -2254,17 +2259,17 @@
      "ondalik": 18,
      "kademe": 3000,
      "havuz": "0xfad57d2039c21811c8f2b5d5b65308aa99d31559",
-     "likidite": "779757429890844396",
+     "likidite": "789710677894616689",
      "kardinalite": 128,
      "havuzSayisi": 3,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 1.0101,
+     "ittirme": 1.01,
      "boyutlar": {
       "20000000": 1.003,
       "200000000": 1.0031,
       "2000000000": 1.0037,
-      "20000000000": 1.0101
+      "20000000000": 1.01
      },
      "azamiTutar": "20000000000",
      "donusturulebilir": true
@@ -2332,12 +2337,12 @@
      "havuzSayisi": 3,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 454.2955,
+     "ittirme": 614.6734,
      "boyutlar": {
       "20000000": 1.0022,
-      "200000000": 4.543,
-      "2000000000": 45.4296,
-      "20000000000": 454.2955
+      "200000000": 6.1467,
+      "2000000000": 61.4673,
+      "20000000000": 614.6734
      },
      "azamiTutar": "20000000",
      "donusturulebilir": true
@@ -2806,17 +2811,17 @@
      "ondalik": 18,
      "kademe": 3000,
      "havuz": "0xa8e8c91faa15149f5f6e4a37846dcd58b88b3ec7",
-     "likidite": "11088388000024901",
+     "likidite": "16967031267623079",
      "kardinalite": 51,
      "havuzSayisi": 2,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 7.5152,
+     "ittirme": 7.7397,
      "boyutlar": {
-      "20000000": 1.0056,
-      "200000000": 1.0264,
-      "2000000000": 1.2673,
-      "20000000000": 7.5152
+      "20000000": 1.005,
+      "200000000": 1.0199,
+      "2000000000": 1.2719,
+      "20000000000": 7.7397
      },
      "azamiTutar": "200000000",
      "donusturulebilir": true
@@ -2828,17 +2833,17 @@
      "ondalik": 18,
      "kademe": 500,
      "havuz": "0x5ae13baaef0620fdae1d355495dc51a17adb4082",
-     "likidite": "205815632103646791",
+     "likidite": "205754762482503777",
      "kardinalite": 2500,
      "havuzSayisi": 4,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 1.002,
+     "ittirme": 1.0019,
      "boyutlar": {
       "20000000": 1.0005,
       "200000000": 1.0005,
-      "2000000000": 1.0007,
-      "20000000000": 1.002
+      "2000000000": 1.0006,
+      "20000000000": 1.0019
      },
      "azamiTutar": "20000000000",
      "donusturulebilir": true
@@ -2867,17 +2872,17 @@
      "ondalik": 18,
      "kademe": 10000,
      "havuz": "0xcee31c846cbf003f4ceb5bbd234cba03c6e940c7",
-     "likidite": "173542705511696622",
+     "likidite": "231346418316067846",
      "kardinalite": 5,
      "havuzSayisi": 2,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 9.3934,
+     "ittirme": 9.0842,
      "boyutlar": {
-      "20000000": 1.055,
-      "200000000": 1.26,
-      "2000000000": 2.7299,
-      "20000000000": 9.3934
+      "20000000": 1.0438,
+      "200000000": 1.233,
+      "2000000000": 2.6522,
+      "20000000000": 9.0842
      },
      "azamiTutar": null,
      "donusturulebilir": false
@@ -2962,12 +2967,12 @@
      "havuzSayisi": 2,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 3.4472,
+     "ittirme": 3.3254,
      "boyutlar": {
-      "20000000": 1.014,
-      "200000000": 1.0487,
-      "2000000000": 1.724,
-      "20000000000": 3.4472
+      "20000000": 1.0139,
+      "200000000": 1.0476,
+      "2000000000": 1.7691,
+      "20000000000": 3.3254
      },
      "azamiTutar": "20000000",
      "donusturulebilir": true
@@ -3463,12 +3468,12 @@
      "havuzSayisi": 2,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 20.2823,
+     "ittirme": 19.0834,
      "boyutlar": {
-      "20000000": 1.2199,
-      "200000000": 2.4544,
-      "2000000000": 3.7973,
-      "20000000000": 20.2823
+      "20000000": 1.2133,
+      "200000000": 2.3616,
+      "2000000000": 3.5779,
+      "20000000000": 19.0834
      },
      "azamiTutar": null,
      "donusturulebilir": false
@@ -3677,17 +3682,17 @@
      "ondalik": 18,
      "kademe": 10000,
      "havuz": "0x020c349a0541d76c16f501abc6b2e9c98adae892",
-     "likidite": "4999340626857",
+     "likidite": "141940680128483",
      "kardinalite": 180,
      "havuzSayisi": 3,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 15.578,
+     "ittirme": 15.1316,
      "boyutlar": {
-      "20000000": 1.308,
-      "200000000": 3.5586,
-      "2000000000": 9.3062,
-      "20000000000": 15.578
+      "20000000": 1.2947,
+      "200000000": 3.4942,
+      "2000000000": 9.064,
+      "20000000000": 15.1316
      },
      "azamiTutar": null,
      "donusturulebilir": false
@@ -3767,7 +3772,7 @@
      "ondalik": 8,
      "kademe": 10000,
      "havuz": "0xa1532d04697ccb522e4efc8fba5daa75a412f7b8",
-     "likidite": "87444431416",
+     "likidite": "605094464344",
      "kardinalite": 1,
      "havuzSayisi": 3,
      "olculebilir": false,
@@ -4197,12 +4202,12 @@
      "havuzSayisi": 4,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 1.0359,
+     "ittirme": 1.0339,
      "boyutlar": {
       "20000000": 1.003,
       "200000000": 1.0033,
-      "2000000000": 1.0064,
-      "20000000000": 1.0359
+      "2000000000": 1.0063,
+      "20000000000": 1.0339
      },
      "azamiTutar": "2000000000",
      "donusturulebilir": true
@@ -4280,12 +4285,12 @@
      "havuzSayisi": 3,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 3.3282,
+     "ittirme": 3.3307,
      "boyutlar": {
       "20000000": 1.003,
       "200000000": 1.003,
       "2000000000": 1.0033,
-      "20000000000": 3.3282
+      "20000000000": 3.3307
      },
      "azamiTutar": "2000000000",
      "donusturulebilir": true
@@ -4314,7 +4319,7 @@
      "ondalik": 6,
      "kademe": 100,
      "havuz": "0x3416cf6c708da44db2624d63ea0aaef7113527c6",
-     "likidite": "4483257234846243",
+     "likidite": "4909648677414235",
      "kardinalite": 180,
      "havuzSayisi": 4,
      "olculebilir": true,
@@ -4387,7 +4392,7 @@
      "ondalik": 8,
      "kademe": 3000,
      "havuz": "0x99ac8ca7087fa4a2a1fb6357269965a2014abc35",
-     "likidite": "2322211464963",
+     "likidite": "2289920376155",
      "kardinalite": 600,
      "havuzSayisi": 4,
      "olculebilir": true,
@@ -4443,7 +4448,7 @@
      "ondalik": 18,
      "kademe": 3000,
      "havuz": "0x8ad599c3a0ff1de082011efddc58f1908eb6e6d8",
-     "likidite": "4695417462389292270",
+     "likidite": "4847389567590891849",
      "kardinalite": 1440,
      "havuzSayisi": 4,
      "olculebilir": true,
@@ -4735,17 +4740,17 @@
      "ondalik": 18,
      "kademe": 3000,
      "havuz": "0xc562998555779318b85284b7af71bebb2ada3461",
-     "likidite": "35407624675078994",
+     "likidite": "37495627158230885",
      "kardinalite": 20,
      "havuzSayisi": 3,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 1.0498,
+     "ittirme": 1.0473,
      "boyutlar": {
-      "20000000": 1.0031,
+      "20000000": 1.003,
       "200000000": 1.0034,
-      "2000000000": 1.0075,
-      "20000000000": 1.0498
+      "2000000000": 1.0071,
+      "20000000000": 1.0473
      },
      "azamiTutar": "2000000000",
      "donusturulebilir": true
@@ -4757,17 +4762,17 @@
      "ondalik": 18,
      "kademe": 500,
      "havuz": "0xe5b5f522e98b5a2baae212d4da66b865b781db97",
-     "likidite": "552766403307316855",
+     "likidite": "550965493706667622",
      "kardinalite": 2000,
      "havuzSayisi": 4,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 1.0361,
+     "ittirme": 1.0377,
      "boyutlar": {
-      "20000000": 0.9998,
-      "200000000": 1.0001,
-      "2000000000": 1.0034,
-      "20000000000": 1.0361
+      "20000000": 1,
+      "200000000": 1.0003,
+      "2000000000": 1.0036,
+      "20000000000": 1.0377
      },
      "azamiTutar": "2000000000",
      "donusturulebilir": true
@@ -4784,12 +4789,12 @@
      "havuzSayisi": 4,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 1.1226,
+     "ittirme": 1.1204,
      "boyutlar": {
       "20000000": 1.0031,
       "200000000": 1.0043,
-      "2000000000": 1.0156,
-      "20000000000": 1.1226
+      "2000000000": 1.0155,
+      "20000000000": 1.1204
      },
      "azamiTutar": "2000000000",
      "donusturulebilir": true
@@ -4869,17 +4874,17 @@
      "ondalik": 18,
      "kademe": 10000,
      "havuz": "0x9144a6e8ad6f56db96dac444eb173831660ba3e5",
-     "likidite": "235754229300774934",
+     "likidite": "235757401655872949",
      "kardinalite": 360,
      "havuzSayisi": 4,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 1.2433,
+     "ittirme": 1.2445,
      "boyutlar": {
       "20000000": 1.0103,
       "200000000": 1.0124,
-      "2000000000": 1.0325,
-      "20000000000": 1.2433
+      "2000000000": 1.0328,
+      "20000000000": 1.2445
      },
      "azamiTutar": "200000000",
      "donusturulebilir": true
@@ -4925,17 +4930,17 @@
      "ondalik": 18,
      "kademe": 3000,
      "havuz": "0x22906596bd81f53f01d700ddbdb3935bac2e1446",
-     "likidite": "918887917330547440",
+     "likidite": "1247413418714763346",
      "kardinalite": 450,
      "havuzSayisi": 3,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 1.1095,
+     "ittirme": 1.1037,
      "boyutlar": {
-      "20000000": 1.0052,
-      "200000000": 1.0068,
-      "2000000000": 1.0227,
-      "20000000000": 1.1095
+      "20000000": 1.0032,
+      "200000000": 1.0044,
+      "2000000000": 1.0162,
+      "20000000000": 1.1037
      },
      "azamiTutar": "2000000000",
      "donusturulebilir": true
@@ -4952,12 +4957,12 @@
      "havuzSayisi": 2,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 1.7786,
+     "ittirme": 1.7782,
      "boyutlar": {
       "20000000": 1.0109,
       "200000000": 1.0178,
       "2000000000": 1.0869,
-      "20000000000": 1.7786
+      "20000000000": 1.7782
      },
      "azamiTutar": "200000000",
      "donusturulebilir": true
@@ -5037,17 +5042,17 @@
      "ondalik": 8,
      "kademe": 500,
      "havuz": "0xfbb6eed8e7aa03b138556eedaf5d271a5e1e43ef",
-     "likidite": "2754368406447",
+     "likidite": "2893725699124",
      "kardinalite": 2000,
      "havuzSayisi": 4,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 1.0008,
+     "ittirme": 1.0007,
      "boyutlar": {
       "20000000": 1.0005,
       "200000000": 1.0005,
       "2000000000": 1.0005,
-      "20000000000": 1.0008
+      "20000000000": 1.0007
      },
      "azamiTutar": "20000000000",
      "donusturulebilir": true
@@ -5081,14 +5086,14 @@
      "havuzSayisi": 4,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 9.0372,
+     "ittirme": 9.1194,
      "boyutlar": {
       "20000000": 1.0058,
-      "200000000": 1.0312,
-      "2000000000": 1.1815,
-      "20000000000": 9.0372
+      "200000000": 1.0303,
+      "2000000000": 1.1746,
+      "20000000000": 9.1194
      },
-     "azamiTutar": "20000000",
+     "azamiTutar": "200000000",
      "donusturulebilir": true
     },
     {
@@ -5137,12 +5142,12 @@
      "havuzSayisi": 2,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 1.0904,
+     "ittirme": 1.0915,
      "boyutlar": {
       "20000000": 1.0102,
       "200000000": 1.0108,
       "2000000000": 1.0174,
-      "20000000000": 1.0904
+      "20000000000": 1.0915
      },
      "azamiTutar": "2000000000",
      "donusturulebilir": true
@@ -5154,17 +5159,17 @@
      "ondalik": 8,
      "kademe": 10000,
      "havuz": "0x824ed9d2f9ca65636eba5a89d3bc3c9fe7cc3f9a",
-     "likidite": "61807204169",
+     "likidite": "47946294952",
      "kardinalite": 600,
      "havuzSayisi": 1,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 1.15,
+     "ittirme": 1.2598,
      "boyutlar": {
       "20000000": 1.0102,
-      "200000000": 1.011,
-      "2000000000": 1.0197,
-      "20000000000": 1.15
+      "200000000": 1.0113,
+      "2000000000": 1.0219,
+      "20000000000": 1.2598
      },
      "azamiTutar": "2000000000",
      "donusturulebilir": true
@@ -5254,12 +5259,12 @@
      "havuzSayisi": 3,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 90.2238,
+     "ittirme": 89.9185,
      "boyutlar": {
-      "20000000": 10.2258,
-      "200000000": 16.0169,
-      "2000000000": 21.3962,
-      "20000000000": 90.2238
+      "20000000": 10.2007,
+      "200000000": 15.9649,
+      "2000000000": 21.324,
+      "20000000000": 89.9185
      },
      "azamiTutar": null,
      "donusturulebilir": false
@@ -5293,12 +5298,12 @@
      "havuzSayisi": 3,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 46.8691,
+     "ittirme": 46.1521,
      "boyutlar": {
-      "20000000": 1.0559,
-      "200000000": 1.7504,
-      "2000000000": 4.6869,
-      "20000000000": 46.8691
+      "20000000": 1.0552,
+      "200000000": 1.7453,
+      "2000000000": 4.6152,
+      "20000000000": 46.1521
      },
      "azamiTutar": null,
      "donusturulebilir": false
@@ -5332,12 +5337,12 @@
      "havuzSayisi": 4,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 1.4478,
+     "ittirme": 1.494,
      "boyutlar": {
       "20000000": 1.0001,
       "200000000": 1.0001,
       "2000000000": 1.0001,
-      "20000000000": 1.4478
+      "20000000000": 1.494
      },
      "azamiTutar": "2000000000",
      "donusturulebilir": true
@@ -5349,17 +5354,17 @@
      "ondalik": 18,
      "kademe": 3000,
      "havuz": "0x0cc3150056ff3fa2e70be77d25fe9ec33d12a437",
-     "likidite": "4422441534717023",
+     "likidite": "4432806103385349",
      "kardinalite": 20,
      "havuzSayisi": 4,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 152.5555,
+     "ittirme": 152.0274,
      "boyutlar": {
-      "20000000": 1.1496,
-      "200000000": 2.5124,
-      "2000000000": 16.1509,
-      "20000000000": 152.5555
+      "20000000": 1.1491,
+      "200000000": 2.5074,
+      "2000000000": 16.0983,
+      "20000000000": 152.0274
      },
      "azamiTutar": null,
      "donusturulebilir": false
@@ -5456,17 +5461,17 @@
      "ondalik": 18,
      "kademe": 3000,
      "havuz": "0x99571b348e9bd9cec1eb4dfc053be41a7a698b58",
-     "likidite": "510699134119409738",
+     "likidite": "514254300053441225",
      "kardinalite": 10,
      "havuzSayisi": 3,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 1.5798,
+     "ittirme": 1.6434,
      "boyutlar": {
       "20000000": 1.0031,
       "200000000": 1.0042,
-      "2000000000": 1.0147,
-      "20000000000": 1.5798
+      "2000000000": 1.0148,
+      "20000000000": 1.6434
      },
      "azamiTutar": "2000000000",
      "donusturulebilir": true
@@ -5483,12 +5488,12 @@
      "havuzSayisi": 4,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 1.8863,
+     "ittirme": 1.8819,
      "boyutlar": {
       "20000000": 1.0112,
       "200000000": 1.0211,
-      "2000000000": 1.1203,
-      "20000000000": 1.8863
+      "2000000000": 1.12,
+      "20000000000": 1.8819
      },
      "azamiTutar": "200000000",
      "donusturulebilir": true
@@ -5500,17 +5505,17 @@
      "ondalik": 6,
      "kademe": 500,
      "havuz": "0x7279c08a36333e12c3fc81747963264c100d66fb",
-     "likidite": "2777932631396",
+     "likidite": "2471533834606",
      "kardinalite": 200,
      "havuzSayisi": 4,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 1.0134,
+     "ittirme": 1.0105,
      "boyutlar": {
       "20000000": 1.0005,
       "200000000": 1.0006,
-      "2000000000": 1.0012,
-      "20000000000": 1.0134
+      "2000000000": 1.0011,
+      "20000000000": 1.0105
      },
      "azamiTutar": "20000000000",
      "donusturulebilir": true
@@ -5583,12 +5588,12 @@
      "havuzSayisi": 3,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 1.6067,
+     "ittirme": 1.5966,
      "boyutlar": {
       "20000000": 1.0011,
-      "200000000": 1.0066,
-      "2000000000": 1.0611,
-      "20000000000": 1.6067
+      "200000000": 1.0065,
+      "2000000000": 1.0601,
+      "20000000000": 1.5966
      },
      "azamiTutar": "200000000",
      "donusturulebilir": true
@@ -5605,12 +5610,12 @@
      "havuzSayisi": 2,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 2.9027,
+     "ittirme": 2.9126,
      "boyutlar": {
       "20000000": 1.0054,
-      "200000000": 1.0265,
-      "2000000000": 1.239,
-      "20000000000": 2.9027
+      "200000000": 1.0267,
+      "2000000000": 1.2401,
+      "20000000000": 2.9126
      },
      "azamiTutar": "200000000",
      "donusturulebilir": true
@@ -5717,17 +5722,17 @@
      "ondalik": 18,
      "kademe": 10000,
      "havuz": "0x860c135ac0156b18cf0771274597e3f98526a0bc",
-     "likidite": "1049899977466575",
+     "likidite": "1051191240296543",
      "kardinalite": 10,
      "havuzSayisi": 3,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 66.5976,
+     "ittirme": 61.0296,
      "boyutlar": {
-      "20000000": 1.3504,
-      "200000000": 1.8666,
-      "2000000000": 6.9584,
-      "20000000000": 66.5976
+      "20000000": 1.2586,
+      "200000000": 1.7143,
+      "2000000000": 6.3771,
+      "20000000000": 61.0296
      },
      "azamiTutar": null,
      "donusturulebilir": false
@@ -5744,12 +5749,12 @@
      "havuzSayisi": 4,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 45.9088,
+     "ittirme": 45.112,
      "boyutlar": {
-      "20000000": 1.8554,
-      "200000000": 3.5801,
-      "2000000000": 6.8417,
-      "20000000000": 45.9088
+      "20000000": 1.8464,
+      "200000000": 3.5264,
+      "2000000000": 6.7241,
+      "20000000000": 45.112
      },
      "azamiTutar": null,
      "donusturulebilir": false
@@ -5885,7 +5890,7 @@
      "ondalik": 18,
      "kademe": 10000,
      "havuz": "0x2043b296ffc6b2d3bf4a3f3167d2afb3b0fbdbee",
-     "likidite": "1012257457732259748",
+     "likidite": "1011900446160280967",
      "kardinalite": 360,
      "havuzSayisi": 4,
      "olculebilir": true,
@@ -5980,17 +5985,17 @@
      "ondalik": 18,
      "kademe": 10000,
      "havuz": "0x8582924d47688e81292a72f2833133c5dbc320d9",
-     "likidite": "90621350455012346",
+     "likidite": "79557707670148417",
      "kardinalite": 120,
      "havuzSayisi": 2,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 25.0041,
+     "ittirme": 17.1179,
      "boyutlar": {
-      "20000000": 1.0107,
-      "200000000": 1.0201,
-      "2000000000": 2.5004,
-      "20000000000": 25.0041
+      "20000000": 1.0108,
+      "200000000": 1.0167,
+      "2000000000": 1.7539,
+      "20000000000": 17.1179
      },
      "azamiTutar": "200000000",
      "donusturulebilir": true
@@ -6002,7 +6007,7 @@
      "ondalik": 18,
      "kademe": 3000,
      "havuz": "0x518e7ce7e4844941737f670eb4b4b1161f013a28",
-     "likidite": "1651103741055950",
+     "likidite": "2599702287758952",
      "kardinalite": 1,
      "havuzSayisi": 3,
      "olculebilir": false,
@@ -6087,17 +6092,17 @@
      "ondalik": 18,
      "kademe": 3000,
      "havuz": "0x953764548d1ca834e2b73fcd0d26a495336c99c8",
-     "likidite": "511153512399494372",
+     "likidite": "511998642866481877",
      "kardinalite": 2000,
      "havuzSayisi": 2,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 1.2086,
+     "ittirme": 1.2051,
      "boyutlar": {
       "20000000": 1.0033,
-      "200000000": 1.0075,
-      "2000000000": 1.0216,
-      "20000000000": 1.2086
+      "200000000": 1.0057,
+      "2000000000": 1.0146,
+      "20000000000": 1.2051
      },
      "azamiTutar": "2000000000",
      "donusturulebilir": true
@@ -6187,12 +6192,12 @@
      "havuzSayisi": 3,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 4.0645,
+     "ittirme": 4.0807,
      "boyutlar": {
       "20000000": 1.031,
-      "200000000": 1.6062,
-      "2000000000": 3.5339,
-      "20000000000": 4.0645
+      "200000000": 1.6004,
+      "2000000000": 3.5417,
+      "20000000000": 4.0807
      },
      "azamiTutar": null,
      "donusturulebilir": false
@@ -6209,12 +6214,12 @@
      "havuzSayisi": 2,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 251.6436,
+     "ittirme": 256.9919,
      "boyutlar": {
-      "20000000": 1.0368,
-      "200000000": 2.5164,
-      "2000000000": 25.1644,
-      "20000000000": 251.6436
+      "20000000": 1.0378,
+      "200000000": 2.5699,
+      "2000000000": 25.6992,
+      "20000000000": 256.9919
      },
      "azamiTutar": null,
      "donusturulebilir": false
@@ -6282,12 +6287,12 @@
      "havuzSayisi": 2,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 2.8865,
+     "ittirme": 2.885,
      "boyutlar": {
       "20000000": 1.0049,
       "200000000": 1.0218,
-      "2000000000": 1.1914,
-      "20000000000": 2.8865
+      "2000000000": 1.1912,
+      "20000000000": 2.885
      },
      "azamiTutar": "200000000",
      "donusturulebilir": true
@@ -6333,17 +6338,17 @@
      "ondalik": 8,
      "kademe": 10000,
      "havuz": "0x037818b04ac34ea8b54b6683b79ef24d23c0e7cb",
-     "likidite": "3069135502747",
+     "likidite": "3424801835024",
      "kardinalite": 10000,
      "havuzSayisi": 2,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 1.1092,
+     "ittirme": 1.108,
      "boyutlar": {
       "20000000": 1.0102,
-      "200000000": 1.0112,
-      "2000000000": 1.0208,
-      "20000000000": 1.1092
+      "200000000": 1.011,
+      "2000000000": 1.0196,
+      "20000000000": 1.108
      },
      "azamiTutar": "2000000000",
      "donusturulebilir": true
@@ -6445,12 +6450,12 @@
      "havuzSayisi": 4,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 1.427,
+     "ittirme": 1.4278,
      "boyutlar": {
       "20000000": 1.0105,
       "200000000": 1.0145,
       "2000000000": 1.0541,
-      "20000000000": 1.427
+      "20000000000": 1.4278
      },
      "azamiTutar": "200000000",
      "donusturulebilir": true
@@ -6489,12 +6494,12 @@
      "havuzSayisi": 3,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 1.8546,
+     "ittirme": 1.8515,
      "boyutlar": {
       "20000000": 1.0042,
-      "200000000": 1.0145,
-      "2000000000": 1.1174,
-      "20000000000": 1.8546
+      "200000000": 1.0144,
+      "2000000000": 1.1172,
+      "20000000000": 1.8515
      },
      "azamiTutar": "200000000",
      "donusturulebilir": true
@@ -6506,17 +6511,17 @@
      "ondalik": 18,
      "kademe": 10000,
      "havuz": "0x35d84ae687f0d3bf8548d5470fd04d2abe74f074",
-     "likidite": "34013124339550684",
+     "likidite": "34995495114463721",
      "kardinalite": 10,
      "havuzSayisi": 4,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 1.1264,
+     "ittirme": 1.1096,
      "boyutlar": {
       "20000000": 1.0103,
-      "200000000": 1.0122,
-      "2000000000": 1.0305,
-      "20000000000": 1.1264
+      "200000000": 1.012,
+      "2000000000": 1.0216,
+      "20000000000": 1.1096
      },
      "azamiTutar": "2000000000",
      "donusturulebilir": true
@@ -6550,12 +6555,12 @@
      "havuzSayisi": 4,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 8.1157,
+     "ittirme": 8.074,
      "boyutlar": {
       "20000000": 1.0001,
       "200000000": 1.0001,
-      "2000000000": 1.0402,
-      "20000000000": 8.1157
+      "2000000000": 1.0372,
+      "20000000000": 8.074
      },
      "azamiTutar": "200000000",
      "donusturulebilir": true
@@ -6567,17 +6572,17 @@
      "ondalik": 6,
      "kademe": 100,
      "havuz": "0xd56da2b74ba826f19015e6b7dd9dae1903e85da1",
-     "likidite": "163744897534621",
+     "likidite": "195159517258753",
      "kardinalite": 1000,
      "havuzSayisi": 4,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 1.0003,
+     "ittirme": 1.0002,
      "boyutlar": {
       "20000000": 1.0001,
       "200000000": 1.0001,
       "2000000000": 1.0001,
-      "20000000000": 1.0003
+      "20000000000": 1.0002
      },
      "azamiTutar": "20000000000",
      "donusturulebilir": true
@@ -6589,17 +6594,17 @@
      "ondalik": 18,
      "kademe": 3000,
      "havuz": "0x529d2863a1521d0b57db028168fde2e97120017c",
-     "likidite": "4014881479201337123",
+     "likidite": "4001193325904842863",
      "kardinalite": 600,
      "havuzSayisi": 4,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 1.0088,
+     "ittirme": 1.0089,
      "boyutlar": {
       "20000000": 1.003,
       "200000000": 1.0031,
       "2000000000": 1.0036,
-      "20000000000": 1.0088
+      "20000000000": 1.0089
      },
      "azamiTutar": "20000000000",
      "donusturulebilir": true
@@ -6611,17 +6616,17 @@
      "ondalik": 18,
      "kademe": 3000,
      "havuz": "0x67a11022b7b6ed66f81233f6c8ed6e48f7826530",
-     "likidite": "227921699630869997",
+     "likidite": "228246354022713483",
      "kardinalite": 2000,
      "havuzSayisi": 3,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 1.0214,
+     "ittirme": 1.0202,
      "boyutlar": {
       "20000000": 1.003,
       "200000000": 1.0032,
-      "2000000000": 1.0049,
-      "20000000000": 1.0214
+      "2000000000": 1.0048,
+      "20000000000": 1.0202
      },
      "azamiTutar": "20000000000",
      "donusturulebilir": true
@@ -6667,7 +6672,7 @@
      "ondalik": 18,
      "kademe": 3000,
      "havuz": "0x6c561b446416e1a00e8e93e221854d6ea4171372",
-     "likidite": "34742720369910481223",
+     "likidite": "34586286237172494103",
      "kardinalite": 2000,
      "havuzSayisi": 4,
      "olculebilir": true,
@@ -6706,17 +6711,17 @@
      "ondalik": 18,
      "kademe": 100,
      "havuz": "0x2df380544b88adb3ad0a94100dcc45fd705aae2d",
-     "likidite": "32074340082439550311",
+     "likidite": "33613496369313567450",
      "kardinalite": 20,
      "havuzSayisi": 4,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 1.0035,
+     "ittirme": 1.004,
      "boyutlar": {
-      "20000000": 1,
-      "200000000": 0.9999,
-      "2000000000": 1.0003,
-      "20000000000": 1.0035
+      "20000000": 1.0004,
+      "200000000": 1.0004,
+      "2000000000": 1.0007,
+      "20000000000": 1.004
      },
      "azamiTutar": "20000000000",
      "donusturulebilir": true
@@ -6745,17 +6750,17 @@
      "ondalik": 18,
      "kademe": 3000,
      "havuz": "0x91a6e9dc63cab9e52f29f712d688e845dd01a5fe",
-     "likidite": "1914685169750125",
+     "likidite": "1927996762737686",
      "kardinalite": 500,
      "havuzSayisi": 4,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 5.4729,
+     "ittirme": 5.4661,
      "boyutlar": {
-      "20000000": 1.0071,
-      "200000000": 1.0432,
-      "2000000000": 1.3809,
-      "20000000000": 5.4729
+      "20000000": 1.007,
+      "200000000": 1.043,
+      "2000000000": 1.3798,
+      "20000000000": 5.4661
      },
      "azamiTutar": "20000000",
      "donusturulebilir": true
@@ -6789,12 +6794,12 @@
      "havuzSayisi": 4,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 1.0957,
+     "ittirme": 1.0975,
      "boyutlar": {
-      "20000000": 1.0031,
-      "200000000": 1.0037,
-      "2000000000": 1.0102,
-      "20000000000": 1.0957
+      "20000000": 1.0034,
+      "200000000": 1.004,
+      "2000000000": 1.0109,
+      "20000000000": 1.0975
      },
      "azamiTutar": "2000000000",
      "donusturulebilir": true
@@ -6806,17 +6811,17 @@
      "ondalik": 18,
      "kademe": 10000,
      "havuz": "0x4587df381022922f6622f9096c22e754bcf27b4f",
-     "likidite": "26266787378741002",
+     "likidite": "25974510077927759",
      "kardinalite": 200,
      "havuzSayisi": 3,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 1.5998,
+     "ittirme": 1.5978,
      "boyutlar": {
       "20000000": 1.0106,
-      "200000000": 1.0155,
-      "2000000000": 1.064,
-      "20000000000": 1.5998
+      "200000000": 1.0154,
+      "2000000000": 1.0633,
+      "20000000000": 1.5978
      },
      "azamiTutar": "200000000",
      "donusturulebilir": true
@@ -6872,17 +6877,17 @@
      "ondalik": 18,
      "kademe": 3000,
      "havuz": "0x3db70832f48f8c01ee041671f7bb1cfaa2677584",
-     "likidite": "24877581228007287",
+     "likidite": "25028033116719182",
      "kardinalite": 2000,
      "havuzSayisi": 4,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 1.065,
+     "ittirme": 1.0648,
      "boyutlar": {
       "20000000": 1.0031,
       "200000000": 1.0036,
       "2000000000": 1.0092,
-      "20000000000": 1.065
+      "20000000000": 1.0648
      },
      "azamiTutar": "2000000000",
      "donusturulebilir": true
@@ -6928,17 +6933,17 @@
      "ondalik": 18,
      "kademe": 3000,
      "havuz": "0xaebdca1bc8d89177ebe2308d62af5e74885dccc3",
-     "likidite": "1190457472316623505",
+     "likidite": "1252428836816333698",
      "kardinalite": 50,
      "havuzSayisi": 4,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 1.0425,
+     "ittirme": 1.0401,
      "boyutlar": {
       "20000000": 1.003,
       "200000000": 1.0034,
-      "2000000000": 1.0068,
-      "20000000000": 1.0425
+      "2000000000": 1.0066,
+      "20000000000": 1.0401
      },
      "azamiTutar": "2000000000",
      "donusturulebilir": true
@@ -7096,12 +7101,12 @@
      "havuzSayisi": 3,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 4.4369,
+     "ittirme": 4.382,
      "boyutlar": {
       "20000000": 1.008,
-      "200000000": 1.0531,
-      "2000000000": 1.4164,
-      "20000000000": 4.4369
+      "200000000": 1.0526,
+      "2000000000": 1.4035,
+      "20000000000": 4.382
      },
      "azamiTutar": "20000000",
      "donusturulebilir": true
@@ -7422,12 +7427,12 @@
      "havuzSayisi": 3,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 2.5519,
+     "ittirme": 2.7452,
      "boyutlar": {
       "20000000": 1.0034,
       "200000000": 1.0066,
-      "2000000000": 1.0391,
-      "20000000000": 2.5519
+      "2000000000": 1.0387,
+      "20000000000": 2.7452
      },
      "azamiTutar": "200000000",
      "donusturulebilir": true
@@ -7439,17 +7444,17 @@
      "ondalik": 18,
      "kademe": 3000,
      "havuz": "0xbbe36e6f0331c6a36ab44bc8421e28e1a1871c1e",
-     "likidite": "21945575588809112",
+     "likidite": "21983798871996481",
      "kardinalite": 20,
      "havuzSayisi": 4,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 1.2501,
+     "ittirme": 1.2468,
      "boyutlar": {
       "20000000": 1.0033,
       "200000000": 1.0055,
-      "2000000000": 1.0282,
-      "20000000000": 1.2501
+      "2000000000": 1.0276,
+      "20000000000": 1.2468
      },
      "azamiTutar": "2000000000",
      "donusturulebilir": true
@@ -7483,12 +7488,12 @@
      "havuzSayisi": 3,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 57969.9404,
+     "ittirme": 58305.5038,
      "boyutlar": {
-      "20000000": 58.4695,
-      "200000000": 580.1938,
-      "2000000000": 5797.4434,
-      "20000000000": 57969.9404
+      "20000000": 58.8108,
+      "200000000": 583.5552,
+      "2000000000": 5831.005,
+      "20000000000": 58305.5038
      },
      "azamiTutar": null,
      "donusturulebilir": false
@@ -7602,17 +7607,17 @@
      "ondalik": 18,
      "kademe": 3000,
      "havuz": "0xc6af8e73e2261264ef95466b97b13e03bd88165e",
-     "likidite": "237572547305399931",
+     "likidite": "237634332020292682",
      "kardinalite": 100,
      "havuzSayisi": 4,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 1.0557,
+     "ittirme": 1.0523,
      "boyutlar": {
       "20000000": 1.0031,
       "200000000": 1.0036,
-      "2000000000": 1.0087,
-      "20000000000": 1.0557
+      "2000000000": 1.0086,
+      "20000000000": 1.0523
      },
      "azamiTutar": "2000000000",
      "donusturulebilir": true
@@ -7845,17 +7850,17 @@
      "ondalik": 18,
      "kademe": 3000,
      "havuz": "0x05477c22a5349cee601500da0489dad137fd6bfa",
-     "likidite": "122937612972320482",
+     "likidite": "123502167737701236",
      "kardinalite": 1000,
      "havuzSayisi": 4,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 1.0608,
+     "ittirme": 1.0567,
      "boyutlar": {
       "20000000": 1.0031,
       "200000000": 1.0036,
-      "2000000000": 1.0089,
-      "20000000000": 1.0608
+      "2000000000": 1.0088,
+      "20000000000": 1.0567
      },
      "azamiTutar": "2000000000",
      "donusturulebilir": true
@@ -7889,12 +7894,12 @@
      "havuzSayisi": 4,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 1.4794,
+     "ittirme": 1.4454,
      "boyutlar": {
       "20000000": 1.0001,
       "200000000": 1.0001,
       "2000000000": 1.0001,
-      "20000000000": 1.4794
+      "20000000000": 1.4454
      },
      "azamiTutar": "2000000000",
      "donusturulebilir": true
@@ -7923,7 +7928,7 @@
      "ondalik": 6,
      "kademe": 100,
      "havuz": "0xbe3ad6a5669dc0b8b12febc03608860c31e2eef6",
-     "likidite": "4462537271123959",
+     "likidite": "4876491902819964",
      "kardinalite": 1000,
      "havuzSayisi": 4,
      "olculebilir": true,
@@ -7945,7 +7950,7 @@
      "ondalik": 8,
      "kademe": 500,
      "havuz": "0x0e4831319a50228b9e450861297ab92dee15b44f",
-     "likidite": "2417153410458",
+     "likidite": "2765792302362",
      "kardinalite": 2000,
      "havuzSayisi": 4,
      "olculebilir": true,
@@ -7967,17 +7972,17 @@
      "ondalik": 18,
      "kademe": 500,
      "havuz": "0xc6962004f452be9203591991d15f6b388e09e8d0",
-     "likidite": "3198196546664112268",
+     "likidite": "3196874526314688459",
      "kardinalite": 9000,
      "havuzSayisi": 4,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 1.0006,
+     "ittirme": 1.0004,
      "boyutlar": {
       "20000000": 1.0005,
-      "200000000": 1.0005,
-      "2000000000": 1.0005,
-      "20000000000": 1.0006
+      "200000000": 1.0004,
+      "2000000000": 1.0004,
+      "20000000000": 1.0004
      },
      "azamiTutar": "20000000000",
      "donusturulebilir": true
@@ -8067,12 +8072,12 @@
      "havuzSayisi": 4,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 7.8195,
+     "ittirme": 9.1338,
      "boyutlar": {
       "20000000": 1.0107,
-      "200000000": 1.0162,
-      "2000000000": 1.0853,
-      "20000000000": 7.8195
+      "200000000": 1.0161,
+      "2000000000": 1.1264,
+      "20000000000": 9.1338
      },
      "azamiTutar": "200000000",
      "donusturulebilir": true
@@ -8150,12 +8155,12 @@
      "havuzSayisi": 2,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 50.6643,
+     "ittirme": 51.1303,
      "boyutlar": {
-      "20000000": 1.0276,
-      "200000000": 1.185,
-      "2000000000": 5.0664,
-      "20000000000": 50.6643
+      "20000000": 1.0274,
+      "200000000": 1.1833,
+      "2000000000": 5.113,
+      "20000000000": 51.1303
      },
      "azamiTutar": "20000000",
      "donusturulebilir": true
@@ -8184,17 +8189,17 @@
      "ondalik": 18,
      "kademe": 100,
      "havuz": "0xd28f71e383e93c570d3edfe82ebbceb35ec6c412",
-     "likidite": "8464975896988317065",
+     "likidite": "10965718655406895425",
      "kardinalite": 1000,
      "havuzSayisi": 2,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 1.3634,
+     "ittirme": 1.3739,
      "boyutlar": {
       "20000000": 1.0001,
       "200000000": 1.0001,
       "2000000000": 1.0003,
-      "20000000000": 1.3634
+      "20000000000": 1.3739
      },
      "azamiTutar": "2000000000",
      "donusturulebilir": true
@@ -8376,17 +8381,17 @@
      "ondalik": 18,
      "kademe": 3000,
      "havuz": "0xb533c12fb4e7b53b5524eab9b47d93ff6c7a456f",
-     "likidite": "977782834113316824",
+     "likidite": "938628270612789577",
      "kardinalite": 1000,
      "havuzSayisi": 4,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 1.055,
+     "ittirme": 1.038,
      "boyutlar": {
       "20000000": 1.0031,
-      "200000000": 1.0035,
-      "2000000000": 1.0084,
-      "20000000000": 1.055
+      "200000000": 1.0036,
+      "2000000000": 1.0072,
+      "20000000000": 1.038
      },
      "azamiTutar": "2000000000",
      "donusturulebilir": true
@@ -8510,12 +8515,12 @@
      "havuzSayisi": 4,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 1.3932,
+     "ittirme": 1.4164,
      "boyutlar": {
       "20000000": 1.0001,
       "200000000": 1.0001,
       "2000000000": 1.0001,
-      "20000000000": 1.3932
+      "20000000000": 1.4164
      },
      "azamiTutar": "2000000000",
      "donusturulebilir": true
@@ -8583,17 +8588,17 @@
      "ondalik": 8,
      "kademe": 3000,
      "havuz": "0xadab76dd2dca7ae080a796f0ce86170e482afb4a",
-     "likidite": "31110055123",
+     "likidite": "39626397291",
      "kardinalite": 140,
      "havuzSayisi": 4,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 1.0222,
+     "ittirme": 1.0213,
      "boyutlar": {
-      "20000000": 1.003,
+      "20000000": 1.0031,
       "200000000": 1.0032,
-      "2000000000": 1.0052,
-      "20000000000": 1.0222
+      "2000000000": 1.0048,
+      "20000000000": 1.0213
      },
      "azamiTutar": "20000000000",
      "donusturulebilir": true
@@ -8622,7 +8627,7 @@
      "ondalik": 18,
      "kademe": 3000,
      "havuz": "0xc1738d90e2e26c35784a0d3e3d8a9f795074bca4",
-     "likidite": "1038705202658071788",
+     "likidite": "1050954822226391016",
      "kardinalite": 200,
      "havuzSayisi": 4,
      "olculebilir": true,
@@ -8649,12 +8654,12 @@
      "havuzSayisi": 3,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 2.1086,
+     "ittirme": 2.1231,
      "boyutlar": {
       "20000000": 1.0125,
-      "200000000": 1.0337,
-      "2000000000": 1.2626,
-      "20000000000": 2.1086
+      "200000000": 1.0338,
+      "2000000000": 1.263,
+      "20000000000": 2.1231
      },
      "azamiTutar": "20000000",
      "donusturulebilir": true
@@ -8710,17 +8715,17 @@
      "ondalik": 18,
      "kademe": 3000,
      "havuz": "0xc42bf5cd16d9eb1e892b66bb32a3892dcb7bb75c",
-     "likidite": "61335204757928676",
+     "likidite": "65812794454321978",
      "kardinalite": 200,
      "havuzSayisi": 4,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 1.0261,
+     "ittirme": 1.0254,
      "boyutlar": {
       "20000000": 1.003,
-      "200000000": 1.0033,
-      "2000000000": 1.0054,
-      "20000000000": 1.0261
+      "200000000": 1.0032,
+      "2000000000": 1.0053,
+      "20000000000": 1.0254
      },
      "azamiTutar": "20000000000",
      "donusturulebilir": true
@@ -8805,12 +8810,12 @@
      "havuzSayisi": 4,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 30.8637,
+     "ittirme": 30.6788,
      "boyutlar": {
-      "20000000": 1.0238,
-      "200000000": 1.2143,
-      "2000000000": 3.0864,
-      "20000000000": 30.8637
+      "20000000": 1.0236,
+      "200000000": 1.2132,
+      "2000000000": 3.0679,
+      "20000000000": 30.6788
      },
      "azamiTutar": "20000000",
      "donusturulebilir": true
@@ -8827,12 +8832,12 @@
      "havuzSayisi": 4,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 3.2978,
+     "ittirme": 3.3562,
      "boyutlar": {
       "20000000": 1.0001,
       "200000000": 1.0001,
       "2000000000": 1.0001,
-      "20000000000": 3.2978
+      "20000000000": 3.3562
      },
      "azamiTutar": "2000000000",
      "donusturulebilir": true
@@ -8878,17 +8883,17 @@
      "ondalik": 18,
      "kademe": 3000,
      "havuz": "0x79e4240e33c121402dfc9009de266356c91f241d",
-     "likidite": "157180693395477288",
+     "likidite": "155145697148583530",
      "kardinalite": 301,
      "havuzSayisi": 4,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 1.0377,
+     "ittirme": 1.0365,
      "boyutlar": {
       "20000000": 1.003,
       "200000000": 1.0034,
-      "2000000000": 1.0065,
-      "20000000000": 1.0377
+      "2000000000": 1.0066,
+      "20000000000": 1.0365
      },
      "azamiTutar": "2000000000",
      "donusturulebilir": true
@@ -8990,12 +8995,12 @@
      "havuzSayisi": 3,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 5.1812,
+     "ittirme": 5.194,
      "boyutlar": {
       "20000000": 1.0054,
-      "200000000": 1.0267,
-      "2000000000": 1.2259,
-      "20000000000": 5.1812
+      "200000000": 1.0277,
+      "2000000000": 1.2167,
+      "20000000000": 5.194
      },
      "azamiTutar": "200000000",
      "donusturulebilir": true
@@ -9029,17 +9034,17 @@
      "ondalik": 6,
      "kademe": 100,
      "havuz": "0x31083a78e11b18e450fd139f9abea98cd53181b7",
-     "likidite": "258172510988938",
+     "likidite": "334541153491833",
      "kardinalite": 1000,
      "havuzSayisi": 4,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 1.0001,
+     "ittirme": 1.0002,
      "boyutlar": {
       "20000000": 1.0001,
       "200000000": 1.0001,
       "2000000000": 1.0001,
-      "20000000000": 1.0001
+      "20000000000": 1.0002
      },
      "azamiTutar": "20000000000",
      "donusturulebilir": true
@@ -9085,17 +9090,17 @@
      "ondalik": 8,
      "kademe": 3000,
      "havuz": "0xe6ba22265aefe9dc392f544437acce2aedf8ef36",
-     "likidite": "62148836640",
+     "likidite": "70808292257",
      "kardinalite": 301,
      "havuzSayisi": 4,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 1.0129,
+     "ittirme": 1.0133,
      "boyutlar": {
       "20000000": 1.003,
       "200000000": 1.0031,
       "2000000000": 1.004,
-      "20000000000": 1.0129
+      "20000000000": 1.0133
      },
      "azamiTutar": "20000000000",
      "donusturulebilir": true
@@ -9107,7 +9112,7 @@
      "ondalik": 18,
      "kademe": 500,
      "havuz": "0xa4d8c89f0c20efbe54cba9e7e7a7e509056228d9",
-     "likidite": "48859275020430928",
+     "likidite": "49636244640215466",
      "kardinalite": 1000,
      "havuzSayisi": 4,
      "olculebilir": true,
@@ -9129,17 +9134,17 @@
      "ondalik": 18,
      "kademe": 500,
      "havuz": "0xb6e57ed85c4c9dbfef2a68711e9d6f36c56e0fcb",
-     "likidite": "2035233835300279774",
+     "likidite": "2047632328651195678",
      "kardinalite": 1000,
      "havuzSayisi": 4,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 1.0325,
+     "ittirme": 1.0326,
      "boyutlar": {
       "20000000": 1.0005,
       "200000000": 1.0008,
-      "2000000000": 1.0036,
-      "20000000000": 1.0325
+      "2000000000": 1.0039,
+      "20000000000": 1.0326
      },
      "azamiTutar": "2000000000",
      "donusturulebilir": true
@@ -9168,17 +9173,17 @@
      "ondalik": 6,
      "kademe": 500,
      "havuz": "0x9bcef8ddd75817e66e01a5af313c776c74319394",
-     "likidite": "3680211975074",
+     "likidite": "3968977224852",
      "kardinalite": 100,
      "havuzSayisi": 4,
      "olculebilir": true,
      "sebep": "",
-     "ittirme": 2.1497,
+     "ittirme": 1.9385,
      "boyutlar": {
       "20000000": 1.0005,
       "200000000": 1.0006,
-      "2000000000": 1.0012,
-      "20000000000": 2.1497
+      "2000000000": 1.0011,
+      "20000000000": 1.9385
      },
      "azamiTutar": "2000000000",
      "donusturulebilir": true
@@ -9353,7 +9358,7 @@
      "ondalik": 18,
      "kademe": 500,
      "havuz": "0x01ed0722f62a5dd3212b04aed2a2065623a705bb",
-     "likidite": "923013607874957241",
+     "likidite": "1254380690686976044",
      "kardinalite": 1,
      "havuzSayisi": 3,
      "olculebilir": false,
@@ -9489,7 +9494,7 @@
      "ondalik": 6,
      "kademe": 100,
      "havuz": "0x804226ca4edb38e7ef56d16d16e92dc3223347a0",
-     "likidite": "106032583131766",
+     "likidite": "106012868086137",
      "kardinalite": 1000,
      "havuzSayisi": 4,
      "olculebilir": true,
@@ -9511,7 +9516,7 @@
      "ondalik": 18,
      "kademe": 500,
      "havuz": "0xfae3f424a0a47706811521e3ee268f00cfb5c45e",
-     "likidite": "9804519542350484268",
+     "likidite": "10074602476214202997",
      "kardinalite": 8500,
      "havuzSayisi": 4,
      "olculebilir": true,
@@ -9645,7 +9650,7 @@
      "ondalik": 18,
      "kademe": 3000,
      "havuz": "0x5d3e7f5da38fbf476e8b36e3b90d02fc4c1a08c3",
-     "likidite": "8527333588048216896",
+     "likidite": "8553563673491540439",
      "kardinalite": 1000,
      "havuzSayisi": 3,
      "olculebilir": true,
@@ -9730,7 +9735,7 @@
      "ondalik": 6,
      "kademe": 500,
      "havuz": "0x18b268965e4e702bdf13469205937894b8ab0ee8",
-     "likidite": "15099250396637",
+     "likidite": "15099250406644",
      "kardinalite": 1,
      "havuzSayisi": 4,
      "olculebilir": false,
@@ -9781,7 +9786,7 @@
      "ondalik": 18,
      "kademe": 3000,
      "havuz": "0x8927058918e3cff6f55efe45a58db1be1f069e49",
-     "likidite": "192799742247445867",
+     "likidite": "194017255546909281",
      "kardinalite": 601,
      "havuzSayisi": 4,
      "olculebilir": true,

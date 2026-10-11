@@ -194,58 +194,61 @@ console.log("");
  * today, one level up: there the function was missing from the
  * contract, here the table is missing from ABI. */
 console.log("");
-/* ---- KAMUYA ACIK YUZEYDE NE OLMAMALI ----------------------------
+/* ---- WHAT MUST NOT APPEAR ON A PUBLIC SURFACE --------------------
  *
- * Iki kural, ikisi de kullanicinin koydugu:
+ * Two rules, both set by the user:
  *
- *   1. Islemeye ait adrese "isletme" denir, baska bir ad verilmez.
- *      Zincirde gorunen bir adresi baska bir faaliyete baglamak o
- *      faaliyet hakkinda disari bilgi vermektir.
- *   2. Yerel anahtar dosyasinin YOLU yazilmaz. Yol anahtari vermez ama
- *      nereye bakilacagini soyler.
+ *   1. The operations address is called "isletme" and given no other
+ *      name. Tying an address visible on chain to another activity leaks
+ *      information about that activity.
+ *   2. The PATH of the local key file is not written down. A path does
+ *      not give the key, but it says where to look.
  *
- * ADRESLER.md ikisini de bozuyordu — ve ayni dosya birinci kurali
- * ACIKLIYORDU: "kontratta ve sayfada adi isletme olarak geciyor, bot
- * demiyor" diye yazip bes ayri yerde bot diyordu, bir yerde de yolu
- * veriyordu. Kurali yazip ihlal etmek, hic yazmamaktan daha kotu:
- * okuyana kuralin uygulandigini soyluyor.
+ * ADRESLER.md broke both — and the same file EXPLAINED the first rule:
+ * it wrote "in the contract and on the page its name is isletme, not
+ * bot" and then said bot in five separate places, and gave the path in
+ * one. Writing a rule down and then violating it is worse than never
+ * writing it: it tells the reader the rule is being enforced.
  *
- * Bu depo GitHub a cikacak, yani bu bir uslup meselesi degil. */
+ * This repository is going to GitHub, so this is not a matter of
+ * style. */
 console.log("");
-/* ---- ADRESLER.md DE KAYITLA AYNI MI -----------------------------
+/* ---- DOES ADRESLER.md MATCH THE RECORD TOO ----------------------
  *
- * Bu dosya elle yaziliyor ve kamuya acik. Icine elle yazilan bir adres,
- * arayuzdeki elle yazilan bir adresten daha az tehlikeli degil: biri
- * ekrani yanlis sozlesmeye baglar, digeri okuyani yanlis sozlesmeye
- * yonlendirir — ve ikincisi daha uzun yasar, cunku kimse onu calistirip
- * hata almiyor.
+ * This file is written by hand and it is public. An address typed into
+ * it by hand is no less dangerous than one typed into the interface by
+ * hand: one points the screen at the wrong contract, the other points
+ * the READER at the wrong contract — and the second lives longer,
+ * because nobody runs it and gets an error.
  *
- * Bu denetim yazildigi sirada ADRESLER.md in "DAGITILMIS, CANLI"
- * tablosunda ikinci neslin TEK BIR adresi yoktu, ve ayni dosyanin baska
- * bir bolumu okuyucuyu o tabloya yonlendiriyordu.
+ * When this audit was written, ADRESLER.md's "DEPLOYED, LIVE" table did
+ * not contain A SINGLE address from the second generation, and another
+ * section of the same file directed the reader to that table.
  *
- * Satir adinda "emekli", "1. tur" ya da "eski" gecen satirlar haric
- * tutuluyor: onlar kasitli olarak gecmisi gosteriyor. */
+ * Rows whose name contains "emekli", "1. tur" or "eski" are excluded:
+ * those deliberately show the past. */
 console.log("");
-/* ---- BIR FONKSIYONU OZELLIK GIBI OKUMAK --------------------------
+/* ---- READING A FUNCTION AS IF IT WERE A PROPERTY -----------------
  *
- * cuzdan.hesap() bir fonksiyon. Yeni bir gorunum onu
- * "cuzdan.hesap ? cuzdan.hesap : null" diye okudu: fonksiyonun KENDISI
- * atandi, ve bir fonksiyon her zaman truthy. Sonuc, cuzdan bagli
- * olmasa bile ekranin bagliymis gibi davranmasi — gonderemeyecegi bir
- * formu basmasi ve olmayan bir hesabin kazancini okumaya calismasi.
+ * cuzdan.hesap() is a function. A new view read it as
+ * "cuzdan.hesap ? cuzdan.hesap : null": the function ITSELF was
+ * assigned, and a function is always truthy. The result is the screen
+ * behaving as if a wallet were connected when it is not — rendering a
+ * form it cannot submit and trying to read the earnings of an account
+ * that does not exist.
  *
- * Ne node --check ne de ice aktarma denetimi bunu gorur: ad var, modul
- * cozuluyor, sozdizimi gecerli. Yalniz DAVRANIS yanlis, ve yanlis
- * tarafa dusuyor — baglanmamis bir cuzdana bagli muamelesi.
+ * Neither node --check nor the import audit sees this: the name exists,
+ * the module resolves, the syntax is valid. Only the BEHAVIOUR is wrong,
+ * and it falls on the wrong side — an unconnected wallet treated as
+ * connected.
  *
- * Bu dar bir kontrol, ve dar olmasi kasitli: cuzdanin erisimcileri bu
- * arayuzde kimin ne gorecegini belirleyen tek yer. */
+ * This is a narrow check, and narrow on purpose: the wallet's accessors
+ * are the one place that decides who sees what in this interface. */
 console.log("");
 console.log("2f) CUZDAN ERISIMCILERI CAGRILIYOR MU");
 {
   const T = String.fromCharCode(92);
-  /* cuzdan.js icinde fonksiyon olarak tanimli olanlar. */
+  /* The ones defined as functions inside cuzdan.js. */
   const cKaynak = fs.readFileSync(path.join(JS, "cuzdan.js"), "utf8");
   const reErisimci = new RegExp("^" + T + "s{2}(" + T + "w+)" +
     T + "s*" + T + "(" + T + ")" + T + "s*{", "gm");
@@ -371,6 +374,35 @@ console.log("2e) ADRESLER.md KAYITLA AYNI MI");
         : hedefler.length + " sozlesme, " + satirlar.length +
           " adres satiri tarandi — belge kayittan sapmiyor");
   }
+}
+
+/* ---- IS THE INTERFACE IN ENGLISH --------------------------------
+ *
+ * The user's rule: every public surface is English — the site, the X
+ * account, the banner, the posts. Conversation stays Turkish, the
+ * product does not.
+ *
+ * This assertion stayed RED until the translation was finished and that
+ * was right: it counts how many strings are left. The moment it turns
+ * green the rule is locked in — if a Turkish string is added later the
+ * set says so immediately.
+ *
+ * The scan lives in scripts/dil-kontrol.js: trying to write its regular
+ * expressions in here through a generator script backfired three times
+ * in one day (the shell, sed and a JS string each eat a backslash
+ * separately), so the check sits directly in its own file. */
+console.log("");
+console.log("2g) ARAYUZ INGILIZCE MI");
+{
+  const { tara } = require("./dil-kontrol.js");
+  const r = tara(path.join(KOK, "docs"));
+  ok(r.kalan === 0,
+    "ARAYUZDE TURKCE DIZGE YOK — kamuya acik her sey Ingilizce",
+    r.kalan === 0
+      ? "taranan her dizge Ingilizce; sonradan Turkce eklenirse bu sav " +
+        "hemen soyler"
+      : r.kalan + " Turkce dizge kaldi — " + r.dosyalar.slice(0, 8).join(", ") +
+        (r.dosyalar.length > 8 ? "  (+" + (r.dosyalar.length - 8) + " dosya)" : ""));
 }
 
 console.log("2d) KAMUYA ACIK YUZEY TEMIZ MI");

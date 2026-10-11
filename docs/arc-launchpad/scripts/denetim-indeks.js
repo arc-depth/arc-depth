@@ -1,35 +1,34 @@
 "use strict";
 /* ===========================================================================
- * denetim-indeks.js — indeksleyici kendi sonucunu ölçebiliyor mu
+ * denetim-indeks.js — can the indexer measure its own result
  *
  *   node scripts/denetim-indeks.js
  *
- * SORU
- *   Bir indeksleyicinin "çalışıyor" demesi hiçbir şey ifade etmez. Doğru
- *   soru şu: türettiği sayı, zincirin söylediği sayıyla aynı mı?
+ * THE QUESTION
+ *   An indexer saying "it works" means nothing. The right question is:
+ *   does the number it derives match the number the chain states?
  *
- *   `sahip` tablosu TAMAMEN Transfer olaylarından türetiliyor — hiçbir
- *   yerde `balanceOf` okunmuyor. Dolayısıyla o tabloyu zincirdeki gerçek
- *   `balanceOf` ile karşılaştırmak, indeksleyicinin bağımsız bir sınavı:
- *   tek bir eksik log, tek bir yanlış çözülmüş alan ya da tek bir çift
- *   sayım burada ortaya çıkar.
+ *   The `sahip` table is derived ENTIRELY from Transfer events — nowhere is
+ *   `balanceOf` read. So comparing that table against the real `balanceOf`
+ *   on chain is an independent exam for the indexer: a single missing log,
+ *   a single wrongly decoded field or a single double count shows up here.
  *
- * NEDEN BU SINAV GEÇİLEBİLİR OLMAK ZORUNDA DEĞİL
- *   Bir token doğumundan beri EKSİKSİZ indekslenmediyse bakiye yanlış
- *   olur — ve bu bir kusur değil, tarama bitmemiş demektir. O yüzden
- *   denetim iki şeyi ayırıyor:
+ * WHY THIS EXAM DOES NOT HAVE TO BE PASSABLE
+ *   If a token has not been indexed COMPLETELY from birth, the balance will
+ *   be wrong — and that is not a defect, it means the scan is unfinished.
+ *   So the audit separates two things:
  *
- *     TAM indekslenmiş token    -> bakiye birebir tutmak ZORUNDA
- *     yarim indekslenmis token  -> atlanıyor, gerekçesiyle
+ *     a FULLY indexed token      -> the balance MUST match exactly
+ *     a partly indexed token     -> skipped, with the reason given
  *
- *   İkisini karıştırmak, bitmemiş bir taramayı bozuk bir indeksleyici gibi
- *   göstermek olurdu — ya da tersi, ki daha kötü.
+ *   Conflating them would present an unfinished scan as a broken indexer —
+ *   or the other way round, which is worse.
  *
- * ARZ DA KONTROL EDİLİYOR
- *   Sıfır adresinden gelen ve sıfır adresine giden transferler mint ve burn
- *   demek. Bunların toplamı `totalSupply` etmek zorunda, ve bu bakiye
- *   kontrolünden ayrı bir sınav: biri sahip başına, diğeri bütün üzerinden
- *   yanılabilir.
+ * THE SUPPLY IS CHECKED TOO
+ *   Transfers from the zero address and to the zero address mean mints and
+ *   burns. Their sum has to come to `totalSupply`, and that is a separate
+ *   exam from the balance check: one can be wrong per holder, the other
+ *   across the whole.
  * =========================================================================== */
 const path = require("path");
 const fs = require("fs");

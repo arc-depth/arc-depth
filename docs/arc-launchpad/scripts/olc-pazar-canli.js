@@ -1,23 +1,26 @@
 "use strict";
-/* DAĞITILMIŞ Pazar işe yarıyor mu — derlenen kopya değil, ana ağdaki adres.
+/* Does the DEPLOYED Pazar work — not the compiled copy, the mainnet
+ * address.
  *
- * NİYE İKİNCİ BİR ÖLÇÜM
- *   `olc-pazar.js` harness'ın kendi dağıttığı bir kopyayı ölçüyor: "derlenen
- *   kod doğru mu". Bu betik ana ağdaki adresi çağırıyor: "ZİNCİRDEKİ kod
- *   doğru mu". İkisi aynı soru değil. Bu projede bir kez dağıtılmış bir
- *   kanca yanlış bir kasayı gösteriyordu ve derlenen kod kusursuzdu —
- *   hiçbir şey revert etmiyordu, para erişilemez bir yerde birikecekti.
+ * WHY A SECOND MEASUREMENT
+ *   `olc-pazar.js` measures a copy the harness deploys itself: "is the
+ *   compiled code correct". This script calls the mainnet address: "is the
+ *   code ON CHAIN correct". They are not the same question. In this project
+ *   a deployed hook once pointed at the wrong vault while the compiled code
+ *   was flawless — nothing reverted, and the money would have accumulated
+ *   somewhere unreachable.
  *
- * TEK ÇAĞRI, SIFIR HARCAMA
- *   Kayıt, ürün yayını, satın alma, kapatma ve puanlama tek bir `eth_call`
- *   içinde oluyor. Durum değişiklikleri çağrı bitince atılıyor: zincire
- *   hiçbir şey yazılmıyor, tek kuruş harcanmıyor ve ana ağdaki ürün sayısı
- *   değişmiyor.
+ * ONE CALL, ZERO SPEND
+ *   The registration, the product publishing, the purchase, the closing and
+ *   the rating all happen inside a single `eth_call`. The state changes are
+ *   discarded when the call ends: nothing is written to the chain, not a
+ *   cent is spent, and the mainnet product count does not change.
  *
- * BEKLENEN PAY ŞARTNAMEDEN GELİYOR
- *   %20'yi sözleşmenin kendi sabitinden okuyup ona karşı doğrulamak,
- *   "sözleşme dediğini yapıyor" demek olurdu — her oran için geçerli bir
- *   cümle. Oran burada bir kez yazılı ve ödeme ona karşı ölçülüyor.
+ * THE EXPECTED SHARE COMES FROM THE SPEC
+ *   Reading the 20% from the contract's own constant and verifying against
+ *   it would amount to saying "the contract does what it says" — a sentence
+ *   that holds for any rate. The rate is written here once and the payment
+ *   is measured against it.
  */
 const { Interface } = require("ethers");
 const fs = require("fs");
@@ -28,7 +31,8 @@ const RPC = process.env.ARC_RPC || "https://rpc.mainnet.arc.io";
 const H = "0x00000000000000000000000000000000000000E2";
 const USDC = "0x3600000000000000000000000000000000000000";
 
-/* %20 — kararlaştırılan oran. Sözleşmeden okunmuyor, ona KARŞI ölçülüyor. */
+/* 20% — the agreed rate. Not read from the contract, measured AGAINST it. */
+
 const SARTNAME_PLATFORM_PPM = 200_000n;
 
 const B = (n) => JSON.parse(fs.readFileSync(path.join(KOK, "build", n + ".json"), "utf8"));
@@ -72,7 +76,9 @@ const usd = (v) => "$" + (Number(v) / 1e6).toLocaleString("en", { maximumFractio
   console.log("");
   console.log("  pazar  " + PAZAR);
 
-  /* Zincirde gerçekten kod var mı — yoksa geri kalan her şey anlamsız. */
+  /* Is there really code on chain — without it everything else is
+     meaningless. */
+
   const kod = await rpc("eth_getCode", [PAZAR, "latest"]);
   ok(!!kod && kod !== "0x", "ADRESTE KOD VAR",
     ((String(kod).length - 2) / 2).toLocaleString("en") + " bayt");
@@ -81,9 +87,9 @@ const usd = (v) => "$" + (Number(v) / 1e6).toLocaleString("en", { maximumFractio
   const T = B("TestPazarCanli");
   const iface = new Interface(T.abi);
 
-  /* Harness'ın ödeyecek USDC'si olmalı. Arc'ta USDC gas token'ın kendisi,
-     yani yerli bakiye override'ı ERC20 balanceOf olarak okunuyor — ölçüldü,
-     oran tam 1e12. */
+  /* The harness needs USDC to pay with. On Arc, USDC IS the gas token, so a
+     native balance override reads back as the ERC20 balanceOf — measured,
+     the ratio is exactly 1e12. */
   const YERLI = (10n ** 6n) * (10n ** 18n);          // 1.000.000 USDC
 
   const r = await rpc("eth_call", [
@@ -129,14 +135,14 @@ const usd = (v) => "$" + (Number(v) / 1e6).toLocaleString("en", { maximumFractio
     "arada kaybolan ya da eklenen bir kurus yok");
   ok(BigInt(s.devArtis) + BigInt(s.isletmeArtis) === BigInt(s.fiyat),
     "IKI PAYIN TOPLAMI FIYATA ESIT", "yuvarlama kalanini kimse yutmuyor");
-  /* CARPRAZ CARPIM, BOLME DEGIL
-       Ilk hali dev * 1e6 / fiyat > 800_000 diyordu. Tam sayi bolmesi
-       orani asagi kirpiyor: fiyat 77.000.007 iken gelistirici tam %80
-       olan 61.600.005,6 nin UZERINDE (61.600.006) aliyor, ama bolme
-       800.000 veriyor ve "> 800.000" yanlis cikiyor. Sav, sozlesme dogru
-       davranirken kirmizi yandi.
+  /* CROSS-MULTIPLY, DO NOT DIVIDE
+       The first form said dev * 1e6 / fiyat > 800_000. Integer division
+       truncates the ratio downward: at a price of 77,000,007 the developer
+       receives ABOVE the exact 80% of 61,600,005.6 (that is, 61,600,006),
+       but the division yields 800,000 and "> 800,000" comes out false. The
+       assertion went red while the contract behaved correctly.
 
-       Carpraz carpim kirpmiyor: dev * 1e6 >= fiyat * 800.000. */
+       Cross-multiplication does not truncate: dev * 1e6 >= fiyat * 800,000. */
   ok(beklenenDev * 1_000_000n >= BigInt(s.fiyat) * 800_000n,
     "YUVARLAMA GELISTIRICININ LEHINE",
     "gelistirici tam %80 ya da uzeri aliyor — bolunmeyen kurus platforma " +

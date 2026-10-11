@@ -73,7 +73,8 @@ export const cuzdan = {
     const p = saglayici();
     if (!p) {
       throw new Error(
-        "Tarayıcıda cüzdan bulunamadı. Arc ağını destekleyen bir cüzdan kurulu olmalı."
+        "No wallet found in this browser. A wallet that supports the Arc " +
+    "network has to be installed."
       );
     }
     const h = await p.request({ method: "eth_requestAccounts" });
@@ -90,7 +91,7 @@ export const cuzdan = {
    */
   async arcaGec() {
     const p = saglayici();
-    if (!p) throw new Error("Cüzdan yok");
+    if (!p) throw new Error("No wallet");
     try {
       await p.request({ method: "wallet_switchEthereumChain", params: [{ chainId: ONALTILIK_ID }] });
     } catch (e) {
@@ -134,10 +135,10 @@ export const cuzdan = {
   /** Send a transaction. The chain is verified first, every time. */
   async gonder(islem) {
     const p = saglayici();
-    if (!p) throw new Error("Cüzdan yok");
-    if (!_hesap) throw new Error("Cüzdan bağlı değil");
+    if (!p) throw new Error("No wallet");
+    if (!_hesap) throw new Error("Wallet not connected");
     if (!this.zincirdeMi()) await this.arcaGec();
-    if (!this.zincirdeMi()) throw new Error("Cüzdan Arc ağında değil");
+    if (!this.zincirdeMi()) throw new Error("Wallet is not on the Arc network");
     return p.request({ method: "eth_sendTransaction", params: [{ from: _hesap, ...islem }] });
   },
 

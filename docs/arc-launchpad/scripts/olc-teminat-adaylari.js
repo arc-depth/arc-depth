@@ -1,46 +1,50 @@
 "use strict";
 /* ===========================================================================
- * olc-teminat-adaylari.js — teminat olabilecek token ve coinlerin TAM listesi
+ * olc-teminat-adaylari.js — the COMPLETE list of tokens and coins that can
+ *                           serve as collateral
  *
  *   node scripts/olc-teminat-adaylari.js
  *   node scripts/olc-teminat-adaylari.js --zincir base
  *
- * TEMİNAT NE
- *   Kullanıcının kuralı: *"teminat olarak token yada coini kullanmalıyız"*,
- *   *"doge link avax bilmem ne tüm tokenler"*, *"BTC'ye özel bir durum yok,
- *   teminat coin ya da tokenlerinin özellikleri hepsi aynı"*. Hisseyle
- *   eşleştirilmiş tokenler İPTAL.
+ * WHAT COLLATERAL IS
+ *   The user's rule: *"we should use a token or a coin as collateral"*,
+ *   *"doge link avax whatever, all the tokens"*, *"there is nothing special
+ *   about BTC, the properties of collateral coins or tokens are all the
+ *   same"*. Equity-paired tokens are CANCELLED.
  *
- *   Bunlar Arc'ta yerel olarak bulunmadığı için teminat başka zincirde
- *   tutuluyor ve dönüşüm orada yapılıyor. Yani aday kümesi "o zincirde
- *   alınıp satılabilen ve fiyatı doğrulanabilen her token".
+ *   Since none of these exist natively on Arc, the collateral is held on
+ *   another chain and the conversion happens there. So the candidate set is
+ *   "every token that can be traded on that chain and whose price can be
+ *   verified".
  *
- * BİR ADAYIN GEÇMESİ İÇİN İKİ ŞEY GEREKİYOR, İKİSİ DE ÖLÇÜLÜYOR
+ * TWO THINGS ARE REQUIRED FOR A CANDIDATE TO PASS, AND BOTH ARE MEASURED
  *
- *   1. DOĞRULANMIŞ FİYAT — Chainlink PROXY'si okunabilir olmalı.
- *      Aggregator değil proxy: aggregator proxy'sinin altından emekliye
- *      ayrılır ve sonra hiç hata vermeden eski bir fiyat cevaplar. Arc'ta
- *      34/34 besleyici ancak proxy'ye çevrildikten sonra okunabilir oldu.
+ *   1. A VERIFIED PRICE — the Chainlink PROXY has to be readable.
+ *      The proxy, not the aggregator: an aggregator gets retired from
+ *      under its proxy and then answers with a stale price without ever
+ *      erroring. On Arc, 34/34 feeds only became readable after being
+ *      switched to the proxy.
  *
- *   2. ALINIP SATILABİLİRLİK — gerçek bir USDC havuzu olmalı.
- *      Fiyatı olan ama havuzu olmayan bir varlık, dönüşümün içine
- *      girilebilen ama çıkılamayan bir varlıktır.
+ *   2. TRADABILITY — there has to be a real USDC pool.
+ *      An asset with a price but no pool is an asset you can enter the
+ *      conversion into but not leave.
  *
- *   Bunun dışında bir kalite kapısı YOK. Likidite tabanı, piyasa değeri
- *   eşiği gibi vekil ölçütler kullanıcı tarafından açıkça reddedildi:
- *   ölçüt "alınıp satılabiliyor mu" artı bir sürtünme tavanıdır.
+ *   Beyond that there is NO quality gate. Proxy criteria such as a
+ *   liquidity floor or a market-cap threshold were explicitly rejected by
+ *   the user: the criterion is "can it be bought and sold" plus a friction
+ *   ceiling.
  *
- * NABIZ TAHMİN EDİLMİYOR, DİZİNDEN OKUNUYOR
- *   Her besleyicinin tazelik penceresi kendi nabzına göre verilmek zorunda.
- *   Ölçüldü: Ethereum'da ETH/USD 3.552 saniye, Base'de DAI/USD 7.244 saniye
- *   güncellenmemişti — tek bir "1 saat" sabiti birincisini reddederdi,
- *   2 saatlik olan ikincisini. Chainlink'in dizini her besleyicinin
- *   `heartbeat` değerini veriyor, o yüzden pencere = nabız × 2.
+ * THE HEARTBEAT IS NOT GUESSED, IT IS READ FROM THE DIRECTORY
+ *   Each feed's freshness window has to be set from its own heartbeat.
+ *   Measured: on Ethereum ETH/USD had gone 3,552 seconds without an
+ *   update, on Base DAI/USD 7,244 seconds — a single "1 hour" constant
+ *   would reject the first, a 2-hour one the second. Chainlink's directory
+ *   gives every feed's `heartbeat`, so the window is heartbeat x 2.
  *
- * HİSSELER NEDEN LİSTEDE YOK
- *   Dizin her besleyiciye bir `feedType` veriyor: Crypto, Forex, Equities.
- *   Yalnızca Crypto alınıyor. Bu bir tercih değil, iptal edilmiş bir modelin
- *   dışarıda bırakılması.
+ * WHY EQUITIES ARE NOT ON THE LIST
+ *   The directory gives each feed a `feedType`: Crypto, Forex, Equities.
+ *   Only Crypto is taken. That is not a preference but the exclusion of a
+ *   cancelled model.
  * =========================================================================== */
 const fs = require("fs");
 const path = require("path");

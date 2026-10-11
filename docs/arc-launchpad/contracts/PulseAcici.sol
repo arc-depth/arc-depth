@@ -17,48 +17,42 @@ interface IERC20P {
     function balanceOf(address who) external view returns (uint256);
 }
 
-/// @title PulseAcici — havuzu AÇILIŞ FİYATINDA açar, iki tarafı da gerçek
+/// @title PulseAcici — opens the pool AT THE OPENING PRICE, both sides real
 ///
-/// NEDEN YENİ BİR AÇICI GEREKTİ
-///   `HavuzAcici` fiyatı konan miktarların ORANINDAN türetiyor. Yeni kuralda
-///   havuza $98 gerçek USDC ve 972.000.000 token konuyor; o oranın ima ettiği
-///   fiyat $0,0000001008, yani açılış fiyatının 35 KATI ALTINDA. Ölçülebilir
-///   bir hata değil, kaçınılmaz bir sonuç: oran bir fiyat değil, iki miktarın
-///   bölümü.
+/// WHY A NEW OPENER WAS NEEDED
+///   `HavuzAcici` derives the price from the RATIO of the amounts placed.
+///   Under the new rule the pool receives $98 of real USDC and 972,000,000
+///   tokens; the price that ratio implies is $0.0000001008 — 35 TIMES
+///   BELOW the opening price. Not a bug you could measure away but an
+///   unavoidable consequence: a ratio is not a price, it is one amount
+///   divided by another.
 ///
-///   Bu yüzden açılış fiyatı burada bir GİRDİ. Hesaplanıp işlem gönderilmeden
-///   önce okunabiliyor, türetilmiyor.
+///   So the opening price is an INPUT here. It can be computed and read
+///   before any transaction is sent, rather than derived afterwards.
 ///
-/// NEDEN TEK BİR POZİSYON DEĞİL, İKİ TANE
-///   v4'te fiyatın üstünü KAPSAYAN bir pozisyon iki varlıkla fonlanmak
-///   zorunda ve oranı seçme hakkı yok — sizin verdiğiniz iki miktardan
-///   küçüğü neyi fonluyorsa o kadar likidite oluyor, kalanı geri dönüyor.
-///   Yani "şu kadar USDC ve şu kadar token koy" diyemiyorsunuz.
+/// WHY TWO POSITIONS AND NOT ONE
+///   In v4 a position that SPANS the price has to be funded with both
+///   assets, and you do not get to choose the ratio — whichever of your
+///   two amounts runs out first decides the liquidity and the rest comes
+///   back. So you cannot say "place this much USDC and this many tokens".
 ///
-///   O yüzden iki ayrı tek taraflı pozisyon:
+///   Hence two separate one-sided positions:
 ///
-///     TOKEN  fiyatın ÜSTÜNE    -> merdiven. Alıcılar yukarı yürürken
-///                                 dolarları havuzu dolduruyor.
-///     USDC   fiyatın ALTINA    -> gerçek teklif. Satanın karşısına
-///                                 çıkan para bu.
+///     TOKENS  ABOVE the price  -> the ladder. As buyers walk it up,
+///                                their dollars fill the pool.
+///     USDC    BELOW the price  -> the real bid. This is the money a
+///                                seller meets.
 ///
-///   Hiçbiri fiyatı kapsamadığı için her biri tek varlıkla tam olarak
-///   istenen miktarda fonlanıyor. Bu, projede ölçülmüş iki hatanın da
-///   dışında kalan tek şekil: tek yönlü merdiven teklifi hiç tutamadı
-///   (havuz deltası $0,00 döndü), fiyatı kapsayan iki taraflı pozisyon ise
-///   miktarları kabul etmedi.
+///   Because neither spans the price, each is funded with one asset in
+///   exactly the amount intended. This is the only shape that avoids both
+///   of the errors measured in this project: a one-sided ladder never
+///   held a bid at all (the pool delta came back $0.00), and a two-sided
+///   position spanning the price refused the amounts.
 ///
-/// SANAL LİKİDİTE YOK — BU HAVUZDA OLAN HER ŞEY GERÇEK
-///   Merdiven gerçek token, teklif gerçek USDC. "Fantom" olan tek şey
-///   merdivenin ima ettiği eğri şekli, ki o bir bakiye değil bir
-///   YERLEŞTİRME. Arayüzün gösterdiği USDC bu sözleşmenin havuzdaki gerçek
-///   bakiyesidir ve `havuzdakiQuote()` onu zincirden okur.
-///
-/// KİLİTLİ, VE KİMSE ÇEKEMEZ
-///   Likiditeyi azaltacak bir fonksiyon yok. `modifyLiquidity` yalnızca
-///   pozitif delta ile çağrılıyor ve çağıran adresi hiçbir yere
-///   yazılmıyor — yani çekilecek bir sahiplik kaydı da yok. Kurucu da
-///   protokol de DAO da çekemez.
+/// NO VIRTUAL LIQUIDITY — EVERYTHING IN THIS POOL IS REAL
+///   The ladder is real tokens and the bid is real USDC. The only
+///   "phantom" thing is the curve shape the ladder implies, and that is a
+///   PLACEMENT, not a balance. The USDC the interface shows is this
 contract PulseAcici {
     using PoolIdLibrary for PoolKey;
 
@@ -209,8 +203,8 @@ contract PulseAcici {
 
     /// The REAL quote this pool's locked position is holding.
     ///
-    /// Exists so the interface never has to infer it. "Sanal likidite
-    /// gerçek USDC gibi gösterilmeyecek" is a rule about what a screen
+    /// Exists so the interface never has to infer it. "Virtual liquidity
+    /// is never shown as if it were real USDC" is a rule about what a screen
     /// says, and a screen can only keep it if there is a number to read.
     /// This is that number: what the position was funded with, net of what
     /// trading has since taken out of it.

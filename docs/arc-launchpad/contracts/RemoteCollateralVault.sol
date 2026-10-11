@@ -323,22 +323,24 @@ contract RemoteCollateralVault is ITakasAlicisi {
         return (uint256(cevap), vOnd, bOnd);
     }
 
-    /* ---- IKI KAYNAK, DAHA SIKI OLANI KAZANIR -----------------------
+    /* ---- TWO SOURCES, THE STRICTER ONE WINS ------------------------
      *
-     * Besleyicisi olan varlikta besleyici, olmayanda havuzun 30 dakikalik
-     * ortalamasi. Ikisi birden varsa ikisi de hesaplanip DAHA YUKSEK taban
-     * uygulanir — taban ne kadar yuksekse yurutucuya kalan pay o kadar az.
+     * For an asset with a feed, the feed; without one, the pool's
+     * 30-minute average. If both exist, both are computed and the HIGHER
+     * floor is applied — the higher the floor, the smaller the share left
+     * to the executor.
      *
-     * Neden "ikisinden biri" degil de "daha sikisi": besleyici havuzdan
-     * bagimsiz oldugu icin havuz oynatildiginda yerinde kalir, havuz
-     * ortalamasi da besleyici eskidiginde hala canlidir. Birini secmek
-     * digerinin yakaladigi durumu kaybetmek olurdu.
+     * Why "the stricter of the two" and not "either one": because the feed
+     * is independent of the pool it stays put when the pool is moved, and
+     * the pool average is still alive when the feed goes stale. Picking one
+     * would mean losing the case the other catches.
      *
-     * Besleyici OKUNAMAZSA (sessiz ya da eskimis) islem geri donmuyor,
-     * havuz tabanina dusuyor — ama yalnizca besleyicinin kendisi
-     * cevapsizsa. Olculdu: bir toplayici proxy'sinin altindan cekildiginde
-     * hata vermeden eski fiyati dondurmeye devam ediyor, ve o eski fiyat
-     * bir taban olarak kullanilsa teminat yanlis kurdan donusurdu.
+     * If the feed CANNOT BE READ (silent or stale) the transaction does not
+     * revert, it falls back to the pool floor — but only if the feed itself
+     * is unresponsive. Measured: when an aggregator is pulled out from
+     * under its proxy it goes on returning the old price without erroring,
+     * and if that old price were used as a floor the collateral would be
+     * converted at the wrong rate.
      */
 
     /// Buying: how much of `varlik` a quote amount is worth.

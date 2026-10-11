@@ -20,16 +20,16 @@ export async function ciz({ cuzdan }) {
   const kap = el("div", { sinif: "yigin" });
   const hesap = cuzdan.hesap();
 
-  kap.append(sayfaUst("Portföy", hesap ? null : "Cüzdan bağlı değil"));
+  kap.append(sayfaUst("Portfolio", hesap ? null : "No wallet connected"));
 
   if (!hesap) {
     kap.append(bos(
-      "Cüzdan bağlı değil",
-      "Bakiyeleri okumak için cüzdanı bağla. Sayfa hiçbir şey göndermez; " +
-      "yalnızca okur.",
+      "No wallet connected",
+      "Connect a wallet to read balances. The page sends nothing; it only " +
+      "reads.",
       el("button", {
         sinif: "dugme dugme--marka",
-        yazi: "Cüzdan bağla",
+        yazi: "Connect wallet",
         attr: { type: "button" },
         on: { click: () => document.getElementById("cuzdan-dugme").click() }
       })
@@ -39,11 +39,11 @@ export async function ciz({ cuzdan }) {
 
   if (!cuzdan.zincirdeMi()) {
     kap.append(bos(
-      "Cüzdan Arc ağında değil",
-      "Bakiyeler Arc'tan okunuyor. Ağı değiştirmen gerekiyor.",
+      "Wallet is not on the Arc network",
+      "Balances are read from Arc. You have to switch networks.",
       el("button", {
         sinif: "dugme dugme--marka",
-        yazi: "Arc ağına geç",
+        yazi: "Switch to Arc",
         attr: { type: "button" },
         on: { click: () => cuzdan.arcaGec().catch(() => {}) }
       })
@@ -56,7 +56,7 @@ export async function ciz({ cuzdan }) {
   kap.append(el("div", { sinif: "izgara izgara--olcum" }, [
     olcum("USDC", usdcHam == null ? "—" : para(tamSayidanSayi(usdcHam, 6)),
       "Arc'ta hem bakiye hem gas"),
-    olcum("Cüzdan", hesap.slice(0, 6) + "…" + hesap.slice(-4), "bağlı")
+    olcum("Wallet", hesap.slice(0, 6) + "…" + hesap.slice(-4), "connected")
   ]));
 
   const { dagitildiMi, liste } = await launchListesi();
@@ -64,8 +64,8 @@ export async function ciz({ cuzdan }) {
     kap.append(panel("Tokenler", bos(
       "Okunacak token yok",
       dagitildiMi
-        ? "Henüz hiç token çıkarılmamış."
-        : "Launchpad dağıtılmadığı için bakılacak bir token kaydı yok."
+        ? "Nothing has been launched yet."
+        : "With the launchpad not deployed there is no token record to read."
     )));
     return kap;
   }
@@ -85,8 +85,8 @@ export async function ciz({ cuzdan }) {
 
   if (!tutulan.length) {
     kap.append(panel("Tokenler", bos(
-      "Bu cüzdanda launch tokeni yok",
-      "Keşfet sayfasından bir token alabilirsin."
+      "This wallet holds no launch tokens",
+      "You can buy one from the Discover page."
     )));
     return kap;
   }
@@ -95,7 +95,7 @@ export async function ciz({ cuzdan }) {
   const tablo = el("table", { sinif: "tablo tablo--kart" });
   tablo.append(el("thead", {}, [el("tr", {}, [
     el("th", { yazi: "Token" }), el("th", { yazi: "Bakiye" }),
-    el("th", { yazi: "Teminat hakkı" }), el("th", { yazi: "" })
+    el("th", { yazi: "Collateral claim" }), el("th", { yazi: "" })
   ])]));
   const govde = el("tbody");
 
@@ -120,11 +120,11 @@ export async function ciz({ cuzdan }) {
         ])
       ]),
       el("td", { sinif: "sayi", attr: { "data-et": "Bakiye" }, yazi: jetonMiktar(miktar) }),
-      el("td", { sinif: "sayi", attr: { "data-et": "Teminat hakkı" },
+      el("td", { sinif: "sayi", attr: { "data-et": "Collateral claim" },
         yazi: deger == null ? "—" : para(deger) }),
       el("td", { attr: { "data-et": "" } }, [
         el("a", { sinif: "dugme dugme--kucuk",
-          attr: { href: "#/terminal?t=" + t.token }, yazi: "İşlem" })
+          attr: { href: "#/terminal?t=" + t.token }, yazi: "Trade" })
       ])
     ]));
   }
@@ -136,10 +136,11 @@ export async function ciz({ cuzdan }) {
   ], el("div", { sinif: "tablo-sarmal" }, [tablo])));
 
   kap.append(not(
-    "Teminat hakkı, o tokeni yakarak kasadan alabileceğin tutar — piyasa " +
-    "fiyatı değil, tabandır. Kâr/zarar burada yok: maliyet esası cüzdanın " +
-    "geçmiş işlemlerinden çıkarılmak zorunda ve o indeksleyici henüz yok. " +
-    "Tahmini bir maliyet, yanlış bir kâr demektir.",
+    "The collateral claim is what burning that token would take out of " +
+    "the vault — the floor, not the market price. Profit and loss is not " +
+    "here: cost basis has to be derived from the wallet's past trades " +
+    "and that indexer does not exist yet. An estimated cost means a " +
+    "wrong profit.",
     "bilgi"
   ));
 

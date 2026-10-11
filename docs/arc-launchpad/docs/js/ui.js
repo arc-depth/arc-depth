@@ -100,19 +100,20 @@ export function bos(baslik, yazi, eylem = null) {
  */
 export function dagitimBekliyor(yolKaydi) {
   return el("div", { sinif: "yok" }, [
-    el("div", { sinif: "etiket etiket--uyari", yazi: "DAĞITIM BEKLİYOR" }),
-    el("div", { sinif: "yok__baslik", yazi: yolKaydi.ad + " henüz zincirde değil" }),
+    el("div", { sinif: "etiket etiket--uyari", yazi: "AWAITING DEPLOYMENT" }),
+    el("div", { sinif: "yok__baslik", yazi: yolKaydi.ad + " is not on chain yet" }),
     el("div", {
       sinif: "yok__yazi",
       yazi:
-        "Sözleşmeler yazıldı ve Arc mainnet'e karşı ölçüldü, ama dağıtılmadı. " +
-        "Bu ekranı çalışıyormuş gibi göstermiyoruz: işlem gönderecek bir " +
-        "düğme, gönderebileceği bir adres olmadan sunulmaz."
+        "The contracts are written and measured against Arc mainnet, but " +
+        "not deployed. This screen is not dressed up as working: a button " +
+        "that sends a transaction is not offered without an address to " +
+        "send it to."
     }),
     yolKaydi.gerekli
       ? el("div", { sinif: "not not--uyari" }, [
           el("span", { html: ikon("uyari", "not__ikon") }),
-          el("span", { yazi: "Gereken: " + yolKaydi.gerekli })
+          el("span", { yazi: "Needs: " + yolKaydi.gerekli })
         ])
       : null
   ]);
@@ -211,10 +212,10 @@ export function adres(deger, kisaltMi = true) {
         click: async (ev) => {
           try {
             await navigator.clipboard.writeText(deger);
-            ev.target.textContent = "kopyalandı";
+            ev.target.textContent = "copied";
             setTimeout(() => { ev.target.textContent = "kopyala"; }, 1200);
           } catch (e) {
-            ev.target.textContent = "kopyalanamadı";
+            ev.target.textContent = "copy failed";
           }
         }
       }

@@ -23,11 +23,11 @@ interface IERC20C {
     function balanceOf(address who) external view returns (uint256);
 }
 
-/// Alıcı ayrı bir adres olmak ZORUNDA.
+/// The buyer HAS TO be a separate address.
 ///
-/// Harness aynı anda geliştirici ve müşteri olursa %80/%20 bölüşmesi kendi
-/// içinde kapanır ve ölçüm hiçbir şey söylemez. Bu projede tam bu hata bir
-/// kez yapıldı ve sonucu bir underflow oldu.
+/// If the harness is the developer and the customer at once, the 80/20
+/// split closes inside itself and the measurement says nothing. That exact
+/// mistake was made once in this project and the result was an underflow.
 contract AliciC {
     function hazirla(IERC20C t, address pazar) external {
         t.approve(pazar, type(uint256).max);
@@ -46,31 +46,32 @@ contract AliciC {
     }
 }
 
-/// @notice DAĞITILMIŞ Pazar sözleşmesi işe yarıyor mu?
+/// @notice Does the DEPLOYED Pazar contract work?
 ///
-/// NİYE AYRI BİR ÖLÇÜM
-///   `olc-pazar.js` harness'ın KENDİ dağıttığı bir kopyayı ölçüyor, yani
-///   "derlenen kod doğru mu" sorusunu cevaplıyor. Bu ölçüm ana ağdaki
-///   adresi çağırıyor: "ZİNCİRDEKİ kod doğru mu". İkisi aynı soru değil —
-///   bu projede bir kez dağıtılmış bir kanca yanlış bir kasayı
-///   gösteriyordu ve derlenen kod kusursuzdu.
+/// WHY A SEPARATE MEASUREMENT
+///   `olc-pazar.js` measures a copy the harness deploys ITSELF, so it
+///   answers "is the compiled code correct". This measurement calls the
+///   mainnet address: "is the code ON CHAIN correct". They are not the same
+///   question — in this project a deployed hook once pointed at the wrong
+///   vault while the compiled code was flawless.
 ///
-///   Her şey tek bir `eth_call` içinde oluyor: kayıt, ürün, satın alma ve
-///   puan. Durum değişiklikleri çağrı bitince atılıyor, zincire hiçbir şey
-///   yazılmıyor ve tek kuruş harcanmıyor.
+///   Everything happens inside a single `eth_call`: the registration, the
+///   product, the purchase and the rating. The state changes are discarded
+///   when the call ends, nothing is written to the chain and not a cent is
+///   spent.
 contract TestPazarCanli {
     struct Sonuc {
         address pazar;
         address alici;
         uint256 oncekiUrunSayisi;
 
-        /* kayıt ve yayın */
+        /* registration and publishing */
         bool kayitOldu;
         uint256 urunId;
         uint256 sonrakiUrunSayisi;
         bool yabanciGuncelleRed;
 
-        /* satış ve bölüşme */
+        /* the sale and the split */
         uint256 fiyat;
         uint256 devArtis;
         uint256 isletmeArtis;
@@ -82,7 +83,7 @@ contract TestPazarCanli {
         bool lisansli;
         uint64 bitis;
 
-        /* kapanış ve itibar */
+        /* closing and reputation */
         bool kapaliSatisRed;
         bool kapandiktanSonraLisansDuruyor;
         bool lisanssizPuanRed;
@@ -106,7 +107,7 @@ contract TestPazarCanli {
         usdc.transfer(address(alici), 1_000e6);
         alici.hazirla(usdc, address(p));
 
-        /* ---- kayıt ve yayın ------------------------------------------ */
+        /* ---- registration and publishing ---------------------------- */
         p.kaydol("ipfs://canli-olcum");
         s.kayitOldu = true;
 
@@ -118,7 +119,7 @@ contract TestPazarCanli {
 
         s.yabanciGuncelleRed = alici.deneGuncelle(p, s.urunId);
 
-        /* ---- satış ---------------------------------------------------- */
+        /* ---- the sale ------------------------------------------------ */
         uint256 dev0 = usdc.balanceOf(address(this));
         uint256 is0 = usdc.balanceOf(isletme);
         uint256 al0 = usdc.balanceOf(address(alici));
@@ -131,12 +132,12 @@ contract TestPazarCanli {
         s.pazardaKalan = p.tutulan();
         s.lisansli = p.lisansliMi(s.urunId, address(alici));
 
-        /* ---- kapatma satılmış lisansı bozmamalı ---------------------- */
+        /* ---- closing must not break a sold licence ------------------- */
         p.urunGuncelle(s.urunId, s.fiyat, false, "ipfs://canli-urun");
         s.kapaliSatisRed = alici.deneAl(p, s.urunId);
         s.kapandiktanSonraLisansDuruyor = p.lisansliMi(s.urunId, address(alici));
 
-        /* ---- itibar yalnızca ödeyenden ------------------------------- */
+        /* ---- reputation only from a payer --------------------------- */
         s.lisanssizPuanRed = _denePuanla(p, s.urunId);
         alici.puanla(p, s.urunId, 5);
 

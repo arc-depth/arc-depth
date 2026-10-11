@@ -1,36 +1,37 @@
 "use strict";
 /* ===========================================================================
- * denetim-dagitim-pulse.js — bugün dağıtılan yığın gerçekten bağlı mı
+ * denetim-dagitim-pulse.js — is the stack deployed today really wired up
  *
  *   node scripts/denetim-dagitim-pulse.js
  *
- * NEDEN AYRI BİR DENETİM
- *   `denetim-dagitim.js` 8 Ekim'de dağıtılan yığını denetliyor:
- *   ArcLaunchHook, Launchpad, TeminatKarnesi. Bu betik EgriLaunchpad
- *   yığınını denetliyor — dokuz Arc sözleşmesi artı iki uzak zincirdeki
- *   dördü. İkisi ayrı dağıtım ve ayrı adresler; birini diğerinin yerine
- *   denetlemek hiçbir şeyi denetlemez.
+ * WHY A SEPARATE AUDIT
+ *   `denetim-dagitim.js` audits the stack deployed on 8 October:
+ *   ArcLaunchHook, Launchpad, TeminatKarnesi. This script audits the
+ *   EgriLaunchpad stack — nine Arc contracts plus four on two remote
+ *   chains. They are separate deployments at separate addresses; auditing
+ *   one in place of the other audits nothing.
  *
- * KARŞILAŞTIRMA KODU PAYLAŞILIYOR, KOPYALANMIYOR
- *   `karsilastir` ve `degismezPencereler` degismezlik.js'ten geliyor.
- *   O fonksiyonların içindeki her sertleştirme yorumu bir kez geçmiş
- *   YANLIŞ BİR YEŞİLİ kaydediyor: boş tampon boş tamponla karşılaştırılıp
- *   "kod aynı" denmesi, kesirli bir değişmez penceresinin gerçek bir fark
- *   baytını mazur göstermesi, metadata maskesinin yalnızca güvendiği
- *   tarafa bakması. İkinci bir kopya, üçünün geri gelmesi için ikinci bir
- *   yer olurdu.
+ * THE COMPARISON CODE IS SHARED, NOT COPIED
+ *   `karsilastir` and `degismezPencereler` come from degismezlik.js. Every
+ *   hardening comment inside those functions records a WRONG GREEN that
+ *   happened once: an empty buffer compared against an empty buffer and
+ *   called "identical code", a fractional immutable window excusing a real
+ *   differing byte, the metadata mask looking only at the side it trusted.
+ *   A second copy would be a second place for all three to come back.
  *
- * NE SORULUYOR
- *   Doğru adrese düşmüş bir sözleşme, YANLIŞ bir adrese bakıyor olabilir.
- *   Bu projede tam olarak bu oldu: kanca bir kez `quote` yerine launchpad
- *   adresiyle canlıya çıktı ve dağıtım o sırada başarılı göründü. O yüzden
- *   burada tahmin karşılaştırması yok — her bağlantı zincirdeki sözleşmenin
- *   KENDİSİNE sorulup bir halka olarak kapatılıyor.
+ * WHAT IS ASKED
+ *   A contract that landed at the right address may be looking at the
+ *   WRONG one. That is exactly what happened in this project: the hook once
+ *   went live with the launchpad's address where `quote` belonged, and the
+ *   deployment looked successful while it happened. So there is no
+ *   comparison against a prediction here — every link is asked of the
+ *   contract ITSELF on chain and closed as a ring.
  *
- * DAĞITIM KAYDI DA BURADA YAZILIYOR
- *   Dağıtım betiği hız sınırı yüzünden kaydı yazamadan çöktü. Kayıt bu
- *   denetim geçerse zincirden kuruluyor — doğrulanmamış bir dosyadan
- *   kurmak, o dosyanın yanlış olabileceği durumu kaydetmek olurdu.
+ * THE DEPLOYMENT RECORD IS WRITTEN HERE TOO
+ *   The deployment script died to a rate limit before it could write the
+ *   record. The record is built from the chain if this audit passes —
+ *   building it from an unverified file would be recording the case where
+ *   that file is wrong.
  * =========================================================================== */
 const fs = require("fs");
 const path = require("path");
@@ -423,9 +424,10 @@ async function kodDenetle(cag, ad, adres, blok) {
       data: sel("totalStaked()") }, blok]).catch(() => null);
     const staked = ts && ts !== "0x" ? BigInt(ts) : 0n;
     console.log("     FTHM stake edilmis     " + (Number(staked) / 1e18).toLocaleString("en"));
-    /* Sav adi KOSULA bagli. Onceki hali kosulsuz "HENUZ AKTIF DEGIL"
-       diyordu; DAO taban stake ile acildiktan sonra o ad yanlis bir sey
-       soylemeye devam ederdi — hem de her kosumda, gecerek. */
+    /* The assertion's name depends ON THE CONDITION. Its previous form
+       said "NOT ACTIVE YET" unconditionally; once the DAO was opened with
+       the floor stake, that name would have gone on saying something
+       false — on every run, while passing. */
     ok(true, staked === 0n
         ? "FTHM DAO SU HENUZ AKTIF DEGIL — bir sav degil, bir not"
         : "FTHM DAO SU AKTIF — stake var, teklif verilebiliyor",

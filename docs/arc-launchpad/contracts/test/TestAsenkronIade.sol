@@ -35,7 +35,7 @@ contract SahteGeriAlimci {
     }
 }
 
-/// @notice AŞAMA 8 — asenkron iade ve geri alım muhasebesi
+/// @notice STAGE 8 — asynchronous redemption and buyback accounting
 ///
 /// THE QUESTION
 ///   A holder redeems while part of the reserve is on another chain. Three

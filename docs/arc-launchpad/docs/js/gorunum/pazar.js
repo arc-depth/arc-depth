@@ -1,24 +1,27 @@
 /* ===========================================================================
- * gorunum/pazar.js — geliştirici pazarı: listeleme, satın alma, gelir panosu
+ * gorunum/pazar.js — the developer marketplace: listing, buying, the
+ *                    revenue panel
  *
- * Geliştiriciler ürün yayınlar, müşteriler USDC ile satın alır, hasılat %80
- * geliştiriciye / %20 platforma gider ve lisans zincirde durur.
+ * Developers publish products, customers buy with USDC, revenue goes 80% to
+ * the developer and 20% to the platform, and the licence lives on chain.
  *
- * DAĞITILDI VE BU EKRAN ARTIK ONU OKUYOR
- *   Pazar sözleşmesi Arc ana ağında. Ücret oranı, gelir defteri ve ürün
- *   listesi doğrudan o sözleşmeden okunuyor; sayfada tutulan kopya yok.
+ * DEPLOYED, AND THIS SCREEN NOW READS IT
+ *   The Pazar contract is on Arc mainnet. The fee rate, the revenue ledger
+ *   and the product list are read straight from that contract; the page
+ *   keeps no copy.
  *
- * SIFIRLAR SAHTE DEĞİL, GERÇEK
- *   Bugün hiç ürün yok, hiç satış yok ve defter sıfır. Ekran bunları
- *   olduğu gibi gösteriyor — örnek ürün, örnek hasılat ya da "yakında"
- *   diye bir katalog basmıyor. Boş bir pazarı dolu göstermek, bu projenin
- *   tekrar tekrar kaçındığı tek şey.
+ * THE ZEROS ARE NOT FAKE, THEY ARE REAL
+ *   Today there are no products, no sales, and the ledger is zero. The
+ *   screen shows exactly that — it does not print a sample product, sample
+ *   revenue or a "coming soon" catalogue. Showing an empty marketplace as
+ *   full is the one thing this project keeps avoiding.
  *
- * TUTULAN = 0 BİR SÜS DEĞİL, DENETLENEBİLİR BİR İDDİA
- *   Sözleşme hiç para tutmuyor: ödeme ve bölüşme aynı işlemde oluyor. Bu
- *   yüzden `withdraw`/`sweep`/`rescue` diye bir fonksiyon yok ve
- *   olmadığı için kimse kullanamaz. Panoda `tutulan()` gösteriliyor ki bu
- *   iddia söz olarak kalmasın — herkes her an bakabilsin.
+ * HELD = 0 IS NOT AN ORNAMENT BUT AN AUDITABLE CLAIM
+ *   The contract holds no money at all: the payment and the split happen in
+ *   the same transaction. That is why there is no `withdraw`/`sweep`/
+ *   `rescue` function, and because there is none nobody can use one. The
+ *   panel shows `tutulan()` so that the claim does not stay a promise —
+ *   anyone can check it at any time.
  * =========================================================================== */
 
 import { el, sayfaUst, panel, bos, not, olcum, hata } from "../ui.js";
@@ -41,16 +44,16 @@ export async function ciz({ kayit, cuzdan }) {
   const hesap = cuzdan ? cuzdan.hesap() : null;
 
   kap.append(sayfaUst(
-    "Geliştirici Pazarı",
-    "Dış geliştiricilerin ürünleri; ödeme USDC, hasılatın %" +
-    (PAZAR_KURAL.gelistiriciPpm / 10_000) + "'i geliştiriciye"
+    "Developer marketplace",
+    "Products from outside developers. Paid in USDC, " +
+    (PAZAR_KURAL.gelistiriciPpm / 10_000) + "% of revenue to the developer"
   ));
 
   if (!canli(PAZAR.pazar)) {
     kap.append(hata(
-      "Pazar adresi tanımlı değil",
-      "Bu ekran dağıtılmış bir Pazar sözleşmesi olmadan hiçbir şey " +
-      "göstermiyor. Uydurma bir katalog basmak yerine burada duruyor."
+      "No marketplace address",
+      "This screen shows nothing without a deployed marketplace contract. " +
+      "It stops here rather than printing an invented catalogue."
     ));
     return kap;
   }
@@ -67,83 +70,85 @@ export async function ciz({ kayit, cuzdan }) {
 
   if (v.urunSayisi == null) {
     kap.append(hata(
-      "Pazar okunamadı",
-      "Sözleşme " + PAZAR.pazar + " adresinde ama `urunSayisi()` cevap " +
-      "vermedi. Ekran uydurma bir durum göstermiyor."
+      "The marketplace could not be read",
+      "The contract is at " + PAZAR.pazar + " but `urunSayisi()` did not " +
+      "answer. The screen is not inventing a state."
     ));
     return kap;
   }
 
   const zincirPpm = v.PLATFORM_PPM == null ? null : Number(v.PLATFORM_PPM);
-  kap.append(panel("Nasıl çalışıyor", el("div", { sinif: "yigin yigin--sik" }, [
+  kap.append(panel("How it works", el("div", { sinif: "yigin yigin--sik" }, [
     el("div", { sinif: "izgara izgara--olcum" }, [
-      olcum("Geliştirici payı",
-        zincirPpm == null ? "okunamadı" : ppmYuzde(1_000_000 - zincirPpm),
-        "her satıştan, aynı işlemde"),
-      olcum("Platform payı",
-        zincirPpm == null ? "okunamadı" : ppmYuzde(zincirPpm), "ARC PULSE"),
-      olcum("Ödeme birimi", "USDC", "Arc üzerinde"),
-      olcum("Lisans", "zincirde", "herkes doğrulayabilir")
+      olcum("Developer share",
+        zincirPpm == null ? "unreadable" : ppmYuzde(1_000_000 - zincirPpm),
+        "of every sale, in the same transaction"),
+      olcum("Platform share",
+        zincirPpm == null ? "unreadable" : ppmYuzde(zincirPpm), "ARC PULSE"),
+      olcum("Paid in", "USDC", "on Arc"),
+      olcum("Licence", "on chain", "anyone can verify it")
     ]),
     /* The page's own copy of the rate is compared against the contract's,
        here and in the audit. Two numbers that should agree are worth
        showing disagreeing. */
     zincirPpm != null && zincirPpm !== PAZAR_KURAL.platformPpm
-      ? not("Sayfadaki oran (" + ppmYuzde(PAZAR_KURAL.platformPpm) +
-            ") ile sözleşmedeki oran (" + ppmYuzde(zincirPpm) +
-            ") AYNI DEĞİL. Sözleşmedeki geçerlidir.", "uyari")
+      ? not("The rate on this page (" + ppmYuzde(PAZAR_KURAL.platformPpm) +
+            ") and the contract's rate (" + ppmYuzde(zincirPpm) +
+            ") DO NOT MATCH. The contract's rate is the one that applies.", "uyari")
       : not(
-        "Bu oran sayfada tutulan bir kopya değil — " + PAZAR.pazar +
-        " adresinden okundu. Sözleşmede sabit, yani bir setter'ı yok ve " +
-        "değiştirilemez.", "bilgi"),
+        "This rate is not a copy kept on the page — it was read from " +
+        PAZAR.pazar + ". It is a constant in the contract: no setter, and " +
+        "it cannot be changed.", "bilgi"),
     not(
-      "Ödeme ve bölüşme aynı işlemde oluyor: sözleşme arada para " +
-      "TUTMUYOR. Çekilecek bir bakiye olmadığı için withdraw, sweep ya " +
-      "da rescue gibi bir fonksiyon yok — ve olmadığı için kimse " +
-      "kullanamaz. Tam bölünmeyen kuruş da platforma değil " +
-      "GELİŞTİRİCİYE kalıyor.", "bilgi")
+      "Payment and the split happen in one transaction: the contract " +
+      "HOLDS NOTHING in between. With no balance to withdraw there is no " +
+      "withdraw, sweep or rescue function — and because there is none, " +
+      "nobody can use one. The remainder of an uneven division goes to " +
+      "the DEVELOPER, not the platform.", "bilgi")
   ])));
 
   /* ---- 2. the revenue book, including the zero that matters ------- */
-  kap.append(panel("Gelir panosu", el("div", { sinif: "yigin yigin--sik" }, [
+  kap.append(panel("Revenue", el("div", { sinif: "yigin yigin--sik" }, [
     el("div", { sinif: "izgara izgara--olcum" }, [
-      olcum("Toplam hasılat",
-        v.toplamHasilat == null ? "okunamadı"
-          : para(tamSayidanSayi(v.toplamHasilat, 6)), "bugüne kadar"),
-      olcum("Platform payı (ARC PULSE)",
-        v.platformKazanci == null ? "okunamadı"
-          : para(tamSayidanSayi(v.platformKazanci, 6)), "%" +
-          (zincirPpm == null ? "?" : zincirPpm / 10_000) + " dilimin toplamı"),
-      olcum("Geliştiricilere giden",
-        v.toplamHasilat == null || v.platformKazanci == null ? "okunamadı"
+      olcum("Total revenue",
+        v.toplamHasilat == null ? "unreadable"
+          : para(tamSayidanSayi(v.toplamHasilat, 6)), "to date"),
+      olcum("Platform share (ARC PULSE)",
+        v.platformKazanci == null ? "unreadable"
+          : para(tamSayidanSayi(v.platformKazanci, 6)),
+        (zincirPpm == null ? "?" : zincirPpm / 10_000) + "% slice, summed"),
+      olcum("Paid to developers",
+        v.toplamHasilat == null || v.platformKazanci == null ? "unreadable"
           : para(tamSayidanSayi(v.toplamHasilat, 6) -
                  tamSayidanSayi(v.platformKazanci, 6)),
-        "hasılat eksi platform payı"),
-      olcum("Sözleşmede tutulan",
-        v.tutulan == null ? "okunamadı" : para(tamSayidanSayi(v.tutulan, 6)),
-        "tasarım gereği her zaman sıfır")
+        "revenue minus the platform share"),
+      olcum("Held by the contract",
+        v.tutulan == null ? "unreadable" : para(tamSayidanSayi(v.tutulan, 6)),
+        "zero by design, always")
     ]),
     v.tutulan != null && BigInt(v.tutulan) !== 0n
-      ? not("SÖZLEŞMEDE PARA DURUYOR. Bu olmamalı: ödeme ve bölüşme aynı " +
-            "işlemde yapılıyor ve çekme fonksiyonu yok. Bir token " +
-            "yanlışlıkla buraya gönderilmiş olabilir.", "uyari")
-      : not("Sözleşmenin bakiyesi sıfır — 'hiç para tutmuyor' bir söz " +
-            "değil, her an bakılabilen bir sayı.", "bilgi"),
+      ? not("THE CONTRACT IS HOLDING MONEY. This should not happen: " +
+            "payment and the split occur in one transaction and there is " +
+            "no withdraw function. A token may have been sent here by " +
+            "mistake.", "uyari")
+      : not("The contract's balance is zero — \"it holds nothing\" is not " +
+            "a promise but a number anyone can check.", "bilgi"),
     v.toplamHasilat != null && BigInt(v.toplamHasilat) === 0n
-      ? not("Henüz hiç satış olmadı. Sıfırlar gerçek: pazar yeni " +
-            "dağıtıldı ve kimse ürün yayınlamadı.", "bilgi")
+      ? not("No sales yet. These zeros are real: the marketplace was " +
+            "just deployed and nobody has published a product.", "bilgi")
       : null
   ].filter(Boolean))));
 
   /* ---- 3. the listing -------------------------------------------- */
   const sayi = Number(v.urunSayisi);
   if (sayi === 0) {
-    kap.append(panel("Ürünler", bos(
-      "Henüz hiç ürün yok",
-      "Sözleşme dağıtıldı ve cevap veriyor; kimse henüz ürün yayınlamadı. " +
-      "Yayınlamak Geliştirici Portalı'ndan, izin almadan yapılıyor.",
+    kap.append(panel("Products", bos(
+      "No products yet",
+      "The contract is deployed and answering; nobody has published a " +
+      "product. Publishing happens from the developer portal, with no " +
+      "permission needed.",
       el("a", {
-        sinif: "dugme dugme--marka", yazi: "Geliştirici Portalı",
+        sinif: "dugme dugme--marka", yazi: "Developer portal",
         attr: { href: "#/gelistirici" }
       })
     )));
@@ -181,9 +186,9 @@ export async function ciz({ kayit, cuzdan }) {
       ? sonucCoz(ABI.pazar, "lisans", satirlar[k * adim + 2]) : null;
 
     if (!u) {
-      liste.append(panel("Ürün #" + id, not(
-        "Bu ürün okunamadı. Uydurma bir içerik göstermek yerine boş " +
-        "bırakıldı.", "uyari")));
+      liste.append(panel("Product #" + id, not(
+        "This product could not be read. Left empty rather than showing " +
+        "invented content.", "uyari")));
       return;
     }
 
@@ -197,16 +202,16 @@ export async function ciz({ kayit, cuzdan }) {
 
     const govde = el("div", { sinif: "yigin yigin--sik" });
     govde.append(el("div", { sinif: "izgara izgara--olcum" }, [
-      olcum("Fiyat", fiyat === 0 ? "ücretsiz" : para(fiyat),
-        periyot === 0 ? "bir defalık, süresiz lisans"
-          : "her " + gecenSure(periyot * 1000) + " için"),
-      olcum("Satış", String(satis), "bugüne kadar"),
-      olcum("Hasılat", para(hasilat), "brüt"),
-      olcum("Puan",
+      olcum("Price", fiyat === 0 ? "free" : para(fiyat),
+        periyot === 0 ? "one-off, a licence that never expires"
+          : "every " + gecenSure(periyot * 1000)),
+      olcum("Sales", String(satis), "to date"),
+      olcum("Revenue", para(hasilat), "gross"),
+      olcum("Rating",
         puan && Number(puan[1]) > 0
           ? (Number(puan[0]) / 100).toFixed(2) + " / 5"
-          : "puan yok",
-        puan ? Number(puan[1]) + " oy" : null)
+          : "no ratings",
+        puan ? Number(puan[1]) + " ratings" : null)
     ]));
 
     /* The URI is shown as text, never as a clickable link: this string is
@@ -214,25 +219,25 @@ export async function ciz({ kayit, cuzdan }) {
        into a link the page invites you to click is how a marketplace
        becomes a phishing surface. */
     govde.append(el("div", { sinif: "yazi yazi--kucuk yazi--sessiz" }, [
-      el("span", { yazi: "Bilgi: " }),
-      el("code", { yazi: uri.slice(0, 160) || "(boş)" })
+      el("span", { yazi: "Details: " }),
+      el("code", { yazi: uri.slice(0, 160) || "(empty)" })
     ]));
     govde.append(not(
-      "Bu bağlantı geliştiricinin yazdığı metindir, sayfa onu tıklanır " +
-      "yapmıyor ve doğrulamıyor. Açmadan önce kendin kontrol et.", "uyari"));
+      "This link is text the developer wrote. The page does not make it " +
+      "clickable and does not verify it. Check it yourself before " +
+      "opening it.", "uyari"));
 
     if (!acik) {
-      govde.append(not("Bu ürün satışa kapalı. Daha önce alınmış " +
-        "lisanslar geçerliliğini koruyor — kapatmak satılmış lisansı " +
-        "iptal etmiyor.", "bilgi"));
+      govde.append(not("This product is closed for sale. Licences already " +
+        "bought stay valid — closing does not revoke a sold licence.", "bilgi"));
     }
 
     if (lis && lis[0] === true) {
       govde.append(not(
         lis[2] === true
-          ? "Bu üründe süresiz lisansın var."
-          : "Lisansın var, bitiş " + new Date(Number(lis[1]) * 1000)
-              .toLocaleString("tr-TR") + ".",
+          ? "You hold a licence to this product that never expires."
+          : "You hold a licence, ending " + new Date(Number(lis[1]) * 1000)
+              .toLocaleString("en-GB") + ".",
         "bilgi"));
     }
 
@@ -241,7 +246,7 @@ export async function ciz({ kayit, cuzdan }) {
     if (acik && hesap) {
       const dugme = el("button", {
         sinif: "dugme dugme--marka",
-        yazi: fiyat === 0 ? "ÜCRETSİZ AL" : "SATIN AL — " + para(fiyat),
+        yazi: fiyat === 0 ? "GET IT FREE" : "BUY — " + para(fiyat),
         attr: { type: "button" }
       });
       dugme.addEventListener("click", async () => {
@@ -249,7 +254,7 @@ export async function ciz({ kayit, cuzdan }) {
           const miktar = BigInt(u[1]);
           if (miktar > 0n) {
             durumSatiri.className = "yazi yazi--kucuk yazi--sessiz";
-            durumSatiri.textContent = "USDC izni isteniyor…";
+            durumSatiri.textContent = "Asking for the USDC allowance…";
             /* Exactly this purchase, not an unlimited allowance: a
                standing allowance on a contract that moves money is a
                liability for no benefit. */
@@ -258,7 +263,7 @@ export async function ciz({ kayit, cuzdan }) {
               data: cagriVerisi(ABI.erc20Yaz, "approve", [PAZAR.pazar, miktar])
             });
           }
-          durumSatiri.textContent = "Satın alma gönderiliyor…";
+          durumSatiri.textContent = "Sending the purchase…";
           const h = await cuzdan.gonder({
             to: PAZAR.pazar,
             data: cagriVerisi(ABI.pazarYaz, "satinAl", [id])
@@ -266,29 +271,29 @@ export async function ciz({ kayit, cuzdan }) {
           durumSatiri.className = "yazi yazi--kucuk";
           /* The hash and nothing else: whether it landed is the chain's
              to say, and it says so on the next read. */
-          durumSatiri.textContent = "Gönderildi: " + h;
+          durumSatiri.textContent = "Sent: " + h;
         } catch (e) {
           durumSatiri.className = "yazi yazi--kucuk yazi--hata";
-          durumSatiri.textContent = (e && e.message) || "İşlem gönderilemedi.";
+          durumSatiri.textContent = (e && e.message) || "The transaction could not be sent.";
         }
       });
       govde.append(dugme);
     } else if (acik && !hesap) {
-      govde.append(not("Satın almak için cüzdanı bağla. Sayfa kendi " +
-        "başına hiçbir şey göndermiyor.", "bilgi"));
+      govde.append(not("Connect a wallet to buy. The page sends nothing on " +
+        "its own.", "bilgi"));
     }
     govde.append(durumSatiri);
 
     govde.append(el("div", { sinif: "yazi yazi--kucuk yazi--sessiz",
-      yazi: "Geliştirici: " + gelistirici }));
+      yazi: "Developer: " + gelistirici }));
 
-    liste.append(panel("Ürün #" + id, govde));
+    liste.append(panel("Product #" + id, govde));
   });
 
-  kap.append(panel("Ürünler", liste));
+  kap.append(panel("Products", liste));
   if (sayi > 20) {
-    kap.append(not("En yeni 20 ürün gösteriliyor (toplam " + sayi + "). " +
-      "Tamamını listelemek yüzlerce çağrı demek olurdu.", "bilgi"));
+    kap.append(not("Showing the newest 20 of " + sayi + " products. " +
+      "Listing them all would mean hundreds of calls.", "bilgi"));
   }
   return kap;
 }

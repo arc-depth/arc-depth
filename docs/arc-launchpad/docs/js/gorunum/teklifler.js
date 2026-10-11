@@ -1,32 +1,34 @@
 /* ===========================================================================
- * gorunum/teklifler.js — Teklifler ve Oylama
+ * gorunum/teklifler.js — proposals and voting
  *
- * BU EKRAN GERÇEKTEN İŞLEM GÖNDERİR
- *   Şartname: *"Sadece görsel DAO ekranı yapma. Gerçek oylama ve teklif
- *   mekanizması oluştur."* Buradaki her düğme zincirdeki canlı Governor'a
- *   `eth_sendTransaction` yapıyor — `propose`, `castVote`, `queue`,
- *   `execute`. Hiçbiri taklit değil.
+ * THIS SCREEN REALLY SENDS TRANSACTIONS
+ *   From the spec: *"Do not build a decorative DAO screen. Build real
+ *   voting and a real proposal mechanism."* Every button here calls
+ *   `eth_sendTransaction` against the live governor on chain —
+ *   `propose`, `castVote`, `queue`, `execute`. None of it is a mock.
  *
- * ÇALIŞAMAYACAK HİÇBİR KONTROL BASILMIYOR
- *   Aynı şartnamenin diğer kuralı: *"Çalışmayan özellikleri aktif buton
- *   olarak sunma."* Bu yüzden her düğme, o işlemin O AN geçerli olup
- *   olmadığına göre basılıyor:
+ * NO CONTROL THAT CANNOT WORK IS RENDERED
+ *   The other rule in the same spec: *"Do not offer features that do
+ *   not work as active buttons."* So each button is rendered according
+ *   to whether that action is valid RIGHT NOW:
  *
- *     teklif formu   yalnızca oy gücü eşiği aşıyorsa
- *     oy düğmeleri   yalnızca teklif Oylamada ve kullanıcı oy vermediyse
- *     kuyruğa al     yalnızca durum Kabul edildi ise
- *     uygula         yalnızca durum Uygulanabilir ise
+ *     proposal form   only if voting power clears the threshold
+ *     vote buttons    only while the proposal is Active and the user
+ *                     has not voted
+ *     queue           only when the state is Succeeded
+ *     execute         only when the state is Executable
  *
- *   Ölçüldü: `totalStaked()` sıfır. Yani şu an hiç kimsenin oy gücü yok ve
- *   teklif formu hiç basılmıyor — yerine sebebi yazılıyor. Formu gösterip
- *   işlemi zincire gönderip reddettirmek, kullanıcıya gazını ödetip hiçbir
- *   şey söylememek olurdu.
+ *   Measured: `totalStaked()` is zero. So nobody has voting power right
+ *   now and the proposal form is not rendered at all — the reason is
+ *   printed instead. Showing the form would send a transaction the chain
+ *   refuses, charging the user gas to be told nothing.
  *
- * HAM ÇAĞRI ALANI AÇIK VE UYARILI
- *   Governor'ın imzası `propose(string, address, bytes)` — yani bir teklif
- *   herhangi bir çağrıyı ifade edebilir. Bunu arayüzde saklamak, sözleşmeyi
- *   olduğundan daha güvenli göstermek olurdu. Alan var, varsayılan boş
- *   (sinyal teklifi) ve ne olduğu yazılı: kimse o baytları doğrulamıyor.
+ * THE RAW CALLDATA FIELD IS OPEN, AND LABELLED
+ *   The governor's signature is `propose(string, address, bytes)`, so a
+ *   proposal can express any call. Hiding that in the interface would be
+ *   showing the system as safer than it is. The field is there, it
+ *   defaults to empty (a signal proposal), and what it means is written
+ *   down: nobody verifies those bytes.
  * =========================================================================== */
 
 import { el, sayfaUst, panel, bos, not, olcum, adres, hata } from "../ui.js";
@@ -42,9 +44,9 @@ const DURUM = [
   { ad: "Kabul edildi", sinif: "etiket--kabul" },
   { ad: "Kuyrukta", sinif: "etiket--bekle" },
   { ad: "Uygulanabilir", sinif: "etiket--kabul" },
-  { ad: "Uygulandı", sinif: "etiket--bitti" },
-  { ad: "Süresi geçti", sinif: "etiket--red" },
-  { ad: "İptal edildi", sinif: "etiket--red" }
+  { ad: "Executed", sinif: "etiket--bitti" },
+  { ad: "Expired", sinif: "etiket--red" },
+  { ad: "Cancelled", sinif: "etiket--red" }
 ];
 
 /* Governor.State indices, named so a comparison reads as a sentence. */
@@ -61,7 +63,7 @@ function gonderici(cuzdan, dugme, durumSatiri) {
   return async (veri, aciklama) => {
     dugme.disabled = true;
     const eskiYazi = dugme.textContent;
-    dugme.textContent = "Cüzdan bekleniyor…";
+    dugme.textContent = "Waiting for the wallet…";
     durumSatiri.textContent = "";
     durumSatiri.className = "yazi yazi--kucuk yazi--sessiz";
     try {
@@ -70,8 +72,8 @@ function gonderici(cuzdan, dugme, durumSatiri) {
       /* The hash and nothing else. Claiming the proposal "passed" here
          would be claiming something only the chain can say, and it says
          it on the next read. */
-      durumSatiri.textContent = aciklama + " gönderildi: " + hash;
-      dugme.textContent = "Gönderildi";
+      durumSatiri.textContent = aciklama + " sent: " + hash;
+      dugme.textContent = "Sent";
       /* Re-read after a few blocks rather than guessing the new state.
          Arc's measured block time is ~0.507 s, so five seconds is several
          blocks. */
@@ -80,8 +82,8 @@ function gonderici(cuzdan, dugme, durumSatiri) {
       durumSatiri.className = "yazi yazi--kucuk yazi--hata";
       /* 4001 is the user declining, which is an answer and not a fault. */
       durumSatiri.textContent = (e && e.code === 4001)
-        ? "Cüzdan reddetti."
-        : "Gönderilemedi: " + ((e && e.message) || String(e));
+        ? "The wallet rejected it."
+        : "Could not send: " + ((e && e.message) || String(e));
       dugme.disabled = false;
       dugme.textContent = eskiYazi;
     }
@@ -90,27 +92,26 @@ function gonderici(cuzdan, dugme, durumSatiri) {
 
 /* ---- a developer payment, composed rather than hand-encoded --------
  *
- * ŞARTNAMENİN BU MADDESİ MEKANİZMA OLARAK VARDI, YOL OLARAK YOKTU
- *   DAO'nun tek yetkisi DevPool'dan ödeme yapmak ve bu artık mümkün:
- *   taban stake edildi, propose() kabul ediliyor. Ama aşağıdaki serbest
- *   form çıplak bir hedef adresi ve çıplak hex çağrı verisi istiyor —
- *   yani bir geliştiriciye ödeme önermek için pay(address,address,
- *   uint256,uint256) çağrısını elle ABI-kodlamak gerekiyordu.
+ * THIS SPEC ITEM EXISTED AS A MECHANISM BUT NOT AS A PATH
+ *   The DAO's only power is paying out of the DevPool, and that is now
+ *   possible: the floor is staked and propose() is accepted. But the
+ *   free-form form below asks for a bare target address and bare hex
+ *   calldata — so proposing a payment to a developer meant ABI-encoding
+ *   pay(address,address,uint256,uint256) by hand.
  *
- *   Kullanılabilir olmayan bir yetki, olmayan bir yetkiden yalnızca
- *   kâğıt üzerinde farklı. Bu bölüm o çağrıyı üç alandan kuruyor:
- *   alıcı, miktar, katkı no.
+ *   An authority nobody can use differs from one that does not exist
+ *   only on paper. This section builds that call from three fields:
+ *   recipient, amount, contribution id.
  *
- * KODLUYOR, GÖNDERMİYOR
- *   Üretilen çağrı verisi teklifin içine giriyor. Ödemeyi yapan bu sayfa
- *   değil: teklif geçecek, 2 günlük timelock dolacak ve execute()
- *   Governor adına çağıracak. Düğmenin yazısı bunu söylüyor — "öde"
- *   değil, "teklif ver".
- */
+ * IT ENCODES, IT DOES NOT SEND
+ *   The calldata produced goes inside the proposal. This page does not
+ *   make the payment: the proposal has to pass, the two-day timelock has
+ *   to run out, and then execute() calls it as the governor. The
+ *   button's label says so — "propose a payment", not "pay". */
 function odemeTeklifi(cuzdan, havuzBakiye) {
   const alici = el("input", {
     sinif: "girdi",
-    attr: { type: "text", placeholder: "0x… geliştiricinin adresi" }
+    attr: { type: "text", placeholder: "0x… the developer's address" }
   });
   const miktar = el("input", {
     sinif: "girdi",
@@ -123,13 +124,13 @@ function odemeTeklifi(cuzdan, havuzBakiye) {
   const neden = el("textarea", {
     sinif: "girdi girdi--alan",
     attr: { rows: 2,
-      placeholder: "Ne için ödeniyor? Bu metin zincire yazılır." }
+      placeholder: "What is this paying for? This text goes on chain." }
   });
 
   const durumSatiri = el("div", { sinif: "yazi yazi--kucuk yazi--sessiz" });
   const dugme = el("button", {
     sinif: "dugme dugme--marka", attr: { type: "button" },
-    yazi: "ÖDEME TEKLİFİ VER"
+    yazi: "PROPOSE A PAYMENT"
   });
   const gonder = gonderici(cuzdan, dugme, durumSatiri);
 
@@ -141,30 +142,30 @@ function odemeTeklifi(cuzdan, havuzBakiye) {
 
     if (!/^0x[0-9a-fA-F]{40}$/.test(a)) {
       durumSatiri.className = "yazi yazi--kucuk yazi--hata";
-      durumSatiri.textContent = "Alıcı bir adres değil.";
+      durumSatiri.textContent = "The recipient is not an address.";
       return;
     }
     if (a === SIFIR_ADRES) {
       durumSatiri.className = "yazi yazi--kucuk yazi--hata";
       durumSatiri.textContent =
-        "Sıfır adres olamaz — sözleşme ZeroAddress ile reddediyor.";
+        "The zero address is refused — the contract reverts with ZeroAddress.";
       return;
     }
     if (!Number.isFinite(m) || m <= 0) {
       durumSatiri.className = "yazi yazi--kucuk yazi--hata";
       durumSatiri.textContent =
-        "Miktar sıfırdan büyük olmalı — sözleşme ZeroAmount ile reddediyor.";
+        "The amount has to be above zero — the contract reverts with ZeroAmount.";
       return;
     }
     if (!Number.isInteger(k) || k < 0) {
       durumSatiri.className = "yazi yazi--kucuk yazi--hata";
-      durumSatiri.textContent = "Katkı no tam sayı olmalı (yoksa 0 yaz).";
+      durumSatiri.textContent = "The contribution id has to be a whole number — write 0 if there is none.";
       return;
     }
     if (!n) {
       durumSatiri.className = "yazi yazi--kucuk yazi--hata";
       durumSatiri.textContent =
-        "Açıklama boş olamaz: zincire yazılan tek okunabilir şey o.";
+        "The description cannot be empty: it is the only readable thing written on chain.";
       return;
     }
 
@@ -179,10 +180,10 @@ function odemeTeklifi(cuzdan, havuzBakiye) {
     if (havuzBakiye != null && ham > BigInt(havuzBakiye)) {
       durumSatiri.className = "yazi yazi--kucuk yazi--hata";
       durumSatiri.textContent =
-        "Uyarı: havuzda şu an " + para(tamSayidanSayi(havuzBakiye, 6)) +
-        " var, teklif " + para(m) + " istiyor. Teklif verilebilir ama " +
-        "uygulandığı anda bakiye yetmezse işlem döner. Yine göndermek " +
-        "için düğmeye bir daha bas.";
+        "Warning: the pool holds " + para(tamSayidanSayi(havuzBakiye, 6)) +
+        " and the proposal asks for " + para(m) + ". It can still be sent, " +
+        "but if the balance is short when it executes, the call reverts. " +
+        "Press the button again to send it anyway.";
       /* The second press goes through: the warning is shown once. */
       if (!dugme.dataset.uyarildi) { dugme.dataset.uyarildi = "1"; return; }
     }
@@ -194,16 +195,16 @@ function odemeTeklifi(cuzdan, havuzBakiye) {
        cagriVerisi). */
     gonder(
       cagriVerisi(ABI.governor, "propose", [n, PULSE.devPool, veri]),
-      "Odeme teklifi");
+      "Propose a payment");
   });
 
   const kap = el("div", { sinif: "yigin yigin--sik" });
   kap.append(el("p", {
     sinif: "yazi yazi--sessiz",
-    yazi: "DAO'nun tek yetkisi bu: geliştirici havuzundan USDC ödemek. " +
-      "Aşağıdaki alanlar pay() çağrısını kuruyor; ödemeyi bu sayfa " +
-      "yapmıyor — teklif geçecek, 2 günlük timelock dolacak, sonra " +
-      "execute() Governor adına çağıracak."
+    yazi: "This is the DAO's only power: paying USDC out of the developer " +
+      "pool. The fields below build the pay() call. This page does not " +
+      "make the payment — the proposal has to pass, the two-day timelock " +
+      "has to run out, and then execute() calls it as the governor."
   }));
   if (havuzBakiye != null) {
     kap.append(el("div", { sinif: "izgara izgara--olcum" }, [
@@ -213,10 +214,10 @@ function odemeTeklifi(cuzdan, havuzBakiye) {
     ]));
   }
   for (const [etiket, girdi] of [
-    ["Geliştiricinin adresi", alici],
+    ["Developer's address", alici],
     ["Miktar (USDC)", miktar],
-    ["Katkı no (DevPool.register'dan)", katkiNo],
-    ["Ne için", neden]
+    ["Contribution id (from DevPool.register)", katkiNo],
+    ["What for", neden]
   ]) {
     kap.append(el("div", { sinif: "alan" }, [
       el("label", { sinif: "alan__etiket", yazi: etiket }), girdi
@@ -225,9 +226,9 @@ function odemeTeklifi(cuzdan, havuzBakiye) {
   kap.append(dugme);
   kap.append(durumSatiri);
   kap.append(not(
-    "Katkı no zorunlu değil ve doğrulanmıyor: bir ödeme meşru olarak " +
-    "kayıttan önce gelebilir ya da birkaç katkıyı kapsayabilir. " +
-    "Sözleşme bir muhasebe referansı yüzünden bir oyu reddetmiyor.",
+    "The contribution id is optional and is not validated: a payment may " +
+    "legitimately come before a registration, or cover several of them. " +
+    "The contract does not refuse a vote over a bookkeeping reference.",
     "bilgi"));
   return kap;
 }
@@ -237,22 +238,22 @@ function odemeTeklifi(cuzdan, havuzBakiye) {
 function teklifFormu(cuzdan) {
   const aciklama = el("textarea", {
     sinif: "girdi girdi--alan",
-    attr: { rows: 3, placeholder: "Teklifin ne olduğunu yaz. Bu metin zincire yazılır." }
+    attr: { rows: 3, placeholder: "Say what the proposal is. This text goes on chain." }
   });
   const hedef = el("input", {
     sinif: "girdi",
-    attr: { type: "text", placeholder: "0x… (boş bırakılırsa sinyal teklifi)" }
+    attr: { type: "text", placeholder: "0x… (leave empty for a signal proposal)" }
   });
   const veri = el("input", {
     sinif: "girdi",
-    attr: { type: "text", placeholder: "0x… çağrı verisi (boş bırakılabilir)" }
+    attr: { type: "text", placeholder: "0x… calldata (may be left empty)" }
   });
 
   const durumSatiri = el("div", { sinif: "yazi yazi--kucuk yazi--sessiz" });
   const dugme = el("button", {
     sinif: "dugme dugme--marka",
     attr: { type: "button" },
-    yazi: "Teklifi gönder"
+    yazi: "Send the proposal"
   });
   const gonder = gonderici(cuzdan, dugme, durumSatiri);
 
@@ -260,43 +261,44 @@ function teklifFormu(cuzdan) {
     const a = aciklama.value.trim();
     if (!a) {
       durumSatiri.className = "yazi yazi--kucuk yazi--hata";
-      durumSatiri.textContent = "Açıklama boş olamaz: zincire yazılan tek şey o.";
+      durumSatiri.textContent = "The description cannot be empty: it is the only thing written on chain.";
       return;
     }
     const h = hedef.value.trim() || SIFIR_ADRES;
     if (!/^0x[0-9a-fA-F]{40}$/.test(h)) {
       durumSatiri.className = "yazi yazi--kucuk yazi--hata";
-      durumSatiri.textContent = "Hedef bir adres değil. Boş bırakmak sinyal teklifi demek.";
+      durumSatiri.textContent = "The target is not an address. Leaving it empty means a signal proposal.";
       return;
     }
     const d = veri.value.trim() || "0x";
     if (!/^0x([0-9a-fA-F]{2})*$/.test(d)) {
       durumSatiri.className = "yazi yazi--kucuk yazi--hata";
-      durumSatiri.textContent = "Çağrı verisi 0x ile başlayan çift sayıda onaltılık olmalı.";
+      durumSatiri.textContent = "Calldata has to start with 0x and have an even number of hex digits.";
       return;
     }
     if (h !== SIFIR_ADRES && d === "0x") {
       durumSatiri.className = "yazi yazi--kucuk yazi--hata";
       durumSatiri.textContent =
-        "Hedef verilmiş ama çağrı verisi boş. Bu teklif geçse bile hedefe " +
-        "boş bir çağrı yapar. Sinyal teklifi istiyorsan hedefi boş bırak.";
+        "A target was given but the calldata is empty. Even if this passes " +
+        "it makes an empty call. Leave the target empty for a signal proposal.";
       return;
     }
     gonder(cagriVerisi(ABI.governor, "propose", [a, h, d]), "Teklif");
   });
 
   return el("div", { sinif: "yigin yigin--sik" }, [
-    el("label", { sinif: "etiket-girdi", yazi: "Açıklama" }),
+    el("label", { sinif: "etiket-girdi", yazi: "Description" }),
     aciklama,
-    el("label", { sinif: "etiket-girdi", yazi: "Hedef sözleşme (isteğe bağlı)" }),
+    el("label", { sinif: "etiket-girdi", yazi: "Target contract (optional)" }),
     hedef,
-    el("label", { sinif: "etiket-girdi", yazi: "Çağrı verisi (isteğe bağlı)" }),
+    el("label", { sinif: "etiket-girdi", yazi: "Calldata (optional)" }),
     veri,
     not(
-      "Hedef ve çağrı verisi boş bırakılırsa bu bir SİNYAL teklifi olur: " +
-      "kayda geçer, oylanır, geçebilir ama hiçbir şey çağırmaz. Dolu " +
-      "bırakılırsa teklif geçtiğinde o çağrı aynen yapılır ve o baytları " +
-      "kimse doğrulamıyor — ne bu sayfa ne sözleşme.",
+      "With the target and calldata left empty this is a SIGNAL proposal: " +
+      "it is recorded, voted on, and can pass, but it calls nothing. " +
+      "Filled in, the call is made exactly as written when the proposal " +
+      "passes — and nobody verifies those bytes, neither this page nor " +
+      "the contract.",
       "uyari"
     ),
     el("div", { sinif: "satir satir--arali" }, [dugme]),
@@ -335,22 +337,22 @@ function teklifKarti(id, pr, durumNo, hesap, oyVerdi, gucu, cuzdan, oy) {
 
   const govde = el("div", { sinif: "yigin yigin--sik" });
 
-  govde.append(el("p", { yazi: pr[3] || "(açıklama yok)" }));
+  govde.append(el("p", { yazi: pr[3] || "(no description)" }));
 
   govde.append(el("div", { sinif: "izgara izgara--olcum" }, [
     /* A failed read is not zero votes. Printing 0 would tell someone
        deciding how to vote that a proposal has no support when the
        truth is that the count did not arrive. */
-    olcum("Lehte", lehte == null ? "okunamadı" : jetonMiktar(lehte) + " FTHM",
+    olcum("For", lehte == null ? "unreadable" : jetonMiktar(lehte) + " FTHM",
       lehte != null && toplamAnlik > 0
-        ? (lehte / toplamAnlik * 100).toFixed(2) + "% anlık toplamın" : null),
-    olcum("Aleyhte", aleyhte == null ? "okunamadı" : jetonMiktar(aleyhte) + " FTHM", null),
-    olcum("Anlık toplam", jetonMiktar(toplamAnlik) + " FTHM", "teklif açıldığındaki stake"),
-    olcum("Oylama bitişi", new Date(bitis).toISOString().slice(0, 16).replace("T", " "),
-      bitis > Date.now() ? gecenSure(bitis - Date.now()) + " kaldı" : "bitti"),
+        ? (lehte / toplamAnlik * 100).toFixed(2) + "% of the snapshot" : null),
+    olcum("Against", aleyhte == null ? "unreadable" : jetonMiktar(aleyhte) + " FTHM", null),
+    olcum("Snapshot total", jetonMiktar(toplamAnlik) + " FTHM", "stake when the proposal opened"),
+    olcum("Voting ends", new Date(bitis).toISOString().slice(0, 16).replace("T", " "),
+      bitis > Date.now() ? gecenSure(bitis - Date.now()) + " left" : "over"),
     eta > 0
       ? olcum("Uygulanabilir", new Date(eta).toISOString().slice(0, 16).replace("T", " "),
-        eta > Date.now() ? gecenSure(eta - Date.now()) + " kaldı" : "şimdi")
+        eta > Date.now() ? gecenSure(eta - Date.now()) + " left" : "now")
       : null,
     olcum("Teklif eden", adres(pr[0]), null)
   ].filter(Boolean)));
@@ -360,7 +362,7 @@ function teklifKarti(id, pr, durumNo, hesap, oyVerdi, gucu, cuzdan, oy) {
       ? el("span", { sinif: "yazi yazi--kucuk" }, ["Hedef: ", adres(pr[1])])
       : el("span", {
         sinif: "yazi yazi--kucuk yazi--sessiz",
-        yazi: "Sinyal teklifi — çağrı yok, uygulanması yalnızca işaretler"
+        yazi: "Signal proposal — no call; executing it only marks it"
       })
   ]));
 
@@ -373,17 +375,17 @@ function teklifKarti(id, pr, durumNo, hesap, oyVerdi, gucu, cuzdan, oy) {
     if (!hesap) {
       eylemler.append(el("span", {
         sinif: "yazi yazi--kucuk yazi--sessiz",
-        yazi: "Oy vermek için cüzdanı bağla."
+        yazi: "Connect a wallet to vote."
       }));
     } else if (oyVerdi) {
       eylemler.append(el("span", {
         sinif: "etiket etiket--bitti",
-        yazi: "Oy kullandın"
+        yazi: "You have voted"
       }));
     } else if (!gucu || gucu === 0) {
       eylemler.append(el("span", {
         sinif: "yazi yazi--kucuk yazi--sessiz",
-        yazi: "Oy gücün sıfır — oy gücü FTHM stake etmekten geliyor."
+        yazi: "Your voting power is zero — it comes from staking FTHM."
       }));
     } else {
       for (const [yazi, lehteMi, sinif] of [
@@ -399,22 +401,22 @@ function teklifKarti(id, pr, durumNo, hesap, oyVerdi, gucu, cuzdan, oy) {
       }
       eylemler.append(el("span", {
         sinif: "yazi yazi--kucuk yazi--sessiz",
-        yazi: "Ağırlığın: " + jetonMiktar(gucu) + " FTHM"
+        yazi: "Your weight: " + jetonMiktar(gucu) + " FTHM"
       }));
     }
   } else if (durumNo != null && Number(durumNo) === KABUL) {
     const b = el("button", {
       sinif: "dugme dugme--marka", attr: { type: "button" },
-      yazi: "Kuyruğa al"
+      yazi: "Queue"
     });
     const g = gonderici(cuzdan, b, durumSatiri);
-    b.addEventListener("click", () => g(cagriVerisi(ABI.governor, "queue", [id]), "Kuyruğa alma"));
+    b.addEventListener("click", () => g(cagriVerisi(ABI.governor, "queue", [id]), "Queueing"));
     if (hesap) eylemler.append(b);
     eylemler.append(el("span", {
       sinif: "yazi yazi--kucuk yazi--sessiz",
       yazi: hesap
-        ? "Kuyruğa alındıktan sonra timelock başlar."
-        : "Kuyruğa almak için cüzdanı bağla. Bunu herkes yapabilir."
+        ? "The timelock starts once it is queued."
+        : "Connect a wallet to queue it. Anyone can."
     }));
   } else if (durumNo != null && Number(durumNo) === UYGULANABILIR) {
     const b = el("button", {
@@ -427,8 +429,8 @@ function teklifKarti(id, pr, durumNo, hesap, oyVerdi, gucu, cuzdan, oy) {
     eylemler.append(el("span", {
       sinif: "yazi yazi--kucuk yazi--sessiz",
       yazi: hesap
-        ? "Uygulamak herkese açık — teklifi geçiren kişi olmak gerekmiyor."
-        : "Uygulamak için cüzdanı bağla. Bunu herkes yapabilir."
+        ? "Executing is open to anyone — you do not have to be the proposer."
+        : "Connect a wallet to execute it. Anyone can."
     }));
   }
 
@@ -449,8 +451,8 @@ export async function ciz({ cuzdan }) {
   const kap = el("div", { sinif: "yigin" });
   const hesap = cuzdan.hesap();
   kap.append(sayfaUst(
-    "Teklifler ve oylama",
-    "Canlı Governor — her düğme zincire gerçek bir işlem gönderir"
+    "Proposals and voting",
+    "A live governor — every button sends a real transaction"
   ));
 
   /* ---- parameters and the caller's standing --------------------- */
@@ -471,9 +473,9 @@ export async function ciz({ cuzdan }) {
 
   if (P.proposalCount == null) {
     kap.append(hata(
-      "Yönetişim okunamadı",
-      "Governor " + YONETISIM.governor + " adresinde ama `proposalCount()` " +
-      "cevap vermedi. Ekran uydurma bir durum göstermiyor."
+      "Governance could not be read",
+      "The governor is at " + YONETISIM.governor + " but `proposalCount()` " +
+      "did not answer. The screen is not inventing a state."
     ));
     return kap;
   }
@@ -493,61 +495,63 @@ export async function ciz({ cuzdan }) {
   }
 
   kap.append(el("div", { sinif: "izgara izgara--olcum" }, [
-    olcum("Teklif sayısı", String(Number(P.proposalCount)), "bugüne kadar"),
-    olcum("Teklif eşiği", esik == null ? "—" : jetonMiktar(esik) + " FTHM",
-      "stake oranı ile asgarinin büyüğü"),
-    olcum("Senin oy gücün",
-      hesap ? (gucu == null ? "—" : jetonMiktar(gucu) + " FTHM") : "cüzdan bağlı değil",
-      hesap ? "stake edilmiş FTHM" : null)
+    olcum("Proposals", String(Number(P.proposalCount)), "to date"),
+    olcum("Proposal threshold", esik == null ? "—" : jetonMiktar(esik) + " FTHM",
+      "the greater of the stake share and the floor"),
+    olcum("Your voting power",
+      hesap ? (gucu == null ? "—" : jetonMiktar(gucu) + " FTHM") : "no wallet connected",
+      hesap ? "FTHM staked" : null)
   ]));
 
   /* ---- the form, and only if it can succeed --------------------- */
   if (!hesap) {
     kap.append(panel("Teklif ver", bos(
-      "Cüzdan bağlı değil",
-      "Teklif vermek ve oy kullanmak için cüzdanı bağla. Sayfa kendi " +
-      "başına hiçbir şey göndermez.",
+      "Wallet not connected",
+      "Connect a wallet to propose and to vote. The page sends nothing " +
+      "on its own.",
       el("button", {
         sinif: "dugme dugme--marka", attr: { type: "button" },
-        yazi: "Cüzdan bağla",
+        yazi: "Connect wallet",
         on: { click: () => document.getElementById("cuzdan-dugme").click() }
       })
     )));
   } else if (!cuzdan.zincirdeMi()) {
     kap.append(panel("Teklif ver", bos(
-      "Cüzdan Arc ağında değil",
-      "Governor Arc üzerinde. Ağı değiştirmen gerekiyor.",
+      "Wallet is not on the Arc network",
+      "The governor lives on Arc. You have to switch networks.",
       el("button", {
         sinif: "dugme dugme--marka", attr: { type: "button" },
-        yazi: "Arc ağına geç",
+        yazi: "Switch to Arc",
         on: { click: () => cuzdan.arcaGec().catch(() => {}) }
       })
     )));
   } else if (gucu == null || esik == null) {
     kap.append(panel("Teklif ver", not(
-      "Oy gücü okunamadı, o yüzden teklif formu basılmıyor: geçersiz bir " +
-      "işlemi zincire gönderip gazını ödetmek yerine durulması daha doğru.",
+      "Voting power could not be read, so the proposal form is not " +
+      "rendered: stopping is better than sending a transaction that " +
+      "would be refused and charging gas for it.",
       "uyari"
     )));
   } else if (gucu < esik) {
     /* The measured state today: nothing is staked, so this is everyone. */
     kap.append(panel("Teklif ver", not(
-      "Oy gücün " + jetonMiktar(gucu) + " FTHM, teklif eşiği " +
-      jetonMiktar(esik) + " FTHM. Form basılmıyor çünkü gönderilen işlem " +
-      "zincirde reddedilirdi — düğmeyi gösterip gazını ödetmek bilgi değil, " +
+      "Your voting power is " + jetonMiktar(gucu) + " FTHM and the " +
+      "threshold is " + jetonMiktar(esik) + " FTHM. The form is not " +
+      "rendered because the transaction would be refused on chain — " +
+      "showing the button and charging gas for it is not information, " +
       "maliyet olurdu." +
       (toplam === 0
-        ? " Şu an HİÇ FTHM stake edilmemiş, yani bu herkes için geçerli: " +
-          "DAO dağıtılmış ve çalışıyor, eksik olan stake."
+        ? " Right now NO FTHM is staked, so this holds for everyone: the " +
+          "DAO is deployed and answering; what is missing is stake."
         : ""),
       "uyari"
     )));
   } else {
-    /* ODEME TEKLIFI ONCE, SERBEST FORM SONRA
-         DAO nun tek yetkisi DevPool dan odeme yapmak, yani teklif
-         verenlerin neredeyse tamamı bunu yapacak. Serbest formu one
-         koymak, herkesi pay() cagrisini elle ABI-kodlamaya davet etmek
-         olurdu — mekanizma var ama kullanilamaz olurdu. */
+    /* THE PAYMENT COMPOSER FIRST, THE FREE-FORM FORM AFTER IT
+         The DAO has one power — paying out of the DevPool — so nearly
+         everyone who proposes will be doing that. Putting the free-form
+         form first would invite every one of them to ABI-encode a pay()
+         call by hand: the mechanism would exist and be unusable. */
     let havuzBakiye = null;
     if (canli(PULSE.devPool)) {
       try {
@@ -555,7 +559,7 @@ export async function ciz({ cuzdan }) {
           [PULSE.devPool]);
       } catch (e) { havuzBakiye = null; }
     }
-    kap.append(panel("Geliştiriciye ödeme teklifi",
+    kap.append(panel("Propose a developer payment",
       odemeTeklifi(cuzdan, havuzBakiye)));
     kap.append(panel("Serbest teklif — ileri seviye", teklifFormu(cuzdan)));
   }
@@ -568,9 +572,10 @@ export async function ciz({ cuzdan }) {
         el("span", { sinif: "yazi yazi--kucuk yazi--sessiz", yazi: "  " + x.nerede })
       ]))),
     not(
-      "Bunun dışındaki bir teklif de VERİLEBİLİR — Governor'ın imzası her " +
-      "çağrıyı ifade eder. Ama hedef sözleşmelerde çekilecek bir kol " +
-      "olmadığı için geçse bile çağrı döner. Ayrıntı Platform DAO ekranında.",
+      "A proposal outside this list CAN be made — the governor's signature " +
+      "can express any call. But the target contracts have no lever to " +
+      "pull, so the call reverts even if the vote passes. The detail is " +
+      "on the Platform DAO screen.",
       "bilgi"
     )
   ])));
@@ -579,9 +584,9 @@ export async function ciz({ cuzdan }) {
   const sayi = Number(P.proposalCount);
   if (sayi === 0) {
     kap.append(panel("Teklifler", bos(
-      "Henüz hiç teklif yok",
-      "Governor sıfır teklif kaydetmiş. Bu bir hata değil: sözleşme " +
-      "dağıtılmış ve cevap veriyor, kimse henüz teklif vermedi."
+      "No proposals yet",
+      "The governor has recorded zero proposals. That is not a fault: " +
+      "the contract is deployed and answering, nobody has proposed yet."
     )));
     return kap;
   }
@@ -622,8 +627,8 @@ export async function ciz({ cuzdan }) {
       : false;
     if (!pr) {
       liste.append(panel("Teklif #" + id, not(
-        "Bu teklif okunamadı. Uydurma bir içerik göstermek yerine " +
-        "boş bırakıldı.", "uyari"
+        "This proposal could not be read. Left empty rather than showing " +
+        "invented content.", "uyari"
       )));
       return;
     }

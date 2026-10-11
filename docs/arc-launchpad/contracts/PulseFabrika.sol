@@ -10,40 +10,41 @@ interface IERC20F {
     function transfer(address to, uint256 v) external returns (bool);
 }
 
-/// @title PulseFabrika — bir launch'ın tokeni ve havuz açıcısı
+/// @title PulseFabrika — a launch's token and its pool opener
 ///
-/// NEDEN AYRI BİR FABRİKA
-///   Launchpad'in kendisi bu ikisinin yaratma kodunu taşımak zorunda
-///   kalsaydı EIP-170'in %94'üne çıkardı: launchpad 10.327, token 2.853,
-///   açıcı 10.008 bayt. Proje bu sınıra bir kez çarptı ve bir birleşik
-///   fabrika 23.007 bayt ölçüldü. Bölünme bir tercih değil, ölçülmüş bir
-///   zorunluluk.
+/// WHY A SEPARATE FACTORY
+///   If the launchpad had to carry the creation code for both of these it
+///   would reach 94% of EIP-170: launchpad 10,327 bytes, token 2,853,
+///   opener 10,008. This project hit that limit once, and a combined
+///   factory measured 23,007 bytes. The split is not a preference but a
+///   measured necessity.
 ///
-/// EGRIFABRIKA'DAN FARKI: EĞRİ YOK, ÖDÜL YOK
-///   `EgriFabrika` üç şey üretiyordu — token, eğri ve HolderRewards. İkisi
-///   çıktı:
+/// HOW IT DIFFERS FROM EGRIFABRIKA: NO CURVE, NO REWARD
+///   `EgriFabrika` produced three things — the token, the curve and
+///   HolderRewards. Two of them are gone:
 ///
-///   EĞRİ ÇIKTI çünkü artık ayrı bir piyasa yok. Eğri kendi fiyatını
-///     tutuyordu ve havuz mezuniyette açılıyordu; aynı tokenin iki fiyatı
-///     vardı ve mezuniyette havuz fiyatı açılış seviyesine dönüyordu.
-///     Yeni kuralda piyasa ilk bloktan Uniswap v4.
+///   THE CURVE went because there is no separate market any more. The
+///     curve held its own price and the pool opened at graduation; the
+///     same token had two prices, and at graduation the pool's price
+///     returned to the opening level.
 ///
-///   ÖDÜL ÇIKTI çünkü holder ödülü verilmeyecek. Onun payı olan %0,30
-///     havuz derinliğine gidiyor: kilitli, kimsenin çekemediği ve her
-///     sahibin işine yarayan tek yer. Bir cüzdana gitse para toplayan bir
-///     cüzdan olurdu; hiçbir yere gitmese buharlaşırdı.
+///   THE REWARD went because holder rewards will not be paid. Its 0.30%
+///     goes to pool depth: locked, unwithdrawable by anyone, and the one
+///     place that serves every holder. Sent to a wallet it would be a
+///     wallet collecting money; sent nowhere it would evaporate.
 ///
-///   Kalan artık: `LaunchToken.lastBalanceChange` artık hiçbir şey
-///   tarafından okunmuyor. Tokeni çatallamak yerine bırakıldı — kasanın
-///   ihtiyaç duyduğu `burnFrom` onda ve token ölçülmüş durumda; para
-///   yolunda test edilmemiş yeni bir token denemek, her transferde iki
-///   sıcak SSTORE'dan pahalıya gelir.
+///   What is left over: `LaunchToken.lastBalanceChange` is no longer read
+///   by anything. The token was left alone rather than forked — the
+///   `burnFrom` the vault needs is on it and the token is measured; trying
+///   an untested new token on the money path costs more than two warm
+///   SSTOREs per transfer.
 ///
-/// ARZIN TAMAMI LAUNCHPAD'E GİDİYOR
-///   Bölünmeyi launchpad yapıyor: kurucunun payı cüzdanına, kalanı
-///   merdivene. Burada bölünmüyor çünkü kurucunun payı net ödemeye bağlı
-///   ve net ödeme burada bilinmiyor — bilinseydi aynı sayı iki yerde
-///   hesaplanmış olurdu, ki ayrışabilen iki sayı demektir.
+/// THE WHOLE SUPPLY GOES TO THE LAUNCHPAD
+///   The launchpad does the splitting: the founder's share to their
+///   wallet, the rest to the ladder. It is not split here because the
+///   founder's share depends on the net payment and the net payment is
+///   not known here — if it were, the same number would be computed in
+///   two places, which means two numbers that can drift apart.
 contract PulseFabrika {
     error TransferOlmadi();
 

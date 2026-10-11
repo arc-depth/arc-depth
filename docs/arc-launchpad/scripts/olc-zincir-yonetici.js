@@ -1,6 +1,6 @@
 "use strict";
 /* ===========================================================================
- * olc-zincir-yonetici.js — AŞAMA 2 testi: kim taşıyabilir, nereye, ne kadar
+ * olc-zincir-yonetici.js — STAGE 2: who can move it, where to, and how much
  *
  *   node scripts/olc-zincir-yonetici.js
  *

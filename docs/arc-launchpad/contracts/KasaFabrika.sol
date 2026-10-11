@@ -5,7 +5,7 @@ import {CrossChainAssetRegistry} from "./CrossChainAssetRegistry.sol";
 import {KopruKasasi, IYakilabilirK} from "./KopruKasasi.sol";
 import {YoneticiFabrika} from "./YoneticiFabrika.sol";
 
-/// @title KasaFabrika — bir launch'ın kasasını kurar ve yöneticisine bağlar
+/// @title KasaFabrika — builds a launch's vault and wires it to its manager
 ///
 /// WHY THIS EXISTS AT ALL
 ///   EgriLaunchpad used to deploy the vault inline, and its comment gave

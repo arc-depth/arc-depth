@@ -1,6 +1,6 @@
 "use strict";
 /* ===========================================================================
- * olc-zincir-muhasebe.js — AŞAMA 2: does the three-bucket ledger close the
+ * olc-zincir-muhasebe.js — STAGE 2: does the three-bucket ledger close the
  *                          gap that was measured?
  *
  *   node scripts/olc-zincir-muhasebe.js

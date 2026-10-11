@@ -146,7 +146,7 @@ contract SahteTokenMessenger {
     }
 }
 
-/// @notice AŞAMA 3 — the remote side, and the one measurement that has to
+/// @notice STAGE 3 — the remote side, and the one measurement that has to
 ///         come first.
 ///
 /// THE MEASUREMENT THAT COMES FIRST

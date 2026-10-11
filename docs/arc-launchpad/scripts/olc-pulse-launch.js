@@ -1,31 +1,33 @@
 "use strict";
 /* ===========================================================================
- * olc-pulse-launch.js — yeni launch uçtan uca, iki kritik bilinmeyenle
+ * olc-pulse-launch.js — the new launch end to end, with two critical
+ *                       unknowns
  *
  *   node scripts/olc-pulse-launch.js
  *
- * İKİ ŞEY BAŞKA HİÇBİR YERDE GÖRÜNMÜYOR
+ * TWO THINGS ARE VISIBLE NOWHERE ELSE
  *
- *   1. EXACT-OUTPUT TAKAS ÜCRET ÖDÜYOR MU
- *      Eski kanca exact-output'ta sıfır döndürüyordu, yani bir aggregator
- *      "bana tam N token ver" diyerek vergisiz işlem yapabiliyordu. Yeni
- *      kanca ücreti GİRDİden alıyor. v4'ün pozitif `afterSwap` deltasını
- *      trader'ın BORCUNA uyguladığını yalnızca ölçüm söyler.
+ *   1. DOES AN EXACT-OUTPUT SWAP PAY THE FEE
+ *      The old hook returned zero on exact-output, so an aggregator could
+ *      trade tax-free by saying "give me exactly N tokens". The new hook
+ *      takes the fee out of the INPUT. Only measurement can say that v4
+ *      applies a positive `afterSwap` delta to what the trader OWES.
  *
- *   2. dolasim() HAVUZU DIŞLIYOR MU
- *      Eğri kalktı, satılmamış arz artık havuzda ve kasanın `egri`
- *      yuvasına PoolManager verildi. Yanlış olsa REVERT ETMEZDİ — hak
- *      kimsenin sahip olmadığı ~%97 arzla sulanır ve her iade teminatın
- *      küçük bir kesrini öder. O yüzden dolaşım, kodu paylaşmayan bir
- *      hesapla karşılaştırılıyor.
+ *   2. DOES dolasim() EXCLUDE THE POOL
+ *      The curve is gone, unsold supply now sits in the pool, and the
+ *      PoolManager was put in the vault's `egri` slot. If that were wrong
+ *      it WOULD NOT REVERT — the claim would be diluted by the ~97% of
+ *      supply nobody owns and every redemption would pay a small fraction
+ *      of the collateral. So circulating is compared against a calculation
+ *      that shares none of its code.
  *
- * ADRESLER CREATE2 İLE
- *   Kanca launchpad'in adresini, launchpad de kancanın adresini taşımak
- *   zorunda. Proje bu döngüyü nonce tahminiyle çözüyordu ve o tahmin dört
- *   koşum kaybettirdi. Burada ikisi de sabit tuzlu CREATE2 ve bu betik
- *   adresleri bağımsız olarak hesaplıyor.
+ * ADDRESSES BY CREATE2
+ *   The hook has to carry the launchpad's address and the launchpad the
+ *   hook's. The project used to resolve that cycle by predicting a nonce,
+ *   and the prediction cost four runs. Here both are CREATE2 with a fixed
+ *   salt and this script computes the addresses independently.
  *
- * GERÇEK ARC, SIFIR HARCAMA
+ * THE REAL ARC, ZERO SPEND
  * =========================================================================== */
 const fs = require("fs");
 const path = require("path");

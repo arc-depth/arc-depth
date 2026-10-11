@@ -1,57 +1,60 @@
 "use strict";
 /* ===========================================================================
- * dao-aktivasyon.js — FTHM DAO'sunu kilitli durumdan çıkarmak
+ * dao-aktivasyon.js — taking the FTHM DAO out of its locked state
  *
- *   node scripts/dao-aktivasyon.js            ölçer ve prova eder, GÖNDERMEZ
- *   node scripts/dao-aktivasyon.js --uygula   tek işlemi gönderir
+ *   node scripts/dao-aktivasyon.js            measures and dry-runs, SENDS NOTHING
+ *   node scripts/dao-aktivasyon.js --uygula   sends the one transaction
  *
- * SORUN, ÖLÇÜLMÜŞ HALİYLE
- *   Her işlemin %0,30'u artık DevPool'a gidiyor ve DevPool'dan parayı
- *   yalnızca FTHM Governor çıkarabiliyor. Governor'dan para çıkması için bir
- *   teklifin geçmesi gerekiyor. Teklif verebilmek için oy gücü gerekiyor. Oy
- *   gücü stake etmekten geliyor. Ve zincirden okundu:
+ * THE PROBLEM, AS MEASURED
+ *   0.30% of every trade now goes to the DevPool, and only the FTHM
+ *   governor can take money out of it. For money to leave the governor a
+ *   proposal has to pass. To propose you need voting power. Voting power
+ *   comes from staking. And read from the chain:
  *
  *     totalStaked        0
- *     MIN_OY_GUCU   50.000 FTHM
+ *     MIN_OY_GUCU   50,000 FTHM
  *
- *   Yani bugün hiç kimse teklif veremiyor. Dilim birikmeye devam ediyor ve
- *   kimse çekemiyor — ne DAO ne biz. Sözleşmede bir kusur yok; eksik olan
- *   dolaşımdaki stake.
+ *   So today nobody can propose. The slice keeps accumulating and nobody
+ *   can take it out — not the DAO, not us. There is no fault in the
+ *   contract; what is missing is stake in circulation.
  *
- * NEDEN YENİ BİR SÖZLEŞME YOK
- *   Stake.stake(uint256) izinsiz: FTHM tutan herkes çağırabilir. Yani
- *   kilidin çözümü bir sözleşme değil, bir işlem. Buraya bir "aktivasyon
- *   sözleşmesi" koymak yeni bir yetki, yeni bir dağıtım ve yeni bir güven
- *   varsayımı eklerdi — hiçbirine gerek yok.
+ * WHY THERE IS NO NEW CONTRACT
+ *   Stake.stake(uint256) is permissionless: anyone holding FTHM can call
+ *   it. So the way out of the lock is not a contract but a transaction.
+ *   Putting an "activation contract" here would add a new authority, a new
+ *   deployment and a new trust assumption — none of which is needed.
  *
- * NE KADAR — VE NİYE EN AZ
- *   Kurucunun bakiyesi 50.066.437 FTHM. Bunun tamamını stake etmek DAO'yu
- *   açar ama oy gücünün tamamını tek adreste toplar. Tabanı (50.000 FTHM)
- *   stake etmek de DAO'yu açar, çünkü eşik stake edilmiş arzın %1'i ile bu
- *   tabanın BÜYÜĞÜ ve tek stake eden kişi her ikisini de geçer.
+ * HOW MUCH — AND WHY THE MINIMUM
+ *   The founder holds 50,066,437 FTHM. Staking all of it would open the
+ *   DAO but gather every vote at one address. Staking the floor (50,000
+ *   FTHM) opens it too, because the threshold is the GREATER of 1% of the
+ *   staked supply and that floor, and a lone staker clears both.
  *
- *   İkisi arasında fark yetki değil, YOĞUNLUK: üçüncü taraflar stake
- *   etmeye başladığında kurucunun payı tabandan başlarsa hızla erir,
- *   50 milyondan başlarsa erimez. O yüzden taban.
+ *   The difference between the two is not authority but CONCENTRATION:
+ *   once third parties stake, a share that started at the floor erodes
+ *   quickly, while one that started at 50 million does not. Hence the
+ *   floor.
  *
- * DÜRÜST SINIR — VE BU SAKLANMIYOR
- *   Bu işlem DAO'yu "merkeziyetsiz" yapmıyor. Tek stake eden kurucu olduğu
- *   sürece teklif eşiğini de kotayı da yalnız geçer; yani DAO açıldığı anda
- *   tek adresli bir DAO oluyor. Bunu tutan şey oy dağılımı değil:
+ * THE HONEST LIMIT — AND IT IS NOT BURIED
+ *   This transaction does not make the DAO "decentralised". While the
+ *   founder is the only staker they clear both the proposal threshold and
+ *   the quorum alone; the DAO opens as a one-address DAO. What holds it is
+ *   not the spread of votes:
  *
- *     oy süresi    5 gün      bir ödeme aynı gün hareket etmiyor
- *     timelock     2 gün      kabulden uygulamaya
- *     guardian     2027-10-07'ye kadar, YALNIZCA iptal edebiliyor
+ *     voting period   5 days     a payment cannot move the same day
+ *     timelock        2 days     from passing to execution
+ *     guardian        until 2027-10-07, and it can only CANCEL
  *
- *   Ve DAO'nun tek yetkisi DevPool'dan ödeme yapmak; teminat, kilitli
- *   likidite, ücretler ve açılış fiyatı erişilemez (denetim-dao-erisimi.js
- *   bunu zincirden sorarak doğruluyor).
+ *   And the DAO's only power is paying out of the DevPool; collateral,
+ *   locked liquidity, fees and the opening price are out of reach
+ *   (denetim-dao-erisimi.js verifies that by asking the chain).
  *
- *   Arayüz bunu olduğu gibi gösteriyor: tek stake eden varsa ekran "oy
- *   gücünün %100'ü tek adreste" yazıyor, "DAO yönetiyor" yazmıyor.
+ *   The interface shows this as it is: with a single staker the screen
+ *   says "100% of the voting power is at one address", not "the DAO
+ *   governs".
  *
- * GERİ ALINABİLİR
- *   unstake(uint256) var. Bu işlem bir yöne kilitlenme değil.
+ * REVERSIBLE
+ *   unstake(uint256) exists. This transaction does not lock anything in.
  * =========================================================================== */
 const fs = require("fs");
 const path = require("path");

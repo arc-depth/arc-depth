@@ -1,38 +1,42 @@
 "use strict";
 /* ===========================================================================
- * olc-canli-yasam.js — DAĞITILMIŞ launchpad'in tam yaşam döngüsü, bedelsiz
+ * olc-canli-yasam.js — the DEPLOYED launchpad's full life cycle, for free
  *
  *   node scripts/olc-canli-yasam.js
  *
- * NE YAPIYOR
- *   Zincirde duran launchpad'e gerçek bir launch yaptırıyor, tokeni sırf
- *   USDC ile satın alıyor, o alımın vergisinin kasaya ulaştığını ölçüyor ve
- *   token yakıp kasadan parasını geri alıyor. Hepsi gerçek Arc'ta, gerçek
- *   PoolManager'a karşı, dağıtılmış gerçek kancayla.
+ * WHAT IT DOES
+ *   It makes the launchpad that sits on chain perform a real launch, buys
+ *   the token with nothing but USDC, measures that the buy's tax reaches
+ *   the vault, then burns tokens and takes the money back out of the vault.
+ *   All of it on the real Arc, against the real PoolManager, with the real
+ *   deployed hook.
  *
- * VE HİÇBİR ŞEY HARCAMIYOR
- *   Kullanıcının sorusu: *"simülasyon da yap, niye gerçek para kullanacaksın
- *   ki."* Doğru soru ve cevabı şu: gerekmiyor. `eth_call` durum geçersiz
- *   kılmasıyla harness'a bakiye veriliyor, bütün döngü tek çağrıda dönüyor,
- *   sonunda durum atılıyor. Zincire tek bayt yazılmıyor.
+ * AND IT SPENDS NOTHING
+ *   The user's question: *"simulate it too, why would you use real money."*
+ *   The right question, and the answer is: you do not have to. An
+ *   `eth_call` state override gives the harness a balance, the whole cycle
+ *   runs in one call, and at the end the state is discarded. Not one byte
+ *   is written to the chain.
  *
- *   Arc'ta bu özellikle temiz: USDC hem quote hem yerli gaz tokeni ve ERC20
- *   `balanceOf` yerli bakiyenin kendisi — ölçüldü, oran tam 1e12. Yani
- *   `balance` geçersiz kılması hem gazı hem parayı veriyor, bir token
- *   deposunun storage slotunu bulmak gerekmiyor.
+ *   On Arc this is especially clean: USDC is both the quote and the native
+ *   gas token, and the ERC20 `balanceOf` IS the native balance — measured,
+ *   the ratio is exactly 1e12. So a `balance` override supplies both the
+ *   gas and the money, with no need to find a token contract's storage
+ *   slot.
  *
- * SİMÜLASYONUN ÖLÇEMEDİĞİ TEK ŞEY
- *   Kalıcılık. EVM semantiği birebir aynı ama `eth_call` sonunda durum
- *   atılıyor, yani `launchCount()` sıfır kalıyor. Bu yüzden bu koşum
- *   "ürün çalışıyor mu" sorusunu cevaplıyor, "zincirde bir token var mı"
- *   sorusunu cevaplamıyor. İkincisi bir doğrulama değil ürün kararı — ve
- *   ancak birincisi geçtikten sonra sorulmalı.
+ * THE ONE THING A SIMULATION CANNOT MEASURE
+ *   Persistence. The EVM semantics are identical, but at the end of an
+ *   `eth_call` the state is discarded, so `launchCount()` stays zero. That
+ *   is why this run answers "does the product work" and not "is there a
+ *   token on chain". The second is not a verification but a product
+ *   decision — and it should only be asked once the first one passes.
  *
- * NEDEN DÖRDÜ BİRLİKTE
- *   Launch, alım, vergi ve iade aynı para üzerinde sırayla ölçülüyor. Ayrı
- *   ayrı ölçülseydi, aradaki bağlantının koptuğu bir sistem de dört testi
- *   geçerdi: kasa dolabilir ama hak hesabı o parayı görmeyebilir, hak
- *   doğru olabilir ama iade ödememiş olabilir.
+ * WHY ALL FOUR TOGETHER
+ *   The launch, the buy, the tax and the redemption are measured in
+ *   sequence on the same money. Measured separately, a system whose links
+ *   between them were broken would also pass four tests: the vault can
+ *   fill while the claim calculation does not see that money, and the
+ *   claim can be right while the redemption does not pay.
  * =========================================================================== */
 const fs = require("fs");
 const path = require("path");

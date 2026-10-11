@@ -1,28 +1,31 @@
 /* ===========================================================================
- * gorunum/gelistirici.js — Geliştirici Portalı
+ * gorunum/gelistirici.js — the developer portal
  *
- * Dış bir geliştiricinin bu sistemde para kazanmasının İKİ yolu var ve
- * ikisi birbirinden bağımsız:
+ * There are TWO ways an outside developer earns here, and they are
+ * independent of each other:
  *
- *   1. PAZAR — kendi ürününü satar. Hasılatın %80'i doğrudan ona gider,
- *      aynı işlemde, aracı bir bakiye olmadan.
- *   2. GELİŞTİRİCİ HAVUZU — her işlemin %0,30'u DevPool'da birikir ve
- *      oradan ödeme yalnızca FTHM DAO'sunun geçen bir teklifiyle çıkar.
+ *   1. THE MARKETPLACE — they sell their own product. 80% of the revenue
+ *      goes straight to them, in the same transaction, with no balance
+ *      held in between.
+ *   2. THE DEVELOPER POOL — 0.30% of every trade accumulates in the
+ *      DevPool, and money leaves it only through a proposal the FTHM DAO
+ *      has passed.
  *
- * NİYE İKİSİNİ AYRI ANLATIYORUM
- *   Birincisi kendi kendine çalışıyor: ürünü sat, parayı al. İkincisi bir
- *   oya bağlı ve o oy BUGÜN VERİLEMİYOR — stake edilmiş FTHM sıfır, yani
- *   kimsenin oy gücü yok. Havuz dolmaya devam ediyor ama kimse çekemiyor.
+ * WHY THEY ARE DESCRIBED SEPARATELY
+ *   The first runs by itself: sell the product, take the money. The
+ *   second depends on a vote, and that vote CANNOT BE CAST TODAY —
+ *   staked FTHM is zero, so nobody has voting power. The pool keeps
+ *   filling and nobody can draw on it.
  *
- *   Bu ikisini "geliştirici kazançları" diye tek başlıkta toplamak,
- *   fonlanmamış bir ödülü garanti edilmiş kazanç gibi göstermek olurdu —
- *   kullanıcının açıkça yasakladığı şey tam bu.
+ *   Putting both under one "developer earnings" heading would present an
+ *   unfunded reward as guaranteed income, which is precisely what the
+ *   user forbade.
  *
- * ZİNCİRDE NE YOK
- *   Ürün bilgisi bir URI'nin arkasında. API anahtarı, gizli uç nokta ya da
- *   müşteri verisi zincire YAZILMIYOR; zincir herkese açık ve geri
- *   alınamaz. Lisans doğrulaması alıcının adresiyle yapılıyor, yani
- *   geliştirici kimseyle sır paylaşmıyor.
+ * WHAT IS NOT ON CHAIN
+ *   Product details sit behind a URI. An API key, a private endpoint or
+ *   customer data is NOT written to the chain; the chain is public and
+ *   cannot be undone. Licence checks use the buyer's address, so the
+ *   developer shares no secret with anyone.
  * =========================================================================== */
 
 import { el, sayfaUst, panel, bos, not, olcum, dagitimBekliyor } from "../ui.js";
@@ -51,23 +54,23 @@ export async function ciz({ kayit, cuzdan }) {
   const hesap = cuzdan ? cuzdan.hesap() : null;
 
   kap.append(sayfaUst(
-    "Geliştirici Portalı",
-    "Ürün sat ya da katkı yap — iki yol, iki ayrı kaynak"
+    "Developer portal",
+    "Sell a product or contribute — two routes, two separate sources"
   ));
 
   /* ---- 1. the two routes, side by side ---------------------------- */
-  kap.append(panel("İki kazanç yolu", el("div", { sinif: "yigin yigin--sik" }, [
+  kap.append(panel("Two ways to earn", el("div", { sinif: "yigin yigin--sik" }, [
     el("div", { sinif: "izgara izgara--olcum" }, [
-      olcum("Pazar satışı", ppmYuzde(1_000_000 - PLATFORM_PPM),
-        "satış başına, aynı işlemde sana"),
-      olcum("Geliştirici havuzu", ppmYuzde(GELISTIRICI_PPM),
-        "her işlemden, DAO kararıyla dağıtılır")
+      olcum("Marketplace sale", ppmYuzde(1_000_000 - PLATFORM_PPM),
+        "per sale, to you in the same transaction"),
+      olcum("Developer pool", ppmYuzde(GELISTIRICI_PPM),
+        "from every trade, paid out by a DAO vote")
     ]),
     not(
-      "Pazar satışı kendi kendine çalışıyor: ürünü satarsın, para aynı " +
-      "işlemde cüzdanına geçer, arada kimse tutmaz. Geliştirici havuzu " +
-      "ise bir oya bağlı — ve o oy şu anda verilemiyor. Aşağıda neden " +
-      "yazıyor.",
+      "A marketplace sale runs by itself: you sell, the money reaches your " +
+      "wallet in the same transaction, nobody holds it in between. The " +
+      "developer pool depends on a vote instead. Why that matters is " +
+      "below.",
       "bilgi"
     )
   ])));
@@ -76,7 +79,7 @@ export async function ciz({ kayit, cuzdan }) {
   const havuzGovde = el("div", { sinif: "yigin yigin--sik" });
 
   if (!canli(PULSE.devPool)) {
-    havuzGovde.append(not("Geliştirici havuzu henüz zincirde değil.", "uyari"));
+    havuzGovde.append(not("The developer pool is not on chain yet.", "uyari"));
   } else {
     /* The balance and the voting power that would be needed to spend it. */
     let tutulan = null, stakeli = null, taban = null;
@@ -101,14 +104,14 @@ export async function ciz({ kayit, cuzdan }) {
 
     havuzGovde.append(el("div", { sinif: "izgara izgara--olcum" }, [
       olcum("Havuzda biriken",
-        tutulan == null ? "okunamadı" : para(tamSayidanSayi(tutulan, 6)),
-        "her işlemin %0,30'u"),
-      olcum("Stake edilmiş FTHM",
-        stakeli == null ? "okunamadı" : jetonMiktar(tamSayidanSayi(stakeli, 18)),
-        "oy gücünün tamamı"),
-      olcum("Teklif tabanı",
-        taban == null ? "okunamadı" : jetonMiktar(tamSayidanSayi(taban, 18)) + " FTHM",
-        "teklif verebilmek için en az")
+        tutulan == null ? "unreadable" : para(tamSayidanSayi(tutulan, 6)),
+        "0.30% of every trade"),
+      olcum("FTHM staked",
+        stakeli == null ? "unreadable" : jetonMiktar(tamSayidanSayi(stakeli, 18)),
+        "all of the voting power"),
+      olcum("Proposal floor",
+        taban == null ? "unreadable" : jetonMiktar(tamSayidanSayi(taban, 18)) + " FTHM",
+        "the minimum needed to propose")
     ]));
 
     /* THE HONEST PART, AND IT IS THE WHOLE POINT
@@ -119,22 +122,23 @@ export async function ciz({ kayit, cuzdan }) {
     const bos0 = stakeli != null && BigInt(stakeli) === 0n;
     havuzGovde.append(not(
       bos0
-        ? "Bu havuzdan ödeme yalnızca FTHM DAO'sunun geçen bir teklifiyle " +
-          "çıkıyor ve ŞU AN hiç FTHM stake edilmemiş — yani kimsenin oy " +
-          "gücü yok ve kimse teklif veremiyor. Havuz dolmaya devam ediyor, " +
-          "ama ne DAO ne biz oradan para çekebiliyoruz. Burada bir 'talep " +
-          "et' düğmesi yok çünkü basılacak bir şey yok."
-        : "Bu havuzdan ödeme yalnızca FTHM DAO'sunun geçen bir teklifiyle " +
-          "çıkıyor: %1 teklif eşiği, %10 kota, 5 gün oy, 2 gün timelock. " +
-          "Katkını kaydettirebilirsin ama ödeme bir oya bağlı.",
+        ? "Money leaves this pool only through a proposal the FTHM DAO has " +
+          "passed, and RIGHT NOW no FTHM is staked — so nobody has voting " +
+          "power and nobody can propose. The pool keeps filling and " +
+          "neither the DAO nor we can take anything out of it. There is no " +
+          "claim button here because there is nothing to press."
+        : "Money leaves this pool only through a proposal the FTHM DAO has " +
+          "passed: a 1% proposal threshold, 10% quorum, five days of " +
+          "voting, two days of timelock. You can record your contribution, " +
+          "but payment depends on a vote.",
       bos0 ? "uyari" : "bilgi"
     ));
 
     havuzGovde.append(not(
-      "Havuzun yetkilisi FTHM Governor'ı ve bu adres değiştirilemez. " +
-      "Önceki geliştirici fonunun tahsiscisi işletme cüzdanıydı ve o da " +
-      "değiştirilemezdi — yani DAO ona hiç dokunamıyordu. Havuz tam bu " +
-      "yüzden yenilendi.",
+      "The pool answers to the FTHM governor, and that address cannot be " +
+      "changed. The previous developer fund answered to the operations " +
+      "wallet, and that could not be changed either — so the DAO could " +
+      "never reach it. That is exactly why the pool was replaced.",
       "bilgi"
     ));
   }
@@ -158,20 +162,20 @@ export async function ciz({ kayit, cuzdan }) {
 
     katkiGovde.append(el("p", {
       sinif: "yazi yazi--sessiz",
-      yazi: "Yaptığın işi zincire kaydedebilirsin: bir bağlantı (PR, " +
-        "depo, rapor) ver, kaydı herkes görür ve bir id alır. Bu bir " +
-        "ÖDEME DEĞİL — ödeme ancak DAO'nun geçen bir teklifiyle olur ve " +
-        "o teklif bu id'ye atıfta bulunur."
+      yazi: "You can put your work on chain: give a link (a PR, a repo, a " +
+        "report), the record is public and gets an id. This is NOT A " +
+        "PAYMENT — payment happens only through a proposal the DAO " +
+        "passes, and that proposal refers to this id."
     }));
     katkiGovde.append(el("div", { sinif: "izgara izgara--olcum" }, [
-      olcum("Kayıtlı katkı", sayi == null ? "okunamadı" : String(Number(sayi)),
-        "bugüne kadar"),
-      olcum("Kayıt yetkisi", "herkes", "izinsiz: yargı oyda veriliyor")
+      olcum("Contributions recorded", sayi == null ? "unreadable" : String(Number(sayi)),
+        "to date"),
+      olcum("Who may record", "anyone", "permissionless: the judgement happens in the vote")
     ]));
 
     const uriGirdi = el("input", {
       sinif: "girdi",
-      attr: { type: "text", placeholder: "https://github.com/... veya ipfs://...",
+      attr: { type: "text", placeholder: "https://github.com/... or ipfs://...",
         maxlength: "300" }
     });
     const durumSatiri = el("div", { sinif: "yazi yazi--kucuk yazi--sessiz" });
@@ -185,17 +189,17 @@ export async function ciz({ kayit, cuzdan }) {
       const uri = (uriGirdi.value || "").trim();
       if (!uri) {
         durumSatiri.className = "yazi yazi--kucuk yazi--hata";
-        durumSatiri.textContent = "Bir bağlantı gir.";
+        durumSatiri.textContent = "Enter a link.";
         return;
       }
       if (!hesap) {
         durumSatiri.className = "yazi yazi--kucuk yazi--hata";
-        durumSatiri.textContent = "Cüzdan bağlı değil.";
+        durumSatiri.textContent = "Wallet is not connected.";
         return;
       }
       try {
         durumSatiri.className = "yazi yazi--kucuk yazi--sessiz";
-        durumSatiri.textContent = "Gönderiliyor…";
+        durumSatiri.textContent = "Sending…";
         const hash = await cuzdan.gonder({
           to: PULSE.devPool,
           data: cagriVerisi(ABI.devPoolYaz, "register", [uri])
@@ -203,47 +207,46 @@ export async function ciz({ kayit, cuzdan }) {
         durumSatiri.className = "yazi yazi--kucuk";
         /* The hash and nothing else: whether it landed is the chain's to
            say, and it says so on the next read. */
-        durumSatiri.textContent = "Gönderildi: " + hash;
+        durumSatiri.textContent = "Sent: " + hash;
       } catch (e) {
         durumSatiri.className = "yazi yazi--kucuk yazi--hata";
-        durumSatiri.textContent = (e && e.message) || "İşlem gönderilemedi.";
+        durumSatiri.textContent = (e && e.message) || "The transaction could not be sent.";
       }
     });
 
     katkiGovde.append(el("div", { sinif: "alan" }, [
-      el("label", { sinif: "alan__etiket", yazi: "Katkı bağlantısı" }),
+      el("label", { sinif: "alan__etiket", yazi: "Link to the contribution" }),
       uriGirdi
     ]));
     if (hesap) {
       katkiGovde.append(dugme);
     } else {
       katkiGovde.append(not(
-        "Kaydetmek için cüzdanı bağla. Sayfa kendi başına hiçbir şey " +
-        "göndermiyor.", "bilgi"));
+        "Connect a wallet to record something. The page sends nothing on " +
+        "its own.", "bilgi"));
     }
     katkiGovde.append(durumSatiri);
     katkiGovde.append(not(
-      "Kaydettiğin bağlantı herkese açık ve geri alınamaz. Gizli bir " +
-      "depo adresi, anahtar ya da müşteri verisi YAZMA.", "uyari"));
+      "What you record is public and cannot be taken back. DO NOT write a " +
+      "private repo address, a key, or customer data.", "uyari"));
 
-    kap.append(panel("Katkını kaydet", katkiGovde));
+    kap.append(panel("Record a contribution", katkiGovde));
   }
 
-  kap.append(panel("Geliştirici havuzu", havuzGovde));
+  kap.append(panel("Developer pool", havuzGovde));
 
   /* ---- 3. the marketplace side ------------------------------------
    *
-   * DAĞITILDI, ARTIK FORMLAR GERÇEK
-   *   Bu bölüm "dağıtım bekliyor" diyordu ve doğruydu. Pazar artık Arc
-   *   ana ağında, bu yüzden kayıt ve yayın formları gerçek işlem
-   *   gönderiyor.
+   * DEPLOYED, SO THE FORMS ARE REAL NOW
+   *   This section used to say "awaiting deployment", and that was true.
+   *   The marketplace is on Arc mainnet now, so the registration and
+   *   publishing forms send real transactions.
    *
-   *   Kayıt izinsiz: onay kapısı koymak onaylayacak birini gerektirirdi.
-   *   Kalite kapısı kayıt değil — satış sayısı ve yalnızca ödemiş
-   *   müşterilerin verebildiği puan.
-   */
+   *   Registration is permissionless: an approval gate would need
+   *   somebody to do the approving. The quality gate is not registration
+   *   but sales count and ratings only paying customers can give.   */
   if (!canli(PAZAR.pazar)) {
-    kap.append(panel("Pazarda ürün yayınla", dagitimBekliyor(kayit)));
+    kap.append(panel("Publish a product", dagitimBekliyor(kayit)));
   } else {
     /* Is this wallet registered? Everything else depends on it, and the
        contract refuses urunEkle() without it. */
@@ -266,22 +269,22 @@ export async function ciz({ kayit, cuzdan }) {
 
     if (!hesap) {
       kayitGovde.append(bos(
-        "Cüzdan bağlı değil",
-        "Kaydolmak için cüzdanı bağla. Sayfa kendi başına hiçbir şey " +
-        "göndermiyor."
+        "Wallet not connected",
+        "Connect a wallet to register. The page sends nothing on its own."
       ));
     } else if (kayitli === null) {
       kayitGovde.append(not(
-        "Kayıt durumu okunamadı. Zincirin ne dediği bilinmeden form " +
-        "basmak, geri dönecek bir işlem göndermeye davet olurdu.", "uyari"));
+        "Registration status could not be read. Rendering a form without " +
+        "knowing what the chain says would be an invitation to send a " +
+        "transaction that reverts.", "uyari"));
     } else if (kayitli === true) {
-      kayitGovde.append(not("Bu cüzdan kayıtlı. Ürün yayınlayabilirsin.",
+      kayitGovde.append(not("This wallet is registered. You can publish a product.",
         "bilgi"));
     } else {
       const profilGirdi = el("input", {
         sinif: "girdi",
         attr: { type: "text", maxlength: "300",
-          placeholder: "https://… veya ipfs://… — kim olduğun, ne yaptığın" }
+          placeholder: "https://… or ipfs://… — who you are, what you build" }
       });
       const kayitDugme = el("button", {
         sinif: "dugme dugme--marka", yazi: "KAYDOL", attr: { type: "button" }
@@ -292,51 +295,52 @@ export async function ciz({ kayit, cuzdan }) {
            than letting the chain answer with a selector. */
         if (!uri) {
           durum1.className = "yazi yazi--kucuk yazi--hata";
-          durum1.textContent = "Profil bağlantısı boş olamaz.";
+          durum1.textContent = "The profile link cannot be empty.";
           return;
         }
         try {
           durum1.className = "yazi yazi--kucuk yazi--sessiz";
-          durum1.textContent = "Gönderiliyor…";
+          durum1.textContent = "Sending…";
           const h = await cuzdan.gonder({
             to: PAZAR.pazar,
             data: cagriVerisi(ABI.pazarYaz, "kaydol", [uri])
           });
           durum1.className = "yazi yazi--kucuk";
-          durum1.textContent = "Gönderildi: " + h;
+          durum1.textContent = "Sent: " + h;
         } catch (e) {
           durum1.className = "yazi yazi--kucuk yazi--hata";
-          durum1.textContent = (e && e.message) || "İşlem gönderilemedi.";
+          durum1.textContent = (e && e.message) || "The transaction could not be sent.";
         }
       });
       kayitGovde.append(el("div", { sinif: "alan" }, [
-        el("label", { sinif: "alan__etiket", yazi: "Profil bağlantısı" }),
+        el("label", { sinif: "alan__etiket", yazi: "Profile link" }),
         profilGirdi
       ]));
       kayitGovde.append(kayitDugme);
       kayitGovde.append(not(
-        "Yazdığın bağlantı herkese açık ve geri alınamaz. API anahtarı, " +
-        "gizli uç nokta ya da müşteri verisi YAZMA — zincir herkese açık.",
+        "What you write is public and cannot be taken back. DO NOT write an " +
+        "API key, a private endpoint, or customer data — the chain is " +
+        "open to everyone.",
         "uyari"));
     }
     kayitGovde.append(durum1);
-    kap.append(panel("Geliştirici kaydı", kayitGovde));
+    kap.append(panel("Developer registration", kayitGovde));
 
     /* ---- publishing, only when it can succeed --------------------- */
     const yayinGovde = el("div", { sinif: "yigin yigin--sik" });
     if (kayitli !== true) {
       yayinGovde.append(not(
         hesap
-          ? "Ürün yayınlamak için önce kaydolman gerekiyor; sözleşme " +
-            "kayıtsız bir adresten urunEkle() kabul etmiyor. Çalışmayacak " +
-            "bir form basmıyorum."
-          : "Ürün yayınlamak için cüzdanı bağla ve kaydol.",
+          ? "You have to register before publishing: the contract does " +
+            "not accept urunEkle() from an unregistered address. A form " +
+            "that cannot work is not rendered."
+          : "Connect a wallet and register to publish a product.",
         "bilgi"));
     } else {
       const adGirdi = el("input", {
         sinif: "girdi",
         attr: { type: "text", maxlength: "300",
-          placeholder: "https://… veya ipfs://… — ürün bilgisi" }
+          placeholder: "https://… or ipfs://… — product details" }
       });
       const fiyatGirdi = el("input", {
         sinif: "girdi",
@@ -344,15 +348,15 @@ export async function ciz({ kayit, cuzdan }) {
       });
       const periyotGirdi = el("select", { sinif: "girdi" });
       for (const [etiket, sn] of [
-        ["Bir defalık — süresiz lisans", "0"],
-        ["Aylık abonelik (30 gün)", String(30 * 86400)],
-        ["Yıllık abonelik (365 gün)", String(365 * 86400)]
+        ["One-off — a licence that never expires", "0"],
+        ["Monthly subscription (30 days)", String(30 * 86400)],
+        ["Yearly subscription (365 days)", String(365 * 86400)]
       ]) {
         periyotGirdi.append(el("option", { yazi: etiket, attr: { value: sn } }));
       }
       const durum2 = el("div", { sinif: "yazi yazi--kucuk yazi--sessiz" });
       const yayinDugme = el("button", {
-        sinif: "dugme dugme--marka", yazi: "ÜRÜNÜ YAYINLA",
+        sinif: "dugme dugme--marka", yazi: "PUBLISH PRODUCT",
         attr: { type: "button" }
       });
       yayinDugme.addEventListener("click", async () => {
@@ -360,17 +364,17 @@ export async function ciz({ kayit, cuzdan }) {
         const f = Number(fiyatGirdi.value);
         if (!uri) {
           durum2.className = "yazi yazi--kucuk yazi--hata";
-          durum2.textContent = "Ürün bağlantısı boş olamaz.";
+          durum2.textContent = "The product link cannot be empty.";
           return;
         }
         if (!Number.isFinite(f) || f < 0) {
           durum2.className = "yazi yazi--kucuk yazi--hata";
-          durum2.textContent = "Fiyat sıfır ya da pozitif bir sayı olmalı.";
+          durum2.textContent = "The price has to be zero or a positive number.";
           return;
         }
         try {
           durum2.className = "yazi yazi--kucuk yazi--sessiz";
-          durum2.textContent = "Gönderiliyor…";
+          durum2.textContent = "Sending…";
           /* Six decimals, because the quote has six. Rounded rather than
              truncated so a form showing 25 does not send 24,999999. */
           const fiyat = BigInt(Math.round(f * 1e6));
@@ -380,15 +384,15 @@ export async function ciz({ kayit, cuzdan }) {
             data: cagriVerisi(ABI.pazarYaz, "urunEkle", [fiyat, periyot, uri])
           });
           durum2.className = "yazi yazi--kucuk";
-          durum2.textContent = "Gönderildi: " + h;
+          durum2.textContent = "Sent: " + h;
         } catch (e) {
           durum2.className = "yazi yazi--kucuk yazi--hata";
-          durum2.textContent = (e && e.message) || "İşlem gönderilemedi.";
+          durum2.textContent = (e && e.message) || "The transaction could not be sent.";
         }
       });
 
       yayinGovde.append(el("div", { sinif: "alan" }, [
-        el("label", { sinif: "alan__etiket", yazi: "Ürün bağlantısı" }),
+        el("label", { sinif: "alan__etiket", yazi: "Product link" }),
         adGirdi
       ]));
       yayinGovde.append(el("div", { sinif: "alan" }, [
@@ -396,58 +400,59 @@ export async function ciz({ kayit, cuzdan }) {
         fiyatGirdi
       ]));
       yayinGovde.append(el("div", { sinif: "alan" }, [
-        el("label", { sinif: "alan__etiket", yazi: "Satış şekli" }),
+        el("label", { sinif: "alan__etiket", yazi: "How it sells" }),
         periyotGirdi
       ]));
       yayinGovde.append(yayinDugme);
       yayinGovde.append(durum2);
       yayinGovde.append(not(
-        "Satış şekli sonradan DEĞİŞTİRİLEMEZ. Aylık diye alınmış bir " +
-        "aboneliği yıllığa çevirmek, müşterinin elindeki lisansın ne " +
-        "olduğunu sonradan değiştirmek olurdu; farklı bir periyot isteyen " +
-        "yeni bir ürün açar. Fiyat ve açıklama değişebilir.", "bilgi"));
+        "How it sells CANNOT be changed later. Turning a subscription that " +
+        "was bought as monthly into a yearly one would change what the " +
+        "customer already holds; a different period means a new product. " +
+        "Price and description can change.", "bilgi"));
       yayinGovde.append(not(
-        "Ürünü satıştan çekebilirsin ama SATILMIŞ LİSANSI geri alamazsın " +
-        "— parasını ödemiş birinin ürününü elinden almak olurdu.", "bilgi"));
+        "You can take a product off sale, but you CANNOT revoke a licence " +
+        "already sold — that would be taking back something somebody " +
+        "paid for.", "bilgi"));
     }
-    kap.append(panel("Pazarda ürün yayınla", yayinGovde));
+    kap.append(panel("Publish a product", yayinGovde));
   }
 
   /* ---- 4. earnings, from the contract's own ledger ----------------- */
   const kazancGovde = el("div", { sinif: "yigin yigin--sik" });
   if (!hesap) {
     kazancGovde.append(bos(
-      "Cüzdan bağlı değil",
-      "Kazanç cüzdan adresine göre okunuyor."
+      "Wallet not connected",
+      "Earnings are read per wallet address."
     ));
   } else if (!canli(PAZAR.pazar)) {
-    kazancGovde.append(not("Pazar dağıtılmadığı için okunacak bir defter " +
-      "yok.", "bilgi"));
+    kazancGovde.append(not("The marketplace is not deployed, so there is no " +
+      "ledger to read.", "bilgi"));
   } else {
     let kazanc = null;
     try {
       kazanc = await oku(PAZAR.pazar, ABI.pazar, "gelistiriciKazanci", [hesap]);
     } catch (e) { kazanc = null; }
     kazancGovde.append(el("div", { sinif: "izgara izgara--olcum" }, [
-      olcum("Pazardan kazandığın",
-        kazanc == null ? "okunamadı" : para(tamSayidanSayi(kazanc, 6)),
-        "satışların %" + (PAZAR_KURAL.gelistiriciPpm / 10_000) + "'i")
+      olcum("Earned on the marketplace",
+        kazanc == null ? "unreadable" : para(tamSayidanSayi(kazanc, 6)),
+        (PAZAR_KURAL.gelistiriciPpm / 10_000) + "% of your sales")
     ]));
     /* The distinction the brief insists on: this number is money that
        ALREADY moved, not a promise. */
     kazancGovde.append(not(
       kazanc != null && BigInt(kazanc) === 0n
-        ? "Henüz satış yok. Bu sıfır gerçek — pazar yeni dağıtıldı."
-        : "Bu tutar ZATEN cüzdanına geçmiş paranın toplamı; talep " +
-          "edilecek bir bakiye değil. Pazar satışında ödeme aynı işlemde " +
-          "yapılıyor, arada kimse tutmuyor.",
+        ? "No sales yet. This zero is real — the marketplace was just deployed."
+        : "This is the total that has ALREADY reached your wallet, not a " +
+          "balance waiting to be claimed. A marketplace sale pays out in " +
+          "the same transaction; nobody holds it in between.",
       "bilgi"));
     kazancGovde.append(not(
-      "Geliştirici havuzu bundan AYRI ve oraya bakan sayı yukarıda. O " +
-      "havuzdaki para bir oya bağlı; bu ikisini tek başlıkta toplamak, " +
-      "fonlanmamış bir ödülü kazanç gibi göstermek olurdu.", "uyari"));
+      "The developer pool is SEPARATE from this, and its figure is above. " +
+      "Money in that pool depends on a vote; adding the two under one " +
+      "heading would present an unfunded reward as earnings.", "uyari"));
   }
-  kap.append(panel("Kazancım", kazancGovde));
+  kap.append(panel("My earnings", kazancGovde));
 
   return kap;
 }

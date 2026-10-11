@@ -1,34 +1,33 @@
 "use strict";
 /* ===========================================================================
- * denetim-dao-erisimi.js — DAO gerçekte neye dokunabiliyor
+ * denetim-dao-erisimi.js — what the DAO can actually touch
  *
  *   node scripts/denetim-dao-erisimi.js
  *
- * SORU
- *   Canlı Governor'ın teklif imzası `propose(string, address, bytes)`. Yani
- *   bir teklif HERHANGİ bir adrese HERHANGİ bir çağrı yapabilir. "DAO
- *   yalnızca izin verilen konularda karar alır" kuralı sözleşmenin
- *   imzasında yazılı DEĞİL.
+ * THE QUESTION
+ *   The live Governor's proposal signature is `propose(string, address,
+ *   bytes)`. So a proposal can make ANY call to ANY address. The rule that
+ *   "the DAO only decides on permitted subjects" is NOT written in the
+ *   contract's signature.
  *
- *   O zaman kuralı ne tutuyor? Hedef sözleşmelerin kendisi. Bir DAO,
- *   yetkisi olmayan bir fonksiyonu çağırabilir — ama o çağrı döner. Dolayı-
- *   sıyla gerçek soru şu: hangi sözleşme Governor'ı yetkili sayıyor ve bu
- *   hangi fonksiyonları açıyor?
+ *   So what holds the rule? The target contracts themselves. A DAO can
+ *   call a function it has no authority over — but that call reverts. So
+ *   the real question is: which contract treats the Governor as authorised,
+ *   and which functions does that open?
  *
- * NEDEN "ÇAĞIRABİLİR AMA DÖNER" YETERLİ BİR CEVAP
- *   Yetki beyaz listesini Governor'ın içine koymak daha gösterişli
- *   görünürdü ve daha zayıf olurdu: o liste değiştirilebilir bir durum
- *   olur ve onu değiştiren teklif de bir tekliftir. Teminat kasasının hiç
- *   sahibi ve hiç ayarlayıcısı olmaması ise değiştirilemez. Kısıt, DAO'nun
- *   nazik davranmasına değil, karşı tarafta dokunulacak bir kol
- *   olmamasına dayanıyor.
+ * WHY "CAN CALL BUT REVERTS" IS A SUFFICIENT ANSWER
+ *   Putting the whitelist inside the Governor would look more impressive
+ *   and be weaker: that list becomes mutable state, and the proposal that
+ *   changes it is also a proposal. The collateral vault having no owner and
+ *   no setter at all is not changeable. The constraint does not rest on the
+ *   DAO behaving politely but on there being no lever to touch on the other
+ *   side.
  *
- * BU DENETİM NE ZAMAN KIRMIZI YANAR
- *   Birisi kasalardan birine bir ayarlayıcı eklerse ya da bir sözleşme
- *   Governor'ı yetkili saymaya başlarsa. İkisi de sessiz değişiklikler ve
- *   ikisi de kullanıcının koyduğu kuralı geçersiz kılar: *"Kilitli
- *   likidite, teminat rezervleri, değiştirilemez ücretler ve kullanıcı
- *   varlıkları DAO tarafından değiştirilemesin."*
+ * WHEN THIS AUDIT GOES RED
+ *   If somebody adds a setter to one of the vaults, or a contract starts
+ *   treating the Governor as authorised. Both are silent changes and both
+ *   void the rule the user set: *"Locked liquidity, collateral reserves,
+ *   immutable fees and user assets must not be changeable by the DAO."*
  * =========================================================================== */
 const fs = require("fs");
 const path = require("path");
@@ -180,10 +179,10 @@ console.log("3) DAO NUN GERCEK IZIN KUMESI — YAZDIRILAN DEGIL, SORULAN");
   const bekle = (ms) => new Promise((r) => setTimeout(r, ms));
 
   const ham = async (to, imza) => {
-    /* Arc hiz sinirini sert uyguluyor ve okunamayan bir yetki burada
-       BASARISIZLIK sayiliyor — dogru karar, ama o zaman geri cekilme de
-       digerleri kadar sabirli olmali. 900ms x 4 toplam 5 saniye ediyordu
-       ve set icinde yetmedi. */
+    /* Arc enforces its rate limit hard, and an authority that cannot be
+       read counts as a FAILURE here — the right call, but then the backoff
+       has to be as patient as the others. 900ms x 4 came to 5 seconds in
+       total and was not enough inside the set. */
     for (let d = 0; d < 6; d++) {
       if (d > 0) await bekle(Math.min(2500 * Math.pow(2, d - 1), 20000));
       const r = await fetch(ARC_RPC, {
@@ -294,10 +293,10 @@ console.log("3) DAO NUN GERCEK IZIN KUMESI — YAZDIRILAN DEGIL, SORULAN");
   console.log("   kota         %" + (kotaBps == null ? "?" : Number(kotaBps) / 100));
 
   ok(oySure != null && kilit != null && oySure > 0n && kilit > 0n,
-    /* Adinda "KOTU" gecmiyor, ve bu bir uslup tercihi degil: hepsi.js
-       sav sayilarini metinden /(KOTU|KALDI)/ ile cikariyor, yani
-       savin ADI sayaci kirletiyordu — bu kosum her seferinde bir fazla
-       basarisizlikla raporlaniyordu. */
+    /* Its name does not contain "KOTU", and that is not a stylistic
+       choice: hepsi.js extracts the assertion counts from the text with
+       /(KOTU|KALDI)/, so the assertion's NAME was polluting the counter —
+       this run reported one failure too many every time. */
     "SESSIZ BIR ODEME MUMKUN DEGIL — oy ve timelock sifir degil",
     "oy " + gun(oySure) + " + timelock " + gun(kilit) +
       ": bir teklif gecse bile parayi ayni gun hareket ettiremez");

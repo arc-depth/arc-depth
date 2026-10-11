@@ -1,29 +1,31 @@
 "use strict";
 /* ===========================================================================
- * olc-havuz-fiyat.js — CA'dan türetilen fiyat, gerçek havuzlara karşı
+ * olc-havuz-fiyat.js — the price derived from a CA, against real pools
  *
  *   anvil --fork-url https://base-rpc.publicnode.com     --port 8547 --silent
  *   anvil --fork-url https://ethereum-rpc.publicnode.com --port 8546 --silent
  *   node scripts/olc-havuz-fiyat.js
  *
- * ÖLÇÜLEN ŞEY
- *   Teminat listesi yok. Kullanıcı yalnızca kontrat adresini veriyor ve
- *   sözleşme havuzu, kademeyi ve fiyatı kendi türetiyor. Bu koşum o
- *   türetmenin doğru olduğunu gösteriyor — ve "doğru"nun ölçütü sözleşmenin
- *   kendi iddiası değil, UNISWAP'IN KENDİ KOTASI.
+ * WHAT IS MEASURED
+ *   There is no collateral list. The user supplies only a contract address
+ *   and the contract derives the pool, the tier and the price itself. This
+ *   run shows that derivation is correct — and the standard for "correct"
+ *   is not the contract's own claim but UNISWAP'S OWN QUOTE.
  *
- * NEDEN KOTAYLA KARŞILAŞTIRILIYOR
- *   Tick aritmetiğini yanlış yazmak sessiz bir hata: sözleşme bir sayı
- *   döndürür, sayı makul görünür ve taban kayar. Yürütücü de o kaymayı
- *   cebe atar. O yüzden türetilen fiyat, aynı miktar için Uniswap'in
- *   Quoter'ına sorulan gerçek çıktıyla karşılaştırılıyor. TWAP ile anlık
- *   kota birebir tutmaz — tutmaması gerekir, biri ortalama diğeri o an —
- *   ama aynı büyüklükte olmak zorundalar.
+ * WHY IT IS COMPARED AGAINST THE QUOTE
+ *   Getting tick arithmetic wrong is a silent error: the contract returns a
+ *   number, the number looks plausible, and the floor shifts. The executor
+ *   pockets that shift. So the derived price is compared against the real
+ *   output Uniswap's Quoter gives for the same amount. A TWAP and a spot
+ *   quote do not match exactly — they should not, one is an average and the
+ *   other is this instant — but they have to be the same order of
+ *   magnitude.
  *
- * NEDEN MEME COIN
- *   Kullanıcının kuralı meme coinler dahil çalışan her şeyin girmesi. O
- *   yüzden test kümesi WETH ve WBTC değil: DEGEN, SHIB, MOG, VIRTUAL gibi
- *   şeyler de var — ve boş havuzu olan PEPE, reddedilmesi gerektiği için.
+ * WHY MEME COINS
+ *   The user's rule is that everything that works gets in, meme coins
+ *   included. So the test set is not WETH and WBTC: it has things like
+ *   DEGEN, SHIB, MOG and VIRTUAL in it — and PEPE, whose pool is empty,
+ *   because it has to be refused.
  * =========================================================================== */
 const { Interface, AbiCoder } = require("ethers");
 const fs = require("fs");
@@ -261,20 +263,22 @@ const V = (v) => BigInt(v.toString());
 
       /* ---- 3a. the tick arithmetic, against the pool's own SPOT ----
        *
-       * NEDEN KOTAYA DEGIL SLOT0'A KARSI
-       *   Bu sav tick aritmetiginin dogrulugunu olcuyor ve ilk yazildiginda
-       *   Quoter'in kotasiyla karsilastiriliyordu. O karsilastirma yanlisti
-       *   ve yanlisligi olculdu: DEGEN'de %93 sapma cikti, ama ikisi de
-       *   DOGRUYDU — farkli seyleri olcuyorlardi.
+       * WHY AGAINST SLOT0 AND NOT AGAINST THE QUOTE
+       *   This assertion measures whether the tick arithmetic is correct,
+       *   and when first written it compared against the Quoter's quote.
+       *   That comparison was wrong, and its wrongness was measured: DEGEN
+       *   came out 93% apart, yet both numbers were RIGHT — they were
+       *   measuring different things.
        *
-       *     TWAP           havuzun MARJINAL fiyati    $0.000998
-       *     Quoter         $2.000'lik islemin         $0.016096
-       *                    GERCEKLESEN fiyati
+       *     TWAP           the pool's MARGINAL price    $0.000998
+       *     Quoter         the EXECUTED price of a      $0.016096
+       *                    $2,000 trade
        *
-       *   Ayni havuzun dort kademesinin hepsi $0.000998 diyor; fark
-       *   aritmetikte degil, islemin havuza gore buyuklugunde. O yuzden
-       *   aritmetik slot0'a karsi olculuyor — ikisi de marjinal fiyat —
-       *   ve islem buyuklugu asagida AYRI bir olcum olarak duruyor.
+       *   All four tiers of the same pool say $0.000998; the difference is
+       *   not in the arithmetic but in the trade's size relative to the
+       *   pool. So the arithmetic is measured against slot0 — both are the
+       *   marginal price — and the trade size stands below as a SEPARATE
+       *   measurement.
        */
       const s0 = await rpc(z.rpc, "eth_call", [{ to: d[0], data: "0x3850c7bd" }, "latest"]);
       const sqrtX96 = BigInt("0x" + s0.slice(2, 66));
@@ -297,16 +301,16 @@ const V = (v) => BigInt(v.toString());
 
       /* ---- 3b. the depth this trade needs, which is a LIMIT ---------
        *
-       * BU BIR SAV DEGIL, OLCUM — VE DURUST BIR SINIR
-       *   Taban TWAP'tan turetiliyor, yani MARJINAL fiyattan. Islem
-       *   havuzu ittiriyorsa gerceklesen fiyat daha kotu olur ve taban
-       *   ulasilamaz hale gelir: donusum reddedilir.
+       * THIS IS NOT AN ASSERTION BUT A MEASUREMENT — AND AN HONEST LIMIT
+       *   The floor is derived from the TWAP, that is, from the MARGINAL
+       *   price. If the trade pushes the pool, the executed price is worse
+       *   and the floor becomes unreachable: the conversion is refused.
        *
-       *   Guvenli yonde kapaniyor — para kaybedilmiyor, islem olmuyor.
-       *   Ama "calisan her token teminat olabilir" vaadinin gercek
-       *   siniri bu: havuz, islem buyuklugune gore yeterince derin
-       *   olmak zorunda. Olculdu: $2.000 icin DEGEN'in en derin
-       *   kademesi bile 16 kat ittiyor.
+       *   It closes in the safe direction — no money is lost, the trade
+       *   does not happen. But this is the real limit of the promise that
+       *   "any token that works can be collateral": the pool has to be
+       *   deep enough for the size of the trade. Measured: for $2,000 even
+       *   DEGEN's deepest tier pushed 16x.
        */
       const ittirme = Number(turetilen) / Number(kota);
       const tolerans = 1 / (1 - 300 / 10_000);      // AZAMI_KAYMA_BPS = 300

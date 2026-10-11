@@ -15,19 +15,19 @@ import { para, jetonMiktar, tamSayidanSayi, bloktanSure } from "../bicim.js";
 
 export async function ciz() {
   const kap = el("div", { sinif: "yigin" });
-  kap.append(sayfaUst("Teminat kasaları", "Her tokenin rezervi ve tabanın devreye girdiği fiyat"));
+  kap.append(sayfaUst("Collateral vaults", "Each token's reserve and the price where the floor engages"));
 
   kap.append(el("div", { sinif: "izgara izgara--olcum" }, [
-    olcum("Çağrı tavanı", EKONOMI.islemTavaniBps / 100 + "%", "tek geri alımda harcanabilir"),
-    olcum("Pencere tavanı", EKONOMI.donemTavaniBps / 100 + "%", "harcama + ödül"),
+    olcum("Per call", EKONOMI.islemTavaniBps / 100 + "%", "spendable in one buyback"),
+    olcum("Per window", EKONOMI.donemTavaniBps / 100 + "%", "spend plus reward"),
     olcum("Pencere", bloktanSure(EKONOMI.donemBlok), EKONOMI.donemBlok + " blok"),
-    olcum("Çağıranın payı", EKONOMI.odulPayiBps / 100 + "%", "yakalanan iskontodan")
+    olcum("Caller's share", EKONOMI.odulPayiBps / 100 + "%", "of the discount captured")
   ]));
 
   kap.append(not(
-    "Geri alım yalnızca piyasa fiyatı hakkın altındayken mümkün. Üstünde " +
-    "sözleşme kendiliğinden reddeder — tetik ayrı bir dedektör değil, " +
-    "değişmezin kendisi.",
+    "A buyback is only possible while the market price is below the " +
+    "claim. Above it the contract refuses by itself — the trigger is not " +
+    "a separate detector but the invariant itself.",
     "bilgi"
   ));
 
@@ -35,14 +35,14 @@ export async function ciz() {
 
   if (!dagitildiMi) {
     kap.append(panel("Kasalar", bos(
-      "Henüz kasa yok",
-      "Her launch kendi teminat kasasını oluşturur. Launchpad dağıtılmadığı " +
-      "için okunacak kasa da yok."
+      "No vaults yet",
+      "Every launch creates its own collateral vault. With the launchpad " +
+      "not deployed there is no vault to read."
     )));
     return kap;
   }
   if (!liste.length) {
-    kap.append(panel("Kasalar", bos("Kasa yok", "Henüz hiç token çıkarılmamış.")));
+    kap.append(panel("Vaults", bos("No vaults", "Nothing has been launched yet.")));
     return kap;
   }
 
@@ -51,9 +51,9 @@ export async function ciz() {
   tablo.append(el("thead", {}, [el("tr", {}, [
     el("th", { yazi: "Token" }),
     el("th", { yazi: "Rezerv" }),
-    el("th", { yazi: "Dolaşım" }),
+    el("th", { yazi: "Circulating" }),
     el("th", { yazi: "Hak / token" }),
-    el("th", { yazi: "Taban fiyatı" }),
+    el("th", { yazi: "Floor price" }),
     el("th", { yazi: "Kasa" })
   ])]));
   const govde = el("tbody");
@@ -84,11 +84,11 @@ export async function ciz() {
       ]),
       el("td", { sinif: "sayi", attr: { "data-et": "Rezerv" },
         yazi: rez == null ? "—" : para(rez) }),
-      el("td", { sinif: "sayi", attr: { "data-et": "Dolaşım" },
+      el("td", { sinif: "sayi", attr: { "data-et": "Circulating" },
         yazi: dol == null ? "—" : jetonMiktar(dol) }),
       el("td", { sinif: "sayi", attr: { "data-et": "Hak / token" },
         yazi: hak == null ? "—" : para(Number(hak) / 1e36) }),
-      el("td", { sinif: "sayi", attr: { "data-et": "Taban fiyatı" },
+      el("td", { sinif: "sayi", attr: { "data-et": "Floor price" },
         yazi: taban == null ? "—" : para(taban) }),
       el("td", { attr: { "data-et": "Kasa" } }, [adres(l.kasa)])
     ]));
@@ -101,10 +101,10 @@ export async function ciz() {
   ], el("div", { sinif: "tablo-sarmal" }, [tablo])));
 
   kap.append(not(
-    "Rezerv yalnızca USDC üzerinden gösteriliyor. Sepette başka varlık " +
-    "varsa onların değeri burada toplanmıyor — toplamak için her varlığın " +
-    "besleyicisini okumak gerekir ve o sayfa henüz yok. Eksik bir toplam " +
-    "göstermek yerine okunan tek kalemi gösteriyoruz.",
+    "The reserve is shown in USDC only. If the basket holds other " +
+    "assets their value is not added here — adding it would mean reading " +
+    "every asset's feed, and that page does not exist yet. Rather than " +
+    "show an incomplete total we show the one line that was read.",
     "uyari"
   ));
 

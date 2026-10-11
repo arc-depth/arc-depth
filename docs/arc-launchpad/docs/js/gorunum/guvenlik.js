@@ -19,65 +19,74 @@ import { bloktanSure } from "../bicim.js";
 /* Claims, each with the script that establishes it. */
 const KANITLAR = [
   {
-    baslik: "Kasadan çıkan her transfer msg.sender'a gider",
-    yazi: "Teminat kasasında varlık çıkaran tam dört yol var — iade, geri alım ödüncü, " +
-          "geri alım ödülü, dönüştürme ödüncü — ve hiçbirinde hedef argümanı yok. " +
-          "Rezerv bir köprüye, bir sahibe ya da herhangi bir adrese yönlendirilemez.",
+    baslik: "Every transfer out of the vault goes to msg.sender",
+    yazi: "There are exactly four ways an asset leaves the collateral " +
+          "vault — redemption, the buyback loan, the buyback reward and " +
+          "the conversion loan — and none of them takes a destination " +
+          "argument. The reserve cannot be routed to a bridge, to an " +
+          "owner, or to any address at all.",
     betik: "scripts/denetim-kasa-cikislari.js"
   },
   {
-    baslik: "Sözleşmeler değiştirilemez",
-    yazi: "15 sözleşmenin bytecode'u tarandı: DELEGATECALL, SELFDESTRUCT ya da kod " +
-          "değiştirecek başka bir opcode yok. Fabrikaların CREATE'i izinli ve hangi " +
-          "sözleşmeyi gömdükleri adıyla kayıtlı.",
+    baslik: "The contracts cannot be changed",
+    yazi: "The bytecode of 15 contracts was scanned: no DELEGATECALL, no " +
+          "SELFDESTRUCT, and no other opcode that could change code. The " +
+          "factories' CREATE is permitted and which contract each one " +
+          "embeds is recorded by name.",
     betik: "scripts/degismezlik.js"
   },
   {
-    baslik: "Eğrinin aritmetiği çatallanmadı",
-    yazi: "EgriLaunch, Egri'nin çatalı. Fiyat ve kota fonksiyonlarının dokuzu satır " +
-          "satır birebir aynı; farklı olan her satır adlandırılmış bir çatal noktasına " +
-          "uymak zorunda, yoksa denetim başarısız oluyor.",
+    baslik: "The curve's arithmetic was not forked",
+    yazi: "EgriLaunch is a fork of Egri. Nine of the price and quota " +
+          "functions are identical line for line; every line that does " +
+          "differ has to match a named fork point, or the audit fails.",
     betik: "scripts/egri-catal-denetimi.js"
   },
   {
-    baslik: "Ücret tablosu iki kontratta aynı",
-    yazi: "Tablo hem launchpad'de hem kancada yazılı. Betik ikisini karşılaştırıyor ve " +
-          "toplamın dilimlere bölündüğünü doğruluyor.",
+    baslik: "The fee table matches in both contracts",
+    yazi: "The table is written in both the launchpad and the hook. The " +
+          "script compares the two and checks that the total divides into " +
+          "the slices.",
     betik: "scripts/egri-ucret-denetimi.js"
   },
   {
-    baslik: "Ücret gerçek bir satışta yedi adrese doğru dağıldı",
-    yazi: "Arc mainnet'te gerçek bir satış yapıldı ve yedi hedefin aldığı pay 1 ppm " +
-          "içinde tabloya uydu. Kancanın para tarafı bundan önce her satışta " +
-          "taşmayla patlıyordu — bu ölçüm onu buldu.",
+    baslik: "On a real sale the fee reached seven addresses correctly",
+    yazi: "A real sale was made on Arc mainnet and what the seven targets " +
+          "received matched the table to within 1 ppm. Before this, the " +
+          "hook's money side reverted on every sale with an overflow — " +
+          "this measurement is what found it.",
     betik: "scripts/olc-geri-alim-canli.js"
   },
   {
-    baslik: "Taban gerçek bir çöküşü yakaladı",
-    yazi: "Rezerve hiçbir şey eklenmeden, fiyat düşürülerek: geri alım −%94,9'da " +
-          "tetiklendi, 2,5 milyon token yakıldı, hak/token yukarı çıktı. Arada satış " +
-          "vergisi rezervi kendiliğinden büyüttü.",
+    baslik: "The floor caught a real collapse",
+    yazi: "With nothing added to the reserve and only the price pushed " +
+          "down: the buyback triggered at −94.9%, 2.5 million tokens were " +
+          "burned, and the claim per token went up. Along the way the " +
+          "sell tax grew the reserve by itself.",
     betik: "scripts/olc-geri-alim-canli.js"
   },
   {
-    baslik: "Tek blokta rezervin %10'undan fazlası çıkamaz",
-    yazi: "Üst üste geri alım denendi. Pencere tavanı diziyi durdurdu ve çıkan toplam " +
-          "sınırın altında kaldı. Bu limit ödülü de sayıyor — saymadığı sürece %10 " +
-          "sözü %17,07 ile tutmuyordu.",
+    baslik: "No more than 10% of the reserve can leave in one window",
+    yazi: "Back-to-back buybacks were tried. The window cap stopped the " +
+          "sequence and the total that left stayed under the limit. That " +
+          "limit counts the reward too — until it did, the 10% promise " +
+          "was being kept at 17.07%.",
     betik: "scripts/olc-geri-alim-canli.js"
   },
   {
-    baslik: "Mezuniyette hiçbir para ulaşılamaz hale gelmiyor",
-    yazi: "Eğri dolunca parası aynı havuzu derinleştiriyor; tokenlerin eşleştiremediği " +
-          "fazla teminat kasasına gidiyor. Muhasebe kuruşa kadar kapanıyor. Düzeltmeden " +
-          "önce 698.671 USDC açıcıda sonsuza kadar sıkışıyordu.",
+    baslik: "No money becomes unreachable at graduation",
+    yazi: "When the curve fills, its money deepens the same pool; the " +
+          "excess the tokens cannot match goes to the collateral vault. " +
+          "The accounting closes to the cent. Before the fix, 698,671 " +
+          "USDC was stuck in the opener forever.",
     betik: "scripts/olc-mezuniyet.js"
   },
   {
-    baslik: "Chainlink besleyicileri sözleşmeden okunabiliyor",
-    yazi: "Arc'taki 34 besleyicinin proxy'si bir sözleşme içinden okundu, 34/34 cevap " +
-          "verdi. Log taramasıyla bulunan aggregator adresleri bunu sağlamıyordu: " +
-          "biri cüzdandan okunup sözleşmeden 'No access' ile reddediyordu.",
+    baslik: "The Chainlink feeds can be read from a contract",
+    yazi: "All 34 feed proxies on Arc were read from inside a contract and " +
+          "34/34 answered. The aggregator addresses found by scanning " +
+          "logs did not manage this: one of them read fine from a wallet " +
+          "and refused a contract with 'No access'.",
     betik: "scripts/olc-besleyiciler.js"
   }
 ];
@@ -86,7 +95,7 @@ export async function ciz() {
   const kap = el("div", { sinif: "yigin" });
   const blok = await sonBlok();
 
-  kap.append(sayfaUst("Güvenlik ve doğrulama",
+  kap.append(sayfaUst("Security and verification",
     blok ? "Arc blok " + blok.toLocaleString("tr-TR") : "Arc"));
 
   /* ---- deployment state, first ------------------------------------- */
@@ -95,32 +104,33 @@ export async function ciz() {
 
   kap.append(not(
     bekleyen.length
-      ? "Bu modelin sözleşmeleri HENÜZ DAĞITILMADI. " + bekleyen.length +
-        " sözleşme zincirde değil, dolayısıyla arayüzde işlem gönderen hiçbir " +
-        "düğme aktif değil. Aşağıdaki kanıtların hepsi gerçek Arc mainnet'e " +
-        "karşı eth_call ile ölçüldü — dağıtım ayrı bir adım."
-      : "Bu modelin sözleşmeleri dağıtıldı.",
+      ? "The contracts for this model are NOT DEPLOYED YET. " +
+        bekleyen.length + " contracts are not on chain, so no button in " +
+        "the interface that sends a transaction is active. Every proof " +
+        "below was measured against real Arc mainnet with eth_call — " +
+        "deploying is a separate step."
+      : "The contracts for this model are deployed.",
     bekleyen.length ? "uyari" : "bilgi"
   ));
 
   const izgara = el("div", { sinif: "izgara izgara--olcum" });
-  izgara.append(olcum("Dağıtılan", String(dagitildi.length), "bu modelden"));
-  izgara.append(olcum("Bekleyen", String(bekleyen.length), "dağıtım gerekiyor"));
-  izgara.append(olcum("Çağrı tavanı", EKONOMI.islemTavaniBps / 100 + "%", "tek geri alımda harcanabilir"));
-  izgara.append(olcum("Pencere tavanı", EKONOMI.donemTavaniBps / 100 + "%",
-    bloktanSure(EKONOMI.donemBlok) + " içinde çıkabilen"));
+  izgara.append(olcum("Deployed", String(dagitildi.length), "from this model"));
+  izgara.append(olcum("Pending", String(bekleyen.length), "still to deploy"));
+  izgara.append(olcum("Per call", EKONOMI.islemTavaniBps / 100 + "%", "spendable in one buyback"));
+  izgara.append(olcum("Per window", EKONOMI.donemTavaniBps / 100 + "%",
+    "able to leave within " + bloktanSure(EKONOMI.donemBlok)));
   kap.append(izgara);
 
   /* ---- addresses ---------------------------------------------------- */
   const tablo = el("table", { sinif: "tablo tablo--kart" });
   tablo.append(el("thead", {}, [el("tr", {}, [
-    el("th", { yazi: "Sözleşme" }), el("th", { yazi: "Adres" }), el("th", { yazi: "Durum" })
+    el("th", { yazi: "Contract" }), el("th", { yazi: "Address" }), el("th", { yazi: "State" })
   ])]));
   const govde = el("tbody");
 
   const ekle = (ad, deger, kaynak) => {
     govde.append(el("tr", {}, [
-      el("td", { attr: { "data-et": "Sözleşme" } }, [
+      el("td", { attr: { "data-et": "Contract" } }, [
         el("strong", { yazi: ad }),
         kaynak ? el("div", { sinif: "ucuncul", yazi: kaynak }) : null
       ]),
@@ -129,16 +139,16 @@ export async function ciz() {
       el("td", { attr: { "data-et": "Durum" } }, [
         canli(deger)
           ? el("span", { sinif: "etiket etiket--alis", yazi: "zincirde" })
-          : el("span", { sinif: "etiket etiket--uyari", yazi: "dağıtılmadı" })
+          : el("span", { sinif: "etiket etiket--uyari", yazi: "not deployed" })
       ])
     ]));
   };
 
-  for (const [ad, v] of Object.entries(PULSE)) ekle(ad, v, "bu model");
-  ekle("isletme (ücret hedefi)", HEDEFLER.isletme, "düz adres");
-  ekle("PoolManager", DIS.poolManager, "Uniswap v4, bizim değil");
+  for (const [ad, v] of Object.entries(PULSE)) ekle(ad, v, "this model");
+  ekle("isletme (fee target)", HEDEFLER.isletme, "a plain address");
+  ekle("PoolManager", DIS.poolManager, "Uniswap v4, not ours");
   ekle("USDC", DIS.usdc, "Arc yerel — hem teminat hem gas");
-  for (const [ad, v] of Object.entries(ESKI)) ekle(ad, v, "önceki nesil");
+  for (const [ad, v] of Object.entries(ESKI)) ekle(ad, v, "previous generation");
 
   tablo.append(govde);
   kap.append(panel([
@@ -152,17 +162,17 @@ export async function ciz() {
     kanitlar.append(el("div", { sinif: "jeton-kart" }, [
       el("div", { sinif: "satir satir--arasi" }, [
         el("strong", { yazi: k.baslik }),
-        el("span", { sinif: "etiket etiket--alis", yazi: "ölçüldü" })
+        el("span", { sinif: "etiket etiket--alis", yazi: "measured" })
       ]),
       el("div", { sinif: "ikincil", yazi: k.yazi }),
       el("code", { sinif: "mono ucuncul", yazi: "node " + k.betik })
     ]));
   }
-  kap.append(panel("Neyin doğru olduğu ve nasıl kontrol edileceği", kanitlar));
+  kap.append(panel("What is true, and how to check it", kanitlar));
 
   kap.append(not(
-    "Bu sayfadaki her iddianın karşısında onu kuran betik yazıyor. Kontrol " +
-    "edilemeyen bir iddia bu sayfaya girmiyor.",
+    "Every claim on this page names the script that establishes it. A " +
+    "claim that cannot be checked does not go on this page.",
     "bilgi"
   ));
 

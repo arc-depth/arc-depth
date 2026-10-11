@@ -4,10 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="dark">
-<title>Arc Launchpad — tabanı olan meme coin</title>
-<meta name="description" content="Arc üzerinde teminatla desteklenmiş meme coin launchpad'i. Teminat kilitli bir kasada durur ve kimse çekemez; kasada çekme fonksiyonu yok ve sonradan eklenemez. Likidite kalıcı kilitli, her işlemin ücreti tabana gider.">
+<title>Arc Launchpad — the meme coin with a floor</title>
+<meta name="description" content="A collateral-backed meme coin launchpad on Arc. The collateral sits in a locked vault and nobody can withdraw it: the vault has no withdraw function and one cannot be added later. Liquidity is locked forever and the fee on every trade goes to the floor.">
 <meta property="og:title" content="Arc Launchpad">
-<meta property="og:description" content="Tabanı olan meme coin: teminat kilitli kasada, likidite kalıcı kilitli, her işlemin ücreti tabana.">
+<meta property="og:description" content="A meme coin with a floor: collateral in a locked vault, liquidity locked forever, and every trade's fee going to the floor.">
 <meta property="og:type" content="website">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -235,43 +235,43 @@ footer{border-top:1px solid var(--line);padding:40px 0 56px;color:var(--dim2);fo
   <div class="wrap hin">
     <div class="brand"><div class="mark"></div>Arc Launchpad</div>
     <nav class="top">
-      <a href="#amac">Ne yapıyor</a>
-      <a href="#nasil">Nasıl işliyor</a>
-      <a href="#guvence">Güvenceler</a>
-      <a href="#ucret">Ücret</a>
-      <a href="#teminat">Teminat</a>
-      <a href="#sayilar">Sayılar</a>
-      <a href="#kontratlar">Kontratlar</a>
-      <a href="#sss">SSS</a>
+      <a href="#amac">What it does</a>
+      <a href="#nasil">How it works</a>
+      <a href="#guvence">Guarantees</a>
+      <a href="#ucret">Fees</a>
+      <a href="#teminat">Collateral</a>
+      <a href="#sayilar">Numbers</a>
+      <a href="#kontratlar">Contracts</a>
+      <a href="#sss">FAQ</a>
     </nav>
     <div class="sp"></div>
-    <a class="cta" href="app.html">Uygulamayı aç</a>
+    <a class="cta" href="app.html">Open the app</a>
   </div>
 </header>
 
 
 <div class="hero">
   <div class="wrap">
-    <div class="tag"><span class="dot"></span>Arc ana ağında canlı</div>
-    <h1>Dibi olan <em>meme coin</em>.</h1>
+    <div class="tag"><span class="dot"></span>Live on Arc mainnet</div>
+    <h1>A <em>meme coin</em> with a bottom.</h1>
     <p class="lead">
-      Sıradan bir meme coin sıfıra gidebilir. Buradakiler gidemez:
-      <strong>her birinin arkasında kilitli gerçek teminat var ve o teminatı
-      kimse çekemez</strong> — ne kurucu, ne biz, ne bir oylama. Kasada
-      çekme fonksiyonu yok, sahibi yok, yükseltme yolu yok. İstediğin an
-      tokenini yakıp teminattan payını alırsın; izin istemeden, kuyruğa
-      girmeden.
+      An ordinary meme coin can go to zero. These cannot:
+      <strong>each one has real collateral locked behind it and nobody can
+      take that collateral out</strong> — not the founder, not us, not a
+      vote. The vault has no withdraw function, no owner and no upgrade
+      path. Whenever you want, you burn your token and take your share of
+      the collateral: no permission, no queue.
     </p>
     <div class="btns">
-      <a class="cta" href="app.html">Launch yap</a>
-      <a class="cta ghost" href="#nasil">Nasıl işliyor</a>
+      <a class="cta" href="app.html">Launch a token</a>
+      <a class="cta ghost" href="#nasil">How it works</a>
     </div>
 
     <div class="strip" id="strip">
-      <div class="sbox"><b>%0,5</b><span>işlem ücreti, tamamı tabana</span></div>
-      <div class="sbox"><b id="s-launch">—</b><span>yapılmış launch</span></div>
-      <div class="sbox"><b id="s-kasa">—</b><span>kasalardaki teminat</span></div>
-      <div class="sbox"><b>515</b><span>geçen otomatik kontrol</span></div>
+      <div class="sbox"><b>0.5%</b><span>trading fee, all of it to the floor</span></div>
+      <div class="sbox"><b id="s-launch">—</b><span>launches so far</span></div>
+      <div class="sbox"><b id="s-kasa">—</b><span>collateral in the vaults</span></div>
+      <div class="sbox"><b>515</b><span>automated checks passing</span></div>
     </div>
   </div>
 </div>
@@ -279,49 +279,50 @@ footer{border-top:1px solid var(--line);padding:40px 0 56px;color:var(--dim2);fo
 <!-- =============== AMAC =============== -->
 <section id="amac">
   <div class="wrap">
-    <p class="eyebrow">Proje ne yapıyor</p>
-    <h2>Taban bir söz değil, bir fonksiyon.</h2>
+    <p class="eyebrow">What the project does</p>
+    <h2>The floor is not a promise. It is a function.</h2>
     <p class="sub">
-      Her launch'ın kendi kasası var. Teminat oraya girer ve oradan tek bir
-      yolla çıkar: <strong>token yakarak</strong>. Yakma arzı, ödeme de
-      teminatı aynı oranda azalttığı için kalanların oranı hiç bozulmaz —
-      çıkan biri geride kalanın tabanını düşürmez.
+      Every launch has its own vault. Collateral goes in, and there is
+      exactly one way out: <strong>by burning tokens</strong>. The burn
+      shrinks the supply and the payout shrinks the collateral by the same
+      proportion, so the ratio never moves — somebody leaving does not
+      lower the floor for whoever stays.
     </p>
 
     <div class="g">
       <div class="bgov">
         <div class="bno">01</div>
-        <h3>Çıkış yolu bir tane</h3>
-        <p><code>redeem()</code> herkese açık ve ücretsiz:
-        <em>ödeme = teminat × miktar ÷ arz</em>. Kurtarma fonksiyonu,
-        süpürme, acil çekme, alıcı adresi parametresi — hiçbiri yok.
-        Böyle bir fonksiyon iyi niyetle yazılır, sonra ya kullanılır ya
-        çalınır.</p>
+        <h3>There is one way out</h3>
+        <p><code>redeem()</code> is open to everyone and free:
+        <em>payout = collateral × amount ÷ supply</em>. A rescue function,
+        a sweep, an emergency withdraw, a recipient-address parameter —
+        none of them exist. A function like that gets written in good
+        faith, and then it is either used or stolen.</p>
       </div>
       <div class="bgov">
         <div class="bno">02</div>
-        <h3>Fiyat tabanın altına inemez</h3>
-        <p>İnerse orada alıp kasada daha pahalıya bozmak serbesttir.
-        Kimsenin tabanı savunması gerekmiyor; <u>savunmak kârlı</u>.
-        Geri alımda hiç ücret yoktur, çünkü çıkıştaki bir ücret fiyatın
-        tabanın o kadar altında durmasına izin verirdi.</p>
+        <h3>The price cannot stay below the floor</h3>
+        <p>If it does, anyone may buy there and redeem at the vault for
+        more. Nobody has to defend the floor; <u>defending it pays</u>.
+        A redemption carries no fee at all, because a fee on the way out
+        would let the price sit that much further below the floor.</p>
       </div>
       <div class="bgov">
         <div class="bno">03</div>
-        <h3>Likidite geri çekilemez</h3>
-        <p>Launch'ın havuz pozisyonu doğduğu anda yakılır. Çekme isteği
-        kontrat seviyesinde reddediliyor, ama reddedecek bir sahip de
-        yok: <u>pozisyonun sahibi hiç kimse</u>. Rug pull teknik olarak
-        imkânsız, sözle engellenmiş değil.</p>
+        <h3>Liquidity cannot be pulled</h3>
+        <p>The launch's pool position is burned the moment it is born. A
+        removal is refused at the contract level, and there is no owner
+        to do the refusing either: <u>nobody owns the position</u>. A rug
+        pull is technically impossible, not merely promised against.</p>
       </div>
       <div class="bgov">
         <div class="bno">04</div>
-        <h3>Sonradan da eklenemez</h3>
-        <p>Kasanın bytecode'unda <code>DELEGATECALL</code>,
-        <code>CALLCODE</code> ve <code>SELFDESTRUCT</code> <u>geçmiyor</u> —
-        yani kodunu değiştirebilecek tek bir komut taşımıyor. "Eklemeyiz"
-        bir söz; "ekleyemeyiz" ölçülebilir bir özellik. Bu sayfadaki her
-        kontrat için ayrı ayrı taranıyor.</p>
+        <h3>And it cannot be added later</h3>
+        <p>The vault's bytecode contains <u>no</u> <code>DELEGATECALL</code>,
+        <code>CALLCODE</code> or <code>SELFDESTRUCT</code> — not one
+        instruction that could change its code. "We will not add one" is a
+        promise; "we cannot add one" is a measurable property. Every
+        contract on this page is scanned for it separately.</p>
       </div>
     </div>
   </div>
@@ -330,41 +331,43 @@ footer{border-top:1px solid var(--line);padding:40px 0 56px;color:var(--dim2);fo
 <!-- =============== NASIL =============== -->
 <section id="nasil">
   <div class="wrap">
-    <p class="eyebrow">Nasıl işliyor</p>
-    <h2>Bir işlem. Dört şey aynı anda olur.</h2>
+    <p class="eyebrow">How it works</p>
+    <h2>One transaction. Four things at once.</h2>
     <p class="sub">
-      Teminatı sen getirirsin, gerisi tek transaction içinde biter. Bekleme
-      yok, operatör yok, teslim edilmeyi beklediğin bir şey yok.
+      You bring the collateral; the rest finishes inside a single
+      transaction. No waiting, no operator, nothing to be delivered to you
+      later.
     </p>
 
     <div class="flow">
       <div class="step">
         <div class="n">1</div>
-        <h3>Teminatı seç ve yatır</h3>
-        <p>USDC, cirBTC, WETH, EURC — ya da adresini yazdığın başka bir
-        token. İzin listesi yok. Ücret: teminat USDC ise <em>%2</em>,
-        başka bir şeyse <em>%3</em>.</p>
+        <h3>Choose the collateral and deposit it</h3>
+        <p>USDC, cirBTC, WETH, EURC — or any other token whose address
+        you paste. There is no allow list. The fee is <em>2%</em> if the
+        collateral is USDC and <em>3%</em> if it is anything else.</p>
       </div>
       <div class="step">
         <div class="n">2</div>
-        <h3>Kasa dolar, taban doğar</h3>
-        <p>Teminatın tamamı kasaya girer. <em>Taban fiyat = kasa ÷ arz</em>
-        ve bu sayı hiç düşmez: geri alım iki tarafı aynı oranda
-        küçültür.</p>
+        <h3>The vault fills and the floor is born</h3>
+        <p>All of the collateral goes into the vault. <em>Floor price =
+        vault ÷ supply</em>, and that number never falls: a redemption
+        shrinks both sides by the same proportion.</p>
       </div>
       <div class="step">
         <div class="n">3</div>
-        <h3>Havuz tek yönlü açılır</h3>
-        <p>Arzın <em>%40'ı</em> Uniswap v4'te tabanın üstüne konur.
-        Karşı tarafa para koymak <em>gerekmiyor</em> — ölçtük, havuzun
-        istediği nakit sıfır. Ve bir daha çekilemez.</p>
+        <h3>The pool opens one-sided</h3>
+        <p><em>40%</em> of the supply is placed above the floor on
+        Uniswap v4. Putting cash on the other side is <em>not required</em>
+        — we measured it: the cash the pool asks for is zero. And it can
+        never be withdrawn again.</p>
       </div>
       <div class="step">
         <div class="n">4</div>
-        <h3>Senin payın</h3>
-        <p>Kalanın <em>%70'i</em> hemen senin, <em>%30'u</em> vesting ile
-        kilitli. Kilit adresi zincirden okunabiliyor, yani alıcı bize
-        güvenmek zorunda değil.</p>
+        <h3>Your own share</h3>
+        <p><em>70%</em> of what remains is yours immediately and
+        <em>30%</em> is locked in vesting. The lock's address can be read
+        from the chain, so a buyer does not have to take our word for it.</p>
       </div>
     </div>
   </div>
@@ -373,50 +376,54 @@ footer{border-top:1px solid var(--line);padding:40px 0 56px;color:var(--dim2);fo
 <!-- =============== UCRET =============== -->
 <section id="ucret">
   <div class="wrap">
-    <p class="eyebrow">Ücret</p>
-    <h2>%0,5, ve tamamı tabana.</h2>
+    <p class="eyebrow">Fees</p>
+    <h2>0.5%, and all of it to the floor.</h2>
     <p class="sub">
-      Kimseye ödül yok: ne tutucuya, ne geliştiriciye, ne bize. Ödül kovası
-      diye bir şey kodda <strong>yok</strong> — sıfırlanmış değil,
-      <strong>silinmiş</strong>, çünkü var olan bir kova sonradan birine
-      ödeme yapılabilecek bir kovadır.
+      Nobody is rewarded: not holders, not developers, not us. A reward
+      bucket does <strong>not exist</strong> in the code — it is not set
+      to zero, it is <strong>absent</strong>, because a bucket that exists
+      is a bucket somebody can be paid from later.
     </p>
 
     <div class="g">
       <div class="fee">
-        <h3>Alımda</h3>
-        <p>Ücret meme token olarak gelir ve <strong>yakılır</strong>. Arz
-        düşer, teminat sabit kalır — yani token başına teminat yükselir.
-        Kalan herkesin tabanı yükselir ve bunun için kimsenin bir şey
-        satması gerekmez.</p>
+        <h3>On a buy</h3>
+        <p>The fee arrives as the meme token and is <strong>burned</strong>.
+        Supply falls while the collateral stays put, so collateral per
+        token rises. Everyone still holding gets a higher floor, and
+        nobody had to sell anything for it.</p>
       </div>
       <div class="fee">
-        <h3>Satışta</h3>
-        <p>Ücret para olarak gelir ve <strong>doğrudan kasaya</strong>
-        girer. Teminat artar. Dönüştürme yok, fiyat sorgusu yok, köprü
-        yok. Teminat USDC değilse araya bir dönüştürücü girer ve işi
-        yapan %2 fark alır — tabanın anaparasından değil, ücretten.</p>
+        <h3>On a sell</h3>
+        <p>The fee arrives as money and goes <strong>straight into the
+        vault</strong>. The collateral grows. No conversion, no price
+        lookup, no bridge. If the collateral is not USDC a converter steps
+        in and whoever does the work takes a 2% spread — out of the fee,
+        never out of the floor's principal.</p>
       </div>
       <div class="fee">
-        <h3>İlk 5 saniye</h3>
-        <p>Açılışta sniper'a <strong>%99'a kadar</strong> sürşarj, her
-        saniye dörde bölünerek. O da tabana gider: ilk bloğu kapmaya
-        çalışanın kârı, kalanların zemini olur.</p>
+        <h3>The first five seconds</h3>
+        <p>At the opening a sniper pays a surcharge of <strong>up to
+        99%</strong>, quartering every second. That goes to the floor too:
+        the profit of whoever tries to grab the first block becomes the
+        ground everyone else stands on.</p>
       </div>
       <div class="fee">
-        <h3>Hangi yoldan gelirse</h3>
-        <p>Hook, havuz kimliğinin bir parçası — <em>keccak(PoolKey)</em>
-        hook adresini de içerir. Yani Uniswap arayüzü, bir aggregator,
-        bir relay ya da zincirler arası bir router: hepsi aynı ücreti
-        öder. Girişi sabitleyip kaçmak da yok, ikisi de ölçülü.</p>
+        <h3>Whichever route you come through</h3>
+        <p>The hook is part of the pool's identity —
+        <em>keccak(PoolKey)</em> includes the hook address. So the Uniswap
+        interface, an aggregator, a relay or a cross-chain router: all of
+        them pay the same fee. Escaping by fixing the input side is closed
+        too, and both were measured.</p>
       </div>
     </div>
 
     <p class="sub kisa" style="margin-top:22px">
-      Bunun bedeli şu: <strong>protokol işlemden hiçbir şey kazanmıyor.</strong>
-      Gelir launch ücretinden gelmek zorunda, ki doğru yer orası — kendi
-      havuzlarının takasından pay alan bir protokol, çok işlem olmasını
-      <em>istemek</em> için sebebi olan bir protokoldür.
+      The price of this: <strong>the protocol earns nothing from
+      trading.</strong> Revenue has to come from the launch fee, which is
+      the right place for it — a protocol that takes a cut of swaps in its
+      own pools is a protocol with a reason to <em>want</em> a lot of
+      trading.
     </p>
   </div>
 </section>
@@ -424,49 +431,51 @@ footer{border-top:1px solid var(--line);padding:40px 0 56px;color:var(--dim2);fo
 <!-- =============== TEMINAT =============== -->
 <section id="teminat">
   <div class="wrap">
-    <p class="eyebrow">Teminat</p>
-    <h2>Yasaklı bir şey yok. Kutsanmış bir şey de yok.</h2>
+    <p class="eyebrow">Collateral</p>
+    <h2>Nothing is banned. Nothing is blessed either.</h2>
     <p class="sub">
-      Teminat bir izin listesinden seçilmiyor, <strong>ölçülüyor</strong>.
-      Launch anında teminatın karnesi zincire bir kez yazılır ve bir daha
-      değişmez — alıcı söz değil ölçüm okur.
+      Collateral is not picked from an allow list, it is
+      <strong>measured</strong>. At launch the collateral's report card is
+      written to the chain once and never changes again — a buyer reads a
+      measurement, not a promise.
     </p>
 
     <div class="g">
       <div class="bgov">
         <div class="bno">?</div>
-        <h3>Neden liste değil</h3>
-        <p>Liste bakımı için bir <u>sahip</u> ister, ve bu projede
-        hiçbir yerde sahip yok. Ayrıca dürüst yazılamaz: "USDC çifti var"
-        Arc'ta <em>31.787</em> token için doğru. "İlk 100" zincirin
-        göremediği bir veri. "Havuzu derin" ise oynanabilir — bir blok
-        için konan likidite sonraki blokta çekilir.</p>
+        <h3>Why not a list</h3>
+        <p>Maintaining a list needs an <u>owner</u>, and nothing in this
+        project has one. It also cannot be written honestly: "has a USDC
+        pair" is true of <em>31,787</em> tokens on Arc. "Top 100" is data
+        the chain cannot see. And "deep pool" can be gamed — liquidity
+        placed for one block is pulled in the next.</p>
       </div>
       <div class="bgov">
         <div class="bno">!</div>
-        <h3>Karne ne söylüyor</h3>
-        <p>Ondalık, arz, kod boyutu; sahibi var mı, basabilir mi,
-        dondurabilir mi, duraklatılabilir mi, yükseltilebilir mi. Hepsi
-        <code>staticcall</code> ile — yani <u>vekilin arkasındaki gerçek
-        kodu</u> sorarak, bytecode'a bakarak değil.</p>
+        <h3>What the report card says</h3>
+        <p>Decimals, supply, code size; whether it has an owner, whether
+        it can mint, freeze, pause or upgrade. All of it through
+        <code>staticcall</code> — that is, by asking <u>the real code
+        behind the proxy</u>, not by looking at bytecode.</p>
       </div>
       <div class="bgov">
         <div class="bno">⚠</div>
-        <h3>Sembole güvenilmiyor</h3>
-        <p>Arc'ta sembolü <code>USDC</code>, adı "Unconditional Support
-        Dog Coin" olan <strong>canlı bir token var</strong>: 18 basamak,
-        1 milyar arz, 26 USDC havuzu. Sembole bakan bir ekran onunla
-        teminatlandırılmış bir launch'ı "dolar destekli" diye yazardı.
-        Karne sembole değil <u>adrese</u> bakıyor.</p>
+        <h3>The symbol is not trusted</h3>
+        <p>There is a <strong>live token on Arc</strong> whose symbol is
+        <code>USDC</code> and whose name is "Unconditional Support Dog
+        Coin": 18 decimals, a billion supply, 26 USDC pools. A screen that
+        trusted the symbol would describe a launch backed by it as
+        "dollar-backed". The report card looks at the <u>address</u>, not
+        the symbol.</p>
       </div>
       <div class="bgov">
         <div class="bno">=</div>
-        <h3>Karne bir değer yargısı değil</h3>
-        <p>Bunlar kontrat hakkında olgular, varlık hakkında hüküm değil.
-        Arc'ın dört büyük varlığının <strong>dördü de</strong> sahibi ve
-        duraklatması olan yükseltilebilir vekiller — bunu kırmızıya
-        boyayan bir ekran USDC'ye güvenilmez demiş olurdu. Olgu yazılır,
-        kararı okuyan verir.</p>
+        <h3>The report card is not a verdict</h3>
+        <p>These are facts about a contract, not judgements about an
+        asset. <strong>All four</strong> of Arc's major assets are
+        upgradeable proxies with an owner and a pause — a screen that
+        painted that red would be saying USDC cannot be trusted. The fact
+        is written down; the reader makes the call.</p>
       </div>
     </div>
   </div>
@@ -475,42 +484,42 @@ footer{border-top:1px solid var(--line);padding:40px 0 56px;color:var(--dim2);fo
 <!-- =============== GUVENCE =============== -->
 <section id="guvence">
   <div class="wrap">
-    <p class="eyebrow">Güvenceler</p>
-    <h2>Neden söz değil, yapı.</h2>
+    <p class="eyebrow">Guarantees</p>
+    <h2>Structure, not a promise.</h2>
     <p class="sub">
-      Aşağıdakilerin hiçbiri bir taahhüt değil. Her biri ya kontratta
-      olmayan bir fonksiyon, ya bytecode'da geçmeyen bir komut, ya da
-      zincirden okunabilen bir sayı.
+      None of the following is a commitment. Each one is either a
+      function the contract does not have, an instruction its bytecode
+      does not contain, or a number you can read off the chain.
     </p>
 
     <div class="g">
       <div class="bgov">
         <div class="bno">01</div>
-        <h3>Anahtar yok</h3>
-        <p>Kasada sadece iki yazan fonksiyon var: <code>fund</code> ve
-        <code>redeem</code>. Sahip, yönetici, duraklatma, yükseltme,
-        kurtarma — hiçbiri ABI'de bile geçmiyor.</p>
+        <h3>There are no keys</h3>
+        <p>The vault has exactly two functions that write:
+        <code>fund</code> and <code>redeem</code>. Owner, admin, pause,
+        upgrade, rescue — none of them appears even in the ABI.</p>
       </div>
       <div class="bgov">
         <div class="bno">02</div>
-        <h3>Kod değişemez</h3>
-        <p>Altı kontratın bytecode'u komut komut taranıyor ve
-        değiştirebilecek bir opcode taşımadıkları her testte yeniden
-        doğrulanıyor.</p>
+        <h3>The code cannot change</h3>
+        <p>Six contracts' bytecode is scanned instruction by instruction,
+        and the fact that none of them carries an opcode that could change
+        it is re-verified on every test run.</p>
       </div>
       <div class="bgov">
         <div class="bno">03</div>
-        <h3>Kurucu kilidi okunabilir</h3>
-        <p>Vesting kontratının adresi launchpad'den okunur, içindeki
-        miktar da. Kurucunun ne kadarının kilitli olduğunu bize sormak
-        zorunda değilsin.</p>
+        <h3>The founder's lock is readable</h3>
+        <p>The vesting contract's address is read from the launchpad, and
+        so is the amount inside it. You do not have to ask us how much of
+        the founder's share is locked.</p>
       </div>
       <div class="bgov">
         <div class="bno">04</div>
-        <h3>Taban ölçülerek yazılıyor</h3>
-        <p>Taban fiyat 1e36 ölçekle hesaplanıyor. Daha önce 1e18'di ve
-        altı basamaklı teminatı <em>1</em>'e yuvarlıyordu — her anlamlı
-        hanesi gitmişti. Bunu bir test yakaladı, bir kullanıcı değil.</p>
+        <h3>The floor is written from measurement</h3>
+        <p>The floor price is computed on a 1e36 scale. It used to be
+        1e18, which rounded six-decimal collateral down to <em>1</em> —
+        every significant digit gone. A test caught that, not a user.</p>
       </div>
     </div>
   </div>
@@ -519,11 +528,12 @@ footer{border-top:1px solid var(--line);padding:40px 0 56px;color:var(--dim2);fo
 <!-- =============== SAYILAR =============== -->
 <section id="sayilar">
   <div class="wrap">
-    <p class="eyebrow">Sayılar</p>
-    <h2>Ölçülmüş, varsayılmamış.</h2>
+    <p class="eyebrow">Numbers</p>
+    <h2>Measured, not assumed.</h2>
     <p class="sub">
-      Aşağısı sayfa açılırken Arc'tan okunuyor. Yazılmış bir sayı değil;
-      okunamazsa "okunamadı" yazar, tahmin etmez.
+      Everything below is read from Arc as the page loads. It is not a
+      number typed in; if it cannot be read it says "unreadable" rather
+      than guessing.
     </p>
     <div class="scroll"><table class="ornek" id="orows"></table></div>
   </div>
@@ -532,11 +542,11 @@ footer{border-top:1px solid var(--line);padding:40px 0 56px;color:var(--dim2);fo
 <!-- =============== KONTRATLAR =============== -->
 <section id="kontratlar">
   <div class="wrap">
-    <p class="eyebrow">Kontratlar</p>
-    <h2>Hepsi açık, hepsi okunabilir.</h2>
+    <p class="eyebrow">Contracts</p>
+    <h2>All of them public, all of them readable.</h2>
     <p class="sub">
-      Hiçbirinin sahibi yok ve hiçbiri yükseltilemez. Son sütun, o
-      kontratın <strong>yapabildiği</strong> şeyi söylüyor.
+      None of them has an owner and none of them can be upgraded. The
+      last column says what that contract <strong>can do</strong>.
     </p>
     <div class="scroll"><table class="ornek" id="adresler"></table></div>
   </div>
@@ -545,49 +555,52 @@ footer{border-top:1px solid var(--line);padding:40px 0 56px;color:var(--dim2);fo
 <!-- =============== SSS =============== -->
 <section id="sss">
   <div class="wrap">
-    <p class="eyebrow">SSS</p>
-    <h2>Dürüst cevaplar.</h2>
+    <p class="eyebrow">FAQ</p>
+    <h2>Honest answers.</h2>
 
     <div class="g">
       <div class="bgov">
-        <h3>Parayı siz çekebilir misiniz?</h3>
-        <p>Hayır, ve bu bir söz değil: kasada çekme fonksiyonu yok.
-        Fonksiyon olmadığı için çağıracak bir şey de yok, ve kodu
-        değiştirip eklemek mümkün değil çünkü kasa kodunu değiştirebilecek
-        bir komut taşımıyor.</p>
+        <h3>Can you withdraw the money?</h3>
+        <p>No, and that is not a promise: the vault has no withdraw
+        function. With no function there is nothing to call, and adding
+        one by changing the code is impossible because the vault carries
+        no instruction that could change its code.</p>
       </div>
       <div class="bgov">
-        <h3>Token sıfıra gidebilir mi?</h3>
-        <p>Teminat sıfıra giderse gider. Taban teminatın değeri kadardır;
-        USDC teminatlı bir launch'ın tabanı dolardır, cirBTC teminatlı
-        birinin tabanı BTC'dir ve BTC düşerse taban da düşer. Garanti
-        edilen şey <em>oranın bozulmaması</em>, teminatın fiyatı değil.</p>
+        <h3>Can the token go to zero?</h3>
+        <p>If the collateral goes to zero, yes. The floor is worth what
+        the collateral is worth: a launch backed by USDC has a floor in
+        dollars, one backed by cirBTC has a floor in BTC, and if BTC falls
+        the floor falls with it. What is guaranteed is that <em>the ratio
+        does not break</em>, not the price of the collateral.</p>
       </div>
       <div class="bgov">
-        <h3>Kurucu her şeyi satıp kaçabilir mi?</h3>
-        <p>Payının %30'u vesting'de kilitli ve havuza verdiği kısım hiç
-        geri gelmiyor. Kalanını satabilir — ama satış havuza baskı
-        yaparken ücreti tabana gider, ve taban zaten kasada duruyor.
-        Satışı tabanı düşürmez.</p>
+        <h3>Can the founder sell everything and run?</h3>
+        <p>30% of their share is locked in vesting and the part they put
+        into the pool never comes back. They can sell the rest — but while
+        that sale pushes on the pool its fee goes to the floor, and the
+        floor is already sitting in the vault. Their selling does not
+        lower it.</p>
       </div>
       <div class="bgov">
-        <h3>Denetlendi mi?</h3>
-        <p>Dışarıdan <strong>denetlenmedi</strong>. 515 otomatik kontrol
-        gerçek Arc zincirine karşı koşuyor, ve bulunan kusurlar koda
-        yorum olarak yazılı — neyin yanlış olduğu ve neden. Bu bir
-        denetim raporunun yerine geçmez.</p>
+        <h3>Has it been audited?</h3>
+        <p><strong>Not externally audited.</strong> 515 automated checks
+        run against the real Arc chain, and the defects they found are
+        written into the code as comments — what was wrong and why. That
+        does not take the place of an audit report.</p>
       </div>
       <div class="bgov">
-        <h3>Ücreti bir aggregator'dan kaçabilir miyim?</h3>
-        <p>Hayır. Hook havuz kimliğinin parçası, o yüzden hangi arayüzden
-        gelirsen gel <code>afterSwap</code> çalışır. Girişi sabitleyip
-        (exact-output) kaçmak da kapatıldı — bir süre açıktı, ölçüldü ve
-        kapandı.</p>
+        <h3>Can I avoid the fee through an aggregator?</h3>
+        <p>No. The hook is part of the pool's identity, so whichever
+        interface you come through, <code>afterSwap</code> runs. Escaping
+        by fixing the output side (exact-output) is closed too — it was
+        open for a while, it was measured, and it was closed.</p>
       </div>
       <div class="bgov">
-        <h3>Bu bir yatırım tavsiyesi mi?</h3>
-        <p>Değil. Meme coin'dir ve tabanı olması onu iyi bir yatırım
-        yapmaz — yalnızca sıfırın nerede olduğunu bilinir yapar.</p>
+        <h3>Is this investment advice?</h3>
+        <p>It is not. This is a meme coin, and having a floor does not
+        make it a good investment — it only makes the location of zero
+        something you can know.</p>
       </div>
     </div>
   </div>
@@ -596,14 +609,14 @@ footer{border-top:1px solid var(--line);padding:40px 0 56px;color:var(--dim2);fo
 <footer>
   <div class="wrap">
     <div class="fl">
-      <a href="app.html">Uygulama</a>
+      <a href="app.html">The app</a>
       <a href="https://explorer.arc.io" target="_blank" rel="noopener">Arc Explorer</a>
-      <a href="#kontratlar">Kontratlar</a>
-      <a href="#sss">SSS</a>
+      <a href="#kontratlar">Contracts</a>
+      <a href="#sss">FAQ</a>
     </div>
     <div>
-      Arc · zincir 5042. Kontratlar denetlenmedi ve yükseltilemez. Bu bir
-      yatırım tavsiyesi değildir.
+      Arc · chain 5042. The contracts are not audited and cannot be
+      upgraded. This is not investment advice.
     </div>
   </div>
 </footer>
@@ -679,30 +692,30 @@ async function canli(){
           kisa(L.token)+"</a></td><td class='mono'>"+kisa(L.vault)+"</td><td>"+sem+
           "</td><td class='r'>"+nk(miktar)+"</td></tr>";
       }catch(e){
-        satirlar += "<tr><td colspan='4'>launch #"+i+" okunamadı</td></tr>";
+        satirlar += "<tr><td colspan='4'>launch #"+i+" could not be read</td></tr>";
       }
     }
     $("orows").innerHTML = okunan ? satirlar
-      : "<tr><td>zincirden okunamadı — ağ yanıt vermiyor</td></tr>";
+      : "<tr><td>could not be read from the chain — the network is not answering</td></tr>";
     /* Only the dollar-denominated vaults are summed. Adding a BTC balance
        to a dollar balance would produce a number with no unit, which is
        worse than no number. */
     $("s-kasa").textContent = toplamUsd > 0 ? "$"+nk(toplamUsd) : "—";
   }catch(e){
-    $("orows").innerHTML = "<tr><td>zincirden okunamadı: "+String(e.message||e).slice(0,80)+"</td></tr>";
+    $("orows").innerHTML = "<tr><td>could not be read from the chain: "+String(e.message||e).slice(0,80)+"</td></tr>";
   }
 }
 
 function adresler(){
   const r = (ad,a,not) => "<tr><td>"+ad+"</td><td class='mono'><a href='"+ARC.explorer+"/address/"+a+
     "' target='_blank' rel='noopener'>"+kisa(a)+"</a></td><td>"+not+"</td></tr>";
-  $("adresler").innerHTML = "<tr><th>kontrat</th><th>adres</th><th>ne yapabilir</th></tr>"+
-    r("Launchpad",A.launchpad,"token, kasa ve havuzu kurar — sahibi yok") +
-    r("Hook",A.hook,"ücreti keser ve tabana yazar — ödeme adresi yok") +
-    r("Swap router",A.router,"al/sat yönlendirir — para tutmaz") +
-    r("PoolManager",A.poolManager,"Uniswap v4, bize ait değil") +
-    r("USDC",A.usdc,"Arc'ın yerel parası ve gazı") +
-    r("Test teminatı",A.testCol,"değersiz, mekanizmayı denemek için");
+  $("adresler").innerHTML = "<tr><th>contract</th><th>address</th><th>what it can do</th></tr>"+
+    r("Launchpad",A.launchpad,"creates the token, the vault and the pool — has no owner") +
+    r("Hook",A.hook,"takes the fee and writes it into the floor — has no payout address") +
+    r("Swap router",A.router,"routes buys and sells — holds no money") +
+    r("PoolManager",A.poolManager,"Uniswap v4, not ours") +
+    r("USDC",A.usdc,"Arc's native money and its gas") +
+    r("Test collateral",A.testCol,"worthless, for trying the mechanism out");
 }
 
 adresler();

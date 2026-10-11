@@ -51,27 +51,28 @@ interface IERC20Q {
     function balanceOf(address who) external view returns (uint256);
 }
 
-/// @title TestPulseAcici — iki taraflı yerleştirme GERÇEKTEN iniyor mu
+/// @title TestPulseAcici — does the two-sided placement REALLY land
 ///
-/// NEDEN BU ÖLÇÜM HER ŞEYDEN ÖNCE GELİYOR
-///   Yeni launchpad'in tamamı şu tek iddianın üstünde duruyor: havuz açılış
-///   fiyatında açılabilir VE her iki taraf da istenen miktarda inebilir.
-///   Önceki nesilde bu iki şekilde denendi ve ikisi de başarısız oldu —
-///   biri sessizce:
+/// WHY THIS MEASUREMENT COMES BEFORE EVERYTHING ELSE
+///   The whole of the new launchpad rests on one claim: the pool can be
+///   opened at the opening price AND both sides can land in the intended
+///   amounts. In the previous generation this was tried two ways and both
+///   failed — one of them silently:
 ///
-///     tek yönlü merdiven   -> USDC'nin gidecek yeri yoktu, havuz deltası
-///                             $0,00 döndü ve açılış BAŞARILI göründü
-///     fiyatı kapsayan      -> miktarları kabul etmedi, küçük taraf
-///     iki taraflı pozisyon    neyi fonluyorsa o kadarı indi
+///     a one-sided ladder     -> the USDC had nowhere to go, the pool delta
+///                               came back $0.00 and the opening looked
+///                               SUCCESSFUL
+///     a two-sided position   -> it refused the amounts; whatever the
+///     spanning the price        smaller side funded is what landed
 ///
-///   İkincisi fark edilir, birincisi fark edilmez. O yüzden bu harness
-///   "açıldı mı" diye sormuyor; HER İKİ TARAFIN havuza GİRDİĞİNİ ve
-///   fiyatın istenen yerde kaldığını soruyor.
+///   The second is noticeable, the first is not. So this harness does not
+///   ask "did it open"; it asks whether BOTH SIDES WENT INTO the pool and
+///   whether the price stayed where it was asked to be.
 ///
-/// VE SONRA BİR ALIM YAPIYOR
-///   Yerleşen likidite bir alım satım yapılabilir mi? Yerleştirmenin
-///   doğru görünüp işe yaramadığı durum tam olarak önceki neslin yaşadığı
-///   şeydi, ve onu ancak gerçek bir takas gösterir.
+/// AND THEN IT MAKES A BUY
+///   Can the liquidity that landed actually be traded against? A placement
+///   that looks right and does not work is exactly what the previous
+///   generation lived through, and only a real swap shows it.
 contract TestPulseAcici {
     using PoolIdLibrary for PoolKey;
 

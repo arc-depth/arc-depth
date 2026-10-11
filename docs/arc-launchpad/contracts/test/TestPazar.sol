@@ -9,10 +9,11 @@ interface IERC20T {
     function balanceOf(address who) external view returns (uint256);
 }
 
-/// Bir alıcı. Harness'ın kendisi alıcı olamaz, çünkü aynı adres hem
-/// geliştirici hem müşteri olursa %80/%20 bölüşmesi kendi içinde kapanır ve
-/// ölçüm hiçbir şey söylemez — bu projede bir kez tam bu hata yapıldı
-/// (harness aynı anda kurucu ve alıcıydı, sonuç bir underflow'du).
+/// A buyer. The harness itself cannot be the buyer, because if one address
+/// is both the developer and the customer the 80/20 split closes inside
+/// itself and the measurement says nothing — that exact mistake was made
+/// once in this project (the harness was the founder and the buyer at the
+/// same time, and the result was an underflow).
 contract SahteAlici {
     function onayla(IERC20T t, address kime, uint256 v) external {
         t.approve(kime, v);
@@ -37,29 +38,31 @@ contract SahteAlici {
     }
 }
 
-/// @notice Pazar gerçekten para bölüyor mu, ve reddetmesi gerekeni reddediyor mu?
+/// @notice Does Pazar really split the money, and does it refuse what it
+///         should refuse?
 ///
-/// ÖNEMLİ OLAN BÖLÜŞMENİN KENDİSİ DEĞİL, PARANIN NEREDE OLMADIĞI
-///   %80/%20 bir çarpma işlemi; onu doğrulamak kolay. Zor olan ve bu testin
-///   asıl ölçtüğü şey: işlem bittiğinde sözleşmede PARA KALMAMIŞ olması.
-///   Bir aracı bakiye olsaydı, onu çekecek bir fonksiyon gerekirdi ve o
-///   fonksiyonun sahibi olurdu.
+/// WHAT MATTERS IS NOT THE SPLIT ITSELF BUT WHERE THE MONEY IS NOT
+///   80/20 is a multiplication; verifying it is easy. The hard part, and
+///   what this test really measures, is that NO MONEY IS LEFT in the
+///   contract when the transaction ends. If there were an intermediate
+///   balance, a function would be needed to withdraw it — and that
+///   function would have an owner.
 contract TestPazar {
     struct Sonuc {
         address pazar;
         address alici;
 
-        /* kayıt */
+        /* registration */
         bool kayitOldu;
         bool mukerrerRed;
         bool kayitsizUrunRed;
 
-        /* ürün */
+        /* the product */
         uint256 urunId;
         uint256 aboneId;
         bool yabanciGuncelleRed;
 
-        /* bir defalık satış */
+        /* a one-off sale */
         uint256 devOncesi;
         uint256 devSonrasi;
         uint256 isletmeOncesi;
@@ -109,7 +112,7 @@ contract TestPazar {
         usdc.transfer(address(alici), 1_000e6);
         alici.onayla(usdc, address(p), type(uint256).max);
 
-        /* ---- kayıt ---------------------------------------------------- */
+        /* ---- registration -------------------------------------------- */
         s.kayitsizUrunRed = alici.dene_urunEkle(p);   // not registered yet
 
         p.kaydol("ipfs://gelistirici");
@@ -117,7 +120,7 @@ contract TestPazar {
         s.kayitOldu = k;
         s.mukerrerRed = _deneKaydol(p);
 
-        /* ---- ürünler -------------------------------------------------- */
+        /* ---- products ------------------------------------------------ */
         s.tekFiyat = 101e6 + 3;              // deliberately not divisible
         s.urunId = p.urunEkle(s.tekFiyat, 0, "ipfs://urun");
         s.periyot = 30 days;
@@ -125,7 +128,7 @@ contract TestPazar {
 
         s.yabanciGuncelleRed = alici.dene_urunGuncelle(p, s.urunId);
 
-        /* ---- bir defalık satış ---------------------------------------- */
+        /* ---- a one-off sale ------------------------------------------ */
         s.devOncesi = usdc.balanceOf(address(this));
         s.isletmeOncesi = usdc.balanceOf(isletme);
         s.aliciOncesi = usdc.balanceOf(address(alici));
@@ -144,11 +147,11 @@ contract TestPazar {
         s.tekPlatform = (s.tekFiyat * p.PLATFORM_PPM()) / 1_000_000;
         s.tekDev = s.tekFiyat - s.tekPlatform;
 
-        /* ---- abonelik: erken yenileme süre KAYBETTİRMEMELİ ------------ */
+        /* ---- subscription: renewing early MUST NOT LOSE time --------- */
         s.aboneBitis1 = alici.satinAl(p, s.aboneId);
         s.aboneBitis2 = alici.satinAl(p, s.aboneId);
 
-        /* ---- kapatma satılmış lisansı bozmamalı ----------------------- */
+        /* ---- closing must not break a sold licence ------------------- */
         p.urunGuncelle(s.urunId, s.tekFiyat, false, "ipfs://urun");
         s.kapaliSatisRed = alici.dene_satinAl(p, s.urunId);
         s.kapandiktanSonraLisansDuruyor = p.lisansliMi(s.urunId, address(alici));

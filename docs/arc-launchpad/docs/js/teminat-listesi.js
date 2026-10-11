@@ -1,46 +1,46 @@
 /* ===========================================================================
- * teminat-listesi.js — ÖNERİLEN 50 TEMİNAT VARLIĞI
+ * teminat-listesi.js — THE 50 SUGGESTED COLLATERAL ASSETS
  *
- * BU DOSYA ÜRETİLDİ — elle düzenlenmemeli.
- *   Kaynak: teminat-derinlik.json
- *   Üreten: scripts/kur-teminat-listesi.js
- *   Ölçüm:  2026-10-10T18:57:03.336Z
+ * THIS FILE IS GENERATED — do not edit it by hand.
+ *   Source:    teminat-derinlik.json
+ *   Generator: scripts/kur-teminat-listesi.js
+ *   Measured:  2026-10-10T18:57:03.336Z
  *
- * NASIL ÖLÇÜLDÜ — ÖLÇÜT DOĞRUDAN YAPILACAK İŞİN KENDİSİ
- *   Her satırın arkasında dört zincir ölçümü var: en derin USDC havuzu
- *   bulundu, likiditesi okundu, gözlem geçmişi kontrol edildi ve dört
- *   ayrı tutarda GERÇEKTEN dönüştürülebilir mi diye Uniswap'in kendi
- *   kotasına soruldu.
+ * HOW IT WAS MEASURED — THE CRITERION IS THE JOB ITSELF
+ *   Behind every row are four on-chain measurements: the deepest USDC
+ *   pool was found, its liquidity read, its observation history
+ *   checked, and Uniswap's own quoter was asked whether four separate
+ *   amounts GENUINELY convert.
  *
- *   Likidite tabanı, piyasa değeri eşiği gibi vekil kalite kapıları
- *   kullanılmadı. Sorulan şey bir eşik değil: bu tutar bu havuzda
- *   dönüştürülebiliyor mu.
+ *   No proxy quality gates such as a liquidity floor or a market-cap
+ *   threshold were used. The question asked is not a threshold: can
+ *   this amount be converted in this pool.
  *
- * NEDEN TEK BİR "ÇALIŞIYOR" YOK
- *   Fiyatın ölçülebilmesi, o havuzda İŞLEM yapılabileceği anlamına
- *   gelmiyor. Ölçüldü: SHIB'in fiyatı %0,00 tutarlı okunuyor ama
- *   $2.000'lık işlem fiyatı 17,5 kat ittiriyor, çünkü SHIB'in likiditesi
- *   SHIB/USDC'de değil SHIB/WETH'te. Taban marjinal fiyattan türetildiği
- *   için böyle bir dönüşüm REDDEDİLİR.
+ * WHY THERE IS NO SINGLE "IT WORKS"
+ *   Being able to read a price does not mean you can TRADE in that
+ *   pool. Measured: SHIB reads a 0.00% price error and still pushes
+ *   17.5x on a $2,000 trade, because SHIB's liquidity is in SHIB/WETH,
+ *   not SHIB/USDC. The floor is derived from the marginal price, so a
+ *   conversion like that is REFUSED.
  *
- *   O yüzden her varlık kaldırdığı EN BÜYÜK tutarla kayıtlı:
- *      $20,000 kadar: 24 varlık
- *       $2,000 kadar: 46 varlık
- *         $200 kadar: 64 varlık
- *          $20 kadar: 73 varlık
+ *   So each asset is recorded with the LARGEST amount it carried:
+ *     up to  $20,000: 24 assets
+ *     up to   $2,000: 46 assets
+ *     up to     $200: 64 assets
+ *     up to      $20: 73 assets
  *
- *   Asgari teminat $20 (ASGARI_TEMINAT = 20e6) ama teminat her işlemin
- *   vergisiyle büyüyor ve tavanı yok — bu yüzden tek bir eşik yanlış
- *   cevap olurdu.
+ *   The minimum collateral is $20 (ASGARI_TEMINAT = 20e6), but
+ *   collateral grows with the tax on every trade and has no ceiling —
+ *   which is why a single threshold would be the wrong answer.
  *
- * BU LİSTE BİR KAPI DEĞİL
- *   Launch yapan bu 50 taneden birini seçebilir ya da KONTRAT ADRESİ
- *   yapıştırıp başka bir token seçebilir. Listede olmamak yasak olmak
- *   değil — sayfa CA için de aynı ölçümü yapıyor.
+ * THIS LIST IS NOT A GATE
+ *   Whoever launches can pick one of these 50, or paste a
+ *   CONTRACT ADDRESS and pick something else. Not being on the list is
+ *   not being banned — the page runs the same measurement for a pasted
+ *   address.
  *
- *   Dönüştürülebildiği ölçülen 73 varlığın 23 tanesi listeye girmedi ve
- *   hepsi CA ile seçilebilir:
- *   ELSA GUSD TOSHI USDP BASECAT FLUX LDO TRUST BITCOIN FET FUN1 ONDO SEAM TOWNS 1INCH cbETH ZEN LUSD REPPO WLD GRT OPG PLUME
+ *   Of the 73 assets measured as convertible, 23 did not make the list,
+ *   and every one of them can still be chosen by address:
  * =========================================================================== */
 
 export const TEMINAT_OLCUMU = "2026-10-10T18:57:03.336Z";

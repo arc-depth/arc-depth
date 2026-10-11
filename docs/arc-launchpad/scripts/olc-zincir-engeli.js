@@ -1,6 +1,6 @@
 "use strict";
 /* ===========================================================================
- * olc-zincir-engeli.js — AŞAMA 1: the blocker, on the chain, in numbers
+ * olc-zincir-engeli.js — STAGE 1: the blocker, on the chain, in numbers
  *
  *   node scripts/olc-zincir-engeli.js
  *

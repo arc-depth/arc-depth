@@ -31,12 +31,12 @@ import { para, kisaBuyuk, jetonMiktar, tamSayidanSayi } from "../bicim.js";
    single read; the rest need the indexer and say so instead of guessing. */
 const LISTELER = [
   { anahtar: "trend", ad: "Trend", canliSiralama: false,
-    neden: "Trend sıralaması 24 saatlik işlem ve hacim toplamı gerektiriyor; bu toplam zincirde tek çağrıyla okunamıyor." },
-  { anahtar: "yeni", ad: "Yeni çıkanlar", canliSiralama: true },
-  { anahtar: "hacim", ad: "En yüksek hacim", canliSiralama: false,
-    neden: "Hacim, Swap olaylarının zaman penceresi içinde toplamı. İndeksleyici olmadan her sayfa açılışında binlerce log sorgusu gerekir." },
-  { anahtar: "yukselen", ad: "En çok yükselenler", canliSiralama: false,
-    neden: "Değişim yüzdesi için 24 saat önceki fiyat gerekiyor; geçmiş fiyat ancak indekslenmiş olaylardan çıkar." },
+    neden: "A trending rank needs 24 hours of trades and volume summed up, and that sum cannot be read with one chain call." },
+  { anahtar: "yeni", ad: "Newly launched", canliSiralama: true },
+  { anahtar: "hacim", ad: "Highest volume", canliSiralama: false,
+    neden: "Volume is the sum of Swap events over a time window. Without an indexer that means thousands of log queries on every page load." },
+  { anahtar: "yukselen", ad: "Biggest gainers", canliSiralama: false,
+    neden: "A percentage change needs the price from 24 hours ago, and a past price only comes out of indexed events." },
   { anahtar: "mezun", ad: "Yeni mezunlar", canliSiralama: true }
 ];
 
@@ -45,12 +45,12 @@ export async function ciz({ param }) {
   const arama = (param.get("q") || "").trim().toLowerCase();
 
   kap.append(sayfaUst(
-    "Keşfet",
-    "Arc üzerinde teminatlı tokenler",
+    "Discover",
+    "Collateral-backed tokens on Arc",
     [
       el("a", { sinif: "dugme dugme--marka", attr: { href: "#/olustur" } }, [
         el("span", { html: ikon("arti", "yol-oge__ikon") }),
-        el("span", { yazi: "Token oluştur" })
+        el("span", { yazi: "Create a token" })
       ])
     ]
   ));
@@ -63,11 +63,11 @@ export async function ciz({ param }) {
 
   if (!dagitildiMi) {
     kap.append(panel("Tokenler", bos(
-      "Henüz zincirde token yok",
-      "Launchpad sözleşmeleri yazıldı ve Arc mainnet'e karşı ölçüldü, ama " +
-      "dağıtılmadı — dolayısıyla okunacak bir kayıt da yok. Burada sahte " +
-      "bir liste göstermiyoruz.",
-      el("a", { sinif: "dugme", attr: { href: "#/guvenlik" }, yazi: "Dağıtım durumu" })
+      "No tokens on chain yet",
+      "The launchpad contracts are written and measured against Arc " +
+      "mainnet, but not deployed — so there is no record to read. We do " +
+      "not show a fake list here.",
+      el("a", { sinif: "dugme", attr: { href: "#/guvenlik" }, yazi: "Deployment status" })
     )));
     kap.append(listeSekmeleri([]));
     return kap;
@@ -75,8 +75,8 @@ export async function ciz({ param }) {
 
   if (!liste.length) {
     kap.append(panel("Tokenler", bos(
-      "Kayıt boş",
-      "Launchpad dağıtılmış durumda ama henüz hiç token çıkarılmamış."
+      "The record is empty",
+      "The launchpad is deployed but nothing has been launched yet."
     )));
     return kap;
   }
@@ -94,7 +94,7 @@ export async function ciz({ param }) {
   }
 
   if (arama && !satirlar.length) {
-    kap.append(panel("Arama", bos("Eşleşme yok", '"' + arama + '" için sonuç bulunamadı.')));
+    kap.append(panel("Search", bos("No matches", 'Nothing found for "' + arama + '".')));
     return kap;
   }
 
@@ -118,23 +118,23 @@ async function ozetSeridi() {
   );
 
   izgara.append(olcum(
-    "Teminat varlığı",
+    "Collateral asset",
     String(TEMINAT_EVRENI.length),
-    "fiyatı ve tokeni Arc'ta doğrulanmış"
+    "price and token both verified on Arc"
   ));
 
   const btc = fiyatlar[TEMINAT_EVRENI.findIndex((t) => t.anahtar === "cirbtc")];
   izgara.append(olcum("cirBTC", btc ? para(btc.fiyat, { kisalt: true }) : "—",
-    btc ? "Chainlink proxy" : "besleyici okunamadı"));
+    btc ? "Chainlink proxy" : "feed could not be read"));
 
   const eth = fiyatlar[TEMINAT_EVRENI.findIndex((t) => t.anahtar === "weth")];
   izgara.append(olcum("WETH", eth ? para(eth.fiyat, { kisalt: true }) : "—",
-    eth ? "Chainlink proxy" : "besleyici okunamadı"));
+    eth ? "Chainlink proxy" : "feed could not be read"));
 
-  izgara.append(olcum("Açılış mcap", para(EKONOMI.acilisMcap, { kisalt: true }),
-    "her launch aynı fiyattan"));
-  izgara.append(olcum("Mezuniyet eşiği", para(EKONOMI.esik, { kisalt: true }),
-    "eğri bu kadar toplayınca havuz derinleşir"));
+  izgara.append(olcum("Opening market cap", para(EKONOMI.acilisMcap, { kisalt: true }),
+    "the same price every launch"));
+  izgara.append(olcum("Graduation threshold", para(EKONOMI.esik, { kisalt: true }),
+    "the pool deepens once the curve has taken this much"));
 
   return izgara;
 }
@@ -171,11 +171,12 @@ function listeSekmeleri(satirlar) {
       govde.append(el("div", { sinif: "panel__govde" }, [
         el("div", { sinif: "yok" }, [
           el("div", { sinif: "etiket", yazi: "SIRALAMA YOK" }),
-          el("div", { sinif: "yok__baslik", yazi: L.ad + " sıralaması henüz hesaplanamıyor" }),
+          el("div", { sinif: "yok__baslik", yazi: "The " + L.ad + " ranking cannot be computed yet" }),
           el("div", { sinif: "yok__yazi", yazi: L.neden }),
           el("div", { sinif: "yok__yazi", yazi:
-            "Uydurma bir sıralama göstermek yerine boş bırakıyoruz. " +
-            "Aşağıdaki liste, şu an gerçekten okunabilen tüm tokenler." })
+            "Left empty rather than showing an invented ranking. The " +
+            "list below is every token that can actually be read right " +
+            "now." })
         ])
       ]));
       if (satirlar.length) govde.append(jetonTablosu(satirlar, "yeni"));
@@ -184,7 +185,7 @@ function listeSekmeleri(satirlar) {
 
     if (!satirlar.length) {
       govde.append(el("div", { sinif: "panel__govde" }, [
-        bos("Liste boş", "Bu ölçüte uyan token yok.")
+        bos("Empty list", "No token matches this filter.")
       ]));
       return;
     }
@@ -248,7 +249,7 @@ function jetonTablosu(satirlar, sira) {
         yazi: (s.vergiPpm / 10_000).toFixed(2).replace(".", ",") + "%" }),
       el("td", { attr: { "data-et": "" } }, [
         el("a", { sinif: "dugme dugme--kucuk",
-          attr: { href: "#/terminal?t=" + s.token }, yazi: "İşlem" })
+          attr: { href: "#/terminal?t=" + s.token }, yazi: "Trade" })
       ])
     ]));
   }

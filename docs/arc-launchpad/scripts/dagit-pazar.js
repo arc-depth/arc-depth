@@ -1,31 +1,32 @@
 "use strict";
 /* ===========================================================================
- * dagit-pazar.js — Pazar sözleşmesini Arc'a dağıtmak
+ * dagit-pazar.js — deploying the Pazar contract to Arc
  *
- *   node scripts/dagit-pazar.js             kuru çalışma, HİÇBİR ŞEY göndermez
- *   node scripts/dagit-pazar.js --uygula    tek işlemi gönderir
+ *   node scripts/dagit-pazar.js             dry run, sends NOTHING
+ *   node scripts/dagit-pazar.js --uygula    sends the single transaction
  *
- * TEK SÖZLEŞME, TEK İŞLEM, HALKA YOK
- *   Pazar yalnızca iki şeye bağlı: USDC ve işletme adresi. İkisi de zaten
- *   zincirde ve ikisi de immutable. Yani ne CREATE2 madenciliği, ne nonce
- *   sırası, ne de iki uçtan kapatılacak bir halka var — launchpad turunun
- *   karmaşıklığının hiçbiri burada yok.
+ * ONE CONTRACT, ONE TRANSACTION, NO CYCLE
+ *   Pazar depends on exactly two things: USDC and the ops address. Both are
+ *   already on chain and both are immutable. So there is no CREATE2 mining,
+ *   no nonce ordering, and no cycle to close from both ends — none of the
+ *   launchpad round's complexity is here.
  *
- *   Bu önemli, çünkü o karmaşıklık bir maliyetti: iki tur boyunca bir nonce
- *   yeniden kullanıldı, bir hız sınırı 9 adımın 8'inde dağıtımı kesti ve bir
- *   kanca yanlış bir kasayı gösterdiği için %0,50 erişilemez birikecekti.
- *   Burada o sınıf hatalardan korkmak için bir neden yok.
+ *   That matters, because the complexity was a cost: across two rounds a
+ *   nonce got reused, a rate limit cut the deployment off at 8 of 9 steps,
+ *   and a hook pointing at the wrong vault would have accumulated 0.50%
+ *   out of reach. There is no reason to fear that class of mistake here.
  *
- * KURU ÇALIŞMA NEYİ DOĞRULUYOR
- *   Yapıt var mı, init kodu derlenen kodla aynı mı, iki yapıcı argümanı
- *   gerçekten zincirde mi, bakiye maliyetin iki katından fazla mı, ve
- *   dağıtıldıktan sonra okunacak değişmezler ne olacak.
+ * WHAT THE DRY RUN VERIFIES
+ *   Whether the artifact exists, whether the init code matches the compiled
+ *   code, whether both constructor arguments are really on chain, whether
+ *   the balance is more than twice the cost, and what the immutables will
+ *   read as once deployed.
  *
- * DAĞITIMDAN SONRA
- *   Çalışan kod derlenen kodla bayt bayt karşılaştırılıyor ve iki değişmez
- *   zincirden okunuyor. Kayıt ancak ikisi de tuttuğunda yazılıyor — çünkü
- *   arayüz bu kaydı okuyor ve denetim-sayfa.js adresleri ona karşı
- *   doğruluyor.
+ * AFTER THE DEPLOYMENT
+ *   The running code is compared byte for byte against the compiled code
+ *   and the two immutables are read from the chain. The record is written
+ *   only when both hold — because the interface reads that record and
+ *   denetim-sayfa.js verifies the addresses against it.
  * =========================================================================== */
 const fs = require("fs");
 const path = require("path");

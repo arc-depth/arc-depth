@@ -22,44 +22,50 @@ interface IKasaP {
     function supur() external returns (uint256);
 }
 
-/// @title PulseLaunchpad — kurucu ilk alımı yapar, piyasa ilk bloktan Uniswap
+/// @title PulseLaunchpad — the founder buys first, the market is Uniswap
+///        from the first block
 ///
-/// ÖNCEKİ NESİLDEN ÜÇ YAPISAL FARK
+/// THREE STRUCTURAL DIFFERENCES FROM THE PREVIOUS GENERATION
 ///
-/// 1. EĞRİ YOK, YANİ İKİ FİYAT YOK
-///      Önceki nesilde eğri kendi piyasasını tutuyordu ve havuz
-///      mezuniyette açılıyordu. Aynı tokenin iki fiyatı vardı ve mezuniyet
-///      anında havuz fiyatı açılış seviyesinden başlıyordu — yani eğride
-///      biriken bütün fiyat hareketi sıfırlanıyordu. Artık piyasa ilk
-///      bloktan Uniswap v4 ve sıfırlanacak bir şey yok.
+/// 1. NO CURVE, SO NO TWO PRICES
+///      In the previous generation the curve held its own market and the
+///      pool opened at graduation. The same token had two prices, and at
+///      graduation the pool's price started from the opening level — so
+///      every bit of price movement accumulated on the curve was reset.
+///      Now the market is Uniswap v4 from the first block and there is
+///      nothing to reset.
 ///
-/// 2. KURUCU PARASININ KARŞILIĞINI ALIYOR
-///      Önceki nesilde kurucuya sıfır token gidiyordu ve ödemenin tamamı
-///      havuza likidite oluyordu. Şimdi ücret sonrası net ödemenin TAMAMI
-///      açılış fiyatından tokene dönüyor ve kurucunun cüzdanına gidiyor.
+/// 2. THE FOUNDER GETS WHAT THEY PAID FOR
+///      Previously the founder received zero tokens and the whole payment
+///      became pool liquidity. Now the ENTIRE net payment after the fee
+///      turns into tokens at the opening price and goes to the founder's
+///      wallet.
 ///
-///      Bedava değil ve bu ölçülebilir: açılış fiyatında bütün arzın
-///      değeri ACILIS_MCAP, kurucunun payının değeri de tam net ödediği
-///      kadar. Beş ödeme için ölçüldü, farkı 0 ham birim.
+///      It is not free, and that is measurable: at the opening price the
+///      whole supply is worth ACILIS_MCAP, and the founder's share is
+///      worth exactly what they paid net. Measured across five payments,
+///      the difference was 0 raw units.
 ///
-/// 3. KAYMA YOK, ÇÜNKÜ TAKAS DA YOK
-///      Kurucunun tokenleri havuzdan takasla çıkmıyor — doğrudan cüzdanına
-///      gidiyor, net USDC'si havuza gerçek teklif olarak konuyor ve havuz
-///      açılış fiyatında başlatılıyor. Fiyat hiç hareket etmediği için
-///      kayma da snipe vergisi de söz konusu değil. Muafiyet bir istisna
-///      değil, bir sonuç: muaf tutulacak bir takas yok.
+/// 3. NO SLIPPAGE, BECAUSE THERE IS NO SWAP
+///      The founder's tokens do not leave the pool through a swap — they
+///      go straight to their wallet, their net USDC is placed in the pool
+///      as a real bid, and the pool is started at the opening price.
+///      Since the price never moves there is neither slippage nor a snipe
+///      tax. The exemption is not a special case but a consequence: there
+///      is no swap to exempt.
 ///
-/// AÇILIŞ FİYATI İKİ SABİTTEN BİRİ
-///   ACILIS_MCAP ve SUPPLY ikisi de sabit, yani açılış fiyatı yalnızca
-///   tokenin adres sıralamasına bağlı — tam iki değer. İkisi de burada
-///   tam tamsayı olarak yazılı ve `olc-pulse-launch.js` ikisini mcap ve
-///   arzdan bağımsız olarak yeniden hesaplayıp karşılaştırıyor.
+/// THE OPENING PRICE IS ONE OF TWO CONSTANTS
+///   ACILIS_MCAP and SUPPLY are both constants, so the opening price
+///   depends only on how the token's address sorts — exactly two
+///   values. Both are written out here as whole integers, and
+///   `olc-pulse-launch.js` recomputes them from the mcap and the
+///   supply independently and compares.
 ///
-///   Fiyat hesaplanmıyor çünkü hesaplanacak bir şey yok; TICK ise
-///   hesaplanıyor, çünkü `sqrtP`'den tick'e geçiş yuvarlama taşıyor.
-///   Elle yazılmış bir tick ölçümle bir birim ayrıştı — bant 6.900
-///   tick genişken zararsız, ama "zararsız" sessiz hataların başladığı
-///   yer.
+///   The price is not computed because there is nothing to compute;
+///   the TICK is, because going from `sqrtP` to a tick carries
+///   rounding. A hand-written tick drifted by one unit against the
+///   measurement — harmless while the band is 6,900 ticks wide, but
+///   "harmless" is where silent errors begin.
 contract PulseLaunchpad {
     using PoolIdLibrary for PoolKey;
 

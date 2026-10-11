@@ -1,44 +1,47 @@
 "use strict";
 /* ===========================================================================
- * launch-pulse.js — dağıtılan yığında GERÇEK bir launch, sonra onu satın al
+ * launch-pulse.js — a REAL launch on the deployed stack, then buy it
  *
- *   node scripts/launch-pulse.js              # her adımı fiyatlar, hiçbir şey göndermez
- *   node scripts/launch-pulse.js --uygula     # gönderir
+ *   node scripts/launch-pulse.js              # prices every step, sends nothing
+ *   node scripts/launch-pulse.js --uygula     # sends
  *
- * NEDEN BU BETİK VAR
- *   601 sav gerçek Arc PoolManager'ına karşı geçiyor ve
- *   `denetim-dagitim-pulse.js` çalışan kodun derlenen kodla bayt bayt aynı
- *   olduğunu 84 savla gösteriyor. İkisi de güçlü ve ikisi de bir launch
- *   değil: `launchCount()` sıfır, yani ürün hakkındaki her iddia hiç
- *   kullanılmamış bir sözleşmeye dayanıyor.
+ * WHY THIS SCRIPT EXISTS
+ *   601 assertions pass against the real Arc PoolManager, and
+ *   `denetim-dagitim-pulse.js` shows with 84 assertions that the running
+ *   code is byte-for-byte the compiled code. Both are strong and neither
+ *   is a launch: `launchCount()` is zero, so every claim about the product
+ *   rests on a contract nobody has ever used.
  *
- *   Dağıtılmış bir adres "çalışıyor" demek değil. Bu betik o farkı kapatıyor.
+ *   A deployed address does not mean "it works". This script closes that
+ *   gap.
  *
- * NE ÖLÇÜYOR — VE BAŞKA HİÇBİR YERDE ÖLÇÜLEMEYEN ÜÇ ŞEY
- *   1. Bir yabancı sıradan dolarla bu tokeni satın alabiliyor mu
- *   2. O alım satımın vergisi teminat kasasına GERÇEKTEN ulaşıyor mu
- *   3. Biri çıkmak istediğinde kasa ödeme yapıyor mu
+ * WHAT IT MEASURES — THREE THINGS MEASURABLE NOWHERE ELSE
+ *   1. Can a stranger buy this token with ordinary dollars
+ *   2. Does that trade's tax REALLY reach the collateral vault
+ *   3. Does the vault pay out when somebody wants to leave
  *
- *   Enjekte edilmiş harness'larda üçü de ölçüldü. Burada zincirin kendisinde
- *   ölçülüyor ve fark şu: harness'ta kasayı ben kuruyorum, burada launchpad
- *   kuruyor ve kurduğu şeyin doğru olup olmadığı başka hiçbir yerde
- *   görünmüyor.
+ *   All three were measured in injected harnesses. Here they are measured
+ *   on the chain itself, and the difference is this: in a harness I build
+ *   the vault, here the launchpad builds it, and whether what it builds is
+ *   correct shows up nowhere else.
  *
- * GERİ ALINAMAYAN NE VAR
- *   Havuzun likiditesi kurulurken kilitleniyor ve hiç kimse tarafından geri
- *   çekilemez — tasarım bu. Yani havuza giden pay harcanmış, park edilmiş
- *   değil. Kasadaki teminat token yakarak geri alınabilir; havuz payı
- *   alınamaz. İki sayı da kuru çalışmada, hiçbir şey gönderilmeden yazılıyor.
+ * WHAT IS NOT RECOVERABLE
+ *   The pool's liquidity is locked when it is placed and cannot be
+ *   withdrawn by anyone — that is the design. So the share that goes to
+ *   the pool is spent, not parked. Collateral in the vault can be redeemed
+ *   by burning tokens; the pool share cannot. Both numbers are printed in
+ *   the dry run, before anything is sent.
  *
- * TEMİNAT NEDEN WETH
- *   Ölçüldü: WETH, ölçülen 73 varlığın en derini — Ethereum'da $20.000'lık
- *   dönüşümü 1,00 kat ittirmeyle kaldırıyor. Teminat hedefi yalnızca
- *   teminat uzak bir zincire taşındığında devreye giriyor; o güne kadar
- *   kasa quote tutuyor ve hak "quote / dolaşım" olarak hesaplanıyor.
+ * WHY THE COLLATERAL IS WETH
+ *   Measured: WETH is the deepest of the 73 assets measured — on Ethereum
+ *   it absorbs a $20,000 conversion with 1.00x of impact. The collateral
+ *   target only comes into play once collateral moves to a remote chain;
+ *   until that day the vault holds quote and the claim is computed as
+ *   "quote / circulating".
  *
- *   Yani bu seçim bugün hiçbir şeyi değiştirmiyor ama yanlış seçilirse
- *   gelecekte düzeltilemez: hedef varlık uzak kasanın ilk fonlanmasında
- *   sabitleniyor ve bir daha değişmiyor.
+ *   So this choice changes nothing today, but if chosen wrongly it cannot
+ *   be corrected later: the target asset is fixed when the remote vault is
+ *   first funded and never changes again.
  * =========================================================================== */
 
 const fs = require("fs");

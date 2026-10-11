@@ -58,36 +58,38 @@ contract SahteKurucu {
     }
 }
 
-/// @title TestPulseLaunch — yeni launch uçtan uca, ve iki kritik bilinmeyen
+/// @title TestPulseLaunch — the new launch end to end, and two critical
+///        unknowns
 ///
-/// İKİ ŞEY BAŞKA HİÇBİR YERDE GÖRÜNMÜYOR
+/// TWO THINGS ARE VISIBLE NOWHERE ELSE
 ///
-/// 1. EXACT-OUTPUT TAKAS ÜCRET ÖDÜYOR MU
-///      `EgriHook` exact-output'ta sıfır döndürüyordu, yani bir aggregator
-///      "bana tam N token ver" diyerek vergisiz işlem yapabiliyordu. Yeni
-///      kanca ücreti GİRDİden alıyor ve bunun v4'te gerçekten işe
-///      yaradığını yalnızca ölçüm söyler: `afterSwap`'ın döndürdüğü
-///      pozitif delta belirtilmeyen tarafa uygulanıyor ve o taraf
-///      exact-output'ta trader'ın BORCU. Akıl yürütmeyle bırakılacak bir
-///      yer değil.
+/// 1. DOES AN EXACT-OUTPUT SWAP PAY THE FEE
+///      `EgriHook` returned zero on exact-output, so an aggregator could
+///      trade tax-free by saying "give me exactly N tokens". The new hook
+///      takes the fee out of the INPUT, and only measurement can say
+///      whether that really works in v4: the positive delta `afterSwap`
+///      returns is applied to the unspecified side, and on exact-output
+///      that side is what the trader OWES. Not a place to leave to
+///      reasoning.
 ///
-/// 2. dolasim() HAVUZU DIŞLIYOR MU
-///      Eğri kalktığı için satılmamış arz artık havuzda. Kasa dolaşımı
-///      `totalSupply - balanceOf(egri) - balanceOf(acici)` diye
-///      hesaplıyor ve `egri` yuvasına PoolManager verildi. Yanlış olsa
-///      REVERT ETMEZDİ: hak, kimsenin sahip olmadığı ~%97 arzla sulanır
-///      ve her iade teminatın küçük bir kesrini öder. Hiçbir tek bakiyede
-///      görünmez.
+/// 2. DOES dolasim() EXCLUDE THE POOL
+///      With the curve gone, unsold supply now sits in the pool. The vault
+///      computes circulating as `totalSupply - balanceOf(egri) -
+///      balanceOf(acici)`, and the PoolManager was put in the `egri` slot.
+///      If that were wrong it WOULD NOT REVERT: the claim would be diluted
+///      by the ~97% of supply nobody owns, and every redemption would pay
+///      a small fraction of the collateral. It is invisible in any single
+///      balance.
 ///
-///      O yüzden burada satıra güvenilmiyor: dolaşım, gerçekten cüzdanda
-///      duran tokenlerle karşılaştırılıyor.
-///
-/// ADRESLER CREATE2 İLE, NONCE TAHMİNİ YOK
-///   Kanca, launchpad'in adresini immutable olarak taşımak zorunda ve
-///   launchpad de kancayı — döngü. Proje bunu nonce tahminiyle çözüyordu
-///   ve o tahmin dört koşum kaybettirdi. Burada ikisi de sabit tuzla
-///   CREATE2 ile kuruluyor, yani adresler tamamen belirli ve betik
-///   ikisini de bağımsız olarak hesaplayıp karşılaştırıyor.
+///      So the line is not trusted here: circulating is compared against
+///      the tokens that really sit in wallets.
+/// ADDRESSES BY CREATE2, WITH NO NONCE PREDICTION
+///   The hook has to carry the launchpad's address as an immutable and the
+///   launchpad has to carry the hook's — a cycle. The project used to
+///   resolve it by predicting a nonce, and that prediction cost four runs.
+///   Here both are built with CREATE2 from a fixed salt, so the addresses
+///   are fully determined and the script computes both independently and
+///   compares them.
 contract TestPulseLaunch {
     using PoolIdLibrary for PoolKey;
 

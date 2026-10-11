@@ -1,6 +1,6 @@
 "use strict";
 /* ===========================================================================
- * olc-uzak-kasa.js — AŞAMA 3: Ethereum tarafı
+ * olc-uzak-kasa.js — STAGE 3: the Ethereum side
  *
  *   node scripts/olc-uzak-kasa.js
  *

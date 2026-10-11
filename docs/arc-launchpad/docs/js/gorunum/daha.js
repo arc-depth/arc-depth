@@ -13,22 +13,23 @@ import { ikon } from "../ikon.js";
 import { YOLLAR, GRUPLAR, durumSayimi } from "../yol.js";
 
 const DURUM_YAZI = {
-  canli: { ad: "çalışıyor", sinif: "etiket--alis" },
-  dagitim: { ad: "dağıtım bekliyor", sinif: "etiket--uyari" },
-  yapim: { ad: "yapılmadı", sinif: "" }
+  canli: { ad: "working", sinif: "etiket--alis" },
+  dagitim: { ad: "awaiting deployment", sinif: "etiket--uyari" },
+  yapim: { ad: "not built", sinif: "" }
 };
 
 export async function ciz() {
   const kap = el("div", { sinif: "yigin" });
   const s = durumSayimi();
 
-  kap.append(sayfaUst("Tüm modüller",
-    s.canli + " çalışıyor · " + s.dagitim + " dağıtım bekliyor · " + s.yapim + " yapılmadı"));
+  kap.append(sayfaUst("All modules",
+    s.canli + " working · " + s.dagitim + " awaiting deployment · " +
+    s.yapim + " not built"));
 
   kap.append(not(
-    "Bitmemiş modüller gizlenmiyor: mimarinin tamamı görünür, ama hangisinin " +
-    "arkasında gerçekten bir şey olduğu her satırda yazıyor. Çalışmayan bir " +
-    "modül aktif düğme olarak sunulmuyor.",
+    "Unfinished modules are not hidden: the whole architecture is " +
+    "visible, and every line says whether there is something behind it. " +
+    "A module that does not work is not offered as an active button.",
     "bilgi"
   ));
 

@@ -1,37 +1,39 @@
 "use strict";
 /* ===========================================================================
- * olc-kurucu-ilk-alim.js — kurucunun ilk alımı, sözleşmenin kendi sabitleriyle
+ * olc-kurucu-ilk-alim.js — the founder's first buy, from the contract's own
+ *                          constants
  *
  *   node scripts/olc-kurucu-ilk-alim.js
  *
- * NE HESAPLIYOR
- *   Yeni kurala göre kurucu 100–500 USDC yatırıyor, %2 protokol ücreti
- *   kesiliyor ve KALANIN TAMAMIYLA açılış fiyatından token alıyor. Bu betik
- *   o token miktarını ve launch sonrası havuzun gerçek durumunu çıkarıyor.
+ * WHAT IT COMPUTES
+ *   Under the new rule the founder pays in 100-500 USDC, a 2% protocol fee
+ *   is taken, and THE WHOLE REMAINDER buys tokens at the opening price.
+ *   This script works out that token amount and the pool's real state after
+ *   the launch.
  *
- * SAYILAR NEREDEN GELİYOR
- *   Hiçbiri elle yazılmadı: ACILIS_MCAP, SUPPLY ve LAUNCH_UCRET_PPM
- *   zincirdeki launchpad'den okunuyor. Elle yazılsaydı bir sabit değişince
- *   hesap sessizce yanlış olurdu.
+ * WHERE THE NUMBERS COME FROM
+ *   None of them was written by hand: ACILIS_MCAP, SUPPLY and
+ *   LAUNCH_UCRET_PPM are read from the launchpad on chain. Written by hand,
+ *   the calculation would go silently wrong the moment a constant changed.
  *
- * FORMÜL ZATEN SÖZLEŞMEDE VAR
- *   Kurucunun alacağı token = net × SUPPLY / ACILIS_MCAP, ki bu birebir
- *   mevcut `havuzToken(likidite)` fonksiyonu. Yeni bir fiyat formülü
- *   yazmaya gerek yok ve yazmak yanlış olurdu: ikinci bir formül, ilkinden
- *   ayrışabilen ikinci bir fiyat demek.
+ * THE FORMULA IS ALREADY IN THE CONTRACT
+ *   The founder's tokens = net x SUPPLY / ACILIS_MCAP, which is exactly the
+ *   existing `havuzToken(likidite)` function. There is no need to write a
+ *   new price formula, and writing one would be wrong: a second formula
+ *   means a second price that can drift from the first.
  *
- * NEDEN KAYMA YOK
- *   Alım bir takas değil. Kurucunun tokenleri cüzdanına doğrudan gidiyor,
- *   net USDC havuza gerçek teklif olarak konuyor ve havuz açılış fiyatında
- *   başlatılıyor. Fiyat hiç hareket etmediği için kayma da yok — ve
- *   "fiyat başlangıca sıfırlanmayacak" kuralı kendiliğinden sağlanıyor,
- *   çünkü sıfırlanacak bir hareket yok.
+ * WHY THERE IS NO SLIPPAGE
+ *   The buy is not a swap. The founder's tokens go straight to their
+ *   wallet, the net USDC is placed in the pool as a real bid, and the pool
+ *   is started at the opening price. Since the price never moves there is
+ *   no slippage — and the rule that "the price will not be reset to the
+ *   start" holds by itself, because there is no movement to reset.
  *
- * DEĞER YARATILMIYOR
- *   Açılış fiyatında bütün arzın değeri ACILIS_MCAP. Kurucu net ödediği
- *   kadarının karşılığını alıyor: 98 USDC öderse arzın %2,8'ini, ki o pay
- *   açılış fiyatında tam 98 USDC eder. Bedava token yok, bu betiğin son
- *   savı da onu ölçüyor.
+ * NO VALUE IS CREATED
+ *   At the opening price the whole supply is worth ACILIS_MCAP. The founder
+ *   gets exactly what they paid net: pay 98 USDC and you get 2.8% of the
+ *   supply, which at the opening price is worth exactly 98 USDC. There are
+ *   no free tokens, and this script's last assertion measures that.
  * =========================================================================== */
 const fs = require("fs");
 const path = require("path");

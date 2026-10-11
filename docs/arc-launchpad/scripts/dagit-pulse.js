@@ -1,50 +1,53 @@
 "use strict";
 /* ===========================================================================
- * dagit-pulse.js — yeni yığının dağıtımı: önce kuru, sonra gerçek
+ * dagit-pulse.js — deploying the new stack: dry first, then for real
  *
- *   node scripts/dagit-pulse.js              # KURU — hiçbir şey harcamaz
- *   node scripts/dagit-pulse.js --uygula     # gerçek işlem, gerçek USDC
+ *   node scripts/dagit-pulse.js              # DRY — spends nothing
+ *   node scripts/dagit-pulse.js --uygula     # a real transaction, real USDC
  *
- * NEDEN AYRI BİR BETİK
- *   `scripts/dagit.js` ESKİ yığını dağıtıyor (Launchpad + ArcLaunchHook) ve
- *   o zincirde canlı. Bu betik yeni yığını dağıtıyor: EgriFabrika,
- *   AciciFabrika, ChainlinkOracle, GelistiriciFonu, LikiditeKasasi,
- *   EgriLaunchpad, EgriHook. Eskisini düzenlemek, canlı bir dağıtımın
- *   kaydını bozmak olurdu.
+ * WHY A SEPARATE SCRIPT
+ *   `scripts/dagit.js` deploys the OLD stack (Launchpad + ArcLaunchHook)
+ *   and that one is live on chain. This script deploys the new stack:
+ *   EgriFabrika, AciciFabrika, ChainlinkOracle, GelistiriciFonu,
+ *   LikiditeKasasi, EgriLaunchpad, EgriHook. Editing the old one would
+ *   have corrupted the record of a live deployment.
  *
- * İKİ DÖNGÜ VE NASIL ÇÖZÜLDÜĞÜ
- *   LikiditeKasasi launchpad'in adresini istiyor, launchpad LikiditeKasasi'yı.
- *   Launchpad hook'un adresini istiyor, hook launchpad'i. İkisi de aynı
- *   şeyle çözülüyor: launchpad'in adresi CREATE ile ÖNCEDEN hesaplanabilir,
- *   çünkü gönderen ve nonce biliniyor.
+ * TWO CYCLES AND HOW THEY ARE BROKEN
+ *   LikiditeKasasi wants the launchpad's address, the launchpad wants
+ *   LikiditeKasasi's. The launchpad wants the hook's address, the hook
+ *   wants the launchpad's. Both are broken by the same thing: the
+ *   launchpad's address can be computed IN ADVANCE from CREATE, because
+ *   the sender and the nonce are known.
  *
- *     launchpad = CREATE(dagitici, nonce + 5)
+ *     launchpad = CREATE(deployer, nonce + 5)
  *
- *   Bu adres bilinince hook'un init kodu kurulabilir, salt madenlenebilir ve
- *   hook'un adresi de önceden bilinir. Sonra gerçek dağıtım sırasında her
- *   adım, DÜŞTÜĞÜ adresin tahmin edilenle aynı olup olmadığına bakıyor.
+ *   Once that address is known the hook's init code can be assembled, the
+ *   salt can be mined, and the hook's address is known in advance too.
+ *   Then, during the real deployment, every step checks whether the
+ *   address it LANDED at is the one that was predicted.
  *
- *   Bu kontrol atlanabilir görünür ve atlanamaz: bu projede hook bir kez
- *   `quote` yerine launchpad adresiyle canlıya çıktı. Tahmini
- *   doğrulamadan geçmek, aynı hatanın bir sonraki hali.
+ *   That check looks skippable and is not: in this project the hook once
+ *   went live with the launchpad's address where `quote` belonged. Walking
+ *   past the prediction is the next version of the same mistake.
  *
- * NEDEN ADRES MADENLENİYOR
- *   Uniswap v4 bir hook'un yeteneklerini ADRESİNİN alt 14 bitinden okuyor.
- *   EgriHook'un ihtiyacı olan küme:
+ * WHY THE ADDRESS IS MINED
+ *   Uniswap v4 reads a hook's capabilities from the low 14 bits OF ITS
+ *   ADDRESS. The set EgriHook needs:
  *
  *     beforeAddLiquidity    1 << 11
  *     beforeRemoveLiquidity 1 << 9
  *     afterSwap             1 << 6
  *     afterSwapReturnDelta  1 << 2   = 0xa44
  *
- *   Normal bir dağıtım adresini seçemez, o yüzden hook CREATE2 fabrikasından
- *   çıkıyor ve salt bu desen bulunana kadar aranıyor. Beklenen deneme
- *   sayısı 2^14 = 16.384 — saniyeler.
+ *   An ordinary deployment cannot choose its address, so the hook comes
+ *   out of a CREATE2 factory and the salt is searched until that pattern
+ *   appears. The expected number of tries is 2^14 = 16,384 — seconds.
  *
- * NEDEN VARSAYILAN KURU ÇALIŞMA
- *   Dağıtım geri alınamaz ve gerçek USDC harcar. `--uygula` olmadan bu betik
- *   tek bir işlem göndermez: yalnızca her adresi hesaplar, salt'ı madenler,
- *   zincirden bakiyeyi ve nonce'u okur ve ne olacağını yazar.
+ * WHY DRY BY DEFAULT
+ *   A deployment cannot be undone and it spends real USDC. Without
+ *   `--uygula` this script sends not a single transaction: it only
+ *   computes every address, mines the salt, reads the balance and the
+ *   nonce from the chain, and writes down what would happen.
  * =========================================================================== */
 const {
   JsonRpcProvider, Wallet, AbiCoder, keccak256,
@@ -271,21 +274,21 @@ const ok = (iyi, ad, not) => {
 
   /* ---- the collateral list, measured not assumed ------------------
    *
-   * BU BOLUM YANLIS DOSYAYI DOGRULUYORDU
-   *   Burada `teminat-evreni.json` kontrol ediliyordu: bes varlik, hepsi
-   *   Chainlink proxy'si. O dosya ChainlinkOracle icin vardi, oracle da
-   *   TeminatKasasi'nin agirlikli sepetini fiyatlandirmak icin. Ikisi de
-   *   kaldirildi — bu dagitimda artik hicbir sey fiyat okumuyor.
+   * THIS SECTION WAS VERIFYING THE WRONG FILE
+   *   It used to check `teminat-evreni.json`: five assets, all Chainlink
+   *   proxies. That file existed for ChainlinkOracle, and the oracle
+   *   existed to price TeminatKasasi's weighted basket. Both are gone —
+   *   nothing in this deployment reads a price any more.
    *
-   *   Yani kontrol gecerken hicbir sey dogrulamiyordu: kullanilmayan bir
-   *   dosyanin dolu olmasi, teminat hakkinda hicbir sey soylemez. Asil
-   *   liste ise hic kontrol edilmiyordu.
+   *   So the check verified nothing while passing: an unused file being
+   *   full says nothing about collateral. The actual list was not checked
+   *   at all.
    *
-   * SIMDI OLCULEN SEY
-   *   Arayuzun gercekten okudugu uretilmis liste ve onun arkasindaki
-   *   derinlik olcumu. Olcumun TARIHI de kontrol ediliyor: havuz
-   *   derinligi degisen bir sey, ve aylik eski bir olcumle "su tutara
-   *   kadar calisir" demek, olcmemekten kotu.
+   * WHAT IS MEASURED NOW
+   *   The generated list the interface really reads, and the depth
+   *   measurement behind it. The measurement's DATE is checked too: pool
+   *   depth is a thing that changes, and saying "it works up to this
+   *   amount" from a month-old measurement is worse than not measuring.
    */
   const listeYolu = path.join(__dirname, "..", "docs", "js", "teminat-listesi.js");
   const derinlikYolu = path.join(__dirname, "..", "teminat-derinlik.json");
@@ -545,23 +548,24 @@ const ok = (iyi, ad, not) => {
   console.log("   dogrulamadan gecmek ayni hatanin bir sonraki hali.");
 
   /* ==================================================================
-   * GERCEK DAGITIM
+   * THE REAL DEPLOYMENT
    *
-   * HER ADIM DUSTUGU ADRESI PLANA KARSI DOGRULUYOR
-   *   Tahmin, gondericinin nonce'una dayaniyor. Arada baska bir islem
-   *   gonderilirse butun sira kayar ve madenlenmis hook adresi YANLIS
-   *   bir launchpad'e bakar — ama her sey basariyla dagitilmis gorunur.
-   *   Bu projede hook bir kez `quote` yerine launchpad adresiyle canliya
-   *   cikti; o hata sessizdi ve bu kontrol onun icin var.
+   * EVERY STEP VERIFIES THE ADDRESS IT LANDED AT AGAINST THE PLAN
+   *   The prediction rests on the sender's nonce. If another transaction
+   *   is sent in between, the whole sequence shifts and the mined hook
+   *   address points at the WRONG launchpad — while everything looks
+   *   successfully deployed. In this project the hook once went live with
+   *   the launchpad's address where `quote` belonged; that mistake was
+   *   silent, and this check exists because of it.
    *
-   * BIR SAPMADA DURUYOR, DEVAM ETMIYOR
-   *   Yarim dagitilmis bir yigin, yanlis dagitilmis bir yigindan daha
-   *   iyidir: ilki yeniden denenebilir, ikincisi zincirde kalir.
+   * IT STOPS ON A DEVIATION INSTEAD OF CONTINUING
+   *   A half-deployed stack is better than a wrongly deployed one: the
+   *   first can be retried, the second stays on chain.
    *
-   * DAGITILMIS KOD DERLEME CIKTISIYLA KARSILASTIRILIYOR
-   *   Immutable degerler calisma zamani kodunun icine gomuldugu icin
-   *   birebir esitlik beklenmiyor; UZUNLUK esitligi bekleniyor. Farkli
-   *   uzunluk, zincire baska bir sozlesmenin gittigi anlamina gelir.
+   * THE DEPLOYED CODE IS COMPARED WITH THE COMPILER OUTPUT
+   *   Immutable values are baked into the runtime code, so exact equality
+   *   is not expected; equal LENGTH is. A different length means a
+   *   different contract went to the chain.
    */
   if (UYGULA) {
     console.log("=== UYGULA — GERCEK ISLEMLER BASLIYOR ===");

@@ -1,48 +1,50 @@
 "use strict";
 /* ===========================================================================
- * dagit-pulse2.js — yeni nesli Arc'a dağıt
+ * dagit-pulse2.js — deploy the new generation to Arc
  *
- *   node scripts/dagit-pulse2.js              # fiyatlar, hiçbir şey göndermez
+ *   node scripts/dagit-pulse2.js              # prices it, sends nothing
  *   node scripts/dagit-pulse2.js --uygula
  *
- * ÜÇ SÖZLEŞME, VE PAYLAŞILAN ALTYAPI YENİDEN DAĞITILMIYOR
- *   PulseFabrika, PulseLaunchpad, PulseHook. Bunlar yeni.
+ * THREE CONTRACTS, AND THE SHARED INFRASTRUCTURE IS NOT REDEPLOYED
+ *   PulseFabrika, PulseLaunchpad, PulseHook. These are new.
  *
  *   KasaFabrika, CrossChainAssetRegistry, YoneticiFabrika, GelistiriciFonu
- *   ve LikiditeKasasi zincirde duruyor ve yeniden dağıtılmıyor. Kayıt
- *   zincir kümesini KURUCUDA sabitliyor ve zincirdeki olan Ethereum ile
- *   Base'deki gerçek fabrikalara bakıyor, bayt bayt doğrulanmış. İkinci
- *   bir kayıt, bir tokenin teminatının nereye gittiğine dair ikinci bir
- *   cevap olurdu.
+ *   and LikiditeKasasi are already on chain and are not redeployed. The
+ *   registry fixes the set of chains IN ITS CONSTRUCTOR, and the one on
+ *   chain points at the real factories on Ethereum and Base, verified byte
+ *   for byte. A second registry would be a second answer to where a token's
+ *   collateral goes.
  *
- * ADRES DÖNGÜSÜ: LAUNCHPAD KANCAYI, KANCA LAUNCHPAD'İ BİLMEK ZORUNDA
- *   İkisi de immutable, yani biri önce dağıtılamaz. Kırılma noktası
- *   şurası: launchpad CREATE ile gidiyor, yani adresi dağıtıcının
- *   nonce'undan ÖNCEDEN hesaplanabiliyor. O adresle kancanın init kodu
- *   kurulup salt'ı madenleniyor, sonra launchpad madenlenmiş kanca
- *   adresiyle dağıtılıyor.
+ * THE ADDRESS CYCLE: THE LAUNCHPAD HAS TO KNOW THE HOOK AND THE HOOK THE
+ * LAUNCHPAD
+ *   Both are immutable, so neither can be deployed first. The break is
+ *   here: the launchpad goes out through CREATE, so its address can be
+ *   computed IN ADVANCE from the deployer's nonce. With that address the
+ *   hook's init code is assembled and its salt mined, then the launchpad is
+ *   deployed with the mined hook address.
  *
- *   Tahmin doğrulanıyor, varsayılmıyor: her adım DÜŞTÜĞÜ adresle
- *   karşılaştırılıyor. Bu projede kanca bir kez `quote` yerine launchpad
- *   adresiyle canlıya çıktı ve dağıtım o sırada başarılı göründü.
+ *   The prediction is verified, not assumed: every step is compared against
+ *   the address it LANDED at. In this project the hook once went live with
+ *   the launchpad's address where `quote` belonged, and the deployment
+ *   looked successful while it happened.
  *
- * KANCA ADRESİ 0xACC İLE BİTMEK ZORUNDA — VE 0xA44 DEĞİL
- *   v4 bir kancanın alt bitlerini okuyup hangi callback'leri alacağına
- *   karar veriyor. Önceki nesil 0xa44'teydi. Yeni kanca `beforeSwap` ve
- *   `beforeSwapReturnsDelta` ekliyor:
+ * THE HOOK ADDRESS HAS TO END IN 0xACC — AND NOT 0xA44
+ *   v4 reads a hook's low bits and decides which callbacks it will receive.
+ *   The previous generation was at 0xa44. The new hook adds `beforeSwap`
+ *   and `beforeSwapReturnsDelta`:
  *
  *     beforeAddLiquidity      1 << 11   0x800
  *     beforeRemoveLiquidity   1 <<  9   0x200
- *     beforeSwap              1 <<  7   0x080   <- yeni
+ *     beforeSwap              1 <<  7   0x080   <- new
  *     afterSwap               1 <<  6   0x040
- *     beforeSwapReturnsDelta  1 <<  3   0x008   <- yeni
+ *     beforeSwapReturnsDelta  1 <<  3   0x008   <- new
  *     afterSwapReturnsDelta   1 <<  2   0x004
  *                                       -----
  *                                       0xacc
  *
- *   Eski son ekte dağıtılsa `beforeSwap` hiç çağrılmaz ve alım bacağının
- *   vergisi sessizce token olarak derinliğe giderdi — ölçülen hata tam
- *   buydu: kasaya $0,000000.
+ *   Deployed at the old suffix, `beforeSwap` would never be called and the
+ *   buy leg's tax would silently go to depth as tokens — that was exactly
+ *   the measured failure: $0.000000 to the vault.
  * =========================================================================== */
 const fs = require("fs");
 const path = require("path");

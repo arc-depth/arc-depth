@@ -93,52 +93,51 @@ contract CrossChainAssetRegistry {
 
     /* ---- reads ------------------------------------------------------ */
 
-    /* ---- TEMINAT HANGI VARLIGA DONUSEBILIR: IZIN LISTESI YOK ------
+    /* ---- WHAT CAN COLLATERAL BE CONVERTED INTO: NO ALLOW LIST -----
      *
-     * BURADA BIR IZIN LISTESI VARDI VE KALDIRILDI
-     *   Kullanicinin kurali: *"Arc'da dogrulamasi gerekmiyor, sadece
-     *   calisan tum adaylari koy, hatta insanlarin eklemesine de izin
-     *   ver."* Yani hangi varligin teminat olabilecegine bir liste karar
-     *   vermiyor.
+     * THERE WAS AN ALLOW LIST HERE AND IT WAS REMOVED
+     *   The user's rule: *"it does not have to be verified on Arc, just
+     *   put in every candidate that works, in fact let people add them
+     *   too."* So no list decides which asset can be collateral.
      *
-     *   Kaldirilan sey yalnizca liste degil, listenin bakim yuku de: her
-     *   yeni token icin yeni bir kayit defteri dagitmak gerekiyordu,
-     *   cunku liste kurucuda sabitti. Bugun dogmus bir token dunun
-     *   kayit defterine giremezdi.
+     *   What was removed is not only the list but its maintenance burden:
+     *   every new token required deploying a new registry, because the
+     *   list was fixed in the constructor. A token born today could not
+     *   get into yesterday's registry.
      *
-     * GUVENLIK KAPIDAN ALINDI, SONUCA TASINDI
-     *   Kapi "hangi varlik" sorusunu soruyordu; yerine gecen sey
-     *   "donusum kac paraya oldu" sorusunu soruyor. Uzak kasa her
-     *   donusumde sonucu bir TABANA karsi olcuyor ve taban tutmazsa
-     *   islem geri doner. Olculdu: dusmanca bir yurutucu tabansiz
-     *   kurulumda $1.999 cekebiliyordu, tabanla $0 cikardi ve durust
-     *   yurutucu gecmeye devam etti.
+     * THE SAFETY WAS TAKEN OFF THE GATE AND MOVED TO THE OUTCOME
+     *   The gate asked "which asset"; what replaced it asks "what did the
+     *   conversion come to". The remote vault measures the outcome of
+     *   every conversion against a FLOOR, and the transaction reverts if
+     *   the floor does not hold. Measured: a hostile executor could take
+     *   $1,999 out of the floorless setup, with the floor it got $0 out,
+     *   and an honest executor kept passing.
      *
-     *   Bu degisim mimariyi degistirmiyor: sinirli-kredi deseni ve
-     *   sonucun olculmesi oldugu gibi duruyor. Degisen tek sey tabanin
-     *   fiyatini NEREDEN aldigi — kurucuda sabit bir besleyici
-     *   tablosundan degil, tokenin kendi havuzunun 30 dakikalik
-     *   ortalamasindan.
+     *   This change does not change the architecture: the bounded-credit
+     *   pattern and the measurement of the outcome stand as they were. The
+     *   only thing that changed is WHERE the floor takes its price from —
+     *   not from a feed table fixed in the constructor, but from the
+     *   token's own pool's 30-minute average.
      *
-     * NEDEN BU KADAR AMA DAHA FAZLASI DEGIL — DURUSTCE
-     *   Bir Chainlink besleyicisi havuzdan BAGIMSIZDIR; havuzun kendi
-     *   ortalamasi degildir. Yani bu, besleyici kadar guclu degil ve
-     *   oyle sunulmayacak:
+     * WHY THIS MUCH AND NOT MORE — HONESTLY
+     *   A Chainlink feed is INDEPENDENT of the pool; it is not the pool's
+     *   own average. So this is not as strong as a feed and it will not be
+     *   presented as if it were:
      *
-     *     - 30 dakikalik ortalama, fiyati 30 dakika boyunca piyasa
-     *       disinda tutmayi gerektirir; Uniswap'in observe() cagrisi
-     *       pencereyi kapatamazsa zaten geri doner (OLD), yani ortalama
-     *       gercekten 1800 saniyeyi kapsiyor.
-     *     - Maliyeti havuzun derinligiyle olcekleniyor ve kazanci
-     *       donusum basina %3 kayma tavani ile sinirli.
-     *     - Besleyicisi OLAN varliklarda besleyici yine kullaniliyor,
-     *       cunku daha siki olan hangisiyse o uygulanmali. Bu kimseyi
-     *       engellemiyor: besleyicisi olmayan varlik da gecebiliyor.
+     *     - A 30-minute average requires holding the price off-market for
+     *       30 minutes; if Uniswap's observe() call cannot close the
+     *       window it reverts anyway (OLD), so the average really does
+     *       span 1800 seconds.
+     *     - Its cost scales with the pool's depth and its gain is capped
+     *       by the 3% slippage ceiling per conversion.
+     *     - For assets that DO have a feed, the feed is still used,
+     *       because whichever is stricter is the one that should apply.
+     *       This blocks nobody: an asset without a feed can pass too.
      *
-     *   Yani kalan risk: derin olmayan bir havuzda, 30 dakika boyunca
-     *   fiyati tutabilen biri donusum basina %3'e kadar siyirabilir.
-     *   Kapiyi geri koymak bunu kapatirdi ama kullanicinin acikca
-     *   istedigi genisligi de kapatirdi.
+     *   So the residual risk is: in a pool that is not deep, somebody who
+     *   can hold the price for 30 minutes could skim up to 3% per
+     *   conversion. Putting the gate back would close that, and would
+     *   also close the breadth the user explicitly asked for.
      */
 
     function zincirSayisi() external view returns (uint256) {

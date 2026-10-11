@@ -1,37 +1,39 @@
 "use strict";
 /* ===========================================================================
- * kur-teminat-listesi.js — önerilen 50'yi ÖLÇÜMDEN üret
+ * kur-teminat-listesi.js — build the suggested 50 FROM MEASUREMENT
  *
  *   node scripts/kur-teminat-listesi.js
  *
- * KAYNAK DEĞİŞTİ — VE NEDEN DEĞİŞTİ
- *   Bu betik önce `teminat-adaylari.json`'dan üretiyordu. O dosya adayları
- *   CHAINLINK BESLEYİCİLERİNDEN türetiyor: feed listesi çekiliyor, sonra o
- *   feed'in varlığı zincirde aranıyor. Yani kullanıcının kaldırdığı kapı,
- *   öneri listesini hâlâ belirliyordu.
+ * THE SOURCE CHANGED — AND WHY
+ *   This script used to build from `teminat-adaylari.json`. That file
+ *   derives its candidates FROM CHAINLINK FEEDS: pull the feed list, then
+ *   look for each feed's asset on chain. So the gate the user removed was
+ *   still deciding the suggestion list.
  *
- *   Sonucu ölçüldü ve kötüydü: o yolla üretilen 50 önerinin yalnızca 21'i
- *   $2.000'lık bir dönüşümü kaldırıyordu. Geri kalanın ya USDC havuzu
- *   yoktu ya da havuz o kadar inceydi ki işlem fiyatı 9–58 kat ittiriyordu.
- *   Sayfa "çalışıyor" diyordu, zincir reddedecekti.
+ *   The result was measured and it was bad: of the 50 suggestions built
+ *   that way, only 21 could carry a $2,000 conversion. The rest either had
+ *   no USDC pool or a pool so thin that the trade pushed the price 9–58x.
+ *   The page said "works" where the chain would have refused.
  *
- *   Artık kaynak `teminat-derinlik.json`: evren Uniswap'in açık token
- *   listesi (ücretsiz, anahtarsız), ölçüt ise doğrudan yapılacak işin
- *   kendisi — bu tutar bu havuzda dönüştürülebiliyor mu.
+ *   The source is now `teminat-derinlik.json`: the universe is Uniswap's
+ *   public token list (free, no key), and the criterion is the job itself
+ *   — can this amount be converted in this pool.
  *
- * SIRALAMA: HANGİ BÜYÜKLÜĞÜ KALDIRDIĞI
- *   Dört tutarda ölçüldü ($20 / $200 / $2.000 / $20.000) ve her varlık
- *   kaldırdığı EN BÜYÜK tutarla kaydedildi. Sıralama buna göre.
+ * THE ORDER: WHAT SIZE IT CARRIES
+ *   Measured at four sizes ($20 / $200 / $2,000 / $20,000) and each asset
+ *   is recorded with the LARGEST it carried. That is the ranking.
  *
- *   Tek bir eşik yanlış cevap olurdu: asgari teminat $20 ama teminat her
- *   işlemin vergisiyle büyüyor ve tavanı yok. "Çalışıyor mu" sorusunun
- *   "hangi büyüklükte" olmadan cevabı yok.
+ *   A single threshold would have been the wrong answer: the minimum
+ *   collateral is $20, but collateral grows with the tax on every trade
+ *   and has no ceiling. "Does it work" has no answer without "at what
+ *   size".
  *
- * LİSTE BİR KAPI DEĞİL
- *   Kullanıcının kuralı: *"biz 50 tane önerelim, launch yapan isterse CA
- *   yapıştırarak istediği şekilde yapar."* Bu 50 bir kısayol. Listede
- *   olmamak yasak olmak değil — sayfadaki CA alanı aynı ölçümü yapıyor ve
- *   aynı şekilde kabul ediyor.
+ * THE LIST IS NOT A GATE
+ *   The user's rule: *"we suggest 50, and whoever launches can paste a
+ *   contract address and do it however they want."* These 50 are a
+ *   shortcut. Not being on the list is not being banned — the contract
+ *   address field on the page runs the same measurement and accepts on
+ *   the same terms.
  * =========================================================================== */
 const fs = require("fs");
 const path = require("path");
@@ -126,45 +128,46 @@ const dagilim = basamaklar.map((t) => ({
 
 const cikti = [
   "/* ===========================================================================",
-  " * teminat-listesi.js — ÖNERİLEN " + ADET + " TEMİNAT VARLIĞI",
+  " * teminat-listesi.js — THE " + ADET + " SUGGESTED COLLATERAL ASSETS",
   " *",
-  " * BU DOSYA ÜRETİLDİ — elle düzenlenmemeli.",
-  " *   Kaynak: teminat-derinlik.json",
-  " *   Üreten: scripts/kur-teminat-listesi.js",
-  " *   Ölçüm:  " + j.olculdu,
+  " * THIS FILE IS GENERATED — do not edit it by hand.",
+  " *   Source:    teminat-derinlik.json",
+  " *   Generator: scripts/kur-teminat-listesi.js",
+  " *   Measured:  " + j.olculdu,
   " *",
-  " * NASIL ÖLÇÜLDÜ — ÖLÇÜT DOĞRUDAN YAPILACAK İŞİN KENDİSİ",
-  " *   Her satırın arkasında dört zincir ölçümü var: en derin USDC havuzu",
-  " *   bulundu, likiditesi okundu, gözlem geçmişi kontrol edildi ve dört",
-  " *   ayrı tutarda GERÇEKTEN dönüştürülebilir mi diye Uniswap'in kendi",
-  " *   kotasına soruldu.",
+  " * HOW IT WAS MEASURED — THE CRITERION IS THE JOB ITSELF",
+  " *   Behind every row are four on-chain measurements: the deepest USDC",
+  " *   pool was found, its liquidity read, its observation history",
+  " *   checked, and Uniswap's own quoter was asked whether four separate",
+  " *   amounts GENUINELY convert.",
   " *",
-  " *   Likidite tabanı, piyasa değeri eşiği gibi vekil kalite kapıları",
-  " *   kullanılmadı. Sorulan şey bir eşik değil: bu tutar bu havuzda",
-  " *   dönüştürülebiliyor mu.",
+  " *   No proxy quality gates such as a liquidity floor or a market-cap",
+  " *   threshold were used. The question asked is not a threshold: can",
+  " *   this amount be converted in this pool.",
   " *",
-  " * NEDEN TEK BİR \"ÇALIŞIYOR\" YOK",
-  " *   Fiyatın ölçülebilmesi, o havuzda İŞLEM yapılabileceği anlamına",
-  " *   gelmiyor. Ölçüldü: SHIB'in fiyatı %0,00 tutarlı okunuyor ama",
-  " *   $2.000'lık işlem fiyatı 17,5 kat ittiriyor, çünkü SHIB'in likiditesi",
-  " *   SHIB/USDC'de değil SHIB/WETH'te. Taban marjinal fiyattan türetildiği",
-  " *   için böyle bir dönüşüm REDDEDİLİR.",
+  " * WHY THERE IS NO SINGLE \"IT WORKS\"",
+  " *   Being able to read a price does not mean you can TRADE in that",
+  " *   pool. Measured: SHIB reads a 0.00% price error and still pushes",
+  " *   17.5x on a $2,000 trade, because SHIB's liquidity is in SHIB/WETH,",
+  " *   not SHIB/USDC. The floor is derived from the marginal price, so a",
+  " *   conversion like that is REFUSED.",
   " *",
-  " *   O yüzden her varlık kaldırdığı EN BÜYÜK tutarla kayıtlı:",
-  ...dagilim.map((d) => " *     " + U(d.tutar).padStart(8) + " kadar: " + d.adet + " varlık"),
+  " *   So each asset is recorded with the LARGEST amount it carried:",
+  ...dagilim.map((d) => " *     up to " + U(d.tutar).padStart(8) + ": " + d.adet + " assets"),
   " *",
-  " *   Asgari teminat $20 (ASGARI_TEMINAT = 20e6) ama teminat her işlemin",
-  " *   vergisiyle büyüyor ve tavanı yok — bu yüzden tek bir eşik yanlış",
-  " *   cevap olurdu.",
+  " *   The minimum collateral is $20 (ASGARI_TEMINAT = 20e6), but",
+  " *   collateral grows with the tax on every trade and has no ceiling —",
+  " *   which is why a single threshold would be the wrong answer.",
   " *",
-  " * BU LİSTE BİR KAPI DEĞİL",
-  " *   Launch yapan bu " + ADET + " taneden birini seçebilir ya da KONTRAT ADRESİ",
-  " *   yapıştırıp başka bir token seçebilir. Listede olmamak yasak olmak",
-  " *   değil — sayfa CA için de aynı ölçümü yapıyor.",
+  " * THIS LIST IS NOT A GATE",
+  " *   Whoever launches can pick one of these " + ADET + ", or paste a",
+  " *   CONTRACT ADDRESS and pick something else. Not being on the list is",
+  " *   not being banned — the page runs the same measurement for a pasted",
+  " *   address.",
   " *",
-  " *   Dönüştürülebildiği ölçülen " + hepsi.length + " varlığın " + kalan.length +
-    " tanesi listeye girmedi ve",
-  " *   hepsi CA ile seçilebilir:",
+  " *   Of the " + hepsi.length + " assets measured as convertible, " +
+    kalan.length + " did not make the list,",
+  " *   and every one of them can still be chosen by address:",
   " *   " + kalan.map((v) => v.simge).join(" "),
   " * =========================================================================== */",
   "",

@@ -28,30 +28,32 @@ const OLCUM = [
 
 export async function ciz() {
   const kap = el("div", { sinif: "yigin" });
-  kap.append(sayfaUst("Whale Shield", "Büyük satışın maliyeti, tabana yazılır"));
+  kap.append(sayfaUst("Whale shield", "What a large sell costs, written into the floor"));
 
   kap.append(el("div", { sinif: "izgara izgara--olcum" }, [
-    olcum("Eşik", ppmYuzde(EKONOMI.kalkanEsikPpm), "dolaşımın payı, blok başına"),
-    olcum("Ek oran tavanı", ppmYuzde(EKONOMI.kalkanTavanPpm), "en fazla"),
-    olcum("Nereye", "teminat kasası", "protokole hiç pay yok"),
-    olcum("Yön", "yalnızca satış", "alım muaf")
+    olcum("Threshold", ppmYuzde(EKONOMI.kalkanEsikPpm), "share of circulating, per block"),
+    olcum("Extra rate cap", ppmYuzde(EKONOMI.kalkanTavanPpm), "at most"),
+    olcum("Where it goes", "the collateral vault", "no share to the protocol"),
+    olcum("Direction", "sells only", "buys are exempt")
   ]));
 
-  kap.append(panel("Nasıl çalışıyor", [
+  kap.append(panel("How it works", [
     el("div", { sinif: "ikincil" }, [
       el("p", { yazi:
-        "Satılan token miktarı, dolaşımdaki arzın yüzdesi olarak ölçülüyor ve " +
-        "havuz başına, blok başına birikiyor. Eşiğin altında kalkan görünmez; " +
-        "üstünde ek oran aşan miktara eşit oluyor ve tavanda duruyor." }),
+        "The amount sold is measured as a percentage of circulating supply " +
+        "and accumulates per pool, per block. Below the threshold the " +
+        "shield is invisible; above it the extra rate equals the amount " +
+        "that went over, and stops at the cap." }),
       el("p", { attr: { style: "margin-top:10px" }, yazi:
-        "Ölçü havuz derinliği değil dolaşımdaki arz. Derinlik, saldırganın " +
-        "aynı blokta likidite ekleyerek büyütebileceği bir sayı — ona bağlı " +
-        "bir kalkan, yakalaması gereken boyut tarafından kapatılabilirdi." }),
+        "The measure is circulating supply, not pool depth. Depth is a " +
+        "number an attacker can inflate by adding liquidity in the same " +
+        "block — a shield keyed to it could be switched off by the very " +
+        "size it is meant to catch." }),
       el("p", { attr: { style: "margin-top:10px" }, yazi:
-        "Alım muaf, çünkü alım fiyatı yükseltir ve havuza para koyar; tabanı " +
-        "tehdit etmez. Alımı da vergilendirmek tabanı savunan geri alım " +
-        "robotunu tavanda yakalıyor ve parayı tabana değil derinliğe " +
-        "yönlendiriyordu." })
+        "Buys are exempt because a buy raises the price and puts money into " +
+        "the pool; it does not threaten the floor. Taxing buys as well " +
+        "caught the buyback that defends the floor at the cap, and sent " +
+        "the money to depth instead of to the floor." })
     ])
   ]));
 
@@ -59,16 +61,16 @@ export async function ciz() {
   const tablo = el("table", { sinif: "tablo tablo--kart" });
   tablo.append(el("thead", {}, [el("tr", {}, [
     el("th", { yazi: "Dilim" }),
-    el("th", { yazi: "Birikmiş boyut" }),
-    el("th", { yazi: "Ödenen oran" })
+    el("th", { yazi: "Cumulative size" }),
+    el("th", { yazi: "Rate paid" })
   ])]));
   const govde = el("tbody");
   for (const o of OLCUM) {
     govde.append(el("tr", {}, [
       el("td", { attr: { "data-et": "Dilim" }, yazi: String(o.dilim) }),
-      el("td", { sinif: "sayi", attr: { "data-et": "Birikmiş boyut" },
+      el("td", { sinif: "sayi", attr: { "data-et": "Cumulative size" },
         yazi: "%" + o.birikmis.toFixed(3).replace(".", ",") }),
-      el("td", { sinif: "sayi", attr: { "data-et": "Ödenen oran" },
+      el("td", { sinif: "sayi", attr: { "data-et": "Rate paid" },
         yazi: "%" + o.oran.toFixed(3).replace(".", ",") })
     ]));
   }
@@ -76,24 +78,26 @@ export async function ciz() {
 
   kap.append(panel([
     el("span", { html: ikon("kalkan-artis", "yol-oge__ikon") }),
-    el("span", { yazi: "Bölme saldırısı denendi" })
+    el("span", { yazi: "The splitting attack was tried" })
   ], [
     el("div", { sinif: "ikincil", attr: { style: "margin-bottom:12px" }, yazi:
-      "Tek işlem içinde sekiz satış, her biri tek başına eşiğin altında. " +
-      "İşlem başına bir eşik hiçbirini yakalamazdı." }),
+      "Eight sells inside one transaction, each one below the threshold " +
+      "on its own. A per-transaction threshold would have caught none of " +
+      "them." }),
     el("div", { sinif: "tablo-sarmal" }, [tablo]),
     el("div", { sinif: "ikincil", attr: { style: "margin-top:12px" }, yazi:
-      "Oran %1,03'ten %3,08'e çıktı ve hiç düşmedi. Pencere gerçekten " +
-      "birikiyor." })
+      "The rate climbed from 1.03% to 3.08% and never fell back. The " +
+      "window really does accumulate." })
   ]));
 
   kap.append(not(
-    "Yapamadığımız şey: zorunlu emir bölme imkânsız. Havuz izinsiz — herkes " +
-    "herhangi bir sözleşmeden, herhangi sayıda adresten geçebilir ve Uniswap " +
-    "v4 kancaya 'bu on takas aynı kişiden' bilgisini vermiyor. Sert bir " +
-    "işlem tavanı tavan değil, döngü olur. Kalkan boyutu yasaklamıyor, " +
-    "fiyatlandırıyor. Bloklar arası bölme hâlâ işliyor ve bu kasıtlı: " +
-    "çıkış serbest, anında çıkış değil.",
+    "What cannot be done: forcing order splitting is impossible. The " +
+    "pool is permissionless — anyone can route through any contract and " +
+    "any number of addresses, and Uniswap v4 does not tell a hook that " +
+    "ten swaps came from one person. A hard per-transaction cap is not a " +
+    "cap, it is a loop. The shield does not forbid size, it prices it. " +
+    "Splitting across blocks still works, and that is deliberate: " +
+    "leaving is free, leaving instantly is not.",
     "uyari"
   ));
 
@@ -120,9 +124,9 @@ export async function ciz() {
 
     if (!canli(PULSE.hook)) {
       govde.append(bos(
-        "Kanca zincirde değil",
-        "Kalkanın o anki pencere durumu kancadan okunuyor. Kanca " +
-        "dağıtılmadığı için okunacak bir pencere yok."
+        "The hook is not on chain",
+        "The shield's current window is read from the hook. With no hook " +
+        "deployed there is no window to read."
       ));
     } else {
       const adlar = ["KALKAN_ESIK_PPM", "KALKAN_TAVAN_PPM",
@@ -145,22 +149,23 @@ export async function ciz() {
       if (okunamayan.length) {
         /* Not silently blank, and not a fabricated number either. */
         govde.append(not(
-          "Kancanın kalkan sabitleri okunamadı (" + okunamayan.join(", ") +
-          "). Ekran burada uydurma bir değer göstermiyor.", "uyari"));
+          "The hook's shield constants could not be read (" +
+          okunamayan.join(", ") + "). The screen is not showing an " +
+          "invented value here.", "uyari"));
       } else {
         const pct = (x) => (Number(x) / 10_000).toFixed(2) + "%";
         govde.append(el("div", { sinif: "izgara izgara--olcum" }, [
-          olcum("Kalkan eşiği", pct(v.KALKAN_ESIK_PPM),
-            "bu orandan küçük satışlar kalkana girmiyor"),
-          olcum("Kalkan tavanı", pct(v.KALKAN_TAVAN_PPM),
-            "en fazla bu kadar kesiliyor"),
-          olcum("Snipe oranı", pct(v.SNIPE_PPM),
-            "açılış anında, her blokta dörde bölünerek"),
-          olcum("Snipe süresi", String(Number(v.SNIPE_SURESI)) + " blok",
-            "sonrasında sıfırlanıyor")
+          olcum("Shield threshold", pct(v.KALKAN_ESIK_PPM),
+            "sells below this rate do not enter the shield"),
+          olcum("Shield cap", pct(v.KALKAN_TAVAN_PPM),
+            "the most that can be taken"),
+          olcum("Snipe rate", pct(v.SNIPE_PPM),
+            "at the opening, quartering every block"),
+          olcum("Snipe window", String(Number(v.SNIPE_SURESI)) + " blocks",
+            "after which it is zero")
         ]));
         govde.append(not(
-          "Bu dört sayı sayfada tutulan kopyalar değil — dağıtılmış " +
+          "These four numbers are not copies kept on the page — they were " +
           "kancadan, " + PULSE.hook + " adresinden okundu.", "bilgi"));
       }
 
@@ -168,22 +173,22 @@ export async function ciz() {
       const sayi = await oku(PULSE.launchpad, ABI.launchpad, "launchCount");
       if (sayi == null) {
         govde.append(not(
-          "Launch sayısı okunamadı, o yüzden hangi havuzun penceresinin " +
-          "okunacağı da bilinmiyor.", "uyari"));
+          "The launch count could not be read, so which pool's window to " +
+          "read is unknown too.", "uyari"));
       } else if (Number(sayi) === 0) {
         govde.append(not(
-          "Henüz hiç launch yok, yani okunacak bir havuz penceresi de yok. " +
-          "Pencere havuz kimliğine göre tutuluyor (pencere(poolId)); havuz " +
-          "olmadan boş bir tablo basmak, var olmayan bir durumu varmış " +
-          "gibi göstermek olurdu.", "bilgi"));
+          "There are no launches yet, so there is no pool window to read. " +
+          "The window is kept per pool id (pencere(poolId)); printing an " +
+          "empty table without a pool would be showing a state that does " +
+          "not exist.", "bilgi"));
       } else {
         govde.append(not(
-          Number(sayi) + " launch var. Havuz penceresi her havuz için " +
-          "ayrı tutuluyor ve ilgili token'ın sayfasından okunuyor.", "bilgi"));
+          Number(sayi) + " launches. The window is kept separately for each " +
+          "pool and is read from that token's own page.", "bilgi"));
       }
     }
 
-    kap.append(panel("Canlı pencere", govde));
+    kap.append(panel("Live window", govde));
   }
 
   return kap;

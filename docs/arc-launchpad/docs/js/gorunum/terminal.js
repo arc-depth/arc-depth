@@ -34,20 +34,20 @@ export async function ciz({ param }) {
   const istenen = (param.get("t") || "").trim();
 
   if (!launchpadCanli()) {
-    kap.append(sayfaUst("İşlem terminali"));
+    kap.append(sayfaUst("Trading terminal"));
     kap.append(bos(
-      "İşlem yapılacak token yok",
-      "Launchpad zincirde olmadığı için kayıtlı token da yok. Terminal " +
-      "gerçek havuzdan okur; gösterecek bir fiyat ya da mum yoksa " +
-      "uydurmuyoruz."
+      "No token to trade",
+      "With the launchpad not on chain there are no registered tokens. " +
+      "The terminal reads a real pool; if there is no price or candle to " +
+      "show, we do not invent one."
     ));
     return kap;
   }
 
   const { liste } = await launchListesi();
   if (!liste.length) {
-    kap.append(sayfaUst("İşlem terminali"));
-    kap.append(bos("Token yok", "Henüz hiç token çıkarılmamış."));
+    kap.append(sayfaUst("Trading terminal"));
+    kap.append(bos("No tokens", "Nothing has been launched yet."));
     return kap;
   }
 
@@ -56,8 +56,8 @@ export async function ciz({ param }) {
     : liste[liste.length - 1];
 
   if (!kayit) {
-    kap.append(sayfaUst("İşlem terminali"));
-    kap.append(bos("Bu token bulunamadı", istenen));
+    kap.append(sayfaUst("Trading terminal"));
+    kap.append(bos("Token not found", istenen));
     return kap;
   }
 
@@ -101,22 +101,23 @@ export async function ciz({ param }) {
 
   /* The five numbers the brief wants on the first screen. */
   kap.append(el("div", { sinif: "izgara izgara--olcum" }, [
-    olcum("Fiyat", fiyat == null ? "—" : para(fiyat), fiyat == null ? "havuz okunamadı" : null),
-    olcum("Piyasa değeri", mcap == null ? "—" : para(mcap, { kisalt: true })),
+    olcum("Price", fiyat == null ? "—" : para(fiyat), fiyat == null ? "the pool could not be read" : null),
+    olcum("Market cap", mcap == null ? "—" : para(mcap, { kisalt: true })),
     olcum("Teminat rezervi", rezerv == null ? "—" : para(rezerv)),
-    olcum("Taban fiyatı", tabanFiyat == null ? "—" : para(tabanFiyat),
-      "bu seviyenin altında geri alım açılır"),
-    olcum("Dolaşım", dol == null ? "—" : jetonMiktar(dol))
+    olcum("Floor price", tabanFiyat == null ? "—" : para(tabanFiyat),
+      "below this level a buyback opens"),
+    olcum("Circulating", dol == null ? "—" : jetonMiktar(dol))
   ]));
 
   if (fiyat != null && tabanFiyat != null) {
     const mesafe = ((fiyat - tabanFiyat) / fiyat) * 100;
     kap.append(not(
       mesafe > 0
-        ? "Fiyat tabanın %" + mesafe.toFixed(1) + " üzerinde. Geri alım " +
-          "ancak fiyat tabanın altına indiğinde mümkün olur."
-        : "Fiyat tabanın altında — geri alım şu an mümkün ve çağıran " +
-          "yakalanan iskontonun %" + EKONOMI.odulPayiBps / 100 + "'sini alır.",
+        ? "The price is " + mesafe.toFixed(1) + "% above the floor. A " +
+          "buyback only becomes possible once the price falls below it."
+        : "The price is below the floor — a buyback is possible now and " +
+          "the caller keeps " + EKONOMI.odulPayiBps / 100 + "% of the " +
+          "discount captured.",
       mesafe > 0 ? "bilgi" : "uyari"
     ));
   }
@@ -139,10 +140,10 @@ export async function ciz({ param }) {
     ]),
     el("div", { sinif: "terminal__panel" }, [islemPaneli(bilgi)]),
     el("div", { sinif: "terminal__islem" }, [
-      panel("İşlem geçmişi", bos(
-        "İşlem geçmişi yok",
-        "Geçmiş, havuzun Swap olaylarından okunur. Bu tokenin henüz " +
-        "işlemi yok ya da pencere dışında."
+      panel("Trade history", bos(
+        "No trade history",
+        "History is read from the pool's Swap events. This token has no " +
+        "trades yet, or they fall outside the window."
       ))
     ]),
     el("div", { sinif: "terminal__bilgi" }, [
@@ -150,17 +151,17 @@ export async function ciz({ param }) {
     ]),
     el("div", { sinif: "terminal__alt" }, [
       el("div", { sinif: "izgara izgara--genis" }, [
-        panel("Holder dağılımı", bos(
-          "Holder dağılımı yok",
-          "Dağılım, Transfer olaylarının tamamını taramayı gerektiriyor. " +
-          "Bunu yapan indeksleyici henüz yok ve tahmini bir dağılım " +
-          "göstermiyoruz."
+        panel("Holder distribution", bos(
+          "No holder distribution",
+          "The distribution requires scanning every Transfer event. The " +
+          "indexer that would do that does not exist yet, and we do not " +
+          "show an estimated distribution."
         )),
         panel("Teminat rezervi", rezervListesi(rezerv, hak, dol, tabanFiyat)),
-        panel("Geri alım geçmişi", bos(
-          "Geri alım yok",
-          "Geri alımlar kasanın olaylarından okunur. Bu kasada henüz " +
-          "geri alım olmamış."
+        panel("Buyback history", bos(
+          "No buybacks",
+          "Buybacks are read from the vault's events. This vault has not " +
+          "had one yet."
         ))
       ])
     ])
@@ -186,7 +187,7 @@ export async function ciz({ param }) {
 async function grafikBolumu(anahtar, blok) {
   if (blok == null) {
     return el("div", { sinif: "panel__govde" }, [
-      bos("Blok okunamadı", "Grafik için zincirin son bloğu gerekiyor.")
+      bos("Block could not be read", "The chart needs the chain's latest block.")
     ]);
   }
 
@@ -198,13 +199,14 @@ async function grafikBolumu(anahtar, blok) {
     el("div", { sinif: "bos" }, [
       el("div", { sinif: "bos__baslik", yazi: "Mum verisi yok" }),
       el("div", { sinif: "bos__yazi", yazi:
-        "Grafik havuzun gerçek Swap olaylarından kuruluyor. Son " +
-        PENCERE.toLocaleString("tr-TR") + " blokta (yaklaşık " +
-        Math.round(PENCERE * 0.507 / 60) + " dakika) bu havuzda işlem yok." }),
+        "The chart is built from the pool's real Swap events. In the " +
+        "last " + PENCERE.toLocaleString("en") + " blocks (about " +
+        Math.round(PENCERE * 0.507 / 60) + " minutes) this pool has had " +
+        "no trades." }),
       el("div", { sinif: "bos__yazi", yazi:
-        "Daha uzun bir geçmiş için olay indeksleyici gerekiyor: Arc'ın blok " +
-        "süresi 0,507 saniye, yani bir gün ~170.000 blok ve bu her sayfa " +
-        "açılışında çekilemez. Uydurma mum çizmiyoruz." })
+        "A longer history needs an event indexer: Arc's block time is " +
+        "0.507 seconds, so a day is about 170,000 blocks and that cannot " +
+        "be fetched on every page load. We do not draw invented candles." })
     ])
   ]);
 }
@@ -232,7 +234,7 @@ function islemPaneli(bilgi) {
     }));
   }
 
-  return panel("İşlem", el("div", { sinif: "yigin" }, [
+  return panel("Trade", el("div", { sinif: "yigin" }, [
     yonKap,
     el("div", { sinif: "alan" }, [
       el("label", { sinif: "alan__etiket" }, [
@@ -245,20 +247,20 @@ function islemPaneli(bilgi) {
       ])
     ]),
     el("div", { sinif: "satir satir--arasi" }, [
-      el("span", { sinif: "ucuncul", yazi: "İşlem ücreti" }),
+      el("span", { sinif: "ucuncul", yazi: "Trading fee" }),
       el("span", { sinif: "mono ikincil", yazi: "%3,00" })
     ]),
     el("div", { sinif: "satir satir--arasi" }, [
-      el("span", { sinif: "ucuncul", yazi: "— teminat kasasına" }),
+      el("span", { sinif: "ucuncul", yazi: "— to the collateral vault" }),
       el("span", { sinif: "mono ikincil", yazi: "%1,00" })
     ]),
     /* The one honest control: there is no router deployed, so nothing can
        be sent, so no enabled button is offered. */
     canli(PULSE.router)
       ? el("button", { sinif: "dugme dugme--marka dugme--buyuk dugme--tam", yazi: "ONAYLA" })
-      : not("İşlem yönlendiricisi zincirde değil. Bu panel tasarlanmış " +
-            "haliyle duruyor ama gönderebileceği bir adres yok, bu yüzden " +
-            "aktif bir onay düğmesi sunulmuyor.", "uyari")
+      : not("The swap router is not on chain. This panel stands as " +
+            "designed but has no address to send to, so no active " +
+            "confirm button is offered.", "uyari")
   ]));
 }
 
@@ -269,9 +271,9 @@ function bilgiListesi(kayit, bilgi, dolasim) {
     ["Sembol", (bilgi && bilgi.sembol) || "—"],
     ["Toplam arz", bilgi && bilgi.arz != null
       ? jetonMiktar(tamSayidanSayi(bilgi.arz, bilgi.ondalik || 18)) : "—"],
-    ["Dolaşım", dolasim == null ? "—" : jetonMiktar(dolasim)],
+    ["Circulating", dolasim == null ? "—" : jetonMiktar(dolasim)],
     ["Teminat vergisi", (kayit.vergiPpm / 10_000).toFixed(2).replace(".", ",") + "%"],
-    ["Kurucu payı", "%0,30 (her işlemden)"],
+    ["Founder's share", "0.30% of every trade"],
     ["Kurucuya bedava token", "0"]
   ];
   const liste = el("div", { sinif: "yigin yigin--sik" });
@@ -289,14 +291,14 @@ function bilgiListesi(kayit, bilgi, dolasim) {
 
 function rezervListesi(rezerv, hak, dolasim, tabanFiyat) {
   if (rezerv == null) {
-    return bos("Rezerv okunamadı", "Kasa çağrısı cevap vermedi.");
+    return bos("Reserve could not be read", "The vault call did not answer.");
   }
   const satirlar = [
     ["Rezerv (USDC)", para(rezerv)],
     ["Hak / token", hak == null ? "—" : para(Number(hak) / 1e36)],
-    ["Taban fiyatı", tabanFiyat == null ? "—" : para(tabanFiyat)],
-    ["Çağrı tavanı", EKONOMI.islemTavaniBps / 100 + "%"],
-    ["Pencere tavanı", EKONOMI.donemTavaniBps / 100 + "%"]
+    ["Floor price", tabanFiyat == null ? "—" : para(tabanFiyat)],
+    ["Per call", EKONOMI.islemTavaniBps / 100 + "%"],
+    ["Per window", EKONOMI.donemTavaniBps / 100 + "%"]
   ];
   const liste = el("div", { sinif: "yigin yigin--sik" });
   for (const [a, b] of satirlar) {

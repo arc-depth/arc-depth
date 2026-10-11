@@ -1,27 +1,27 @@
 "use strict";
 /* ===========================================================================
- * denetim-boyut.js — üretim sözleşmeleri dağıtılabilir mi
+ * denetim-boyut.js — can the production contracts be deployed
  *
  *   node scripts/denetim-boyut.js
  *
- * NEDEN VAR
- *   Derleme çıktısında on bir tane boyut uyarısı var ve en büyüğü 71.960
- *   bayt — EIP-170 sınırının üç katı. Uyarıların içinde bir ÜRETİM
- *   sözleşmesi varsa o sözleşme dağıtılamaz, ve bunu canlıya çıkma gününde
- *   öğrenmek en kötü an olur.
+ * WHY IT EXISTS
+ *   The build output carries eleven size warnings and the largest is 71,960
+ *   bytes — three times the EIP-170 limit. If a PRODUCTION contract is
+ *   among those warnings then it cannot be deployed, and learning that on
+ *   the day of going live is the worst possible moment.
  *
- *   Test harness'ları için aynı sınır geçerli değil: onlar `eth_call` durum
- *   geçersiz kılmasıyla enjekte ediliyor, CREATE'ten geçmiyor, dolayısıyla
- *   EIP-170'e girmiyorlar. Bu yüzden bir boyut uyarısı tek başına ne iyi ne
- *   kötü haber — hangi sözleşme olduğuna bakılması gerekiyor. On bir uyarıyı
- *   her derlemede gözle ayıklamak ise yapılmayacak iştir.
+ *   The same limit does not apply to test harnesses: they are injected with
+ *   an `eth_call` state override, never go through CREATE, and therefore
+ *   never meet EIP-170. So a size warning on its own is neither good nor
+ *   bad news — you have to look at which contract it is. And picking eleven
+ *   warnings apart by eye on every build is work that will not get done.
  *
- * SINIRLAR
- *   EIP-170  (Spurious Dragon): dağıtılmış kod 24.576 bayt
- *   EIP-3860 (Shanghai):        init kodu    49.152 bayt
+ * THE LIMITS
+ *   EIP-170  (Spurious Dragon): deployed code 24,576 bytes
+ *   EIP-3860 (Shanghai):        init code     49,152 bytes
  *
- *   İkisi birden kontrol ediliyor, çünkü init kodu sınırını aşan bir
- *   sözleşme dağıtılmış kodu sınırın altında olsa bile dağıtılamaz.
+ *   Both are checked, because a contract that exceeds the init-code limit
+ *   cannot be deployed even if its deployed code is under the limit.
  * =========================================================================== */
 const fs = require("fs");
 const path = require("path");

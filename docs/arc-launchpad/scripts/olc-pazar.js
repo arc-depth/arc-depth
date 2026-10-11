@@ -1,19 +1,21 @@
 "use strict";
-/* Pazar — %80/%20 bölüşmesi ve sözleşmede para KALMAMASI.
+/* Pazar — the 80/20 split, and NO MONEY LEFT in the contract.
  *
- * Bölüşmeyi doğrulamak bir çarpma işlemi. Bu ölçümün asıl sorusu şu: işlem
- * bittiğinde pazar sözleşmesinin bakiyesi sıfır mı? Çünkü bir aracı bakiye
- * olsaydı onu çekecek bir fonksiyon gerekirdi ve o fonksiyonun bir sahibi
- * olurdu — kullanıcının "protokol fonları kendi cüzdanına çekilemez" kuralı
- * ancak çekilecek bir şey yoksa yapısal olarak sağlanır.
+ * Verifying the split is a multiplication. This measurement's real question
+ * is: when the transaction ends, is the marketplace contract's balance
+ * zero? Because if there were an intermediate balance a function would be
+ * needed to withdraw it, and that function would have an owner — the user's
+ * rule that "protocol funds cannot be withdrawn to one's own wallet" only
+ * holds structurally when there is nothing to withdraw.
  *
- * Kapıların hepsi REDDETME tarafından sürülüyor: kayıtsız ürün ekleyemez,
- * yabancı başkasının ürününü güncelleyemez, kapalı ürün satılamaz, lisansı
- * olmayan puanlayamaz, puanlayan ikinci kez puanlayamaz. Yalnızca geçerli
- * yolu deneyen bir test, hiçbir kapının var olduğunu göstermez.
+ * Every gate is driven from the REFUSAL side: an unregistered account
+ * cannot add a product, a stranger cannot update somebody else's product, a
+ * closed product cannot be sold, somebody without a licence cannot rate,
+ * and a rater cannot rate twice. A test that only tries the valid path
+ * shows that no gate exists.
  *
- * Arc'ın gerçek USDC'si ile, gerçek zincir durumunda, eth_call içinde:
- * hiçbir işlem gönderilmiyor ve tek kuruş harcanmıyor.
+ * With Arc's real USDC, against real chain state, inside eth_call: no
+ * transaction is sent and not a cent is spent.
  */
 const { Interface } = require("ethers");
 const fs = require("fs");
@@ -139,8 +141,9 @@ const usd = (v) => "$" + (Number(v) / 1e6).toLocaleString("en", { maximumFractio
   ok(devArtis + isArtis === BigInt(s.tekFiyat),
     "IKI PAYIN TOPLAMI FIYATA ESIT",
     "yuvarlama kalanini kimse yutmuyor");
-  /* %79,9 degil TAM %80 ve uzeri. Onceki hali bir tolerans savıydi ve
-     bolusme bozulsa bile gecebilirdi; carpraz carpim tam esigi soyluyor. */
+  /* Exactly 80% or above, not 79.9%. Its previous form was a tolerance
+     assertion and could pass even with the split broken; cross-
+     multiplication states the exact threshold. */
   ok(BigInt(s.tekDev) * 1_000_000n >= BigInt(s.tekFiyat) * 800_000n,
     "YUVARLAMA GELISTIRICININ LEHINE",
     "gelistirici tam %80 ya da uzeri aliyor — bolunmeyen kurus platforma " +

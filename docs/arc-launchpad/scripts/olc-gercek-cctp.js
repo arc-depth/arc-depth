@@ -1,7 +1,7 @@
 "use strict";
 /* ===========================================================================
- * olc-gercek-cctp.js — AŞAMA 4 (giden bacak): Arc'ın GERÇEK CCTP'si bizim
- *                      çağrımızı kabul ediyor mu
+ * olc-gercek-cctp.js — STAGE 4 (the outbound leg): does Arc's REAL CCTP
+ *                      accept our call
  *
  *   node scripts/olc-gercek-cctp.js
  *

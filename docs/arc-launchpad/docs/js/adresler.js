@@ -145,38 +145,39 @@ export const ESKI_YONETISIM = {
  * chain refuses. */
 export const DAO_YETKI = {
   yapabilir: [
-    { ne: "Geliştirici havuzundan ödeme yapmak",
-      nerede: "DevPool.pay — her işlemin %0,30'u buraya akıyor" }
+    { ne: "Pay a developer out of the pool",
+      nerede: "DevPool.pay — 0.30% of every trade flows here" }
   ],
   yapamaz: [
-    { ne: "Teminat rezervleri", neden: "TeminatKasasi: sahip yok, ayarlayıcı yok" },
-    { ne: "Zincirler arası teminat", neden: "KopruKasasi: tek ayarlayıcı bir kez, dağıtıcıya" },
-    { ne: "Hak hesabı (defter)", neden: "CrossChainAccounting: tek ayarlayıcı bir kez, kasaya" },
-    { ne: "Ücret tablosu ve kanca", neden: "PulseHook: sabitler değiştirilemez" },
-    { ne: "Kilitli likidite", neden: "PulseAcici / PulseLikiditeKasasi: sahip yok, ayarlayıcı yok" },
-    { ne: "Açılış fiyatı ve arz", neden: "PulseLaunchpad: sabitler değiştirilemez" },
-    { ne: "Hazine", neden: "Hazine.governor ALP governor'ı ve immutable — FTHM ona ulaşamaz" },
-    { ne: "Launch menüsü (hisse kuyruğu)", neden: "LaunchQueue.governor ALP governor'ı; kuyruk da iptal" },
-    { ne: "Eski geliştirici fonu", neden: "GelistiriciFonu.tahsisci işletme cüzdanı ve immutable" }
+    { ne: "Collateral reserves", neden: "TeminatKasasi: no owner, no setter" },
+    { ne: "Cross-chain collateral", neden: "KopruKasasi: one setter, once, to the deployer" },
+    { ne: "The claim ledger", neden: "CrossChainAccounting: one setter, once, to the vault" },
+    { ne: "The fee table and the hook", neden: "PulseHook: the constants cannot be changed" },
+    { ne: "Locked liquidity", neden: "PulseAcici / PulseLikiditeKasasi: no owner, no setter" },
+    { ne: "The opening price and the supply", neden: "PulseLaunchpad: the constants cannot be changed" },
+    { ne: "The treasury", neden: "Hazine.governor is the ALP governor and immutable — FTHM cannot reach it" },
+    { ne: "The launch menu (the share queue)", neden: "LaunchQueue.governor is the ALP governor, and the queue was cancelled" },
+    { ne: "The old developer fund", neden: "GelistiriciFonu.tahsisci is the operations wallet, and immutable" }
   ],
   /* The honest residual, measured the same way. */
-  /* BU METİN DEĞİŞTİ ÇÜNKÜ DURUM DEĞİŞTİ
-       Önceki hali "stake edilmiş FTHM sıfır, kimse teklif veremiyor"
-       diyordu ve doğruydu. DAO tabanla (50.000 FTHM) açıldı; propose()
-       artık gerçek bir DevPool ödemesi için kabul ediliyor — simüle
-       edilerek doğrulandı.
+  /* THIS TEXT CHANGED BECAUSE THE SITUATION CHANGED
+       Its previous form said "no FTHM is staked, nobody can propose", and
+       that was true. The DAO was opened with the floor (50,000 FTHM);
+       propose() is now accepted for a real DevPool payment — verified by
+       simulation.
 
-       Açıldı diye risk kaybolmadı, YER DEĞİŞTİRDİ: artık risk "kimse
-       karar veremiyor" değil, "tek adres karar verebiliyor". Birinciyi
-       düzeltip ikinciyi yazmamak, kötü haberi iyi haberle değiştirmek
-       olurdu. */
-  artikRisk: "DAO'nun tek yetkisi DevPool'dan ödeme yapmak. Taban stake " +
-    "edildi, yani teklif verilebiliyor — ama stake eden tek adres kurucu " +
-    "olduğu için oy gücünün tamamı orada: teklif eşiğini de kotayı da o " +
-    "adres yalnız geçebilir. Bunu yavaşlatan şey oy dağılımı değil, 5 " +
-    "günlük oy süresi, 2 günlük timelock ve 2027'ye kadar yalnızca İPTAL " +
-    "edebilen guardian. Üçüncü taraflar stake ettikçe bu pay erir; DAO " +
-    "ekranı payı olduğu gibi gösteriyor."
+       Being open did not make the risk disappear, it MOVED it: the risk is
+       no longer "nobody can decide" but "one address can decide". Fixing
+       the first without writing down the second would be swapping bad news
+       for good. */
+  artikRisk: "The DAO's only power is paying out of the DevPool. The " +
+    "floor has been staked, so proposals are possible — but the only " +
+    "address staking is the founder's, so all of the voting power sits " +
+    "there: that one address clears both the proposal threshold and the " +
+    "quorum. What slows this down is not the spread of votes but five " +
+    "days of voting, a two-day timelock, and a guardian that can only " +
+    "CANCEL until 2027. The share erodes as third parties stake, and " +
+    "the DAO screen shows it as it is."
 };
 
 /* Ours, and deployed. The previous generation of this product — kept
@@ -186,32 +187,33 @@ export const ESKI = {
   fthm: "0x8c2016b8DbB9034c2Fe173000639A9a1380b26AE"
 };
 
-/* ---- IKINCI NESIL: DAGITILDI VE DOGRULANDI ---------------------
+/* ---- THE SECOND GENERATION: DEPLOYED AND VERIFIED ---------------
  *
- * Her adres `dagitim-pulse2.json`'dan geliyor ve o dosya
- * `scripts/denetim-dagitim-pulse2.js` 34 savi gecirdikten SONRA
- * zincirden yazildi. `scripts/denetim-sayfa.js` bu blogun o kayitla
- * ayni oldugunu kontrol ediyor — elle duzeltilen bir adres, denetimin
- * yakalayacagi bir fark olur, arayuzun sessizce yanlis sozlesmeyi
- * okumasi degil.
+ * Every address comes from `dagitim-pulse2.json`, and that file was written
+ * from the chain AFTER `scripts/denetim-dagitim-pulse2.js` passed its 34
+ * assertions. `scripts/denetim-sayfa.js` checks that this block matches
+ * that record — so an address corrected by hand becomes a difference the
+ * audit catches, not the interface silently reading the wrong contract.
  *
- * ONCEKI NESILDEN UC YAPISAL FARK
- *   1. EGRI YOK. Piyasa ilk bloktan Uniswap v4. Oncekinde egri kendi
- *      fiyatini tutuyordu ve mezuniyette havuz acilis seviyesinden
- *      basliyordu — eride biriken butun fiyat hareketi sifirlaniyordu.
- *   2. KURUCU PARASININ KARSILIGINI ALIYOR. Ucret sonrasi net odemenin
- *      tamami acilis fiyatindan tokene donuyor: 100 USDC -> arzin
- *      %2,80'i, 500 USDC -> %14,00. Bedava degil, olculdu: bes odemede
- *      de acilis fiyatindaki degeri net odenene 0 ham birim farkla esit.
- *   3. HOLDER ODULU YOK. O %0,30 havuz derinligine gitti: %0,40 -> %0,70.
- *      Toplam %2 degismedi.
+ * THREE STRUCTURAL DIFFERENCES FROM THE PREVIOUS GENERATION
+ *   1. NO CURVE. The market is Uniswap v4 from the first block. In the
+ *      previous one the curve held its own price and at graduation the pool
+ *      started from the opening level — every bit of price movement
+ *      accumulated on the curve was reset.
+ *   2. THE FOUNDER GETS WHAT THEY PAID FOR. The entire net payment after
+ *      the fee turns into tokens at the opening price: 100 USDC -> 2.80% of
+ *      supply, 500 USDC -> 14.00%. Not free, and measured: across all five
+ *      payments the value at the opening price equals the net paid to
+ *      within 0 raw units.
+ *   3. NO HOLDER REWARD. That 0.30% went to pool depth: 0.40% -> 0.70%. The
+ *      2% total did not change.
  *
- * KANCA ADRESI 0xACC ILE BITIYOR, 0xA44 DEGIL
- *   v4 bir kancanin alt bitlerini okuyup hangi callback'leri alacagina
- *   karar veriyor ve bu nesil iki tane daha istiyor: beforeSwap ve
- *   beforeSwapReturnsDelta. Onlar olmadan alim bacaginin vergisi TOKEN
- *   olarak alinip derinlige gidiyordu ve kasaya $0,000000 giriyordu —
- *   olculdu. Teminat sistemi hacmin yarisini kaciriyordu.
+ * THE HOOK ADDRESS ENDS IN 0xACC, NOT 0xA44
+ *   v4 reads a hook's low bits and decides which callbacks it will receive,
+ *   and this generation wants two more: beforeSwap and
+ *   beforeSwapReturnsDelta. Without them the buy leg's tax was taken as
+ *   TOKENS and went to depth, and $0.000000 reached the vault — measured.
+ *   The collateral system was missing half the volume.
  */
 export const PULSE = {
   /* Written from dagitim-pulse2.json, which denetim-dagitim-pulse2.js
@@ -267,9 +269,9 @@ export const PAZAR = {
   isletme: "0x89189C84DC95d0520AEeC9c8cF3BA5B9d42611D0"
 };
 
-/* Satis basina bolusme. Sozlesmede sabit, yani bir setter'i yok ve
-   degistirilemez. Buradaki sayi sayfanin alintiladigi kopya; denetim onu
-   dagitilan sozlesmenin kendi sabitiyle karsilastiriyor. */
+/* The split per sale. A constant in the contract, so it has no setter and
+   cannot be changed. The number here is the copy the page quotes; the audit
+   compares it against the deployed contract's own constant. */
 export const PAZAR_KURAL = {
   platformPpm: 200000,
   gelistiriciPpm: 800000
@@ -305,11 +307,11 @@ export const PULSE_KURAL = {
   /* Every trade, both directions, whatever the router. */
   islemUcretPpm: 20_000,    // 2,00% total
   dilimler: [
-    { ne: "Token kurucusu", ppm: 3_000 },
-    { ne: "Geliştirici fonu", ppm: 3_000 },
-    { ne: "Kilitli protokol likiditesi", ppm: 5_000 },
-    { ne: "İşletme", ppm: 2_000 },
-    { ne: "Havuz derinliği", ppm: 7_000 }
+    { ne: "The token's founder", ppm: 3_000 },
+    { ne: "Developer pool", ppm: 3_000 },
+    { ne: "Locked protocol liquidity", ppm: 5_000 },
+    { ne: "Operations", ppm: 2_000 },
+    { ne: "Pool depth", ppm: 7_000 }
   ],
   vergiAsgariPpm: 10_000,   // 1%, chosen once and never changeable
   vergiAzamiPpm: 50_000,    // 5%
@@ -344,9 +346,10 @@ export const EMEKLI = {
   pulseLaunchpadV1: "0x4A49e38816BC25f09BE3e0c51D4067340d203244",
   pulseHookV1: "0xb9D0869b32626559c6f9C282E605E11a1f6ccACc",
 
-  neden: "Hicbirinde launch olmadi ve hicbirinde para yok — olculdu. " +
-    "Zincirden silinemiyorlar: selfdestruct, owner ve pause yok, ki bu " +
-    "tasarimin kendisi. Yapilabilen tek sey her isaretciyi kesmek.",
+  neden: "None of them has a launch and none of them holds money — " +
+    "measured. They cannot be deleted from the chain: there is no " +
+    "selfdestruct, no owner and no pause, which is the design itself. " +
+    "The only thing that can be done is to cut every pointer.",
   olculdu: "2026-10-11"
 };
 

@@ -26,35 +26,37 @@ interface IPulseKayitPL {
     function launchAt(uint256 i) external view returns (Kayit memory);
 }
 
-/// @title PulseLikiditeKasasi — %0,50 dilimi, kilitli derinliğe çevrilir
+/// @title PulseLikiditeKasasi — the 0.50% slice, turned into locked depth
 ///
-/// NEDEN YENİ BİR TANE GEREKTİ — VE BU BİR ÖLÇÜMLE BULUNDU
-///   Önceki nesle ait `LikiditeKasasi` zincirde duruyor ve yeni nesil onu
-///   paylaşılan altyapı sayıp kullanacaktı. Kullanamaz:
+/// WHY A NEW ONE WAS NEEDED — AND IT WAS FOUND BY MEASUREMENT
+///   The previous generation's `LikiditeKasasi` is on chain, and the new
+///   generation was going to treat it as shared infrastructure and use it.
+///   It cannot:
 ///
-///     launchpad.launchIdOfToken(token)   ->  yeni launchpad'de YOK
-///     launchpad.launchAt(i)              ->  dönüş şekli farklı
+///     launchpad.launchIdOfToken(token)   ->  DOES NOT EXIST on the new one
+///     launchpad.launchAt(i)              ->  a different return shape
 ///
-///   Ölçüldü, yeni nesil bir token adresiyle çağrıldı ve `BilinmeyenToken`
-///   ile reddetti. Yani kancanın her işlemde oraya gönderdiği %0,50 içeri
-///   girer ve BİR DAHA ÇIKMAZ — işlem başına küçük, ama sonsuza kadar
-///   birikir.
+///   Measured: called with a new-generation token address, it refused with
+///   `BilinmeyenToken`. So the 0.50% the hook sends there on every trade
+///   would go in and NEVER COME OUT — small per trade, but accumulating
+///   forever.
 ///
-///   Hiçbir şey revert etmezdi. Takaslar çalışmaya devam ederdi ve para
-///   erişilemez bir bakiyede büyürdü; bu projenin yorumlarının tekrar
-///   tekrar uyardığı şekil tam bu.
+///   Nothing would have reverted. The swaps would have kept working and the
+///   money would have grown in an unreachable balance; this is exactly the
+///   shape this project's comments warn about again and again.
 ///
-/// TOKENE GÖRE DEĞİL ID'YE GÖRE
-///   Eskisi tokenden id'ye giden bir eşleme okuyordu. Yenisi doğrudan
-///   launch id'si alıyor, çünkü yeni launchpad o eşlemeyi tutmuyor ve
-///   tutmadığı bir şeyi okumak bu kasayı yine kırılgan yapardı. Id,
-///   `launchCount()` ile sınırlanıyor; uydurulmuş bir id okunamaz.
+/// BY ID, NOT BY TOKEN
+///   The old one read a mapping from token to id. The new one takes the
+///   launch id directly, because the new launchpad does not keep that
+///   mapping, and reading something it does not keep would make this vault
+///   brittle again. The id is bounded by `launchCount()`; an invented id
+///   cannot be read.
 ///
-/// NE KADAR GİDECEĞİNE KARAR VERİLMİYOR
-///   Tutulan her şey gidiyor. Kısmi bir besleme bir karar olurdu ve bir
-///   karar, ona güvenilecek birini gerektirir. Çağıran yalnızca HANGİ
-///   piyasanın derinleşeceğini seçiyor — paranın çıkıp çıkmayacağını
-///   değil, başka nereye gidebileceğini de değil, çünkü başka bir yer yok.
+/// HOW MUCH GOES IS NOT DECIDED
+///   Everything held goes. A partial feed would be a decision, and a
+///   decision needs somebody to be trusted with it. The caller only picks
+///   WHICH market gets deeper — not whether the money leaves, and not where
+///   else it could go, because there is nowhere else.
 contract PulseLikiditeKasasi {
     IERC20PL public immutable quote;
     IPulseKayitPL public immutable launchpad;

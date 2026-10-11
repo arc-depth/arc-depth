@@ -1,34 +1,36 @@
 /* ===========================================================================
- * gorunum/teminat-sec.js — teminat seçimi: önerilen 50 ya da kendi CA'n
+ * gorunum/teminat-sec.js — choosing collateral: the suggested 50, or your
+ *                          own CA
  *
- * NE GÖSTERİR
- *   Launch yapanın teminat olarak ne seçebileceğini. İki yol var ve ikisi
- *   de eşit:
+ * WHAT IT SHOWS
+ *   What the launcher can pick as collateral. There are two paths and they
+ *   are equal:
  *
- *     1. Önerilen 50'den seç     — kısayol
- *     2. Kontrat adresi yapıştır — başka her şey
+ *     1. Pick from the suggested 50   — a shortcut
+ *     2. Paste a contract address     — everything else
  *
- *   Liste bir kapı değil. Listede olmamak yasak olmak değil; CA alanı
- *   listedekiyle BİREBİR aynı kontrolü yapıyor.
+ *   The list is not a gate. Not being on it is not being forbidden; the CA
+ *   field runs the EXACT SAME check as a listed asset.
  *
- * HER SAYI ÖLÇÜLDÜ
- *   Önerilen 50 `teminat-adaylari.json`'dan üretildi, o da zincirden
- *   okunarak. CA kontrolü ise canlı: adres yapıştırıldığı anda yedi zincirde
- *   en derin USDC havuzu aranıyor, likiditesine ve gözlem geçmişine
- *   bakılıyor. Hiçbir servise sorulmuyor, hiçbir şey önbellekten
- *   gösterilmiyor.
+ * EVERY NUMBER WAS MEASURED
+ *   The suggested 50 were generated from `teminat-adaylari.json`, which was
+ *   itself read off the chains. The CA check is live: the moment an address
+ *   is pasted, the deepest USDC pool is searched for on seven chains and
+ *   its liquidity and observation history are examined. No service is
+ *   asked and nothing is shown from a cache.
  *
- * SAYFA İLE ZİNCİR AYRIŞAMAZ
- *   Buradaki türetme `contracts/HavuzFiyat.sol`'ün zincir üstünde yaptığının
- *   aynısı: kademeleri tara, en likit havuzu bul, fiyatı o havuzun
- *   geçmişinden oku. Ayrışsa, sayfa "çalışıyor" derdi, launch gönderilirdi,
- *   sözleşme reddederdi ve gaz giderdi.
+ * THE PAGE AND THE CHAIN CANNOT DRIFT APART
+ *   The derivation here is exactly what `contracts/HavuzFiyat.sol` does on
+ *   chain: scan the tiers, find the most liquid pool, read the price from
+ *   that pool's history. If they drifted, the page would say "it works",
+ *   the launch would be sent, the contract would refuse and the gas would
+ *   be gone.
  *
- * "ÇALIŞMIYOR" İKİ FARKLI ŞEY
- *   Likiditesi olmayan bir havuzu bu sistem dolduramaz — o bir hayır.
- *   Gözlem geçmişi açılmamış bir havuzu ise HERKES açabilir, bir kerelik
- *   gaz. İkisini aynı kefeye koymak, düzeltilebilir bir durumu kalıcı bir
- *   ret gibi göstermek olurdu.
+ * "DOES NOT WORK" IS TWO DIFFERENT THINGS
+ *   A pool with no liquidity is one this system cannot fill — that is a no.
+ *   A pool whose observation history has not been extended can be extended
+ *   by ANYONE, for a one-off bit of gas. Putting both in the same bucket
+ *   would present a fixable condition as a permanent refusal.
  * =========================================================================== */
 
 import { el, sayfaUst, panel, bos, not, olcum, adres, hata } from "../ui.js";
@@ -40,7 +42,7 @@ import { tumZincirleriTara, adresMi, ASGARI_KARDINALITE } from "../teminat.js";
    column of them can be compared at a glance. */
 /* The measured size, written the way a person reads money. */
 export function tutarYaz(t) {
-  if (!t || t === "0") return "ölçülemedi";
+  if (!t || t === "0") return "not measurable";
   const n = Number(t) / 1e6;
   return "$" + n.toLocaleString("tr", { maximumFractionDigits: 0 });
 }
@@ -64,10 +66,10 @@ export function oneriTablosu(secildi) {
   const tablo = el("table", { sinif: "tablo tablo--kart" });
   tablo.append(el("thead", {}, [el("tr", {}, [
     el("th", { yazi: "#" }),
-    el("th", { yazi: "Varlık" }),
+    el("th", { yazi: "Asset" }),
     el("th", { yazi: "Zincir" }),
     el("th", { yazi: "Havuz" }),
-    el("th", { yazi: "Şu tutara kadar" }),
+    el("th", { yazi: "Up to" }),
     el("th", { yazi: "" })
   ])]));
   const govde = el("tbody");
@@ -81,7 +83,7 @@ export function oneriTablosu(secildi) {
           el("strong", { yazi: v.simge }),
           el("span", { sinif: "yazi yazi--kucuk yazi--sessiz", yazi: "  " + v.ad })
         ]),
-        el("div", { sinif: "yazi yazi--kucuk yazi--sessiz", yazi: v.ondalik + " ondalık" })
+        el("div", { sinif: "yazi yazi--kucuk yazi--sessiz", yazi: v.ondalik + " decimals" })
       ]),
       el("td", {}, [
         el("div", { yazi: String(zincirler.length) }),
@@ -94,13 +96,13 @@ export function oneriTablosu(secildi) {
       el("td", {}, [
         el("div", { yazi: tutarYaz(v.azamiTutar) }),
         el("div", { sinif: "yazi yazi--kucuk yazi--sessiz",
-          yazi: "ölçülen en büyük" })
+          yazi: "largest measured" })
       ]),
       el("td", {}, [
         el("button", {
           sinif: "dugme dugme--sessiz",
           attr: { type: "button" },
-          yazi: "Seç",
+          yazi: "Choose",
           on: { click: () => secildi(v) }
         })
       ])
@@ -131,25 +133,26 @@ export function caAlani(secildi) {
 
     if (!adresMi(ca)) {
       sonuc.append(not(
-        "Bu bir kontrat adresi değil. Kırk onaltılık haneli, 0x ile başlayan " +
-        "bir adres olmalı.",
+        "That is not a contract address. It has to be forty hex digits " +
+        "starting with 0x.",
         "uyari"
       ));
       return;
     }
 
     dugme.disabled = true;
-    dugme.textContent = "Zincirler taranıyor…";
+    dugme.textContent = "Scanning chains…";
     sonuc.append(el("div", {
       sinif: "yazi yazi--kucuk yazi--sessiz",
-      yazi: Object.keys(ZINCIRLER).length + " zincirde en derin USDC havuzu aranıyor…"
+      yazi: "Looking for the deepest USDC pool across " +
+        Object.keys(ZINCIRLER).length + " chains…"
     }));
 
     let r;
     try {
       r = await tumZincirleriTara(ca);
     } catch (e) {
-      sonuc.replaceChildren(hata("Tarama başarısız", (e && e.message) || String(e)));
+      sonuc.replaceChildren(hata("The scan failed", (e && e.message) || String(e)));
       dugme.disabled = false;
       dugme.textContent = "Kontrol et";
       return;
@@ -163,10 +166,10 @@ export function caAlani(secildi) {
        the symbol is the only way somebody can tell they pasted what they
        meant to paste. */
     sonuc.append(el("div", { sinif: "izgara izgara--olcum" }, [
-      olcum("Sembol", r.kimlik.simge || "okunamadı",
-        r.kimlik.simge ? null : "bu adres bir ERC20 gibi cevap vermiyor"),
-      olcum("Ondalık", r.kimlik.ondalik == null ? "—" : String(r.kimlik.ondalik), null),
-      olcum("Sonuç", r.calisiyor ? "Çalışıyor" : "Çalışmıyor", r.ozet)
+      olcum("Symbol", r.kimlik.simge || "unreadable",
+        r.kimlik.simge ? null : "this address does not answer like an ERC20"),
+      olcum("Decimals", r.kimlik.ondalik == null ? "—" : String(r.kimlik.ondalik), null),
+      olcum("Result", r.calisiyor ? "Works" : "Does not work", r.ozet)
     ]));
 
     /* Every chain, including the ones that said no — a result that only
@@ -177,7 +180,7 @@ export function caAlani(secildi) {
       el("th", { yazi: "Durum" }),
       el("th", { yazi: "Kademe" }),
       el("th", { yazi: "Derinlik" }),
-      el("th", { yazi: "Gözlem" }),
+      el("th", { yazi: "Observations" }),
       el("th", { yazi: "Havuz" })
     ])]));
     const govde = el("tbody");
@@ -189,7 +192,7 @@ export function caAlani(secildi) {
           el("td", { attr: { colspan: 5 } }, [
             el("span", {
               sinif: "yazi yazi--kucuk yazi--sessiz",
-              yazi: "okunamadı: " + s.hata
+              yazi: "unreadable: " + s.hata
             })
           ])
         ]));
@@ -200,10 +203,10 @@ export function caAlani(secildi) {
         el("td", { yazi: s.ad }),
         el("td", {}, [
           s.calisiyor
-            ? el("span", { sinif: "etiket etiket--kabul", yazi: "Çalışıyor" })
+            ? el("span", { sinif: "etiket etiket--kabul", yazi: "Works" })
             : el("span", {
               sinif: "etiket " + (s.duzeltilebilir ? "etiket--bekle" : "etiket--red"),
-              yazi: s.duzeltilebilir ? "Henüz değil" : "Hayır"
+              yazi: s.duzeltilebilir ? "Not yet" : "No"
             }),
           s.sebep
             ? el("div", { sinif: "yazi yazi--kucuk yazi--sessiz", yazi: s.sebep })
@@ -220,18 +223,19 @@ export function caAlani(secildi) {
 
     if (r.duzeltilebilir.length) {
       sonuc.append(not(
-        "“Henüz değil” kalıcı bir ret değil: o havuzun gözlem geçmişi " +
-        "açılmamış. Uniswap'te bunu HERKES açabilir — bir kerelik gaz, " +
-        "izin gerekmez. Açıldıktan sonra bu varlık teminat olarak " +
-        "kullanılabilir. (Gereken asgari gözlem: " + ASGARI_KARDINALITE + ")",
+        "\"Not yet\" is not a permanent refusal: that pool's " +
+        "observation history has not been opened. ANYONE can open it on " +
+        "Uniswap — one transaction's gas, no permission needed. Once it " +
+        "is open the asset can be used as collateral. (Observations " +
+        "needed: " + ASGARI_KARDINALITE + ")",
         "bilgi"
       ));
     }
     if (!r.calisiyor && !r.duzeltilebilir.length) {
       sonuc.append(not(
-        "Bu adres için hiçbir zincirde likiditesi olan USDC havuzu yok. " +
-        "Teminatın oraya girip çıkabilmesi gerekiyor, yani bu sistemin " +
-        "dolduramayacağı bir eksik. Havuzu olan bir adres gerekiyor.",
+        "This address has no USDC pool with liquidity on any chain. " +
+        "Collateral has to be able to move in and out, so this is a gap " +
+        "the system cannot fill. An address with a pool is needed.",
         "uyari"
       ));
     }
@@ -242,8 +246,8 @@ export function caAlani(secildi) {
           sinif: "dugme dugme--marka",
           attr: { type: "button" },
           yazi: r.kimlik.simge
-            ? r.kimlik.simge + " teminatını seç"
-            : "Bu adresi teminat seç",
+            ? "Use " + r.kimlik.simge + " as collateral"
+            : "Use this address as collateral",
           on: {
             click: () => secildi({
               simge: r.kimlik.simge || ca.slice(0, 10),
@@ -267,10 +271,11 @@ export function caAlani(secildi) {
   return el("div", { sinif: "yigin yigin--sik" }, [
     el("p", {
       sinif: "yazi yazi--sessiz",
-      yazi: "Listede olmayan bir token kullanmak için kontrat adresini " +
-        "yapıştır. Aynı kontrol yapılır: yedi zincirde en derin USDC havuzu " +
-        "bulunur, likiditesine ve gözlem geçmişine bakılır. Hangi kademede " +
-        "işlem göreceğini sen seçmezsin — en likit olan bulunur."
+      yazi: "To use a token that is not listed, paste its contract " +
+        "address. The same check runs: the deepest USDC pool across " +
+        "seven chains is found, and its liquidity and observation " +
+        "history are read. You do not pick the fee tier — the most " +
+        "liquid one is found for you."
     }),
     el("div", { sinif: "satir satir--arali" }, [girdi, dugme]),
     sonuc
@@ -282,39 +287,40 @@ export function caAlani(secildi) {
 export async function ciz({ param }) {
   const kap = el("div", { sinif: "yigin" });
   kap.append(sayfaUst(
-    "Teminat seçimi",
-    "Önerilen " + ONERILEN.length + " varlık, ya da kendi kontrat adresin"
+    "Collateral picker",
+    ONERILEN.length + " suggested assets, or any contract address you paste"
   ));
 
   const secim = el("div");
   const secildi = (v) => {
-    secim.replaceChildren(panel("Seçilen teminat", el("div", { sinif: "yigin yigin--sik" }, [
+    secim.replaceChildren(panel("Chosen collateral", el("div", { sinif: "yigin yigin--sik" }, [
       el("div", { sinif: "izgara izgara--olcum" }, [
-        olcum("Varlık", v.simge, v.ad),
-        olcum("Ondalık", String(v.ondalik), null),
+        olcum("Asset", v.simge, v.ad),
+        olcum("Decimals", String(v.ondalik), null),
         olcum("Zincir", String(Object.keys(v.zincirler).length),
           Object.keys(v.zincirler).map(zincirEtiketi).join(", ")),
-        olcum("Havuz", String(v.havuz), "tüm kademeler"),
-        olcum("Dönüşüm", tutarYaz(v.azamiTutar), "ölçülen en büyük tutar")
+        olcum("Pools", String(v.havuz), "all fee tiers"),
+        olcum("Convertible", tutarYaz(v.azamiTutar), "the largest amount measured")
       ]),
       v.caIle
-        ? not("Bu varlık önerilen listeden değil, kontrat adresiyle seçildi — " +
-          "ve aynı kontrolü geçti.", "bilgi")
+        ? not("This asset is not from the suggested list — it was " +
+          "chosen by contract address and passed the same check.", "bilgi")
         : null,
       el("a", {
         sinif: "dugme dugme--marka",
         attr: { href: "#/olustur?teminat=" + encodeURIComponent(Object.values(v.zincirler)[0].token) },
-        yazi: "Bu teminatla token oluştur"
+        yazi: "Create a token with this collateral"
       })
     ].filter(Boolean))));
     secim.scrollIntoView({ behavior: "smooth", block: "nearest" });
   };
 
   kap.append(not(
-    "Teminat bir token ya da coin. Hepsinin özellikleri aynı — hiçbirinin " +
-    "özel durumu yok, meme coin de dahil. Aşağıdaki " + ONERILEN.length +
-    " varlık bir KISAYOL, kapı değil: listede olmayan her çalışan token " +
-    "kontrat adresiyle seçilebilir.",
+    "Collateral is a token or a coin. They all work the same way — " +
+    "none of them gets special treatment, meme coins included. The " +
+    ONERILEN.length + " assets below are a SHORTCUT, not a gate: any " +
+    "working token that is not listed can be chosen by its contract " +
+    "address.",
     "bilgi"
   ));
 
@@ -323,34 +329,35 @@ export async function ciz({ param }) {
   kap.append(panel("Kendi tokenini kullan", caAlani(secildi)));
 
   kap.append(panel(
-    "Önerilen " + ONERILEN.length,
+    ONERILEN.length + " suggested",
     oneriTablosu(secildi),
     el("span", {
       sinif: "yazi yazi--kucuk yazi--sessiz",
-      yazi: "ölçüldü " + String(TEMINAT_OLCUMU).slice(0, 10)
+      yazi: "measured " + String(TEMINAT_OLCUMU).slice(0, 10)
     }),
     true
   ));
 
   kap.append(not(
-    "Sıralama ölçüme göre: her varlık dört tutarda ($20 / $200 / $2.000 / " +
-    "$20.000) gerçekten dönüştürülebiliyor mu diye Uniswap'in kendi " +
-    "kotasına soruldu ve kaldırdığı EN BÜYÜK tutarla sıralandı. " +
-    DAGILIM.map((d) => tutarYaz(d.tutar) + " için " + d.adet).join(", ") +
-    " varlık. Piyasa değeri ya da likidite tabanı gibi vekil ölçütler " +
-    "kullanılmadı — sorulan şey bir eşik değil, doğrudan yapılacak işin " +
-    "kendisi.",
+    "The order comes from measurement: each asset was put to Uniswap's " +
+    "own quoter at four sizes ($20 / $200 / $2,000 / $20,000) to see " +
+    "whether it genuinely converts, and ranked by the LARGEST size it " +
+    "carried. " +
+    DAGILIM.map((d) => d.adet + " at " + tutarYaz(d.tutar)).join(", ") +
+    ". No proxy criteria like market cap or a liquidity floor were " +
+    "used — the question asked is not a threshold but the job itself.",
     ""
   ));
 
   kap.append(not(
-    "Neden tek bir \"çalışıyor\" yok: fiyatın ölçülebilmesi, o havuzda " +
-    "işlem yapılabileceği anlamına gelmiyor. SHIB'in fiyatı %0,00 tutarlı " +
-    "okunuyor ama $2.000'lık işlem fiyatı 17,5 kat ittiriyor, çünkü " +
-    "likiditesi SHIB/USDC'de değil SHIB/WETH'te. Taban marjinal fiyattan " +
-    "türetildiği için böyle bir dönüşüm reddedilir — para kaybolmaz, işlem " +
-    "olmaz. Asgari teminat $20 ama teminat her işlemin vergisiyle büyüyor, " +
-    "o yüzden \"hangi büyüklüğe kadar\" sorusunun cevabı listede yazılı.",
+    "Why there is no single \"it works\": being able to read a price " +
+    "does not mean you can trade in that pool. SHIB reads a 0.00% price " +
+    "error and still pushes 17.5x on a $2,000 trade, because its " +
+    "liquidity is in SHIB/WETH, not SHIB/USDC. The floor is derived " +
+    "from the marginal price, so a conversion like that is refused — no " +
+    "money is lost, the trade simply does not happen. The minimum " +
+    "collateral is $20, but collateral grows with the tax on every " +
+    "trade, which is why \"up to what size\" is written out in the list.",
     "uyari"
   ));
 

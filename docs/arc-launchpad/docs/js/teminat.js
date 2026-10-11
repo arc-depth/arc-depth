@@ -1,39 +1,41 @@
 /* ===========================================================================
- * teminat.js — bir kontrat adresinin teminat olarak çalışıp çalışmadığı
+ * teminat.js — whether a contract address works as collateral
  *
- * NE YAPAR
- *   Verilen kontrat adresi için her zincirde en derin USDC havuzunu bulur,
- *   likiditesine ve gözlem geçmişine bakar ve "çalışıyor mu" sorusunu
- *   cevaplar. Hiçbir liste okumaz, hiçbir servise sormaz — zinciri okur.
+ * WHAT IT DOES
+ *   For the given contract address it finds the deepest USDC pool on every
+ *   chain, looks at its liquidity and its observation history, and answers
+ *   the question "does it work". It reads no list and asks no service — it
+ *   reads the chain.
  *
- * NEDEN SÖZLEŞMEYLE AYNI TÜRETME
- *   `contracts/HavuzFiyat.sol` aynı işi zincir üstünde yapıyor: kademeleri
- *   tarar, en likit havuzu bulur, fiyatı o havuzun geçmişinden okur. Burada
- *   da aynısı yapılıyor ki sayfanın gösterdiği ile zincirin kabul edeceği
- *   şey ayrışamasın.
+ * WHY THE SAME DERIVATION AS THE CONTRACT
+ *   `contracts/HavuzFiyat.sol` does the same job on chain: it scans the
+ *   tiers, finds the most liquid pool, reads the price from that pool's
+ *   history. The same thing is done here so that what the page shows and
+ *   what the chain will accept cannot drift apart.
  *
- *   Ayrışırsa olacak şey şu: sayfa "çalışıyor" der, kullanıcı launch'ı
- *   gönderir, sözleşme reddeder ve gaz gider. Ya da tersi — sayfa
- *   "çalışmıyor" der ve kullanıcı çalışan bir tokeni kullanamaz.
+ *   If they drift, here is what happens: the page says "it works", the
+ *   user sends the launch, the contract refuses and the gas is gone. Or
+ *   the other way round — the page says "it does not work" and the user
+ *   cannot use a token that does.
  *
- * ÜÇ ŞART, VARLIĞA KALİTE KAPISI DEĞİL
- *   1. Havuz var mı
- *   2. En derin havuzun likiditesi sıfır değil
- *      Ölçüldü: PEPE'nin Base'deki iki havuzunun da likiditesi sıfır ama
- *      observe() yine bir fiyat döndürüyor. Kimsenin işlem yapamayacağı
- *      bir fiyat.
- *   3. Gözlem geçmişi var (kardinalite >= 2)
- *      Kardinalite 1 ise TWAP anlık fiyatın kendisidir ve tek işlemde
- *      oynatılabilir.
+ * THREE CONDITIONS, NOT A QUALITY GATE ON THE ASSET
+ *   1. Is there a pool
+ *   2. Is the deepest pool's liquidity non-zero
+ *      Measured: both of PEPE's pools on Base have zero liquidity, yet
+ *      observe() still returns a price. A price nobody can trade at.
+ *   3. Is there an observation history (cardinality >= 2)
+ *      At cardinality 1 the TWAP is the spot price itself, and it can be
+ *      moved in a single transaction.
  *
- *   Üçüncüsü kalıcı değil: Uniswap'te gözlem geçmişini HERKES açabilir,
- *   bir kerelik gaz. O yüzden cevap "hayır" değil "henüz değil, şöyle
- *   açılır" oluyor.
+ *   The third is not permanent: on Uniswap ANYONE can extend the
+ *   observation history, for a one-off bit of gas. So the answer is not
+ *   "no" but "not yet, and here is how to open it".
  *
- * EN DERİN HAVUZ, ÇÜNKÜ FARK 160 KAT
- *   Ölçüldü — DEGEN'in Base'deki dört kademesi 0 / 26 milyar / 4,3 trilyon
- *   / 445 milyar. Yanlış kademeyi okumak 160 kat ince bir havuzda fiyat
- *   okumak demek, o yüzden kademe kullanıcıdan alınmıyor.
+ * THE DEEPEST POOL, BECAUSE THE GAP IS 160x
+ *   Measured — DEGEN's four tiers on Base are 0 / 26 billion / 4.3
+ *   trillion / 445 billion. Reading the wrong tier means reading a price
+ *   from a pool 160 times thinner, which is why the tier is not taken from
+ *   the user.
  * =========================================================================== */
 
 import { ZINCIRLER, KADEMELER, ONERILEN } from "./teminat-listesi.js";
@@ -66,30 +68,31 @@ const SEC = {
 
 /* ---- DEPTH, WHICH IS A DIFFERENT QUESTION FROM PRICE ----------------
  *
- * NEDEN IKI AYRI SORU
- *   Havuzun fiyati olculebilir olmasi, o havuzda ISLEM yapilabilecegi
- *   anlamina gelmiyor. Olculdu, ve sonuc sasirtici:
+ * WHY THESE ARE TWO SEPARATE QUESTIONS
+ *   A pool's price being measurable does not mean that pool can be TRADED
+ *   in. It was measured, and the result is surprising:
  *
- *     SHIB   fiyat %0.00 tutarli    ama $2.000'lik islem 17.5 kat ittiriyor
- *     DEGEN  fiyat %0.00 tutarli    ama $2.000'lik islem 16.1 kat ittiriyor
- *     WETH   fiyat %0.01 tutarli    $2.000 islem 1.00 kat
+ *     SHIB   price consistent to 0.00%   but a $2,000 trade moves it 17.5x
+ *     DEGEN  price consistent to 0.00%   but a $2,000 trade moves it 16.1x
+ *     WETH   price consistent to 0.01%   a $2,000 trade moves it 1.00x
  *
- *   Sebep: SHIB'in likiditesi SHIB/USDC havuzunda degil, SHIB/WETH'te.
- *   Tek adimlik USDC havuzu fiyati dogru soyluyor ama derinligi yok.
+ *   The reason: SHIB's liquidity is not in the SHIB/USDC pool, it is in
+ *   SHIB/WETH. The single-hop USDC pool tells the truth about the price
+ *   but has no depth.
  *
- *   Bu onemli, cunku taban MARJINAL fiyattan turetiliyor: havuzu ittiren
- *   bir islem tabana ulasamaz ve donusum REDDEDILIR. Guvenli yonde
- *   kapaniyor, para kaybolmuyor — ama sayfa yalnizca "calisiyor" derse
- *   kullanici calismayacak bir seye "calisiyor" dendigini sanir.
+ *   That matters, because the floor is derived from the MARGINAL price: a
+ *   trade that pushes the pool cannot reach the floor and the conversion
+ *   is REFUSED. It closes in the safe direction and no money is lost — but
+ *   if the page only says "it works", the user thinks something that will
+ *   not work has been called working.
  *
- *   O yuzden sayfa iki seyi ayri soyluyor: fiyati olculebiliyor mu, ve
- *   su buyuklukte donusturulebiliyor mu.
+ *   So the page says two things separately: can its price be measured, and
+ *   can it be converted at this size.
  *
- * QUOTER ADRESLERI OLCULDU, VARSAYILMADI
- *   Alti zincirde cevap veren adres bulundu; Unichain'de bulunamadi ve
- *   orada derinlik "olculemedi" olarak gecer. Tahmin edilmis bir adres,
- *   sessizce yanlis bir derinlik demek olurdu.
- */
+ * THE QUOTER ADDRESSES WERE MEASURED, NOT ASSUMED
+ *   An address that answers was found on six chains; on Unichain none was
+ *   found, and depth is reported there as "could not be measured". A
+ *   guessed address would have meant a silently wrong depth. */
 const QUOTER = {
   ethereum: "0x61fFE014bA17989E743c5F6cB21bF9697530B21e",
   base: "0x3d4e44Eb1374240CE5F1B871ab261CD16335B76a",
@@ -218,10 +221,10 @@ export async function zinciriTara(zincirAnahtar, token) {
     let calisiyor = true, sebep = "", duzeltilebilir = false;
     if (enDerin.likidite === 0n) {
       calisiyor = false;
-      sebep = "en derin havuzun likiditesi sıfır";
+      sebep = "the deepest pool has zero liquidity";
     } else if (enDerin.kardinalite < ASGARI_KARDINALITE) {
       calisiyor = false;
-      sebep = "gözlem geçmişi yok";
+      sebep = "no observation history";
       /* Anybody can call increaseObservationCardinalityNext on the pool.
          So this is a "not yet", not a "no". */
       duzeltilebilir = true;
@@ -230,7 +233,7 @@ export async function zinciriTara(zincirAnahtar, token) {
     /* ---- the second question: does a real trade reach that price ----
        Only asked when the price IS measurable; otherwise there is no
        floor to fail to reach and the answer would be noise. */
-    let ittirme = null, derinlikNotu = "ölçülemedi";
+    let ittirme = null, derinlikNotu = "not measurable";
     if (calisiyor) {
       const d = await derinlikOlc(zincirAnahtar, token, enDerin.kademe);
       if (d && enDerin.sqrtX96 > 0n) {
@@ -244,8 +247,8 @@ export async function zinciriTara(zincirAnahtar, token) {
           ittirme = marjinal / Number(d.gercekler);
           const tavan = 1 / (1 - Number(AZAMI_KAYMA_BPS) / 10_000);
           derinlikNotu = ittirme <= tavan
-            ? "bu büyüklükte dönüştürülebiliyor"
-            : "havuz bu büyüklük için yeterince derin değil";
+            ? "converts at this size"
+            : "the pool is not deep enough for this size";
         }
       }
     }
@@ -354,21 +357,20 @@ export async function tumZincirleriTara(token) {
        the answer is no. */
     ozet: calisan.length > 0
       ? (derin.length > 0
-          ? calisan.length + " zincirde fiyatı ölçülebiliyor, " +
-            derin.length + " zincirde $" +
-            (Number(OLCUM_TUTARI) / 1e6).toLocaleString("tr") +
-            " dönüştürülebiliyor"
+          ? "priced on " + calisan.length + " chains, converts $" +
+            (Number(OLCUM_TUTARI) / 1e6).toLocaleString("en") +
+            " on " + derin.length
           : (calisan.some((c) => c.ittirme != null)
-              ? calisan.length + " zincirde fiyatı ölçülebiliyor ama hiçbirinde " +
-                "havuz bu büyüklük için yeterince derin değil"
+              ? "priced on " + calisan.length + " chains, but on none " +
+                "of them is the pool deep enough for this size"
               /* Not a verdict about depth — the depth was never measured.
                  Saying "not deep enough" here would be inventing a
                  measurement that was not taken. */
-              : calisan.length + " zincirde fiyatı ölçülebiliyor; " +
-                "işlem derinliği bu zincirde ölçülemedi"))
+              : "priced on " + calisan.length + " chains; trade depth " +
+                "could not be measured on this chain"))
       : duzeltilebilir.length > 0
-        ? "havuz var ama gözlem geçmişi açılmamış"
-        : "hiçbir zincirde USDC havuzu bulunamadı"
+        ? "a pool exists but its observation history is not open"
+        : "no USDC pool found on any chain"
   };
 }
 

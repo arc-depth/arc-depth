@@ -1,34 +1,35 @@
 /* ===========================================================================
- * gorunum/dao.js — Platform DAO
+ * gorunum/dao.js — the Platform DAO
  *
- * NEDEN BU EKRAN GERÇEK
- *   Şartname açık: *"Sadece görsel DAO ekranı yapma. Gerçek oylama ve teklif
- *   mekanizması oluştur."* Bu ekran uydurulmuş bir yönetişim göstermiyor —
- *   zincirde CANLI olan Governor'ı okuyor. Her sayı bir `eth_call`, her
- *   düğme bir işlem.
+ * WHY THIS SCREEN IS REAL
+ *   The spec is explicit: *"Do not build a decorative DAO screen. Build
+ *   real voting and a real proposal mechanism."* This screen shows no
+ *   invented governance — it reads the Governor that is LIVE on chain.
+ *   Every number is an `eth_call`, every button a transaction.
  *
- *   Platformun geri kalanı dağıtılmadığı için boş durum gösteriyor; DAO ise
- *   dağıtılmış durumda ve hiç kullanılmamış. `proposalCount()` sıfır ve
- *   ekran bunu bir hata gibi değil, olduğu gibi söylüyor: mekanizma var,
- *   kimse henüz teklif vermedi.
+ *   The rest of the platform shows an empty state because it is not
+ *   deployed; the DAO is deployed and has never been used.
+ *   `proposalCount()` is zero and the screen says so as it is, not as an
+ *   error: the mechanism exists, nobody has proposed anything yet.
  *
- * DAO'NUN NEYE DOKUNABİLDİĞİ BİR TASARIM SORUSU DEĞİL, BİR ÖLÇÜM
- *   `yol.js` bir süre "DAO'nun yetki kümesi henüz cevaplanmadı" diyordu ve
- *   haklıydı. Cevap ölçülerek verildi: `scripts/denetim-dao-erisimi.js`
- *   teminat kasalarını, defteri, ücret tablosunu, eğriyi ve kilitli
- *   likiditeyi tek tek okuyup hiçbirinde yetkili rol ve ayarlayıcı
- *   olmadığını savlıyor. Yani kısıt DAO'nun nazik davranmasına değil, karşı
- *   tarafta çekilecek bir kol olmamasına dayanıyor.
+ * WHAT THE DAO CAN TOUCH IS NOT A DESIGN QUESTION BUT A MEASUREMENT
+ *   `yol.js` said for a while that "the DAO's set of powers has not been
+ *   answered yet", and it was right. The answer was given by measurement:
+ *   `scripts/denetim-dao-erisimi.js` reads the collateral vaults, the
+ *   ledger, the fee table, the curve and the locked liquidity one by one
+ *   and asserts that in none of them is there an authorised role or a
+ *   setter. So the constraint does not rest on the DAO behaving politely
+ *   but on there being no lever to pull on the other side.
  *
- *   Governor'a bir beyaz liste koymak daha gösterişli görünür ve daha zayıf
- *   olurdu: o liste değiştirilebilir bir durumdur ve onu değiştiren teklif de
- *   bir tekliftir.
+ *   Putting a whitelist in the Governor would look more impressive and be
+ *   weaker: that list is mutable state, and the proposal that changes it
+ *   is also a proposal.
  *
- * SÜRELER SANİYE
- *   `Governor.state()` `block.timestamp` ile karşılaştırıyor ve `end`,
- *   `block.timestamp + VOTING_PERIOD`. Bunları blok sayısı sanıp Arc'ın
- *   ölçülmüş 0,507 s/blok değeriyle çevirmek 5 günü 2,54 gün gösterdi — bir
- *   kez. Burada saniye olarak okunuyor.
+ * THE DURATIONS ARE SECONDS
+ *   `Governor.state()` compares against `block.timestamp`, and `end` is
+ *   `block.timestamp + VOTING_PERIOD`. Mistaking these for block counts
+ *   and converting with Arc's measured 0.507 s/block showed 5 days as 2.54
+ *   — once. Here they are read as seconds.
  * =========================================================================== */
 
 import { el, sayfaUst, panel, bos, not, olcum, adres, hata } from "../ui.js";
@@ -49,16 +50,16 @@ const DURUM = [
   { ad: "Kabul edildi", sinif: "etiket--kabul" },
   { ad: "Kuyrukta", sinif: "etiket--bekle" },
   { ad: "Uygulanabilir", sinif: "etiket--kabul" },
-  { ad: "Uygulandı", sinif: "etiket--bitti" },
-  { ad: "Süresi geçti", sinif: "etiket--red" },
-  { ad: "İptal edildi", sinif: "etiket--red" }
+  { ad: "Executed", sinif: "etiket--bitti" },
+  { ad: "Expired", sinif: "etiket--red" },
+  { ad: "Cancelled", sinif: "etiket--red" }
 ];
 
 function sureYaz(saniye) {
   const s = Number(saniye);
   if (!isFinite(s) || s <= 0) return "—";
-  if (s % 86400 === 0) return s / 86400 + " gün";
-  if (s >= 86400) return (s / 86400).toFixed(2) + " gün";
+  if (s % 86400 === 0) return s / 86400 + " days";
+  if (s >= 86400) return (s / 86400).toFixed(2) + " days";
   if (s >= 3600) return (s / 3600).toFixed(1) + " saat";
   return s + " sn";
 }
@@ -110,24 +111,25 @@ async function parametreler() {
 function gucVgovde(kap, kurucuPay, yuzde, toplam) {
   kap.append(el("div", { sinif: "izgara izgara--olcum" }, [
     olcum("Kurucuda stake", jetonMiktar(kurucuPay) + " FTHM",
-      "açılışı mümkün kılan taban"),
-    olcum("Oy gücünün payı", yuzde.toFixed(1) + "%",
-      "tek adreste duran kısım")
+      "the floor that made activation possible"),
+    olcum("Share of voting power", yuzde.toFixed(1) + "%",
+      "the part held by one address")
   ]));
   if (yuzde > 50) {
     kap.append(not(
-      "Oy gücünün %" + yuzde.toFixed(1) + "'i tek adreste. Bu haliyle " +
-      "DAO tek adresli: teklif eşiğini de kotayı da o adres yalnız " +
-      "geçebilir. Kararları yavaşlatan şey oy dağılımı değil, 5 günlük oy " +
-      "süresi, 2 günlük timelock ve 2027'ye kadar yalnızca İPTAL edebilen " +
-      "guardian. DAO'nun tek yetkisi geliştirici havuzundan ödeme yapmak; " +
-      "teminat, kilitli likidite, ücretler ve açılış fiyatı erişilemez.",
+      yuzde.toFixed(1) + "% of the voting power sits at one address. As it " +
+      "stands this is a one-address DAO: that address alone clears both " +
+      "the proposal threshold and the quorum. What slows a decision down " +
+      "is not the spread of votes but five days of voting, a two-day " +
+      "timelock, and a guardian that can only CANCEL, until 2027. The " +
+      "DAO's only power is paying out of the developer pool; collateral, " +
+      "locked liquidity, fees and the opening price are out of reach.",
       "uyari"
     ));
   } else {
     kap.append(not(
-      "Oy gücünün %" + yuzde.toFixed(1) + "'i kurucuda, kalanı başka " +
-      "adreslerde. Stake arttıkça bu pay erir.",
+      yuzde.toFixed(1) + "% of the voting power is the founder's, the rest " +
+      "is at other addresses. That share erodes as more is staked.",
       "bilgi"
     ));
   }
@@ -139,7 +141,7 @@ export async function ciz() {
   const kap = el("div", { sinif: "yigin" });
   kap.append(sayfaUst(
     "Platform DAO",
-    "Zincirde canlı yönetişim — teklif, oy, timelock ve uygulama"
+    "Live on-chain governance — propose, vote, timelock, execute"
   ));
 
   let p;
@@ -147,17 +149,18 @@ export async function ciz() {
     p = await parametreler();
   } catch (e) {
     kap.append(hata(
-      "Yönetişim okunamadı",
-      "Governor " + YONETISIM.governor + " adresinde ve okunamadı: " + e.message
+      "Governance could not be read",
+      "The governor is at " + YONETISIM.governor + " and did not " +
+      "answer: " + e.message
     ));
     return kap;
   }
 
   if (p.proposalCount == null) {
     kap.append(hata(
-      "Yönetişim cevap vermiyor",
-      "Governor adresi " + YONETISIM.governor + " ama `proposalCount()` " +
-      "okunamadı. Ekran uydurma bir durum göstermek yerine duruyor."
+      "Governance is not answering",
+      "The governor is at " + YONETISIM.governor + " but `proposalCount()` " +
+      "did not answer. The screen stops here rather than inventing a state."
     ));
     return kap;
   }
@@ -167,23 +170,23 @@ export async function ciz() {
   const sayi = Number(p.proposalCount);
 
   kap.append(el("div", { sinif: "izgara izgara--olcum" }, [
-    olcum("Teklif eşiği", oran(p.PROPOSAL_THRESHOLD_BPS), "stake edilmiş arzın"),
-    olcum("Kota", oran(p.QUORUM_BPS), "teklif açıldığındaki stake toplamına göre"),
-    olcum("Oy süresi", sureYaz(p.VOTING_PERIOD), "saniye, blok değil"),
+    olcum("Proposal threshold", oran(p.PROPOSAL_THRESHOLD_BPS), "of the staked supply"),
+    olcum("Quorum", oran(p.QUORUM_BPS), "against the stake when the proposal opened"),
+    olcum("Voting period", sureYaz(p.VOTING_PERIOD), "seconds, not blocks"),
     olcum("Timelock", sureYaz(p.TIMELOCK), "kabulden uygulamaya"),
-    olcum("Uygulama penceresi", sureYaz(p.GRACE_PERIOD), "sonra süresi geçer"),
+    olcum("Execution window", sureYaz(p.GRACE_PERIOD), "after which it expires"),
     /* FTHM, not ALP. Governance moved; a screen still saying ALP would
        be naming a token that no longer decides anything. */
-    olcum("Asgari oy gücü", p.MIN_OY_GUCU == null
-      ? "okunamadı"
+    olcum("Minimum voting power", p.MIN_OY_GUCU == null
+      ? "unreadable"
       : jetonMiktar(tamSayidanSayi(p.MIN_OY_GUCU, 18)) + " FTHM",
-      "teklif verebilmek için")
+      "needed in order to propose")
   ]));
 
   kap.append(not(
-    "Bu DAO zincirde canlı ve bugüne kadar " + sayi + " teklif aldı. " +
+    "This DAO is live on chain and has taken " + sayi + " proposals. " +
     (sayi === 0
-      ? "Sıfır olması bir kusur değil: mekanizma duruyor, kimse henüz " +
+      ? "Zero is not a fault: the mechanism is in place, nobody has " +
         "teklif vermedi."
       : ""),
     sayi === 0 ? "bilgi" : ""
@@ -196,18 +199,19 @@ export async function ciz() {
     kap.append(panel("Guardian", el("div", { sinif: "yigin yigin--sik" }, [
       el("p", {
         sinif: "yazi yazi--sessiz",
-        yazi: "Guardian bir tekliği İPTAL edebilir, başka hiçbir şey yapamaz: " +
-          "teklif veremez, oy ağırlığı yoktur, bir teklifi geçiremez ve bir " +
-          "parayı yönlendiremez. Yetkisi tek yönlü ve süreli."
+        yazi: "The guardian can CANCEL a proposal and nothing else: it " +
+          "cannot propose, it carries no voting weight, it cannot pass " +
+          "anything and it cannot move money. Its power points one way " +
+          "and it expires."
       }),
       el("div", { sinif: "izgara izgara--olcum" }, [
-        olcum("Adres", adres(p.guardian), "iptal yetkisi"),
-        olcum("Bitiş", new Date(bitis).toISOString().slice(0, 10),
+        olcum("Address", adres(p.guardian), "cancel authority"),
+        olcum("Expires", new Date(bitis).toISOString().slice(0, 10),
           bitis > Date.now()
-            ? gecenSure(bitis - Date.now()) + " kaldı"
-            : "süresi doldu"),
-        olcum("Durum", bitis > Date.now() ? "Aktif" : "Sona erdi",
-          "renounce() ile erken bırakılabilir")
+            ? gecenSure(bitis - Date.now()) + " left"
+            : "already expired"),
+        olcum("State", bitis > Date.now() ? "Active" : "Ended",
+          "can be given up early with renounce()")
       ])
     ])));
   }
@@ -222,10 +226,10 @@ export async function ciz() {
   const gucGovde = el("div", { sinif: "yigin yigin--sik" });
   gucGovde.append(el("p", {
     sinif: "yazi yazi--sessiz",
-    yazi: "Oy gücü FTHM tutmaktan değil STAKE etmekten geliyor, ve bir teklif " +
-      "açıldığında toplamın anlık görüntüsü alınıyor. Yani kota, o anda var " +
-      "olan stake'e göre ölçülüyor — oylamanın ortasında şişirilebilen bir " +
-      "toplama göre değil."
+    yazi: "Voting power comes from STAKING FTHM, not from holding it, and " +
+      "the total is snapshotted when a proposal opens. So the quorum is " +
+      "measured against the stake that existed at that moment — not " +
+      "against a total that can be inflated mid-vote."
   }));
   /* HOW MUCH OF THE VOTING POWER IS IN ONE PLACE
        The total alone can read as healthy when it is one wallet. The set
@@ -244,7 +248,7 @@ export async function ciz() {
   } catch (e) { kurucuStake = null; }
 
   if (stakeToplam == null) {
-    gucGovde.append(not("Stake sözleşmesi okunamadı: " + YONETISIM.staking, "uyari"));
+    gucGovde.append(not("The stake contract could not be read: " + YONETISIM.staking, "uyari"));
   } else {
     const t = tamSayidanSayi(stakeToplam, 18);
     /* The floor comes from a second contract now, so it can be missing
@@ -255,12 +259,12 @@ export async function ciz() {
     const esik = asgari == null
       ? null : Math.max(t * Number(p.PROPOSAL_THRESHOLD_BPS) / 10_000, asgari);
     gucGovde.append(el("div", { sinif: "izgara izgara--olcum" }, [
-      olcum("Toplam stake", jetonMiktar(t) + " FTHM", "oy gücünün tamamı"),
-      olcum("Kota eşiği",
+      olcum("Total staked", jetonMiktar(t) + " FTHM", "all of the voting power"),
+      olcum("Quorum threshold",
         jetonMiktar(t * Number(p.QUORUM_BPS) / 10_000) + " FTHM",
-        "bir teklifin geçmesi için gereken LEHTE oy"),
-      olcum("Teklif eşiği", esik == null ? "okunamadı" : jetonMiktar(esik) + " FTHM",
-        "stake oranı ile asgarinin büyüğü")
+        "the FOR votes a proposal needs to pass"),
+      olcum("Proposal threshold", esik == null ? "unreadable" : jetonMiktar(esik) + " FTHM",
+        "the greater of the stake share and the floor")
     ]));
 
     /* THE STATE NOBODY WOULD GUESS FROM THE PARAMETERS.
@@ -287,32 +291,33 @@ export async function ciz() {
 
     if (t === 0 && asgari != null) {
       gucGovde.append(not(
-        "Hiç FTHM stake edilmemiş, yani şu an hiç kimsenin oy gücü yok ve " +
-        "kimse teklif veremez: asgari " + jetonMiktar(asgari) + " FTHM ve " +
-        "herkesin gücü sıfır. DAO dağıtılmış ve cevap veriyor; eksik olan " +
-        "stake.",
+        "No FTHM is staked, so nobody has voting power right now and " +
+        "nobody can propose: the floor is " + jetonMiktar(asgari) +
+        " FTHM and everyone is at zero. The DAO is deployed and " +
+        "answering; what is missing is stake.",
         "uyari"
       ));
       gucGovde.append(not(
-        "Bu asgari aynı zamanda boş durumu güvenli tutan şey: stake sıfırken " +
-        "yüzde eşiği de kota da sıfıra iniyor, yani mutlak bir taban olmasa " +
-        "tek bir wei stake hem teklif verip hem geçirebilirdi.",
+        "That floor is also what keeps the empty state safe: with nothing " +
+        "staked both the percentage threshold and the quorum collapse to " +
+        "zero, so without an absolute minimum a single wei of stake could " +
+        "both propose and pass.",
         "bilgi"
       ));
     }
   }
-  kap.append(panel("Oy gücü", gucGovde));
+  kap.append(panel("Voting power", gucGovde));
 
   /* ---- 4. the permitted set, as measured --------------------------- */
 
   const yetkiGovde = el("div", { sinif: "yigin yigin--sik" });
   yetkiGovde.append(el("p", {
     sinif: "yazi yazi--sessiz",
-    yazi: "Governor'ın teklif imzası propose(string, address, bytes) — yani " +
-      "bir teklif herhangi bir adrese herhangi bir çağrıyı İFADE edebilir. " +
-      "Onu tutan şey Governor'ın içindeki bir liste değil, hedef " +
-      "sözleşmelerde çekilecek bir kol olmaması. İfade edilebilir olmak " +
-      "geçerli olmak değildir: yetkisi olmayan bir çağrı döner."
+    yazi: "The governor's proposal signature is propose(string, address, " +
+      "bytes), so a proposal can EXPRESS any call to any address. What " +
+      "holds it is not a list inside the governor but the absence of a " +
+      "lever in the target contracts. Being expressible is not the same " +
+      "as being valid: a call without authority reverts."
   }));
 
   const iki = el("div", { sinif: "izgara izgara--iki" });
@@ -337,10 +342,10 @@ export async function ciz() {
   yetkiGovde.append(iki);
 
   yetkiGovde.append(not(
-    "Bu ayrım bir politika değil, bir ölçüm: scripts/denetim-dao-erisimi.js " +
-    "o altı sözleşmeyi tek tek okuyup hiçbirinde yetkili rol ve ayarlayıcı " +
-    "olmadığını savlıyor. Birisi bir kasaya ayarlayıcı eklerse o denetim " +
-    "kırmızı yanar.",
+    "This split is not a policy but a measurement: " +
+    "scripts/denetim-dao-erisimi.js reads those contracts one by one and " +
+    "asserts that none of them has a privileged role or a setter. If " +
+    "somebody adds a setter to a vault, that audit goes red.",
     "bilgi"
   ));
 
@@ -353,14 +358,14 @@ export async function ciz() {
 
   if (sayi === 0) {
     kap.append(panel("Teklifler", bos(
-      "Henüz teklif yok",
-      "Governor " + sayi + " teklif kaydetmiş. Teklif vermek ve oy kullanmak " +
-      "için Teklifler ve Oylama ekranına geçin — oradaki her düğme zincire " +
-      "gerçek bir işlem gönderir.",
+      "No proposals yet",
+      "The governor has recorded " + sayi + " proposals. To propose and " +
+      "to vote, go to the Proposals and voting screen — every button " +
+      "there sends a real transaction.",
       el("a", {
         sinif: "dugme dugme--marka",
         attr: { href: "#/teklifler" },
-        yazi: "Teklifler ve Oylama"
+        yazi: "Proposals and voting"
       })
     )));
     return kap;
@@ -391,7 +396,7 @@ export async function ciz() {
   const tablo = el("table", { sinif: "tablo tablo--kart" });
   tablo.append(el("thead", {}, [el("tr", {}, [
     el("th", { yazi: "#" }),
-    el("th", { yazi: "Açıklama" }),
+    el("th", { yazi: "Description" }),
     el("th", { yazi: "Durum" }),
     el("th", { yazi: "Lehte" }),
     el("th", { yazi: "Aleyhte" }),
@@ -419,14 +424,14 @@ export async function ciz() {
     govde.append(el("tr", {}, [
       el("td", { yazi: String(id) }),
       el("td", {}, [
-        el("div", { yazi: pr[3] || "(açıklama yok)" }),
+        el("div", { yazi: pr[3] || "(no description)" }),
         el("div", { sinif: "yazi yazi--kucuk yazi--sessiz" }, [adres(pr[0])])
       ]),
       el("td", {}, [d
         ? el("span", { sinif: "etiket " + d.sinif, yazi: d.ad })
-        : el("span", { sinif: "yazi yazi--sessiz", yazi: "okunamadı" })]),
-      el("td", { yazi: lehte == null ? "okunamadı" : jetonMiktar(lehte) }),
-      el("td", { yazi: aleyhte == null ? "okunamadı" : jetonMiktar(aleyhte) }),
+        : el("span", { sinif: "yazi yazi--sessiz", yazi: "unreadable" })]),
+      el("td", { yazi: lehte == null ? "unreadable" : jetonMiktar(lehte) }),
+      el("td", { yazi: aleyhte == null ? "unreadable" : jetonMiktar(aleyhte) }),
       el("td", {}, [
         /* A zero target is a signal proposal: a question put on the record
            with no call behind it. Those still vote and still pass, and
@@ -434,16 +439,16 @@ export async function ciz() {
            difference between that and a proposal that moves money. */
         pr[1] && pr[1] !== "0x0000000000000000000000000000000000000000"
           ? adres(pr[1])
-          : el("span", { sinif: "yazi yazi--sessiz", yazi: "sinyal (çağrı yok)" })
+          : el("span", { sinif: "yazi yazi--sessiz", yazi: "signal (no call)" })
       ])
     ]));
   });
 
   tablo.append(govde);
-  kap.append(panel("Son teklifler", tablo, el("a", {
+  kap.append(panel("Recent proposals", tablo, el("a", {
     sinif: "dugme dugme--sessiz",
     attr: { href: "#/teklifler" },
-    yazi: "Hepsi ve oylama"
+    yazi: "See all and vote"
   }), true));
 
   return kap;

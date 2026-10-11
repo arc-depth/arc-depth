@@ -72,8 +72,8 @@ function yolLinki(y, sinifEk = "") {
     y.durum === "canli" ? null
       : el("span", {
           sinif: "etiket" + (y.durum === "dagitim" ? " etiket--uyari" : ""),
-          yazi: y.durum === "dagitim" ? "yakında" : "—",
-          attr: { title: y.durum === "dagitim" ? "Dağıtım bekliyor" : "Yapılmadı" }
+          yazi: y.durum === "dagitim" ? "soon" : "—",
+          attr: { title: y.durum === "dagitim" ? "Awaiting deployment" : "Not built" }
         })
   ]);
 }
@@ -134,7 +134,7 @@ function aramayiCiz() {
     sinif: "girdi",
     attr: {
       type: "search",
-      placeholder: "Token adı, sembol veya adres",
+      placeholder: "Token name, symbol or address",
       "aria-label": "Token ara",
       autocomplete: "off",
       spellcheck: "false"
@@ -201,19 +201,19 @@ let sonCizim = 0;
 async function ciz() {
   const { yol, param } = hashiCoz();
   const kayit = yol === "daha"
-    ? { yol: "daha", ad: "Tüm modüller", durum: "canli", ikon: "daha" }
+    ? { yol: "daha", ad: "All modules", durum: "canli", ikon: "daha" }
     : yolBul(yol);
 
   etkinIsaretle(yol);
   document.body.classList.toggle("terminal-acik", yol === "terminal");
 
   if (!kayit) {
-    temizle(kIcerik).append(hata("Böyle bir sayfa yok", "Aradığın: /" + yol));
+    temizle(kIcerik).append(hata("No such page", "You asked for: /" + yol));
     kIcerik.dataset.cizildi = "1";
     return;
   }
 
-  document.title = kayit.ad === "Keşfet" ? "ARC PULSE" : kayit.ad + " — ARC PULSE";
+  document.title = kayit.ad === "Discover" ? "ARC PULSE" : kayit.ad + " — ARC PULSE";
 
   /* The router, not the view, decides whether a module may render. */
   if (kayit.durum === "yapim") {
@@ -244,7 +244,7 @@ async function ciz() {
   } catch (e) {
     if (bu !== sonCizim) return;
     temizle(kIcerik).append(
-      hata("Bu bölüm yüklenemedi", (e && e.message) || String(e))
+      hata("This section failed to load", (e && e.message) || String(e))
     );
   }
   kIcerik.dataset.cizildi = "1";
@@ -260,7 +260,7 @@ function cuzdanDugmesiniTazele() {
     kCuzdanDugme.classList.remove("dugme--marka");
     kCuzdanDugme.classList.add("mono");
   } else {
-    kCuzdanDugme.textContent = "Cüzdan bağla";
+    kCuzdanDugme.textContent = "Connect wallet";
     kCuzdanDugme.classList.add("dugme--marka");
     kCuzdanDugme.classList.remove("mono");
   }
@@ -274,7 +274,7 @@ kCuzdanDugme.addEventListener("click", async () => {
   } catch (e) {
     /* A refused connection is a normal outcome and not an error state —
        the button simply goes back to offering. */
-    if (e && e.code !== 4001) alert("Cüzdan bağlanamadı: " + ((e && e.message) || e));
+    if (e && e.code !== 4001) alert("Could not connect the wallet: " + ((e && e.message) || e));
   } finally {
     kCuzdanDugme.disabled = false;
     cuzdanDugmesiniTazele();

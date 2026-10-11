@@ -1,35 +1,37 @@
 "use strict";
 /* ===========================================================================
- * olc-teminat-derinlik.js — teminat adaylarını DERİNLİĞE göre ölç
+ * olc-teminat-derinlik.js — measure the collateral candidates by DEPTH
  *
  *   node scripts/olc-teminat-derinlik.js [--tutar 2000]
  *
- * NEDEN BU BETİK VAR — ESKİSİ YANLIŞ EVRENİ ÖLÇÜYORDU
- *   `olc-teminat-adaylari.js` adayları CHAINLINK BESLEYİCİLERİNDEN
- *   türetiyordu: önce feed listesi çekiliyor, sonra o feed'in varlığı
- *   zincirde aranıyordu. Yani kullanıcının kaldırdığı kapı, öneri listesini
- *   hâlâ belirliyordu.
+ * WHY THIS SCRIPT EXISTS — THE OLD ONE MEASURED THE WRONG UNIVERSE
+ *   `olc-teminat-adaylari.js` derived the candidates FROM THE CHAINLINK
+ *   FEEDS: pull the feed list first, then look for that feed's asset on
+ *   chain. So the gate the user removed was still deciding the suggestion
+ *   list.
  *
- *   Sonucu ölçüldü: o yolla üretilen 50 önerinin yalnızca 21'i $2.000'lık
- *   bir dönüşümü kaldırıyor. Besleyicisi olan bir varlığın USDC havuzu ince
- *   olabiliyor — SHIB'in likiditesi SHIB/USDC'de değil SHIB/WETH'te, ve
- *   ölçüldü: $2.000'lık işlem fiyatı 17,5 kat ittiriyor. Fiyat doğru
- *   okunuyor, işlem yapılamıyor.
+ *   The consequence was measured: of the 50 suggestions produced that way,
+ *   only 21 can absorb a $2,000 conversion. An asset with a feed can have a
+ *   thin USDC pool — SHIB's liquidity is not in SHIB/USDC but in SHIB/WETH,
+ *   and it was measured: a $2,000 trade moves the price 17.5x. The price
+ *   reads correctly, the trade cannot be done.
  *
- * ÖLÇÜT NEDEN DERİNLİK
- *   Taban havuzun MARJİNAL fiyatından türetiliyor. Havuzu ittiren bir işlem
- *   o tabana ulaşamaz ve dönüşüm reddedilir. Güvenli yönde kapanıyor — para
- *   kaybolmuyor — ama öneri listesinde yeri yok: çalışmayacak bir şeyi
- *   önermek, hiç önermemekten kötü.
+ * WHY DEPTH IS THE CRITERION
+ *   The floor is derived from the pool's MARGINAL price. A trade that
+ *   pushes the pool cannot reach that floor and the conversion is refused.
+ *   It closes in the safe direction — no money is lost — but it has no
+ *   place on a suggestion list: suggesting something that will not work is
+ *   worse than suggesting nothing.
  *
- *   Bu bir vekil kalite kapısı DEĞİL. "Likiditesi şu eşiğin üstünde olsun"
- *   demiyor; "bu tutar bu havuzda dönüştürülebiliyor mu" diye soruyor —
- *   yani doğrudan yapılacak işin kendisini ölçüyor. Eşik yok, iş var.
+ *   This is NOT a proxy quality gate. It does not say "liquidity must be
+ *   above this threshold"; it asks "can this amount be converted in this
+ *   pool" — that is, it measures the job itself, directly. No threshold, a
+ *   job.
  *
- * EVREN NEREDEN GELİYOR
- *   Uniswap'in kendi açık token listesi (ücretsiz, anahtarsız) artı daha
- *   önce ölçülmüş adaylar. İkisi birleşiyor ki evren değişirken eskiden
- *   bulunmuş hiçbir varlık kaybolmasın. Ücretli hiçbir servis yok.
+ * WHERE THE UNIVERSE COMES FROM
+ *   Uniswap's own public token list (free, no key) plus candidates measured
+ *   earlier. The two are merged so that no asset found before gets lost as
+ *   the universe changes. There is no paid service anywhere in it.
  * =========================================================================== */
 const fs = require("fs");
 const path = require("path");

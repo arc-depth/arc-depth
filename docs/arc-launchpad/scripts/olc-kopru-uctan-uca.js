@@ -1,7 +1,7 @@
 "use strict";
 /* ===========================================================================
- * olc-kopru-uctan-uca.js — AŞAMA 4: giden bacağın tamamı, hiçbiri taklit
- *                          olmadan
+ * olc-kopru-uctan-uca.js — STAGE 4: the whole outbound leg, with nothing
+ *                          imitated
  *
  *   node scripts/olc-kopru-uctan-uca.js
  *

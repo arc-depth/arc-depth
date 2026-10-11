@@ -27,34 +27,34 @@
 
 export const GRUPLAR = [
   { anahtar: "piyasa", ad: "Piyasa" },
-  { anahtar: "varlik", ad: "Varlıklarım" },
-  { anahtar: "yonetisim", ad: "Yönetişim" },
-  { anahtar: "guven", ad: "Güven" }
+  { anahtar: "varlik", ad: "My assets" },
+  { anahtar: "yonetisim", ad: "Governance" },
+  { anahtar: "guven", ad: "Trust" }
 ];
 
 export const YOLLAR = [
   /* ---- market ----------------------------------------------------- */
   {
     yol: "kesfet",
-    ad: "Keşfet",
-    kisa: "Keşfet",
+    ad: "Discover",
+    kisa: "Discover",
     grup: "piyasa",
     ikon: "pusula",
     durum: "canli",
-    ozet: "Trend, yeni çıkan, en yüksek hacim, en çok yükselen ve yeni mezun olan tokenler.",
+    ozet: "Trending, newly launched, highest volume, biggest gainers and freshly graduated tokens.",
     /* Reads the launchpad registry for the token list and the PoolManager
        for prices. With no launchpad deployed the list is genuinely empty,
        and that is what it shows. */
-    kaynak: "launchpad kaydı + Uniswap v4 havuzları",
+    kaynak: "launchpad record + Uniswap v4 pools",
     sekme: true
   },
   {
     yol: "olustur",
-    ad: "Token Oluştur",
-    kisa: "Oluştur",
+    ad: "Create token",
+    kisa: "Create",
     grup: "piyasa",
     ikon: "arti",
-    /* CANLI, VE BU DA OLCULDU
+    /* LIVE, AND THIS WAS MEASURED TOO
          This said "dagitim" — deployment pending — while PulseLaunchpad
          was live, the form had a working submit and the page audit
          confirmed the address against the on-chain record. A working
@@ -64,123 +64,124 @@ export const YOLLAR = [
 
          kaynak also still named EgriLaunchpad, which is retired. */
     durum: "canli",
-    ozet: "İsim, sembol, teminat varlığı, vergi oranı ve kurucu ilk alımı.",
+    ozet: "Name, symbol, collateral asset, tax rate and the founder's first buy.",
     kaynak: "PulseLaunchpad.launch()",
     /* The form is real and the payment breakdown is computed from the
        contract's own constants, so it can be filled in and checked. It
        cannot be SUBMITTED until the launchpad exists. */
-    gerekli: "EgriLaunchpad ve EgriHook dağıtılmalı; kanca adresi 0xa44 ile bitecek şekilde kazılmalı",
+    gerekli: "EgriLaunchpad and EgriHook must be deployed, with the hook address mined to end in 0xa44",
     sekme: true
   },
   {
     yol: "terminal",
-    ad: "İşlem Terminali",
-    kisa: "İşlem",
+    ad: "Trading terminal",
+    kisa: "Trade",
     grup: "piyasa",
     ikon: "mum",
     durum: "canli",
-    ozet: "Mum grafiği, işlem geçmişi, al/sat paneli, holder dağılımı, teminat rezervi ve geri alım geçmişi.",
-    kaynak: "v4 Swap olayları + KopruKasasi + PulseHook olayları",
+    ozet: "Candles, trade history, buy/sell panel, holder distribution, collateral reserve and buyback history.",
+    kaynak: "v4 Swap events + KopruKasasi + PulseHook events",
     sekme: true,
     gizliRay: true          /* reached from a token, not from the rail */
   },
   {
     yol: "teminat",
-    ad: "Teminat Seçimi",
+    ad: "Collateral picker",
     grup: "piyasa",
     ikon: "kasa",
-    /* CANLI. Onerilen 50 olcumden uretildi; CA alani ise canli olarak yedi
-       zincirde en derin USDC havuzunu ariyor. Hicbiri dagitim beklemiyor:
-       okunan sey Uniswap, bizim sozlesmelerimiz degil. */
+    /* LIVE. The suggested 50 were generated from measurement; the CA field
+       searches seven chains live for the deepest USDC pool. Neither is
+       waiting on a deployment: what is read is Uniswap, not our own
+       contracts. */
     durum: "canli",
-    ozet: "Önerilen 50 varlık ya da kendi kontrat adresin — ikisi de aynı kontrolden geçer."
+    ozet: "Fifty suggested assets, or paste any contract address — both go through the same check."
   },
   {
     yol: "kasalar",
-    ad: "Teminat Kasaları",
+    ad: "Collateral vaults",
     grup: "piyasa",
     ikon: "kalkan",
     durum: "canli",
-    ozet: "Her tokenin rezervi, token başına hakkı, tabanın devreye girdiği fiyat ve geri alım geçmişi.",
+    ozet: "Each token's reserve, its claim per token, the price where the floor engages, and buyback history.",
     kaynak: "KopruKasasi.hak() / bakiye() / dolasim()"
   },
   {
     yol: "analitik",
-    ad: "Platform Analitiği",
+    ad: "Platform analytics",
     grup: "piyasa",
     ikon: "grafik",
     durum: "yapim",
-    ozet: "Toplam hacim, launch sayısı, toplanan ücretler, rezervlerin toplam büyüklüğü.",
-    gerekli: "Olay indeksleyici. Bu sayılar zincirde tek bir çağrıyla okunamıyor; Swap ve ücret olaylarını blok blok toplayan bir servis gerekiyor ve o servis henüz yok.",
+    ozet: "Total volume, launch count, fees collected, and the combined size of the reserves.",
+    gerekli: "An event indexer. These numbers cannot be read with one chain call; they need a service that walks Swap and fee events block by block, and that service does not exist yet.",
     eksik: [
-      "EgriHook'un ParaUcreti ve TokenUcreti olaylarını toplayan indeksleyici",
-      "Zaman serisi deposu (toplamları her istekte yeniden hesaplamak RPC kotasını bitirir)"
+      "An indexer that collects EgriHook's ParaUcreti and TokenUcreti events",
+      "A time-series store — recomputing the totals on every request would exhaust the RPC quota"
     ]
   },
 
   /* ---- holdings --------------------------------------------------- */
   {
     yol: "portfoy",
-    ad: "Portföy",
-    kisa: "Portföy",
+    ad: "Portfolio",
+    kisa: "Portfolio",
     grup: "varlik",
     ikon: "cuzdan",
     durum: "canli",
-    ozet: "Bağlı cüzdanın token bakiyeleri ve her birinin teminat hakkı.",
+    ozet: "The connected wallet's token balances and the collateral each one can claim.",
     kaynak: "balanceOf + KopruKasasi.hak()",
     sekme: true
   },
   {
     yol: "kar-zarar",
-    ad: "Kâr / Zarar",
+    ad: "Profit / Loss",
     grup: "varlik",
     ikon: "terazi",
     durum: "yapim",
-    ozet: "Pozisyon maliyeti, gerçekleşen ve gerçekleşmeyen kâr/zarar.",
-    gerekli: "Maliyet esası, cüzdanın geçmiş işlemlerinden çıkarılmak zorunda. Bu, indeksleyici olmadan yapılamaz — ve tahmine dayalı bir maliyet göstermek, yanlış bir kâr göstermek demektir.",
+    ozet: "Position cost, realised and unrealised profit and loss.",
+    gerekli: "Cost basis has to be derived from the wallet's past trades, which cannot be done without an indexer — and showing a guessed cost means showing a wrong profit.",
     eksik: [
-      "Cüzdan bazlı Swap olayı indeksleyici",
-      "Transferle gelen tokenin maliyetini nasıl sayacağımıza dair karar (hediye mi, alım mı)"
+      "A per-wallet Swap event indexer",
+      "A decision on how a token that arrived by transfer is costed — a gift, or a purchase"
     ]
   },
-  /* HOLDER ODULLERI KALDIRILDI — ve iki ayri yanlis beyandi
-       Kullanici holder odulunu iptal etti ("Holder ödülü vermicez"), ama
-       bu modul durum "dagitim" ile duruyordu: yani iptal edilmis bir
-       ozellik "yolda" olarak gosteriliyordu.
+  /* HOLDER REWARDS WERE REMOVED — and it was two separate false claims
+       The user cancelled the holder reward ("we are not giving a holder
+       reward"), but this module was still sitting there with the status
+       "dagitim": a cancelled feature was being shown as on its way.
 
-       Ikinci ve daha kotusu, ozeti su diyordu: "Her islemin %0,30'u token
-       sahiplerine dagitiliyor." O dilim artik GELISTIRICI HAVUZUNA
-       gidiyor ve DevPool'dan yalnizca FTHM DAO'su cikarabiliyor. Yani
-       sayfa, paranin nereye gittigi hakkinda yanlis sey soyluyordu.
+       The second and worse one: its summary said "0.30% of every trade is
+       distributed to token holders." That slice now goes to the DEVELOPER
+       POOL, and only the FTHM DAO can draw out of DevPool. So the page was
+       saying something false about where the money goes.
 
-       Modul kaldirildi; gorunum dosyasi da silindi, cunku birakilan bir
-       gorunum bir sonraki yonlendirici duzenlemesinde geri baglanabilir. */
-
+       The module was removed, and the view file deleted too, because a
+       view left behind can be wired back in by the next edit to the
+       router. */
   /* ---- developer ecosystem ---------------------------------------- */
   {
     yol: "pazar",
-    ad: "Geliştirici Pazarı",
+    ad: "Developer marketplace",
     kisa: "Pazar",
     grup: "piyasa",
     ikon: "terazi",
-    /* CANLI: Pazar Arc ana aginda ve bu ekran onu okuyor. Urun sayisi,
-       ucret orani ve gelir defteri dogrudan sozlesmeden geliyor; sifirlar
-       gercek. */
+    /* LIVE: Pazar is on Arc mainnet and this screen reads it. The product
+       count, the fee rate and the revenue ledger come straight from the
+       contract; the zeros are real. */
     durum: "canli",
-    ozet: "Dış geliştiricilerin ürünleri; ödeme USDC, hasılatın %80'i geliştiriciye.",
+    ozet: "Products from outside developers. Paid in USDC, 80% of revenue to the developer.",
     kaynak: "Pazar.urunler() / ortalamaPuan() / lisans() / platformKazanci()"
   },
   {
     yol: "gelistirici",
-    ad: "Geliştirici Portalı",
-    kisa: "Geliştirici",
+    ad: "Developer portal",
+    kisa: "Developers",
     grup: "varlik",
     ikon: "dis",
     /* Live: the developer-pool half reads the deployed DevPool and the
        deployed FTHM stake today, and tells the truth about why that
        money cannot move yet. Only the marketplace half is pending. */
     durum: "canli",
-    ozet: "İki kazanç yolu: pazarda ürün satmak ve geliştirici havuzundan DAO kararıyla ödeme.",
+    ozet: "Two ways to earn: sell a product on the marketplace, or be paid from the developer pool by a DAO vote.",
     kaynak: "DevPool bakiyesi + Stake.totalStaked() + Pazar defteri"
   },
 
@@ -190,62 +191,63 @@ export const YOLLAR = [
     ad: "Platform DAO",
     grup: "yonetisim",
     ikon: "meclis",
-    /* CANLI. Bu kayıt uzun süre "yapim" idi ve gerekçesi doğruydu: DAO'nun
-       NEYE karar verebileceği cevaplanmadan ekran yapmak, hiçbir şeye
-       bağlanmayan bir form olurdu.
+    /* LIVE. This entry was "yapim" for a long time and the reason was
+       sound: building a screen before answering WHAT the DAO can decide
+       would have been a form wired to nothing.
 
-       İki şey değişti ve ikisi de ölçüm:
+       Two things changed, and both are measurements:
 
-       1. Yönetişim sözleşmesi YAZILMAMIŞ değil, DAĞITILMIŞ.
-          0x20d2E53172D2BD4b010E90fa6ce8f09972343CeB üzerinde propose,
-          castVote, queue, execute, timelock, kota ve guardian var ve
-          hepsi cevap veriyor. proposalCount() sıfır — hiç kullanılmamış,
-          bozuk değil.
+       1. The governance contract is not UNWRITTEN but DEPLOYED.
+          0x20d2E53172D2BD4b010E90fa6ce8f09972343CeB has propose,
+          castVote, queue, execute, the timelock, the quorum and the
+          guardian, and all of them answer. proposalCount() is zero —
+          never used, not broken.
 
-       2. Yetki kümesi artık bir tasarım sorusu değil, bir ölçüm:
-          scripts/denetim-dao-erisimi.js teminat kasalarını, defteri,
-          ücret tablosunu, eğriyi ve kilitli likiditeyi tek tek okuyup
-          hiçbirinde yetkili rol ve ayarlayıcı olmadığını savlıyor. Geriye
-          kalan izinli küme iki konu: geliştirici fonu dağıtımı ve launch
-          menüsü küratörlüğü — ikisi de zincirde Governor'ı yetkili sayan
-          sözleşmelerden okunuyor. */
+       2. The set of powers is no longer a design question but a
+          measurement: scripts/denetim-dao-erisimi.js reads the collateral
+          vaults, the ledger, the fee table, the curve and the locked
+          liquidity one by one and asserts that in none of them is there an
+          authorised role or a setter. The permitted set that remains is two
+          subjects: paying out of the developer fund and curating the launch
+          menu — both read from the contracts that treat the Governor as
+          authorised on chain. */
     durum: "canli",
-    ozet: "Zincirde canlı yönetişim: teklif, oy, timelock ve uygulama.",
+    ozet: "Live on-chain governance: propose, vote, timelock, execute.",
     sekme: true
   },
   {
     yol: "teklifler",
-    ad: "Teklifler ve Oylama",
+    ad: "Proposals and voting",
     grup: "yonetisim",
     ikon: "oy",
-    /* CANLI ve gerçekten işlem gönderiyor: propose, castVote, queue,
-       execute. Her düğme o işlemin O AN geçerli olup olmadığına göre
-       basılıyor — ölçüldü, totalStaked() sıfır olduğu için teklif formu
-       şu an hiç basılmıyor ve yerine sebebi yazılıyor. Formu gösterip
-       işlemi zincirde reddettirmek, kullanıcıya gazını ödetip hiçbir şey
-       söylememek olurdu. */
+    /* LIVE and it really sends transactions: propose, castVote, queue,
+       execute. Each button is rendered according to whether that action is
+       valid RIGHT NOW — measured, and because totalStaked() is zero the
+       proposal form is not rendered at all right now; the reason is
+       printed instead. Showing the form and letting the chain refuse the
+       transaction would be charging the user gas to be told nothing. */
     durum: "canli",
-    ozet: "Teklif ver, oy kullan, kuyruğa al, uygula — hepsi zincirde."
+    ozet: "Propose, vote, queue, execute — all on chain."
   },
   {
     yol: "topluluk-dao",
-    ad: "Token DAO'ları",
+    ad: "Token DAOs",
     grup: "yonetisim",
     ikon: "insanlar",
     durum: "yapim",
-    ozet: "Her tokenin kendi topluluk yönetişimi, platform DAO'sundan ayrı.",
-    gerekli: "Platform DAO'suyla aynı sorun, bir de fazlası: bir token DAO'su kendi kasasına ya da vergisine dokunamaz — ikisi de kasıtlı olarak değiştirilemez. Yetki kümesi ayrıca tanımlanmalı.",
-    eksik: ["Token başına yönetişim sözleşmesi", "Topluluğun gerçekten karar verebileceği konular"]
+    ozet: "Each token's own community governance, separate from the platform DAO.",
+    gerekli: "The same problem as the platform DAO, plus one more: a token DAO cannot touch its own vault or its tax — both are deliberately immutable. The set of things it CAN decide has to be defined first.",
+    eksik: ["A governance contract per token", "Subjects the community can genuinely decide"]
   },
   {
     yol: "topluluk",
-    ad: "Topluluk Sayfaları",
+    ad: "Community pages",
     grup: "yonetisim",
     ikon: "sohbet",
     durum: "yapim",
-    ozet: "Token başına topluluk sayfası, bağlantılar ve duyurular.",
-    gerekli: "Zincir dışı içerik deposu. Zincire yazılmayan bir metnin nerede durduğu ve kimin değiştirebildiği cevaplanmalı.",
-    eksik: ["İçerik deposu", "Kimin yazabileceğine dair yetki kuralı", "Kötüye kullanım politikası"]
+    ozet: "A community page per token: links and announcements.",
+    gerekli: "An off-chain content store. Where text that is not written to the chain lives, and who may change it, has to be answered first.",
+    eksik: ["A content store", "A rule for who may write", "An abuse policy"]
   },
   {
     yol: "liderlik",
@@ -253,9 +255,9 @@ export const YOLLAR = [
     grup: "yonetisim",
     ikon: "kupa",
     durum: "yapim",
-    ozet: "En iyi kurucular, en iyi işlemciler, en çok geri alım tetikleyenler.",
-    gerekli: "İndeksleyici. Sıralama, geçmiş işlemlerin toplamıdır ve o toplam bir yerde tutulmadan her sayfa açılışında hesaplanamaz.",
-    eksik: ["Olay indeksleyici", "Sıralama ölçütünün manipüle edilemez tanımı"]
+    ozet: "Top founders, top traders, and who triggered the most buybacks.",
+    gerekli: "An indexer. A ranking is a sum over past trades, and that sum cannot be recomputed on every page load.",
+    eksik: ["An event indexer", "A ranking rule that cannot be gamed"]
   },
 
   /* ---- trust ------------------------------------------------------- */
@@ -265,43 +267,43 @@ export const YOLLAR = [
     grup: "guven",
     ikon: "kalkan-artis",
     durum: "canli",
-    ozet: "Blok başına birikimli satış eşiği, uygulanan ek oran ve kalkanın kasaya aktardığı tutar.",
+    ozet: "The per-block cumulative sell threshold, the extra rate applied, and what the shield moves into the vault.",
     /* The event is SavunmaAcildi on this hook; KalkanCalisti was the
        previous generation's name and no such event exists to listen for. */
-    kaynak: "PulseHook.pencere() + SavunmaAcildi / SnipeKesildi olayları"
+    kaynak: "PulseHook.pencere() + SavunmaAcildi / SnipeKesildi events"
   },
   {
     yol: "zincirler",
-    ad: "Çok Zincirli Teminat",
+    ad: "Cross-chain collateral",
     grup: "guven",
     ikon: "zincir",
     durum: "canli",
-    ozet: "Teminat olabilen varlıklar, hangi köprüyle Arc'a geldikleri ve hangi rotaların gerçekten açık olduğu.",
+    ozet: "Which assets can back a token, which bridge carries them to Arc, and which routes are actually open.",
     /* This one is live precisely because the honest answer is a
        measurement: which routes exist, which do not, and which carry what. */
     /* Chainlink is no longer a gate — the user removed the requirement
-       that a collateral target have a feed ("sadece çalışan tüm adayları
-       koy"). A feed is still consulted where one exists, as the stricter
+       that a collateral target have a feed ("just put in every candidate
+       that works"). A feed is still consulted where one exists, as the stricter
        of the two prices, but it does not decide what may be collateral. */
-    kaynak: "CCTP v2 zincir okuması + CrossChainAssetRegistry"
+    kaynak: "CCTP v2 chain reads + CrossChainAssetRegistry"
   },
   {
     yol: "guvenlik",
-    ad: "Güvenlik ve Doğrulama",
+    ad: "Security and verification",
     grup: "guven",
     ikon: "kilit",
     durum: "canli",
-    ozet: "Sözleşme adresleri, opcode taraması, kasadan çıkış yolları ve koşan denetimlerin sonucu.",
-    kaynak: "ADRESLER.md + denetim betiklerinin çıktısı"
+    ozet: "Contract addresses, the opcode scan, every way out of the vault, and the result of the audits that run.",
+    kaynak: "the deployment records + the audit scripts' output"
   },
   {
     yol: "dokuman",
-    ad: "Dokümantasyon",
+    ad: "Documentation",
     grup: "guven",
     ikon: "kitap",
     durum: "canli",
-    ozet: "Sistem nasıl çalışıyor: launch, ücretler, taban, kalkan, mezuniyet.",
-    kaynak: "ölçülmüş sayılar"
+    ozet: "How the system works: launching, fees, the floor, the shield, graduation.",
+    kaynak: "measured numbers"
   }
 ];
 

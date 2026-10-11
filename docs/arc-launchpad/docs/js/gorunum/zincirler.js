@@ -23,10 +23,10 @@ import { para } from "../bicim.js";
 const CCIP_HATLAR = [
   { ad: "Ethereum", tasir: "LINK, syrupUSDC" },
   { ad: "Base", tasir: "VIRTUAL" },
-  { ad: "Polygon", tasir: "yalnızca mesaj" },
+  { ad: "Polygon", tasir: "messages only" },
   { ad: "Solana", tasir: "PST" },
-  { ad: "0G", tasir: "yalnızca mesaj" },
-  { ad: "Tempo", tasir: "yalnızca mesaj" }
+  { ad: "0G", tasir: "messages only" },
+  { ad: "Tempo", tasir: "messages only" }
 ];
 
 const CCTP_DOMAINLER = [
@@ -40,26 +40,26 @@ const CCTP_DOMAINLER = [
    finality modes, which is unusual and worth showing rather than
    rounding away. */
 const HIZ = [
-  { yol: "Base → Arc", hizli: "0,325 bps", standart: "ücretsiz" },
-  { yol: "Ethereum → Arc", hizli: "0,25 bps", standart: "ücretsiz" },
-  { yol: "Solana → Arc", hizli: "0,25 bps", standart: "ücretsiz" },
-  { yol: "Polygon → Arc", hizli: "ücretsiz", standart: "ücretsiz" },
-  { yol: "Arc → Base", hizli: "ücretsiz", standart: "ücretsiz" },
-  { yol: "Arc → Ethereum", hizli: "ücretsiz", standart: "ücretsiz" }
+  { yol: "Base → Arc", hizli: "0.325 bps", standart: "free" },
+  { yol: "Ethereum → Arc", hizli: "0.25 bps", standart: "free" },
+  { yol: "Solana → Arc", hizli: "0.25 bps", standart: "free" },
+  { yol: "Polygon → Arc", hizli: "free", standart: "free" },
+  { yol: "Arc → Base", hizli: "free", standart: "free" },
+  { yol: "Arc → Ethereum", hizli: "free", standart: "free" }
 ];
 
 function hizTablosu() {
   const t = el("table", { sinif: "tablo tablo--kart" });
   t.append(el("thead", {}, [el("tr", {}, [
     el("th", { yazi: "Yol" }),
-    el("th", { yazi: "Hızlı (~saniyeler)" }),
+    el("th", { yazi: "Fast (~seconds)" }),
     el("th", { yazi: "Standart" })
   ])]));
   const g = el("tbody");
   for (const h of HIZ) {
     g.append(el("tr", {}, [
       el("td", { attr: { "data-et": "Yol" }, yazi: h.yol }),
-      el("td", { sinif: "sayi", attr: { "data-et": "Hızlı" }, yazi: h.hizli }),
+      el("td", { sinif: "sayi", attr: { "data-et": "Fast" }, yazi: h.hizli }),
       el("td", { sinif: "sayi", attr: { "data-et": "Standart" }, yazi: h.standart })
     ]));
   }
@@ -69,18 +69,19 @@ function hizTablosu() {
 
 export async function ciz() {
   const kap = el("div", { sinif: "yigin" });
-  kap.append(sayfaUst("Çok zincirli teminat",
-    "Hangi rotalar gerçekten açık, hangileri değil"));
+  kap.append(sayfaUst("Cross-chain collateral",
+    "Which routes are genuinely open, and which are not"));
 
   kap.append(not(
-    "Teminat GİRİŞİ 25 zincirden açık ve bugün çalışıyor. ÇIKIŞ yok ve " +
-    "yapılmayacak: kasadan varlık çıkaran dört yolun hepsi msg.sender'a " +
-    "ödüyor, hiçbirinde hedef argümanı yok. Başka zincire teminat " +
-    "göndermek çağıranın hedef verdiği bir fonksiyon gerektirir ve o " +
-    "fonksiyonun adı ne olursa olsun withdraw'dır. Ayrıca CCTP kaynakta " +
-    "yakıp hedefte bastığı için arada kasanın bakiyesi düşmüş olur — " +
-    "Fast Transfer o pencereyi saniyelere indiriyor ama sıfıra " +
-    "indirmiyor, ve hak her an tam olmak zorunda.",
+    "Collateral can COME IN from 25 chains and that works today. There " +
+    "is no way OUT and there will not be: all four ways an asset leaves " +
+    "the vault pay msg.sender, and none of them takes a destination. " +
+    "Sending collateral to another chain would need a function where the " +
+    "caller names the destination, and whatever that function is called, " +
+    "it is a withdraw. On top of that CCTP burns at the source and mints " +
+    "at the target, so the vault's balance would be short in between — " +
+    "Fast Transfer shrinks that window to seconds but not to zero, and " +
+    "the claim has to be whole at every moment.",
     "uyari"
   ));
 
@@ -88,20 +89,20 @@ export async function ciz() {
   const fiyatlar = await Promise.all(TEMINAT_EVRENI.map((t) => besleyiciFiyat(t.besleyici, 8)));
   const tablo = el("table", { sinif: "tablo tablo--kart" });
   tablo.append(el("thead", {}, [el("tr", {}, [
-    el("th", { yazi: "Varlık" }), el("th", { yazi: "Fiyat" }),
-    el("th", { yazi: "Ondalık" }), el("th", { yazi: "Besleyici" })
+    el("th", { yazi: "Asset" }), el("th", { yazi: "Price" }),
+    el("th", { yazi: "Decimals" }), el("th", { yazi: "Feed" })
   ])]));
   const govde = el("tbody");
   for (let i = 0; i < TEMINAT_EVRENI.length; i++) {
     const t = TEMINAT_EVRENI[i], f = fiyatlar[i];
     govde.append(el("tr", {}, [
-      el("td", { attr: { "data-et": "Varlık" } }, [
+      el("td", { attr: { "data-et": "Asset" } }, [
         el("strong", { yazi: t.sembol }),
         el("div", { sinif: "ucuncul", yazi: t.ad })
       ]),
       el("td", { sinif: "sayi", attr: { "data-et": "Fiyat" },
-        yazi: f ? para(f.fiyat, { kisalt: f.fiyat > 1000 }) : "okunamadı" }),
-      el("td", { sinif: "sayi", attr: { "data-et": "Ondalık" }, yazi: String(t.ondalik) }),
+        yazi: f ? para(f.fiyat, { kisalt: f.fiyat > 1000 }) : "unreadable" }),
+      el("td", { sinif: "sayi", attr: { "data-et": "Decimals" }, yazi: String(t.ondalik) }),
       el("td", { attr: { "data-et": "Besleyici" } },
         [el("span", { sinif: "mono ucuncul", yazi: t.besleyiciAdi })])
     ]));
@@ -109,66 +110,67 @@ export async function ciz() {
   tablo.append(govde);
   kap.append(panel([
     el("span", { html: ikon("kalkan", "yol-oge__ikon") }),
-    el("span", { yazi: "Teminat olabilen varlıklar" })
+    el("span", { yazi: "Assets that can back a token" })
   ], el("div", { sinif: "tablo-sarmal" }, [tablo])));
 
-  kap.append(panel("Karşılık doğrulaması", [
+  kap.append(panel("Proof of reserve", [
     el("div", { sinif: "ikincil" }, [
       el("p", { yazi:
-        "Sarmalanmış bir teminat varlığının karşılığı olup olmadığı ayrı " +
-        "bir sorudur. cirBTC'nin Arc'ta Chainlink Proof-of-Reserve " +
-        "besleyicisi var ve ölçüldü: 6.170,82 BTC rezerve karşı 5.297,68 " +
-        "cirBTC arzı — %16,48 fazla karşılık, yani açık yok." }),
+        "Whether a wrapped collateral asset is actually backed is a " +
+        "separate question. cirBTC has a Chainlink Proof-of-Reserve feed " +
+        "on Arc and it was measured: 6,170.82 BTC in reserve against a " +
+        "5,297.68 cirBTC supply — 16.48% over-collateralised, so no gap." }),
       el("p", { attr: { style: "margin-top:10px" }, yazi:
-        "Beş teminat varlığından yalnızca cirBTC'de böyle bir besleyici " +
-        "var. Sözleşmede zorunluluk haline getirilmedi: tek varlığa özel " +
-        "kural, \"bütün teminat varlıkları aynı kurallarla işler\" " +
-        "tasarımını bozardı. Bilgi olarak burada duruyor." })
+        "Of the five collateral assets only cirBTC has such a feed. It " +
+        "was not made a requirement in the contract: a rule written for " +
+        "one asset would break the design where every collateral asset " +
+        "runs by the same rules. It stands here as information." })
     ])
   ]));
 
   kap.append(not(
-    "DOGE, XLM, HBAR, ADA ve DOT Arc'ta fiyatlanmıyor — Chainlink " +
-    "besleyicisi yok, dolayısıyla teminat olamazlar. Fiyatı olup Arc'ta " +
-    "tokeni doğrulanmamış varlıklar da listede yok: fiyat bir varlık değil.",
+    "DOGE, XLM, HBAR, ADA and DOT are not priced on Arc — no Chainlink " +
+    "feed, so they cannot be collateral. Assets that have a price but no " +
+    "verified token on Arc are not listed either: a price is not an asset.",
     "bilgi"
   ));
 
   /* ---- the routes --------------------------------------------------- */
   const izgara = el("div", { sinif: "izgara izgara--olcum" });
-  izgara.append(olcum("CCIP hattı", String(CCIP_HATLAR.length), "Arc'tan çıkan, iki yönlü"));
-  izgara.append(olcum("CCIP + USDC", "yok", "hiçbir hat USDC taşımıyor"));
-  izgara.append(olcum("CCTP domain", "26", "Arc'ın kendi domain kimliği"));
-  izgara.append(olcum("CCTP bağlantısı", "~" + CCTP_DOMAINLER.length, "native USDC yakma/basma"));
+  izgara.append(olcum("CCIP lanes", String(CCIP_HATLAR.length), "out of Arc, both directions"));
+  izgara.append(olcum("CCIP + USDC", "none", "no lane carries USDC"));
+  izgara.append(olcum("CCTP domain", "26", "Arc's own domain id"));
+  izgara.append(olcum("CCTP links", "~" + CCTP_DOMAINLER.length, "native USDC burn and mint"));
   kap.append(izgara);
 
   const hatlar = el("div", { sinif: "yigin yigin--sik" });
   for (const h of CCIP_HATLAR) {
-    const mesajMi = h.tasir === "yalnızca mesaj";
+    const mesajMi = h.tasir === "messages only";
     hatlar.append(el("div", { sinif: "satir satir--arasi" }, [
       el("strong", { yazi: "Arc ↔ " + h.ad }),
       el("span", { sinif: "etiket " + (mesajMi ? "" : "etiket--bilgi"), yazi: h.tasir })
     ]));
   }
-  kap.append(panel("CCIP — mesaj hattı, değer hattı değil", [
+  kap.append(panel("CCIP — a message lane, not a value lane", [
     hatlar,
     el("div", { sinif: "ikincil", attr: { style: "margin-top:12px" }, yazi:
-      "Router 0xB797…3A18, zincirde 10.761 bayt kod. Ücret LINK ya da USDC " +
-      "ile ödenebiliyor. Ama hatların taşıdığı token listesi ölçüldü ve " +
-      "USDC hiçbirinde yok — yani CCIP bu projede teminat taşıyamaz." })
+      "Router 0xB797…3A18, 10,761 bytes of code on chain. The fee can " +
+      "be paid in LINK or in USDC. But the token list each lane carries " +
+      "was measured and USDC is on none of them — so CCIP cannot carry " +
+      "collateral in this project." })
   ]));
 
-  kap.append(panel("CCTP v2 — USDC'nin tek gerçek yolu", [
+  kap.append(panel("CCTP v2 — the only real path for USDC", [
     el("div", { sinif: "ikincil" }, [
       el("p", { yazi:
-        "TokenMessengerV2, MessageTransmitterV2 ve TokenMinterV2 Arc'ta " +
-        "dağıtılmış ve localDomain() 26 cevap veriyor. Circle'ın kendi " +
-        "yakma/basma yolu — üçüncü taraf köprü riski yok." }),
+        "TokenMessengerV2, MessageTransmitterV2 and TokenMinterV2 are " +
+        "deployed on Arc and localDomain() answers 26. Circle's own burn " +
+        "and mint path — no third-party bridge risk." }),
       el("p", { attr: { style: "margin-top:10px" }, yazi:
-        "Arc'ın token eşleştirme olayları tarandı: CCTP burada TEK bir " +
-        "token basabiliyor, USDC, ve 25 ayrı zincirden. Başka hiçbir varlık " +
-        "eşleştirilmemiş. Circle'ın \"CCTP for non-USDC\" ürünü var ama " +
-        "ihraççının mint yetkisi vermesini gerektiriyor ve Arc'ta kurulu değil." })
+        "Arc's token-pairing events were scanned: CCTP can mint exactly " +
+        "ONE token here, USDC, from 25 separate chains. No other asset is " +
+        "paired. Circle has a \"CCTP for non-USDC\" product but it needs " +
+        "the issuer to grant mint authority, and it is not set up on Arc." })
     ]),
     el("div", { sinif: "satir", attr: { style: "margin-top:12px" } },
       CCTP_DOMAINLER.map((d) => el("span", { sinif: "etiket", yazi: d }))),
@@ -177,33 +179,34 @@ export async function ciz() {
 
   /* The finding the whole design rests on, and the one that reverses the
      usual conclusion: inflow is already live. */
-  kap.append(panel("Zincirler arası teminat GİRİŞİ — bugün çalışıyor", [
+  kap.append(panel("Collateral COMING IN across chains — working today", [
     el("div", { sinif: "ikincil" }, [
       el("p", { yazi:
-        "CCTP bir mint yaparken hiçbir şey çağırmaz — parayı alıcısına basar. " +
-        "Kasa da mevduat takip etmiyor, BAKİYESİNİ sayıyor. İkisi birleşince: " +
-        "25 zincirden herhangi birinden bir kasanın adresine gönderilen USDC, " +
-        "sıfır yeni kodla o tokenin tabanına ekleniyor." }),
+        "A CCTP mint calls nothing — it mints the money straight to the " +
+        "recipient. And the vault does not track deposits, it counts its " +
+        "BALANCE. Put together: USDC sent to a vault's address from any " +
+        "of 25 chains is added to that token's floor with zero new code." }),
       el("p", { attr: { style: "margin-top:10px" }, yazi:
-        "Ölçüldü: besle() hiç çağrılmadan gönderilen 250 dolar kasanın " +
-        "bakiyesini, hak/token değerini ve sepet değerini tam 250 dolar " +
-        "artırdı. Yeni güven varsayımı da yok, çünkü kasa bu yolda kimseye " +
-        "bir şey göndermiyor." })
+        "Measured: $250 sent without besle() ever being called raised " +
+        "the vault's balance, the claim per token and the basket value by " +
+        "exactly $250. There is no new trust assumption either, because " +
+        "on this path the vault sends nobody anything." })
     ]),
     el("div", { sinif: "not not--uyari", attr: { style: "margin-top:12px" }, yazi:
-      "Yalnızca o kasanın SEPETİNDEKİ varlık için geçerli. Sepette " +
-      "olmayan bir varlık kasaya gönderilirse iade onu dağıtmaz ve sepet " +
-      "değeri onu saymaz — orada kalır ve çıkarılamaz." })
+      "This holds only for an asset that is IN that vault's basket. An " +
+      "asset outside the basket that is sent to the vault is not " +
+      "distributed by a redemption and is not counted in the basket " +
+      "value — it stays there and cannot be taken out." })
   ]));
 
   kap.append(panel("Arc ↔ Robinhood Chain", [
     el("div", { sinif: "ikincil", yazi:
-      "İkisi de CCIP'de (Arc 5042, RHC 4663) ama aralarında doğrudan hat " +
-      "yok. Buna karşılık Ethereum üzerinden dört bacağın da, Base " +
-      "üzerinden dört bacağın da yapılandırılmış olduğu ölçüldü — yani iki " +
-      "hopla güvenilmeyen bir mesaj yolu bugün mevcut." }),
+      "Both are on CCIP (Arc 5042, RHC 4663) but there is no direct " +
+      "lane between them. All four legs through Ethereum and all four " +
+      "through Base were measured as configured, so a trustless " +
+      "two-hop message path exists today." }),
     el("div", { sinif: "not", attr: { style: "margin-top:12px" }, yazi:
-      "Kurulmadı. Koşmadığımız bir rotayı çalışıyor gibi göstermiyoruz." })
+      "Not built. A route we have not run is not shown as working." })
   ]));
 
   return kap;

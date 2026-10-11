@@ -1,25 +1,27 @@
 "use strict";
 /* ===========================================================================
- * olc-pulse-acici.js — iki taraflı yerleştirme gerçekten iniyor mu
+ * olc-pulse-acici.js — does the two-sided placement really land
  *
  *   node scripts/olc-pulse-acici.js
  *
- * NEDEN BU ÖLÇÜM ÖNCE GELİYOR
- *   Yeni launchpad'in tamamı tek bir iddianın üstünde: havuz AÇILIŞ
- *   FİYATINDA açılabilir ve her iki taraf da istenen miktarda inebilir.
- *   Önceki nesilde iki şekil denendi, ikisi de olmadı — ve biri sessizce:
+ * WHY THIS MEASUREMENT COMES FIRST
+ *   The whole of the new launchpad rests on a single claim: the pool can be
+ *   opened AT THE OPENING PRICE and both sides can land in the intended
+ *   amounts. Two shapes were tried in the previous generation, neither
+ *   worked — and one of them silently:
  *
- *     tek yönlü merdiven      USDC'nin gidecek yeri yok, delta $0,00,
- *                             açılış BAŞARILI göründü
- *     fiyatı kapsayan pozisyon miktarları kabul etmedi
+ *     a one-sided ladder       the USDC had nowhere to go, delta $0.00, and
+ *                              the opening looked SUCCESSFUL
+ *     a position spanning      it refused the amounts
+ *     the price
  *
- *   Bu yüzden burada "açıldı mı" sorulmuyor. Sorulan şey: harness'tan
- *   gerçekten ÇIKTI mı, PoolManager'a GİRDİ mi, fiyat istenen yerde
- *   KALDI mı, ve o likiditeyle işlem YAPILABİLİYOR mu.
+ *   So the question here is not "did it open". The questions are: did it
+ *   really LEAVE the harness, did it GO INTO the PoolManager, did the price
+ *   STAY where it was asked to, and can that liquidity BE TRADED against.
  *
- * GERÇEK ARC, GERÇEK PoolManager, SIFIR HARCAMA
- *   Harness `eth_call` durum geçersiz kılmasıyla enjekte ediliyor ve
- *   bakiyesi override'dan geliyor. Zincire tek bayt yazılmıyor.
+ * THE REAL ARC, THE REAL PoolManager, ZERO SPEND
+ *   The harness is injected with an `eth_call` state override and its
+ *   balance comes from the override. Not one byte is written to the chain.
  * =========================================================================== */
 const fs = require("fs");
 const path = require("path");
@@ -238,7 +240,7 @@ const tickFiyat = (tick, tokenSifirinci) => {
         "degil USDC sozlesmesinden okundu");
 
     /* 4 — what the interface will show must be the real figure. "Sanal
-       likidite gerçek USDC gibi gösterilmeyecek" is only keepable if
+       liquidity will not be shown as if it were real USDC" is only keepable if
        there is a true number to read. */
     const bildirilen = V(s.bildirilenQuote);
     const sapma = bildirilen > quoteGitti

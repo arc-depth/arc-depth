@@ -1,33 +1,34 @@
 "use strict";
 /* ===========================================================================
- * olc-varis-zinciri.js — AŞAMA 5-10: varış tarafı, DOĞRULANMIŞ HER ZİNCİRDE
+ * olc-varis-zinciri.js — STAGES 5-10: the arrival side, ON EVERY VERIFIED
+ *                        CHAIN
  *
  *   anvil --fork-url https://ethereum-rpc.publicnode.com   --port 8546 --silent
  *   anvil --fork-url https://base-rpc.publicnode.com       --port 8547 --silent
  *   node scripts/olc-varis-zinciri.js
  *
- * NEDEN TEK BETİK, ZİNCİR BAŞINA BİR TANE DEĞİL
- *   İlk hali yalnızca Ethereum içindi ve her adres bir sabitti. İkinci
- *   zincire kopyalayarak geçmek, aynı sözleşme yollarını sınayan iki dosya
- *   üretirdi — kopyalanıp kimsenin karşılaştırmadığı bir test, ücret
- *   tablosunun haftalarca kendisiyle uyuşurken aritmetiğin her satışta
- *   taşmasının tam olarak yoludur.
+ * WHY ONE SCRIPT AND NOT ONE PER CHAIN
+ *   The first version was for Ethereum only and every address was a
+ *   constant. Moving to a second chain by copying would have produced two
+ *   files exercising the same contract paths — a test copied and never
+ *   compared is exactly how a fee table agrees with itself for weeks while
+ *   the arithmetic overflows on every sale.
  *
- *   Bu yüzden zincir bir parametre. Aynı yığın Ethereum ve Base'e karşı
- *   koşuyor ve kanıtladığı şey eskisinden güçlü: "tasarım Ethereum'da
- *   çalışıyor" değil, "tasarım hangi zincirde olduğunu bilmiyor". Üçüncü
- *   bir zincir için burada bir satır kod gerekirse, o bir bulgudur.
+ *   So the chain is a parameter. The same stack runs against Ethereum and
+ *   Base, and what it proves is stronger than before: not "the design works
+ *   on Ethereum" but "the design does not know which chain it is on". If a
+ *   third chain needs a line of code here, that is a finding.
  *
- * ZİNCİR BAŞINA ÖLÇÜLMÜŞ OLANLAR
- *   CCTP v2'nin üç sözleşmesi Arc, Ethereum ve Base'de BİREBİR AYNI
- *   adreslerde ve aynı bayt boyutlarında. `localDomain()` sırasıyla 26, 0
- *   ve 6 cevaplıyor. SwapRouter02 ve UniswapV3Factory iki zincirde de
- *   24.497 ve 24.535 bayt.
+ * WHAT WAS MEASURED PER CHAIN
+ *   CCTP v2's three contracts are at the SAME addresses on Arc, Ethereum
+ *   and Base, with the same byte sizes. `localDomain()` answers 26, 0 and 6
+ *   respectively. SwapRouter02 and UniswapV3Factory are 24,497 and 24,535
+ *   bytes on both chains.
  *
- *   Besleyici yaşı ise zincire göre uçurum kadar farklı: Ethereum'da
- *   ETH/USD 3.552 saniye, Base'de 4 saniye güncellenmemişti. Tek bir
- *   tazelik sabiti Ethereum'u reddederdi. Pencere besleyici başına, ve bu
- *   iki bağımsız ölçümün sonucu.
+ *   Feed age, on the other hand, differs by a chasm between chains: ETH/USD
+ *   had gone 3,552 seconds without an update on Ethereum and 4 seconds on
+ *   Base. A single freshness constant would reject Ethereum. The window is
+ *   per feed, and that is the result of these two independent measurements.
  * =========================================================================== */
 const { Interface, keccak256, AbiCoder } = require("ethers");
 const fs = require("fs");

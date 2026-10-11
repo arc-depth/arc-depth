@@ -1,46 +1,51 @@
 "use strict";
 /* ===========================================================================
- * denetim-kasa-cikislari.js — her kasadan varlık kaç yoldan ve NEREYE
- *                             çıkabilir
+ * denetim-kasa-cikislari.js — how many ways can value leave each vault,
+ *                             and WHERE to
  *
  *   node scripts/denetim-kasa-cikislari.js
  *
- * NEDEN ÖNEMLİ OLAN DENETİM BU
- *   Kasaların diğer bütün özellikleri aritmetiktir ve aritmetik başka
- *   yerde ölçülüyor. Bu denetim yapısal: güvenlik savının tamamı, rezervi
- *   kimsenin bir yere yönlendireMEmesine dayanıyor. "Yönlendirmemeli"
- *   değil — yönlendiremez, çünkü çıkış listesi kısa, kapalı ve her
- *   kaleminin alıcısı adlandırılmış.
+ * WHY THIS IS THE AUDIT THAT MATTERS
+ *   Every other property of the vaults is arithmetic, and the arithmetic
+ *   is measured elsewhere. This audit is structural: the entire safety
+ *   claim rests on nobody being able to redirect the reserve anywhere.
+ *   Not "should not redirect" — CANNOT, because the list of exits is
+ *   short, closed, and every line on it names its recipient.
  *
- * ÜÇ KASA, ÜÇ FARKLI KURAL — VE BU BİR GEVŞEME DEĞİL
- *   Eskiden tek bir kural vardı: "her çıkış msg.sender'a". Artık üç kasa
- *   var ve ikisi o kuralı birebir sağlayamıyor. Kuralı gevşetip "hepsi
- *   tamam" demek kolay olurdu; bunun yerine her kasanın kuralı ayrı
- *   yazılı ve neden o kadar gerektiği gerekçeli:
+ * THREE VAULTS, THREE DIFFERENT RULES — AND THAT IS NOT A RELAXATION
+ *   There used to be one rule: "every exit goes to msg.sender". There are
+ *   three vaults now and two of them cannot satisfy it literally. Loosening
+ *   the rule and declaring everything fine would have been easy; instead
+ *   each vault's rule is written down separately, with why it has to be
+ *   that wide:
  *
- *     TeminatKasasi          her çıkış msg.sender'a. Hedef argümanı yok.
- *     KopruKasasi            msg.sender, ya da ÖNCEKİ bir iadenin deftere
- *                            yazdığı adres. İkincisi, kuyruğu başkasının
- *                            da kapatabilmesi için gerekiyor ve o adres
- *                            hiçbir çağrının parametresi değil.
- *     RemoteCollateralVault  msg.sender, ya da çağıranın verdiği ÖDÜNÇ
- *                            ALAN adresi. Burada koruma adres değil
- *                            SONUÇ: kasa kendi tabanını besleyiciden
- *                            türetiyor ve altında kalırsa işlem dönüyor.
+ *     TeminatKasasi          every exit to msg.sender. No target argument.
+ *     KopruKasasi            msg.sender, or an address a PREVIOUS refund
+ *                            wrote into the ledger. The second one is
+ *                            needed so somebody else can close the queue,
+ *                            and that address is not a parameter of any
+ *                            call.
+ *     RemoteCollateralVault  msg.sender, or the BORROWER address the
+ *                            caller supplies. The protection here is not
+ *                            an address but an OUTCOME: the vault derives
+ *                            its own floor from the feed and the call
+ *                            reverts if it would fall below it.
  *
- *   Üçüncüsü ölçülerek kanıtlandı. Taban çağıranın parametresiyken düşman
- *   bir yürütücü $2.000,00 ödünç alıp $1.999,00 tutmuştu — %99,94 kayıp.
- *   Şimdi `TabanAltinda` ile dönüyor ve aynı çağrı sıfır götürüyor.
+ *   The third was proved by measurement. While the floor was the caller's
+ *   parameter, a hostile executor borrowed $2,000.00 and kept $1,999.00 —
+ *   a 99.94% loss. Now it reverts with `TabanAltinda` and the same call
+ *   takes away zero.
  *
- * KÖPRÜ SORUSU ARTIK AÇIK DEĞİL
- *   Bu dosya eskiden "başka zincire teminat göndermek withdraw'dır, o
- *   yüzden yapılmıyor" diyordu. Doğru olan kısım duruyor: ÇAĞIRANIN HEDEF
- *   VERDİĞİ bir fonksiyon withdraw'dır. Çözüm, hedefi çağırandan almamak
- *   oldu — uzak kasanın adresi CREATE2 ile türetiliyor, parayı tutan
- *   sözleşme onu bağımsız olarak bir kez daha türetiyor ve uyuşmazsa
- *   dönüyor. Uçuş sırasında hakkın düşmesi de ayrı olarak kapandı: üç
- *   kovalı defter yoldaki tutarı saymaya devam ediyor ve ölçüldü — hak
- *   dört durum değişikliği boyunca birebir sabit kaldı.
+ * THE BRIDGE QUESTION IS NO LONGER OPEN
+ *   This file used to say "sending collateral to another chain is a
+ *   withdraw, so it is not done". The part that was right still stands: a
+ *   function WHOSE TARGET THE CALLER SUPPLIES is a withdraw. The answer
+ *   was to stop taking the target from the caller — the remote vault's
+ *   address is derived with CREATE2, the contract holding the money
+ *   derives it independently a second time, and reverts if they disagree.
+ *   The claim dropping while funds are in flight was closed separately:
+ *   a three-bucket ledger keeps counting the in-flight amount, and it was
+ *   measured — the claim stayed identical across four state changes.
  * =========================================================================== */
 const fs = require("fs");
 const path = require("path");

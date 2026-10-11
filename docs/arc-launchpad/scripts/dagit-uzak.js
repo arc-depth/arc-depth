@@ -1,43 +1,47 @@
 "use strict";
 /* ===========================================================================
- * dagit-uzak.js — uzak zincirlerdeki fabrikalar: önce kuru, sonra gerçek
+ * dagit-uzak.js — the factories on the remote chains: dry first, then real
  *
- *   node scripts/dagit-uzak.js                    # KURU, iki zincir
- *   node scripts/dagit-uzak.js --zincir ethereum  # tek zincir
- *   node scripts/dagit-uzak.js --uygula           # gerçek işlem, gerçek ETH
+ *   node scripts/dagit-uzak.js                    # DRY, both chains
+ *   node scripts/dagit-uzak.js --zincir ethereum  # a single chain
+ *   node scripts/dagit-uzak.js --uygula           # a real transaction, real ETH
  *
- * NEDEN BU ARC'TAN ÖNCE
- *   Arc'taki `CrossChainAssetRegistry` zincir kümesini KURUCUDA sabitliyor —
- *   `addChain` yok, çünkü zincir ekleyebilen bir anahtar, "fabrikası" kendi
- *   elinde olan bir zincir ekleyebilir. Yani Arc dağıtılırken uzak fabrika
- *   adresleri zaten bilinmek zorunda.
+ * WHY THIS COMES BEFORE ARC
+ *   Arc's `CrossChainAssetRegistry` fixes the set of chains IN ITS
+ *   CONSTRUCTOR — there is no `addChain`, because a key that can add a
+ *   chain can add a chain whose "factory" it holds itself. So the remote
+ *   factory addresses have to be known already when Arc is deployed.
  *
- *   İki yol var ve biri tehlikeli:
+ *   There are two ways to do that and one of them is dangerous:
  *
- *     TAHMİN ET   fabrika = CREATE(dağıtıcı, nonce). Ölçüldü: Ethereum'da
- *                 nonce 0, Base'de 1. Ama o cüzdan o zincirde arada BAŞKA
- *                 bir işlem gönderirse nonce kayar, tahmin bozulur ve Arc'ın
- *                 değiştirilemez kaydı kalıcı olarak boş bir adrese bakar.
+ *     PREDICT     factory = CREATE(deployer, nonce). Measured: the nonce is
+ *                 0 on Ethereum and 1 on Base. But if that wallet sends
+ *                 ANY other transaction on that chain in between, the nonce
+ *                 shifts, the prediction breaks, and Arc's immutable record
+ *                 points permanently at an empty address.
  *
- *     ÖNCE DAĞIT  fabrikalar gerçekten dağıtılır, adresleri okunur ve Arc o
- *                 adreslerle kurulur. Tahmin riski sıfır.
+ *     DEPLOY FIRST  the factories are really deployed, their addresses are
+ *                 read, and Arc is built with those addresses. Zero
+ *                 prediction risk.
  *
- *   İkincisi seçildi. Bir tahmini doğrulamadan geçmek bu projede hook'un bir
- *   kez yanlış adresle canlıya çıkmasına sebep oldu; burada hata kalıcı
- *   olurdu.
+ *   The second was chosen. Walking past a prediction without verifying it
+ *   is what put the hook live with the wrong address once in this project;
+ *   here the mistake would be permanent.
  *
- * FABRİKA NE TAŞIYOR
- *   Arc'ın domaini (26), Arc tarafındaki köprü kasasının adresi, o zincirin
- *   CCTP sözleşmeleri, o zincirin USDC'si ve BESLEYİCİ TABLOSU. Tablo
- *   kurucuda sabit: varlık, Chainlink PROXY'si, ondalıkları ve kendi tazelik
- *   penceresi. Ölçüldü — Ethereum'da ETH/USD 3.552 saniye, Base'de 4 saniye
- *   eskiydi; tek bir tazelik sabiti birincisini reddederdi.
+ * WHAT THE FACTORY CARRIES
+ *   Arc's domain (26), the address of the bridge vault on the Arc side,
+ *   that chain's CCTP contracts, that chain's USDC, and the FEED TABLE. The
+ *   table is fixed in the constructor: the asset, its Chainlink PROXY, its
+ *   decimals and its own freshness window. Measured — ETH/USD was 3,552
+ *   seconds stale on Ethereum and 4 seconds on Base; a single freshness
+ *   constant would reject the first.
  *
- * ARC KASASI ADRESİ HENÜZ YOK — VE SORUN DEĞİL
- *   Fabrika `arcKasasi`yı değiştirilemez tutuyor ve her uzak kasa onu miras
- *   alıyor. Ama Arc tarafında kasa PER-TOKEN kuruluyor, yani tek bir adres
- *   yok. Bu yüzden fabrikaya KasaFabrika'nın adresi veriliyor: uzak kasanın
- *   kabul ettiği gönderen odur ve o adres Arc dağıtımında biliniyor.
+ * THE ARC VAULT ADDRESS DOES NOT EXIST YET — AND THAT IS FINE
+ *   The factory holds `arcKasasi` immutable and every remote vault inherits
+ *   it. But on the Arc side a vault is created PER TOKEN, so there is no
+ *   single address. That is why the factory is given KasaFabrika's address:
+ *   that is the sender the remote vault accepts, and that address is known
+ *   at Arc deployment time.
  * =========================================================================== */
 const {JsonRpcProvider, Wallet, AbiCoder, keccak256, getCreateAddress, formatEther, id } = require("ethers");
 const fs = require("fs");
