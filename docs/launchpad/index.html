@@ -14,10 +14,24 @@
   copies, and two copies drift apart without fail — a bug of exactly that
   class was hunted for a while in this project. So there is a single
   redirect here instead: the source still lives in one place.
+
+  IT POINTS AT THE APP, NOT THE LANDING PAGE
+
+  docs/index.html describes the first generation: a 0.5% fee with all of
+  it going to a floor, and nobody being rewarded. The deployed hook charges
+  2% and splits it five ways, two of which pay the founder and a developer
+  pool. The same page still counts 515 automated checks, where the suite
+  now passes 806.
+
+  A link was posted publicly that landed readers on that page, so this
+  redirect was moved to app.html, which reads every number it shows off
+  the chain and has the page audit asserting that it does. The landing
+  page is left exactly as it is: rewriting the product story is not
+  something to do quietly inside a redirect fix.
 -->
-<link rel="canonical" href="../arc-launchpad/docs/">
-<meta http-equiv="refresh" content="0; url=../arc-launchpad/docs/">
-<script>location.replace("../arc-launchpad/docs/" + location.search + location.hash);</script>
+<link rel="canonical" href="../arc-launchpad/docs/app.html">
+<meta http-equiv="refresh" content="0; url=../arc-launchpad/docs/app.html">
+<script>location.replace("../arc-launchpad/docs/app.html" + location.search + location.hash);</script>
 <style>
   :root { color-scheme: light dark; }
   body { margin: 0; min-height: 100vh; display: grid; place-items: center;
@@ -29,6 +43,6 @@
 </head>
 <body>
   <!-- So the page is not blank if the script does not run. -->
-  <p>Loading Arc Launchpad… <a href="../arc-launchpad/docs/">Click here if it does not open</a>.</p>
+  <p>Loading Arc Launchpad… <a href="../arc-launchpad/docs/app.html">Click here if it does not open</a>.</p>
 </body>
 </html>
