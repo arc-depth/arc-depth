@@ -161,6 +161,26 @@ function htmlMetinleri(kaynak) {
   return govde.split("\n").map((x) => x.trim()).filter(Boolean);
 }
 
+/* WHAT A PAGE SAYS AND WHAT IT DECLARES ITSELF TO BE
+ *
+ * Every served page still carried lang="tr" after all of its text had been
+ * translated. No check caught it, because this file reads strings and body
+ * text and an attribute is neither. It is not cosmetic: a screen reader
+ * picks its voice from it, and a browser offers to translate a page that
+ * claims to be in a language it is not.
+ *
+ * So the declaration is checked as well as the words. */
+function dilEtiketleri(kok) {
+  const kotu = [];
+  for (const f of dosyalar(kok)) {
+    if (!f.endsWith(".html")) continue;
+    const m = fs.readFileSync(f, "utf8").match(/<html[^>]*\blang\s*=\s*["']([^"']*)["']/i);
+    if (!m) kotu.push([f, "(yok)"]);
+    else if (m[1].toLowerCase() !== "en") kotu.push([f, m[1]]);
+  }
+  return kotu;
+}
+
 /** @returns {{kalan:number, dosyalar:string[], ornek:string[]}} */
 function tara(kok) {
   let kalan = 0;
@@ -185,7 +205,7 @@ function tara(kok) {
   return { kalan, dosyalar: liste, ornek };
 }
 
-module.exports = { tara, TR, TR_KELIME };
+module.exports = { tara, TR, TR_KELIME, dilEtiketleri };
 
 if (require.main === module) {
   const kok = process.argv[2] || path.join(__dirname, "..", "docs");

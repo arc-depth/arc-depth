@@ -394,7 +394,7 @@ console.log("2e) ADRESLER.md KAYITLA AYNI MI");
 console.log("");
 console.log("2g) ARAYUZ INGILIZCE MI");
 {
-  const { tara } = require("./dil-kontrol.js");
+  const { tara, dilEtiketleri } = require("./dil-kontrol.js");
   const r = tara(path.join(KOK, "docs"));
   ok(r.kalan === 0,
     "ARAYUZDE TURKCE DIZGE YOK — kamuya acik her sey Ingilizce",
@@ -403,6 +403,23 @@ console.log("2g) ARAYUZ INGILIZCE MI");
         "hemen soyler"
       : r.kalan + " Turkce dizge kaldi — " + r.dosyalar.slice(0, 8).join(", ") +
         (r.dosyalar.length > 8 ? "  (+" + (r.dosyalar.length - 8) + " dosya)" : ""));
+
+  /* WHAT THE PAGE SAYS, AND WHAT IT DECLARES ITSELF TO BE
+   *
+   * All four served pages carried lang="tr" after every word on them had
+   * been translated, and the assertion above was green the whole time: it
+   * reads strings and body text, and an attribute is neither.
+   *
+   * It is not cosmetic. A screen reader picks its voice from that
+   * attribute, and a browser offers to translate a page that claims to be
+   * in a language it is not. Proved to discriminate: flipping one page
+   * back to "tr" makes this fail with that page named. */
+  const yanlisDil = dilEtiketleri(path.join(KOK, "docs"));
+  ok(yanlisDil.length === 0,
+    "HER SAYFA KENDINI INGILIZCE ILAN EDIYOR",
+    yanlisDil.length === 0
+      ? "servis edilen her .html dosyasinda lang=\"en\""
+      : yanlisDil.map(([f, v]) => path.basename(f) + " -> " + v).join(", "));
 }
 
 console.log("2d) KAMUYA ACIK YUZEY TEMIZ MI");
