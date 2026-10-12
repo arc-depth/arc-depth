@@ -19,3 +19,4 @@ ADRESLER.md
 # database that would churn on every commit. The SCHEMA and the code are
 # tracked; the data is not.
 indeksleyici/veri/
+dogrulama/

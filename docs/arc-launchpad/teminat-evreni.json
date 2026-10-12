@@ -1,5 +1,5 @@
 {
- "olculdu": "2026-10-11T20:17:05.540Z",
+ "olculdu": "2026-10-12T04:26:40.367Z",
  "zincir": 5042,
  "not": "proxy adresleri; aggregator DEGIL. olc-besleyiciler.js uretir.",
  "varliklar": [
@@ -25,7 +25,7 @@
    "proxy": "0x50FCDD99D6762D1C170DC6A9111db944AEE6D364",
    "feedOndalik": 8,
    "heartbeat": 86400,
-   "fiyat": 2528.49261111
+   "fiyat": 2546.18849693
   },
   {
    "besleyiciAdi": "EURC / USD",
@@ -41,7 +41,7 @@
    "proxy": "0xB27522566BE765c94D21BFA0A9a1e19934999AB2",
    "feedOndalik": 18,
    "heartbeat": 86400,
-   "fiyat": 4215.013
+   "fiyat": 4219.643
   }
  ]
 }
