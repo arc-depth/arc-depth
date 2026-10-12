@@ -268,10 +268,10 @@ footer{border-top:1px solid var(--line);padding:40px 0 56px;color:var(--dim2);fo
     </div>
 
     <div class="strip" id="strip">
-      <div class="sbox"><b>0.5%</b><span>trading fee, all of it to the floor</span></div>
+      <div class="sbox"><b>2% + 1-5%</b><span>protocol fee, then the creator's share to the floor</span></div>
       <div class="sbox"><b id="s-launch">—</b><span>launches so far</span></div>
       <div class="sbox"><b id="s-kasa">—</b><span>collateral in the vaults</span></div>
-      <div class="sbox"><b>515</b><span>automated checks passing</span></div>
+      <div class="sbox"><b>806</b><span>automated checks passing</span></div>
     </div>
   </div>
 </div>
@@ -344,30 +344,40 @@ footer{border-top:1px solid var(--line);padding:40px 0 56px;color:var(--dim2);fo
         <div class="n">1</div>
         <h3>Choose the collateral and deposit it</h3>
         <p>USDC, cirBTC, WETH, EURC — or any other token whose address
-        you paste. There is no allow list. The fee is <em>2%</em> if the
-        collateral is USDC and <em>3%</em> if it is anything else.</p>
+        you paste. There is no allow list. You pick the trade tax that
+        funds the floor too, anywhere from <em>1% to 5%</em>. The launch
+        fee is a flat <em>2%</em> of your first buy, whatever the
+        collateral is.</p>
       </div>
       <div class="step">
         <div class="n">2</div>
         <h3>The vault fills and the floor is born</h3>
-        <p>All of the collateral goes into the vault. <em>Floor price =
-        vault ÷ supply</em>, and that number never falls: a redemption
-        shrinks both sides by the same proportion.</p>
+        <p>All of the collateral goes into this token's own vault.
+        <em>Floor = vault ÷ circulating</em>, where unsold inventory
+        sitting in the pool is not counted as somebody's holding. That
+        number never falls: a redemption shrinks both sides by the same
+        proportion.</p>
       </div>
       <div class="step">
         <div class="n">3</div>
-        <h3>The pool opens one-sided</h3>
-        <p><em>40%</em> of the supply is placed above the floor on
-        Uniswap v4. Putting cash on the other side is <em>not required</em>
-        — we measured it: the cash the pool asks for is zero. And it can
-        never be withdrawn again.</p>
+        <h3>The pool opens with both sides real</h3>
+        <p>The supply left after your own share goes in as a ladder
+        <em>above</em> the opening price, and your payment, less the fee,
+        is placed <em>below</em> it as an actual bid. An earlier design put
+        only tokens in: the launch reported success and the pool came back
+        holding <em>$0.00</em> of money, so there was nothing to sell into.
+        Neither side can be withdrawn again.</p>
       </div>
       <div class="step">
         <div class="n">4</div>
         <h3>Your own share</h3>
-        <p><em>70%</em> of what remains is yours immediately and
-        <em>30%</em> is locked in vesting. The lock's address can be read
-        from the chain, so a buyer does not have to take our word for it.</p>
+        <p>Your payment, less the 2% fee, becomes tokens at the opening
+        price and lands in your wallet in the same transaction. It is not
+        a swap, so there is no slippage and the snipe tax has nothing to
+        apply to. It is not free either: at the opening price the whole
+        supply is worth <em>$3,500</em>, and what you receive is worth
+        exactly what you paid net — measured across five payments, to
+        within 0 raw units.</p>
       </div>
     </div>
   </div>
@@ -377,53 +387,63 @@ footer{border-top:1px solid var(--line);padding:40px 0 56px;color:var(--dim2);fo
 <section id="ucret">
   <div class="wrap">
     <p class="eyebrow">Fees</p>
-    <h2>0.5%, and all of it to the floor.</h2>
+    <h2>2% to the protocol, 1% to 5% to the floor.</h2>
     <p class="sub">
-      Nobody is rewarded: not holders, not developers, not us. A reward
-      bucket does <strong>not exist</strong> in the code — it is not set
-      to zero, it is <strong>absent</strong>, because a bucket that exists
-      is a bucket somebody can be paid from later.
+      Two separate things come off a trade and it is worth keeping them
+      apart. The protocol takes <strong>2%</strong>, split five ways and
+      fixed in the code. On top of that sits the tax the token's creator
+      chose, <strong>1% to 5%</strong>, and that part does not reach the
+      protocol at all — it goes into that token's vault and raises the
+      floor for everyone still holding.
     </p>
 
     <div class="g">
       <div class="fee">
-        <h3>On a buy</h3>
-        <p>The fee arrives as the meme token and is <strong>burned</strong>.
-        Supply falls while the collateral stays put, so collateral per
-        token rises. Everyone still holding gets a higher floor, and
-        nobody had to sell anything for it.</p>
+        <h3>Where the 2% goes</h3>
+        <p><strong>0.70%</strong> to pool depth, <strong>0.50%</strong> to
+        protocol liquidity, <strong>0.30%</strong> to the token's founder,
+        <strong>0.30%</strong> to the developer pool and
+        <strong>0.20%</strong> to operations. The first two are locked and
+        cannot be withdrawn by anyone, us included. The developer pool
+        pays out only through a vote that has to survive a timelock.</p>
       </div>
       <div class="fee">
-        <h3>On a sell</h3>
-        <p>The fee arrives as money and goes <strong>straight into the
-        vault</strong>. The collateral grows. No conversion, no price
-        lookup, no bridge. If the collateral is not USDC a converter steps
-        in and whoever does the work takes a 2% spread — out of the fee,
-        never out of the floor's principal.</p>
+        <h3>Where the creator's tax goes</h3>
+        <p>Straight into that token's vault, on a buy and on a sell alike,
+        as <strong>money</strong>. No conversion, no price lookup, no
+        bridge. The collateral grows while the supply does not, so the
+        floor rises for everyone still holding — and a large sale pays an
+        extra slice that rides with the vault's share, not the
+        protocol's.</p>
       </div>
       <div class="fee">
         <h3>The first five seconds</h3>
         <p>At the opening a sniper pays a surcharge of <strong>up to
-        99%</strong>, quartering every second. That goes to the floor too:
-        the profit of whoever tries to grab the first block becomes the
-        ground everyone else stands on.</p>
+        99%</strong>, quartering every second and gone after five. It
+        applies to buys only. The founder's own first buy is not exempted
+        by a flag: it is not a swap at all, so there is nothing for the
+        surcharge to apply to.</p>
       </div>
       <div class="fee">
         <h3>Whichever route you come through</h3>
         <p>The hook is part of the pool's identity —
         <em>keccak(PoolKey)</em> includes the hook address. So the Uniswap
         interface, an aggregator, a relay or a cross-chain router: all of
-        them pay the same fee. Escaping by fixing the input side is closed
-        too, and both were measured.</p>
+        them pay the same fee. Asking for an exact <em>output</em> used to
+        escape it entirely; that hole is closed, and the fix is readable
+        in the hook's address, which ends in <em>0xacc</em>.</p>
       </div>
     </div>
 
     <p class="sub kisa" style="margin-top:22px">
-      The price of this: <strong>the protocol earns nothing from
-      trading.</strong> Revenue has to come from the launch fee, which is
-      the right place for it — a protocol that takes a cut of swaps in its
-      own pools is a protocol with a reason to <em>want</em> a lot of
-      trading.
+      Of that 2%, the part we can actually spend is
+      <strong>0.20%</strong> — operations. Depth and liquidity are locked
+      and nobody can withdraw them, the founder's 0.30% is the token's
+      founder and not us, and the developer pool pays out only through a
+      vote that has to clear a timelock. It is worth stating the small
+      number rather than the big one: a protocol that takes a cut of swaps
+      in its own pools has a reason to <em>want</em> a lot of trading, and
+      that is a reason worth keeping small.
     </p>
   </div>
 </section>
@@ -496,23 +516,29 @@ footer{border-top:1px solid var(--line);padding:40px 0 56px;color:var(--dim2);fo
       <div class="bgov">
         <div class="bno">01</div>
         <h3>There are no keys</h3>
-        <p>The vault has exactly two functions that write:
-        <code>fund</code> and <code>redeem</code>. Owner, admin, pause,
-        upgrade, rescue — none of them appears even in the ABI.</p>
+        <p>Seven live contracts were searched for
+        <code>withdraw</code>, <code>sweep</code>, <code>rescue</code>,
+        <code>owner</code>, <code>transferOwnership</code>,
+        <code>pause</code>, <code>setFee</code> and
+        <code>upgradeTo</code>. None of those selectors is present in any
+        of them — not set to zero, not guarded: absent.</p>
       </div>
       <div class="bgov">
         <div class="bno">02</div>
         <h3>The code cannot change</h3>
-        <p>Six contracts' bytecode is scanned instruction by instruction,
-        and the fact that none of them carries an opcode that could change
-        it is re-verified on every test run.</p>
+        <p>The bytecode is scanned instruction by instruction for anything
+        that could replace it, and the running code is compared against
+        the compiler's output byte for byte. Both are re-checked on every
+        test run, not once at deployment.</p>
       </div>
       <div class="bgov">
         <div class="bno">03</div>
-        <h3>The founder's lock is readable</h3>
-        <p>The vesting contract's address is read from the launchpad, and
-        so is the amount inside it. You do not have to ask us how much of
-        the founder's share is locked.</p>
+        <h3>Every exit is named</h3>
+        <p>The ways value can leave a vault are a short closed list, and
+        each one has its recipient fixed in the code rather than passed in
+        by whoever calls it. An exit that is not on the list fails the
+        audit even if it looks harmless — the point is that the list
+        cannot grow.</p>
       </div>
       <div class="bgov">
         <div class="bno">04</div>
@@ -576,15 +602,16 @@ footer{border-top:1px solid var(--line);padding:40px 0 56px;color:var(--dim2);fo
       </div>
       <div class="bgov">
         <h3>Can the founder sell everything and run?</h3>
-        <p>30% of their share is locked in vesting and the part they put
-        into the pool never comes back. They can sell the rest — but while
-        that sale pushes on the pool its fee goes to the floor, and the
-        floor is already sitting in the vault. Their selling does not
-        lower it.</p>
+        <p>They can. Their tokens are theirs from the first transaction —
+        there is no vesting in a launch, and saying otherwise would be
+        inventing a lock that does not exist. What they cannot take back
+        is the money they put into the pool, and their selling does not
+        lower the floor: the collateral is already in the vault, and the
+        tax on that sale goes into it too.</p>
       </div>
       <div class="bgov">
         <h3>Has it been audited?</h3>
-        <p><strong>Not externally audited.</strong> 515 automated checks
+        <p><strong>Not externally audited.</strong> 806 automated checks
         run against the real Arc chain, and the defects they found are
         written into the code as comments — what was wrong and why. That
         does not take the place of an audit report.</p>
