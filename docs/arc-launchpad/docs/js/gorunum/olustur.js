@@ -70,8 +70,17 @@ export async function ciz({ kayit, param }) {
     teminatVarlik: null,
     /* Which chain the launch happens on. Any of the nine; the token can
        then be spread to all the others. */
-    ag: agBul(param && param.get && param.get("zincir")) || agBul("arc")
+    ag: agBul(param && param.get && param.get("zincir")) || agBul("base")
   };
+
+  /* Arc launches are paused. The Arc launchpad (0xB6AC…2300) is wired to a
+     live cross-chain registry whose CCTP receive path cannot complete
+     (found 14 Oct 2026: the vaults wait for a hook call CCTP V2 never makes,
+     and the way home names a contract that cannot move USDC), while the
+     transfer trigger is permissionless. No launch has used it. Until Arc
+     gets a launchpad with that path closed, as on the eight other chains,
+     this screen does not send launches there. */
+  const ARC_DURDU = "Launching on Arc is paused while its cross-chain collateral path is replaced. Every other chain is open, and a token launched there can be spread to Arc with one more transaction.";
 
   const ozetKap = el("div");
   const ozetiCiz = () => { temizle(ozetKap).append(odemeOzeti(durum)); };
@@ -84,16 +93,16 @@ export async function ciz({ kayit, param }) {
     for (const a of AGLAR) {
       agDugmeleri.append(el("button", {
         sinif: "dugme " + (a.id === durum.ag.id ? "dugme--marka" : "dugme--sessiz"),
-        attr: { type: "button" }, yazi: a.ad,
+        attr: { type: "button" }, yazi: a.anahtar === "arc" ? a.ad + " (paused)" : a.ad,
         on: { click: () => { durum.ag = a; agiCiz(); teminatiCiz(); } }
       }));
     }
     temizle(agNotu).append(durum.ag.anahtar === "arc"
-      ? not("Arc: pay in USDC; the collateral can be any asset from the list below, on any supported chain.", "bilgi")
+      ? not(ARC_DURDU, "uyari")
       : not(durum.ag.ad + ": pay in " + durum.ag.dolarSembol +
           (durum.ag.sarmal ? " (wrapped 1:1 into 6-decimal pUSDC first, automatically)" : "") +
           ". The collateral stays in " + durum.ag.dolarSembol + " on " + durum.ag.ad +
-          " — converting it into another asset is offered for launches on Arc.", "bilgi"));
+          ". Converting it into another asset is not offered yet on any chain.", "bilgi"));
   };
   agiCiz();
   kap.append(panel("Chain", el("div", { sinif: "yigin" }, [
@@ -306,6 +315,7 @@ export async function ciz({ kayit, param }) {
     });
 
     dugme.addEventListener("click", async () => {
+      if (durum.ag.anahtar === "arc") { durumSatiri.textContent = ARC_DURDU; return; }
       const ad = (adGirdi.value || "").trim();
       const sembol = (sembolGirdi.value || "").trim();
       const v = durum.teminatVarlik;
