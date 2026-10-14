@@ -191,6 +191,60 @@ footer{border-top:1px solid var(--line);margin-top:30px;padding:34px 0 50px;colo
 .fin{display:flex;align-items:center;gap:24px;flex-wrap:wrap;justify-content:space-between}
 .fl{display:flex;gap:18px;flex-wrap:wrap}
 .fl a{color:var(--dim)}
+
+/* discover: one panel, its own scroll, more rows load as it scrolls */
+.dk{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.dk-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;padding:14px;border-bottom:1px solid var(--line)}
+.dk-bar input,.dk-bar select{background:rgba(255,255,255,.04);border:1px solid var(--line2);border-radius:10px;color:var(--tx);
+  font:500 14px Inter,sans-serif;padding:10px 12px;min-width:0}
+.dk-bar input{flex:1 1 220px}
+.dk-bar select{flex:0 0 auto}
+.dk-bar select option{background:var(--panel-solid)}
+.seg{display:flex;border:1px solid var(--line2);border-radius:10px;overflow:hidden}
+.seg button{background:transparent;border:0;color:var(--dim);font:600 13px Inter,sans-serif;padding:10px 13px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--arc-bg);color:var(--tx)}
+.dk-list{max-height:460px;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+.dk-row{display:grid;grid-template-columns:minmax(0,2.2fr) 1fr 1fr 1fr 170px;gap:12px;align-items:center;padding:13px 16px;border-bottom:1px solid var(--line);font-size:14px}
+.dk-row.h{position:sticky;top:0;z-index:2;background:var(--panel-solid);font:700 11px Inter,sans-serif;letter-spacing:.09em;text-transform:uppercase;color:var(--dim2)}
+.dk-row .r{text-align:right;font-variant-numeric:tabular-nums}
+.dk-tok{display:flex;align-items:center;gap:11px;min-width:0}
+.dk-tok b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dk-tok small{display:block;color:var(--dim2);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dk-av{width:34px;height:34px;border-radius:50%;flex:0 0 auto;display:flex;align-items:center;justify-content:center;font:800 12px Inter,sans-serif;color:#fff}
+.zc{font:700 10.5px Inter,sans-serif;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:7px;white-space:nowrap}
+.zc.arc{color:var(--arc2);background:var(--arc-bg)} .zc.rh{color:var(--rh);background:var(--rh-bg)}
+.dk-row a.go{justify-self:end;font:600 13px Inter,sans-serif;padding:7px 12px;border-radius:9px;border:1px solid var(--line2);color:var(--tx);white-space:nowrap}
+.dk-row a.go:hover{text-decoration:none;background:rgba(255,255,255,.05)}
+.dk-row .wait{justify-self:end;color:var(--dim2);font-size:12.5px;white-space:nowrap}
+.dk-foot{padding:12px 16px;color:var(--dim2);font-size:12.5px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;border-top:1px solid var(--line)}
+.dk-empty{padding:34px 16px;text-align:center;color:var(--dim)}
+.dk-more{padding:14px;text-align:center;color:var(--dim2);font-size:12.5px}
+.dk-more:empty{padding:0}
+@media(max-width:720px){
+  .dk-row{grid-template-columns:minmax(0,1fr) auto}
+  .dk-row .wait{white-space:normal;text-align:right;max-width:110px}
+  .dk-row .m{display:none}
+  .dk-row.h{display:none}
+}
+
+/* platform tabs: three long sections folded into one */
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px}
+.tabs button{background:rgba(255,255,255,.03);border:1px solid var(--line2);color:var(--dim);border-radius:11px;
+  font:600 14px Inter,sans-serif;padding:10px 16px;cursor:pointer}
+.tabs button[aria-selected="true"]{background:linear-gradient(135deg,rgba(74,125,255,.28),rgba(139,107,255,.22));color:var(--tx);border-color:rgba(139,107,255,.5)}
+.tp[hidden]{display:none}
+
+/* tall tables scroll inside their box */
+.scroll.tall{max-height:440px;overflow-y:auto}
+.scroll.tall th{position:sticky;top:0;background:var(--panel-solid);z-index:1}
+
+/* faq as an accordion */
+.faq details{background:var(--panel);border:1px solid var(--line);border-radius:var(--r2);padding:0 18px}
+.faq summary{cursor:pointer;list-style:none;font:700 15.5px Inter,sans-serif;padding:16px 26px 16px 0;position:relative}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"+";position:absolute;right:0;top:13px;font:500 22px Inter,sans-serif;color:var(--arc2)}
+.faq details[open] summary::after{content:"\2013"}
+.faq details p{padding:0 0 16px}
 </style>
 </head>
 <body>
@@ -220,12 +274,11 @@ footer{border-top:1px solid var(--line);margin-top:30px;padding:34px 0 50px;colo
   <div class="wrap hin">
     <a class="brand" href="#"><svg><use href="#logo"/></svg><span><b>ARC PULSE</b><small>Two chains. One protocol.</small></span></a>
     <nav class="top">
+      <a href="#kesfet">Discover</a>
       <a href="#ekosistem">Ecosystems</a>
-      <a href="#nasil">How it works</a>
-      <a href="#yetenekler">Capabilities</a>
-      <a href="#kasa">Vaults</a>
-      <a href="#ucret">Fees</a>
+      <a href="#platform">Platform</a>
       <a href="#sayilar">Live data</a>
+      <a href="#kontratlar">Contracts</a>
       <a href="#sss">FAQ</a>
     </nav>
     <div class="sp"></div>
@@ -245,7 +298,7 @@ footer{border-top:1px solid var(--line);margin-top:30px;padding:34px 0 50px;colo
         <b>No owner, no mint, no withdraw function.</b></p>
       <div class="btns">
         <a class="cta" href="app.html">Create a token <svg class="i"><use href="#i-swap"/></svg></a>
-        <a class="cta ghost" href="#yetenekler">Explore</a>
+        <a class="cta ghost" href="#kesfet">Discover tokens</a>
       </div>
       <div class="hfeat">
         <div><svg><use href="#i-vault"/></svg><span><b>Collateral vaults</b>one per token</span></div>
@@ -270,6 +323,36 @@ footer{border-top:1px solid var(--line);margin-top:30px;padding:34px 0 50px;colo
     <div class="st rh"><b id="s-rh">—</b><span>Launches on Robinhood</span><small>read live from the chain</small></div>
     <div class="st"><b id="s-kasa">—</b><span>In launch vaults</span><small>Arc, read live</small></div>
     <div class="st"><b>0</b><span>Owners</span><small>no admin key on any contract</small></div>
+  </div>
+</section>
+
+<!-- =============== KESFET =============== -->
+<section id="kesfet">
+  <div class="wrap">
+    <div class="sh"><div><p class="k">Discover</p><h2>Every token on both chains, in one list.</h2>
+      <p class="sub">Search, filter by chain, sort. The list scrolls on its own and loads more as you go, so the page stays short however many tokens there are.</p></div></div>
+    <div class="dk">
+      <div class="dk-bar">
+        <input id="dk-q" type="search" placeholder="Search name, symbol or address" autocomplete="off" aria-label="Search tokens">
+        <div class="seg" role="group" aria-label="Chain">
+          <button type="button" data-z="" aria-pressed="true">All</button>
+          <button type="button" data-z="arc" aria-pressed="false">Arc</button>
+          <button type="button" data-z="robinhood" aria-pressed="false">Robinhood</button>
+        </div>
+        <select id="dk-s" aria-label="Sort">
+          <option value="yeni">Newest</option>
+          <option value="hacim">Volume</option>
+          <option value="kasa">In vault</option>
+          <option value="islem">Trades</option>
+        </select>
+      </div>
+      <div class="dk-list" id="dk-list">
+        <div class="dk-row h"><span>Token</span><span class="r m">In vault</span><span class="r m">Volume</span><span class="r m">Trades</span><span></span></div>
+        <div id="dk-rows"></div>
+        <div class="dk-more" id="dk-more"></div>
+      </div>
+      <div class="dk-foot"><span id="dk-sayi">Loading…</span><span id="dk-zaman"></span></div>
+    </div>
   </div>
 </section>
 
@@ -303,10 +386,18 @@ footer{border-top:1px solid var(--line);margin-top:30px;padding:34px 0 50px;colo
   </div>
 </section>
 
-<!-- =============== NASIL =============== -->
-<section id="nasil">
+<!-- =============== PLATFORM =============== -->
+<section id="platform">
   <div class="wrap">
-    <div class="sh"><div><p class="k">How it works</p><h2>One transaction. Four things at once.</h2></div></div>
+    <span id="nasil"></span><span id="yetenekler"></span><span id="kasa"></span><span id="fthm2"></span>
+    <div class="sh"><div><p class="k">The platform</p><h2>How it works, what it does, where the money goes.</h2></div></div>
+    <div class="tabs" role="tablist" aria-label="Platform">
+      <button type="button" role="tab" aria-selected="true" aria-controls="tp-nasil" data-cap="nasil">How it works</button>
+      <button type="button" role="tab" aria-selected="false" aria-controls="tp-yetenekler" data-cap="yetenekler">Capabilities</button>
+      <button type="button" role="tab" aria-selected="false" aria-controls="tp-kasa" data-cap="kasa ucret">Vaults &amp; fees</button>
+      <button type="button" role="tab" aria-selected="false" aria-controls="tp-fthm2" data-cap="fthm2">FTHM on two chains</button>
+    </div>
+    <div class="tp" id="tp-nasil" role="tabpanel">
     <div class="steps">
       <div class="card stp"><div class="ic"><svg><use href="#i-rocket"/></svg></div>
         <h3><em>01</em>Create the token</h3><p>Pick a chain, a name, the dollar collateral and a 1-5% floor tax. The founder's buy lands at the opening price — no discount, nothing to front-run.</p></div>
@@ -317,15 +408,11 @@ footer{border-top:1px solid var(--line);margin-top:30px;padding:34px 0 50px;colo
       <div class="card stp"><div class="ic g"><svg><use href="#i-link"/></svg></div>
         <h3><em>04</em>Trade, feed, redeem</h3><p>Every buy and sell sends the floor tax into the vault. Holders can burn and take their share of the vault whenever they want.</p></div>
     </div>
-  </div>
-</section>
-
-<!-- =============== YETENEKLER =============== -->
-<section id="yetenekler">
-  <div class="wrap">
-    <div class="sh"><div><p class="k">Capabilities</p><h2>Everything the platform does, and where it stands.</h2>
-      <p class="sub"><span class="chip live">Live</span> deployed on mainnet and usable today. &nbsp;
-        <span class="chip built">Built &amp; tested</span> written and passing its checks against real mainnet state, deployment pending.</p></div></div>
+    </div>
+    <div class="tp" id="tp-yetenekler" role="tabpanel" hidden>
+    <p class="sub"><span class="chip live">Live</span> deployed on mainnet and usable today. &nbsp;
+        <span class="chip built">Built &amp; tested</span> written and passing its checks against real mainnet state, deployment pending.</p>
+    <div style="height:14px"></div>
     <div class="caps">
       <div class="card cap"><div class="row"><div class="ic"><svg><use href="#i-rocket"/></svg></div><span class="chip live">Live</span></div>
         <h3>One-transaction launch</h3><p>Token, vault and Uniswap v4 pool created together, on Arc or Robinhood Chain.</p></div>
@@ -341,17 +428,16 @@ footer{border-top:1px solid var(--line);margin-top:30px;padding:34px 0 50px;colo
         <h3>FTHM, staking and a DAO</h3><p>No mint, no owner. Developer funding on both chains moves only through an Arc DAO vote and timelock.</p></div>
       <div class="card cap"><div class="row"><div class="ic g"><svg><use href="#i-swap"/></svg></div><span class="chip built">Built &amp; tested</span></div>
         <h3>One token, two chains</h3><p>Any launch token can get a twin on the other chain over LayerZero. Total supply stays whole across both.</p></div>
-      <div class="card cap"><div class="row"><div class="ic g"><svg><use href="#i-link"/></svg></div><span class="chip built">Built &amp; tested</span></div>
-        <h3>FTHM bridge</h3><p>FTHM moves between Arc and Robinhood; the two chains together always hold exactly 1,000,000,000.</p></div>
+      <div class="card cap"><div class="row"><div class="ic g"><svg><use href="#i-link"/></svg></div><span class="chip built">Deployed · wiring</span></div>
+        <h3>FTHM bridge</h3><p>FTHM moves between Arc and Robinhood; the two chains together always hold exactly 1,000,000,000. Contracts are on both mainnets; the bridge opens once its verifier setup is done.</p></div>
       <div class="card cap"><div class="row"><div class="ic g"><svg><use href="#i-shield"/></svg></div><span class="chip built">Built &amp; tested</span></div>
         <h3>Price gaps go to the vault</h3><p>When the two chains disagree on price, the trade that would profit from the gap pays it into the vault instead.</p></div>
+      <div class="card cap"><div class="row"><div class="ic g"><svg><use href="#i-coins"/></svg></div><span class="chip built">Deployed · wiring</span></div>
+        <h3>One FTHM market</h3><p>Sell FTHM from either chain into either pool and take USDC on Arc or USDG on Robinhood; buy on one chain and receive on the other.</p></div>
     </div>
-  </div>
-</section>
-
-<!-- =============== KASA + UCRET =============== -->
-<section id="kasa">
-  <div class="wrap duo">
+    </div>
+    <div class="tp" id="tp-kasa" role="tabpanel" hidden>
+    <div class="duo">
     <div class="card fb">
       <div class="ic"><svg><use href="#i-vault"/></svg></div>
       <h3>Collateral vaults</h3>
@@ -377,6 +463,29 @@ footer{border-top:1px solid var(--line);margin-top:30px;padding:34px 0 50px;colo
       </div>
     </div>
   </div>
+    </div>
+    <div class="tp" id="tp-fthm2" role="tabpanel" hidden>
+    <div class="duo">
+      <div class="card fb">
+        <div class="ic g"><svg><use href="#i-link"/></svg></div>
+        <h3>One token, one price, two chains</h3>
+        <p>FTHM lives on Arc. On Robinhood it exists only against FTHM locked on Arc, so the two chains together always hold exactly 1,000,000,000. A gate on each chain lets a holder reach either pool: sell from where the FTHM sits into the other chain's pool and take USDC on Arc or USDG on Robinhood, or buy on one chain and receive on the other.</p>
+        <p>The Robinhood pool carries the Arc price. A trade that would profit from a gap between the two pays exactly that gap into the pool's depth, so a buyer pays the same price on either chain.</p>
+      </div>
+      <div class="card fb">
+        <div class="ic"><svg><use href="#i-shield"/></svg></div>
+        <h3>Where it stands</h3>
+        <p>Every contract is on mainnet. Nothing below is open to use until it says so.</p>
+        <div class="kv">
+          <div><span>FTHM on Arc</span><b>Live</b></div>
+          <div><span>Bridge, price relay, gates</span><b>Deployed · verifier setup in progress</b></div>
+          <div><span>FTHM / USDG pool on Robinhood</span><b>Not opened yet</b></div>
+          <div><span>Owner after setup</span><b>None — burned</b></div>
+        </div>
+      </div>
+    </div>
+    </div>
+  </div>
 </section>
 
 <!-- =============== SAYILAR =============== -->
@@ -393,7 +502,7 @@ footer{border-top:1px solid var(--line);margin-top:30px;padding:34px 0 50px;colo
   <div class="wrap">
     <div class="sh"><div><p class="k">Contracts</p><h2>All public. None of them has an owner.</h2>
       <p class="sub">The last column says what each contract <b>can do</b>. 811 automated checks pass against real mainnet state.</p></div></div>
-    <div class="scroll"><table id="adresler"></table></div>
+    <div class="scroll tall"><table id="adresler"></table></div>
   </div>
 </section>
 
@@ -402,13 +511,13 @@ footer{border-top:1px solid var(--line);margin-top:30px;padding:34px 0 50px;colo
   <div class="wrap">
     <div class="sh"><div><p class="k">FAQ</p><h2>Straight answers.</h2></div></div>
     <div class="faq">
-      <div class="card"><h3>Can anyone withdraw the money?</h3><p>No. The vault has no withdraw function, and it carries no instruction that could change its code, so one cannot be added later.</p></div>
-      <div class="card"><h3>Can the token go to zero?</h3><p>The floor is in dollars — USDC on Arc, USDG on Robinhood — so it only falls if that stablecoin does. Market price can still trade above or below it; what is guaranteed is that the ratio doesn't break.</p></div>
-      <div class="card"><h3>Can the founder sell everything?</h3><p>Yes — their tokens are theirs. What they can't do is pull the pool's money or the vault's collateral, and their sale's tax goes into the vault too.</p></div>
-      <div class="card"><h3>Has it been audited?</h3><p>Not externally. 811 automated checks run against real mainnet state, and every defect they found is documented in the code. That is not a substitute for an audit.</p></div>
-      <div class="card"><h3>Can I skip the fee through an aggregator?</h3><p>No. The hook is part of the pool's identity, so it runs whichever interface you come through — including exact-output trades.</p></div>
-      <div class="card"><h3>Are stock-backed launches available?</h3><p>No. Tokenized stocks on Robinhood Chain may not be offered to persons in the United States, and are restricted in Canada, the UK and Switzerland. A launch backed by them would need identity checks and transfer limits that a permissionless pool cannot enforce, so ARC PULSE does not offer one. Every launch today is backed by dollars only.</p></div>
-      <div class="card"><h3>Is this investment advice?</h3><p>No. These are memecoins. A floor doesn't make one a good investment; it makes the location of zero something you can know.</p></div>
+      <details><summary>Can anyone withdraw the money?</summary><p>No. The vault has no withdraw function, and it carries no instruction that could change its code, so one cannot be added later.</p></details>
+      <details><summary>Can the token go to zero?</summary><p>The floor is in dollars — USDC on Arc, USDG on Robinhood — so it only falls if that stablecoin does. Market price can still trade above or below it; what is guaranteed is that the ratio doesn't break.</p></details>
+      <details><summary>Can the founder sell everything?</summary><p>Yes — their tokens are theirs. What they can't do is pull the pool's money or the vault's collateral, and their sale's tax goes into the vault too.</p></details>
+      <details><summary>Has it been audited?</summary><p>Not externally. 811 automated checks run against real mainnet state, and every defect they found is documented in the code. That is not a substitute for an audit.</p></details>
+      <details><summary>Can I skip the fee through an aggregator?</summary><p>No. The hook is part of the pool's identity, so it runs whichever interface you come through — including exact-output trades.</p></details>
+      <details><summary>Are stock-backed launches available?</summary><p>No. Tokenized stocks on Robinhood Chain may not be offered to persons in the United States, and are restricted in Canada, the UK and Switzerland. A launch backed by them would need identity checks and transfer limits that a permissionless pool cannot enforce, so ARC PULSE does not offer one. Every launch today is backed by dollars only.</p></details>
+      <details><summary>Is this investment advice?</summary><p>No. These are memecoins. A floor doesn't make one a good investment; it makes the location of zero something you can know.</p></details>
     </div>
   </div>
 </section>
@@ -547,9 +656,134 @@ function adresler(){
     r("USDC",A.usdc,"Arc's native money and its gas") +
     rh("Launchpad · Robinhood",RH.launchpad,"the same launchpad, in USDG — has no owner") +
     rh("Developer pool · Robinhood",RH.devPool,"pays out only on Arc DAO votes") +
-    rh("Liquidity vault · Robinhood",RH.likidite,"adds its share back into the pools — cannot withdraw");
+    rh("Liquidity vault · Robinhood",RH.likidite,"adds its share back into the pools — cannot withdraw") +
+    r("FTHM bridge · Arc",F2.adapter,"locks FTHM sent to Robinhood, releases what comes back — setup in progress") +
+    r("FTHM price relay · Arc",F2.elci,"sends the Arc FTHM price to Robinhood; anyone can trigger it, nobody can choose the price") +
+    r("FTHM gate · Arc",F2.kapiArc,"sell Robinhood FTHM in the Arc pool, or buy here and receive there — no owner") +
+    rh("FTHM · Robinhood",F2.oft,"minted only against FTHM locked on Arc — setup in progress") +
+    rh("FTHM pool hook · Robinhood",F2.hook,"charges a trade that captures the gap to the Arc price exactly that gap") +
+    rh("FTHM pool opener · Robinhood",F2.acici,"opens the FTHM/USDG pool once, locked; can only add") +
+    rh("FTHM gate · Robinhood",F2.kapiRh,"sell Arc FTHM in the Robinhood pool, or buy here and receive there — no owner");
 }
 
+/* FTHM on two chains (dagitim-fthm-iki-zincir.json), deployed 14 Oct 2026.
+   The bridge carries nothing until its verifier setup is finished; the
+   page says so wherever these appear. */
+const F2 = {
+  adapter:"0x6e591AfAf47A0Ff6aB26a4F5c077De7715C34bf0", elci:"0x971326596420b07bAC4E48D08fFa238bb6268465",
+  kapiArc:"0x9795a46A0a88b73B63D4422E8b963aA04A7846cE", oft:"0x19c9C61Dc70cd52Ab98A562e62DF369EC300855A",
+  hook:"0x8cb46b8a501Ec646B72A2dfDE97aEF02371580c4", acici:"0xeE080199318ba8B37E61A1265e5C2fd766A51629",
+  kapiRh:"0x601E5959f624AF128F3cfD5629f453D8C293e245"
+};
+
+/* ---- platform tabs -------------------------------------------------- */
+function sekmeler(){
+  const dugmeler = [...document.querySelectorAll(".tabs [role=tab]")];
+  const sec = (d) => {
+    for (const x of dugmeler){
+      const on = x === d;
+      x.setAttribute("aria-selected", on ? "true" : "false");
+      $(x.getAttribute("aria-controls")).hidden = !on;
+    }
+  };
+  dugmeler.forEach((d) => d.addEventListener("click", () => sec(d)));
+  /* old links (#yetenekler, #kasa, #ucret …) still land on the right tab */
+  const hashten = () => {
+    const h = location.hash.slice(1);
+    const d = dugmeler.find((x) => x.dataset.cap.split(" ").includes(h));
+    if (d) sec(d);
+  };
+  window.addEventListener("hashchange", hashten);
+  hashten();
+}
+
+/* ---- discover: one list, both chains, loads as it scrolls ----------- */
+const SAYFA = 25;
+const kac = (x) => x == null ? "—" : usd(Number(BigInt(x)) / 1e6);
+const kacUzun = (x) => x == null ? "—" : String(x);
+const kacEs = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+function renk(a){
+  let h = 0; for (const c of String(a)) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  return "linear-gradient(135deg,hsl(" + (h % 360) + " 70% 52%),hsl(" + ((h >> 9) % 360) + " 70% 42%))";
+}
+
+async function kesfet(){
+  const D = { tum: [], z: "", q: "", s: "yeni", gosterilen: 0, liste: [] };
+  /* FTHM first: it is the platform token, and its Robinhood side is shown
+     with its real state rather than left out or dressed up. */
+  const sabit = [
+    { sembol:"FTHM", ad:"Fathom · platform token", zincir:"arc", token:A.fthm, link:"fathom.html", sabit:true },
+    { sembol:"FTHM", ad:"Fathom on Robinhood", zincir:"robinhood", token:F2.oft, bekle:"Bridge setup in progress", sabit:true },
+  ];
+  let zaman = "";
+  try{
+    const r = await fetch("veri/analitik.json?t=" + Date.now(), { cache:"no-store" });
+    if (r.ok){
+      const o = await r.json();
+      zaman = o.olusturuldu;
+      for (const z of o.zincirler || []) for (const t of z.tokenler || []) D.tum.push({ ...t, zincir: z.ad });
+    }
+  }catch(e){ /* the pinned rows still render */ }
+
+  const satir = (t) => {
+    const z = t.zincir === "robinhood" ? "<span class='zc rh'>Robinhood</span>" : "<span class='zc arc'>Arc</span>";
+    const eylem = t.bekle ? "<span class='wait'>" + kacEs(t.bekle) + "</span>"
+      : "<a class='go' href='" + (t.link || ("app.html#/terminal?t=" + t.token)) + "'>" + (t.link ? "View" : "Trade") + "</a>";
+    return "<div class='dk-row'><div class='dk-tok'><span class='dk-av' style='background:" + renk(t.token) + "'>" +
+      kacEs(String(t.sembol || "?").slice(0, 3).toUpperCase()) + "</span><span><b>" + kacEs(t.sembol || "?") + " " + z + "</b><small>" +
+      kacEs(t.ad || "") + " · " + kisa(t.token) + "</small></span></div>" +
+      "<span class='r m'>" + (t.sabit ? "—" : kac(t.kasadaki)) + "</span><span class='r m'>" + (t.sabit ? "—" : kac(t.hacim)) +
+      "</span><span class='r m'>" + (t.sabit ? "—" : kacUzun(t.islem)) + "</span>" + eylem + "</div>";
+  };
+
+  const sirala = {
+    yeni: (a, b) => (b.blok || 0) - (a.blok || 0),
+    hacim: (a, b) => Number(BigInt(b.hacim || 0) - BigInt(a.hacim || 0)),
+    kasa: (a, b) => Number(BigInt(b.kasadaki || 0) - BigInt(a.kasadaki || 0)),
+    islem: (a, b) => (b.islem || 0) - (a.islem || 0),
+  };
+
+  const ciz = () => {
+    const q = D.q.toLowerCase();
+    const uy = (t) => (!D.z || t.zincir === D.z) &&
+      (!q || [t.sembol, t.ad, t.token].some((x) => String(x || "").toLowerCase().includes(q)));
+    D.liste = [...sabit.filter(uy), ...D.tum.filter(uy).sort(sirala[D.s])];
+    D.gosterilen = 0;
+    $("dk-rows").innerHTML = "";
+    $("dk-list").scrollTop = 0;
+    devam();
+    const n = D.tum.length;
+    $("dk-sayi").textContent = n ? n + " launched token" + (n === 1 ? "" : "s") + " across both chains" :
+      "No launches yet on either chain — the first one will appear here.";
+    $("dk-zaman").textContent = zaman ? "Snapshot " + new Date(zaman).toUTCString().replace(" GMT", " UTC") : "";
+  };
+
+  const devam = () => {
+    const parca = D.liste.slice(D.gosterilen, D.gosterilen + SAYFA);
+    $("dk-rows").insertAdjacentHTML("beforeend", parca.map(satir).join(""));
+    D.gosterilen += parca.length;
+    if (!D.liste.length) $("dk-rows").innerHTML = "<div class='dk-empty'>Nothing matches that search.</div>";
+    $("dk-more").textContent = D.gosterilen < D.liste.length ? "Scroll for more — " + (D.liste.length - D.gosterilen) + " left" :
+      (D.liste.length > SAYFA ? "End of list" : "");
+  };
+
+  new IntersectionObserver((g) => { if (g.some((x) => x.isIntersecting) && D.gosterilen < D.liste.length) devam(); },
+    { root: $("dk-list"), rootMargin: "200px" }).observe($("dk-more"));
+
+  let bekleme;
+  $("dk-q").addEventListener("input", (e) => { clearTimeout(bekleme); bekleme = setTimeout(() => { D.q = e.target.value.trim(); ciz(); }, 150); });
+  $("dk-s").addEventListener("change", (e) => { D.s = e.target.value; ciz(); });
+  for (const b of document.querySelectorAll(".seg button")){
+    b.addEventListener("click", () => {
+      for (const x of document.querySelectorAll(".seg button")) x.setAttribute("aria-pressed", x === b ? "true" : "false");
+      D.z = b.dataset.z; ciz();
+    });
+  }
+  ciz();
+}
+
+sekmeler();
+kesfet();
 adresler();
 canli();
 </script>
