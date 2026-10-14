@@ -557,7 +557,7 @@ footer{border-top:1px solid var(--line);padding:40px 0 56px;color:var(--dim2);fo
     <p class="eyebrow">Numbers</p>
     <h2>Measured, not assumed.</h2>
     <p class="sub">
-      Everything below is read from Arc as the page loads. It is not a
+      Everything below is read from the chain as the page loads, one row per chain. It is not a
       number typed in; if it cannot be read it says "unreadable" rather
       than guessing.
     </p>
@@ -659,27 +659,38 @@ import { JsonRpcProvider, Contract, formatUnits } from "https://esm.sh/ethers@6.
    The bridge reader and the governance-token supply map that used to live
    here are gone with the designs they belonged to. */
 const ARC = { chainId:5042, rpc:"https://rpc.mainnet.arc.io", explorer:"https://explorer.arc.io" };
+/* The current generation (dagitim-pulse2.json). Until 13 Oct 2026 this
+   block still pointed at the launchpad deployed on 8 Oct, two generations
+   back; both had zero
+   launches, so the page showed the right number for the wrong contract
+   and nothing noticed. denetim-sayfa.js now compares these addresses with
+   the deployment record. */
 const A = {
-  launchpad:"0x46E14d98a0597B4D65259F24608625f58d68e2C0",
-  hook:     "0x0577943F610609747096fD380aAb69e978630a44",
-  router:   "0x7550058C3F4D8839eBc8AcCB96959Fe69C109581",
+  launchpad:"0xB6AC82F391FD6A7f59af804e3BE1C4753f832300",
+  hook:     "0xE6cc37D2467aAA05BED35D0E667170015E680Acc",
+  devPool:  "0xA110b71c3f0748536f10C9e71A6E9F96999F6CD0",
+  likidite: "0x0a35cfe06Ead3858375690993280Aff1f9aFbF69",
+  pazar:    "0x3b6fb718DC0529645B20F10CC3013f14af2Ad68E",
+  fthm:     "0x8c2016b8DbB9034c2Fe173000639A9a1380b26AE",
   poolManager:"0x8366a39CC670B4001A1121B8F6A443A643e40951",
-  usdc:     "0x3600000000000000000000000000000000000000",
-  testCol:  "0x018ce43Bf0241b7A1fb0433FE13b22A761969Ee9"
+  usdc:     "0x3600000000000000000000000000000000000000"
 };
+/* Robinhood Chain: the same launchpad with USDG as the quote. Not deployed
+   yet, so null — and the table says so instead of showing a zero, which
+   would read as "deployed and empty". Fill these in when it is. */
+const RH = { chainId:4663, rpc:"https://rpc.mainnet.chain.robinhood.com", launchpad:null, devPool:null, likidite:null,
+             usdg:"0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168" };
 
 const read = new JsonRpcProvider(ARC.rpc,{chainId:ARC.chainId,name:"arc"},{staticNetwork:true,batchMaxCount:1});
 const $ = (id) => document.getElementById(id);
 const kisa = (a) => a ? a.slice(0,6)+"…"+a.slice(-4) : "";
-const nk = (x) => Number(x).toLocaleString("tr-TR",{maximumFractionDigits:2});
+const usd = (x) => "$"+Number(x).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});
 
 const LP = [
   "function launchCount() view returns (uint256)",
-  "function launches(uint256) view returns (address token,address vault,address rewards,address founder,uint256 collateral,uint256 liquidity)",
-  "function karne() view returns (address)"
+  "function launchAt(uint256) view returns (tuple(address token,address acici,address kasa,address yonetici,address hedefVarlik,address kurucu,uint256 kurucuToken,uint256 teklif,uint256 vergiPpm,uint64 zaman))"
 ];
-const ERC = ["function symbol() view returns (string)","function decimals() view returns (uint8)"];
-const VAULT = ["function backing() view returns (uint256)","function collateral() view returns (address)","function floorPrice() view returns (uint256)"];
+const ERC = ["function balanceOf(address) view returns (uint256)","function symbol() view returns (string)"];
 
 /* Arc's endpoint throttles and answers erratically, so each read gets a
    few attempts with a pause between. A page that shows "—" because it
@@ -693,44 +704,49 @@ async function oku(fn, deneme = 3){
   throw son;
 }
 
-async function canli(){
-  try{
-    const lp = new Contract(A.launchpad, LP, read);
-    const n = Number(await oku(()=>lp.launchCount()));
-    $("s-launch").textContent = String(n);
-
-    let satirlar = "<tr><th>token</th><th>kasa</th><th>teminat</th><th class='r'>kasadaki</th></tr>";
-    let toplamUsd = 0, okunan = 0;
-    /* Newest first, and only a handful: this is a summary, and thirty
-       sequential reads against a throttling endpoint is not one. */
-    for (let i = n-1; i >= 0 && n-1-i < 6; i--){
-      try{
-        const L = await oku(()=>lp.launches(i));
-        const tem = await oku(()=>(new Contract(L.vault, VAULT, read)).collateral());
-        const c = new Contract(tem, ERC, read);
-        let sem = "?", ond = 18;
-        try{ sem = await oku(()=>c.symbol()); }catch(e){}
-        try{ ond = Number(await oku(()=>c.decimals())); }catch(e){}
-        const bak = await oku(()=>(new Contract(L.vault, VAULT, read)).backing());
-        const miktar = Number(formatUnits(bak, ond));
-        okunan++;
-        if (tem.toLowerCase() === A.usdc.toLowerCase()) toplamUsd += miktar;
-        satirlar += "<tr><td class='mono'><a href='"+ARC.explorer+"/address/"+L.token+"' target='_blank' rel='noopener'>"+
-          kisa(L.token)+"</a></td><td class='mono'>"+kisa(L.vault)+"</td><td>"+sem+
-          "</td><td class='r'>"+nk(miktar)+"</td></tr>";
-      }catch(e){
-        satirlar += "<tr><td colspan='4'>launch #"+i+" could not be read</td></tr>";
-      }
-    }
-    $("orows").innerHTML = okunan ? satirlar
-      : "<tr><td>could not be read from the chain — the network is not answering</td></tr>";
-    /* Only the dollar-denominated vaults are summed. Adding a BTC balance
-       to a dollar balance would produce a number with no unit, which is
-       worse than no number. */
-    $("s-kasa").textContent = toplamUsd > 0 ? "$"+nk(toplamUsd) : "—";
-  }catch(e){
-    $("orows").innerHTML = "<tr><td>could not be read from the chain: "+String(e.message||e).slice(0,80)+"</td></tr>";
+/* One chain's numbers: launches, the dollars sitting in their vaults, and
+   what the protocol's two locked funds hold right now. "Held now", not
+   "earned": a balance cannot tell revenue from a grant already paid out,
+   and calling it revenue would be a claim the chain does not make. */
+async function zincirOku(prov, adr, para){
+  const lp = new Contract(adr.launchpad, LP, prov);
+  const dolar = new Contract(para, ERC, prov);
+  const n = Number(await oku(()=>lp.launchCount()));
+  let kasa = 0n, okunan = 0;
+  for (let i = 0; i < n; i++){
+    const K = await oku(()=>lp.launchAt(i));
+    kasa += await oku(()=>dolar.balanceOf(K.kasa));
+    okunan++;
   }
+  const fon = (await oku(()=>dolar.balanceOf(adr.devPool))) + (await oku(()=>dolar.balanceOf(adr.likidite)));
+  return { n, okunan, kasa: Number(formatUnits(kasa, 6)), fon: Number(formatUnits(fon, 6)) };
+}
+
+async function canli(){
+  const satir = (z, a, b, c) => "<tr><td>"+z+"</td><td class='r'>"+a+"</td><td class='r'>"+b+"</td><td class='r'>"+c+"</td></tr>";
+  let tablo = "<tr><th>chain</th><th class='r'>launches</th><th class='r'>USD in launch vaults</th><th class='r'>USD held by protocol funds</th></tr>";
+  let arc = null;
+  try{
+    arc = await zincirOku(read, A, A.usdc);
+    tablo += satir("Arc · USDC", String(arc.n), usd(arc.kasa), usd(arc.fon));
+    $("s-launch").textContent = String(arc.n);
+    $("s-kasa").textContent = usd(arc.kasa);
+  }catch(e){
+    tablo += "<tr><td>Arc · USDC</td><td colspan='3'>could not be read from the chain — the network is not answering</td></tr>";
+  }
+  if (RH.launchpad){
+    try{
+      const rp = new JsonRpcProvider(RH.rpc,{chainId:RH.chainId,name:"robinhood"},{staticNetwork:true,batchMaxCount:1});
+      const r = await zincirOku(rp, RH, RH.usdg);
+      tablo += satir("Robinhood · USDG", String(r.n), usd(r.kasa), usd(r.fon));
+      if (arc) tablo += "<tr><th>both</th><th class='r'>"+(arc.n+r.n)+"</th><th class='r'>"+usd(arc.kasa+r.kasa)+"</th><th class='r'>"+usd(arc.fon+r.fon)+"</th></tr>";
+    }catch(e){
+      tablo += "<tr><td>Robinhood · USDG</td><td colspan='3'>could not be read from the chain</td></tr>";
+    }
+  } else {
+    tablo += "<tr><td>Robinhood · USDG</td><td colspan='3'>not deployed yet — nothing to read</td></tr>";
+  }
+  $("orows").innerHTML = tablo;
 }
 
 function adresler(){
@@ -738,11 +754,13 @@ function adresler(){
     "' target='_blank' rel='noopener'>"+kisa(a)+"</a></td><td>"+not+"</td></tr>";
   $("adresler").innerHTML = "<tr><th>contract</th><th>address</th><th>what it can do</th></tr>"+
     r("Launchpad",A.launchpad,"creates the token, the vault and the pool — has no owner") +
-    r("Hook",A.hook,"takes the fee and writes it into the floor — has no payout address") +
-    r("Swap router",A.router,"routes buys and sells — holds no money") +
+    r("Hook",A.hook,"takes the 2% and the floor tax on every trade — fixed splits, no setter") +
+    r("Developer pool",A.devPool,"pays developers only through a vote") +
+    r("Liquidity vault",A.likidite,"adds its share back into the pools — cannot withdraw") +
+    r("Marketplace",A.pazar,"launch services paid in USDC") +
+    r("FTHM",A.fthm,"the platform token — no mint, no owner, no pause") +
     r("PoolManager",A.poolManager,"Uniswap v4, not ours") +
-    r("USDC",A.usdc,"Arc's native money and its gas") +
-    r("Test collateral",A.testCol,"worthless, for trying the mechanism out");
+    r("USDC",A.usdc,"Arc's native money and its gas");
 }
 
 adresler();
