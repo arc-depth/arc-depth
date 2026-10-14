@@ -669,14 +669,18 @@ function adresler(){
     r("FTHM · 8 EVM chains",AGN.fthm,"the same address on Robinhood, Base, Arbitrum, Ethereum, BNB, Avalanche, Monad, HyperEVM — minted only against FTHM locked on Arc, no owner") +
     r("Twin factory · all chains",AGN.yayici,"one call makes any launch token appear on the other eight chains at one address — no owner") +
     r("Price network · all chains",AGN.fiyat,"carries a token's home price to every chain; nobody can choose the price — no owner") +
-    "<tr><td>FTHM · Solana</td><td class='mono'><a href='https://solscan.io/token/" + AGN.solMint + "' target='_blank' rel='noopener'>" + kisa(AGN.solMint) + "</a></td><td>OFT store on an immutable LayerZero OFT program; reached through Arc</td></tr>";
+    "<tr><td>FTHM · Solana</td><td class='mono'><a href='https://solscan.io/token/" + AGN.solMint + "' target='_blank' rel='noopener'>" + kisa(AGN.solMint) + "</a></td><td>OFT store on an immutable LayerZero OFT program; reached through Arc</td></tr>" +
+    "<tr><td>FTHM · Sui</td><td class='mono'><a href='https://suiscan.xyz/mainnet/coin/" + AGN.suiCoin + "' target='_blank' rel='noopener'>" + kisa(AGN.suiPaket) + "</a></td><td>LayerZero OFT; reached through Base, where a gate locks Base FTHM 1:1 for what Sui holds</td></tr>" +
+    "<tr><td>FTHM Sui gate · Base</td><td class='mono'><a href='https://basescan.org/address/" + AGN.suiGecit + "' target='_blank' rel='noopener'>" + kisa(AGN.suiGecit) + "</a></td><td>OFT adapter over the Base twin; Sui supply equals its balance</td></tr>";
 }
 
 /* The network generation (dagitim-ag.json, dagitim-fthm-ag.json,
    dagitim-sol-fthm.json), 14 Oct 2026. */
 const AGN = {
   fthm:"0x933F764D62ff7C0D86626972003f6c5138B9eBdd", yayici:"0x24C644e7C29F6582B892cb5D89d7b23Bc34d1bD9",
-  fiyat:"0x18b8D56c8c2b8f36B06380f47796e40b65DE45C6", solMint:"Cx3gUyxZY3JzQaJ2w1V54gpg8PNZRtXbEoYpuZNtaQBb"
+  fiyat:"0x18b8D56c8c2b8f36B06380f47796e40b65DE45C6", solMint:"Cx3gUyxZY3JzQaJ2w1V54gpg8PNZRtXbEoYpuZNtaQBb",
+  suiPaket:"0x6181e2aabffb4fe6f495a53167591e526a18efa458b6b94c7922a899366877ea", suiCoin:"0x6181e2aabffb4fe6f495a53167591e526a18efa458b6b94c7922a899366877ea::fthm::FTHM",
+  suiGecit:"0xFb99d4Ab471e82A19F721Be43F80e6d555C8aF2a"
 };
 
 /* FTHM on two chains (dagitim-fthm-iki-zincir.json), deployed 14 Oct 2026.

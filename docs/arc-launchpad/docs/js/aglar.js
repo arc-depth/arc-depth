@@ -11,6 +11,8 @@
  *
  *   quote   what the launchpad takes (approve this)
  *   dolar   the chain's dollar as people hold it
+ *   ikizHavuzFabrika / ikizHook   where a spread token's twin gets its pool
+ *           on this chain (opened against the home price, liquidity locked)
  * =========================================================================== */
 
 export const AGLAR = [
@@ -25,7 +27,9 @@ export const AGLAR = [
     "launchpad": "0xB6AC82F391FD6A7f59af804e3BE1C4753f832300",
     "quote": "0x3600000000000000000000000000000000000000",
     "dolar": "0x3600000000000000000000000000000000000000",
-    "dolarSembol": "USDC"
+    "dolarSembol": "USDC",
+    "ikizHavuzFabrika": "0x4372765aee45EA4c76b427B7f75Cdca9d7Fd3d69",
+    "ikizHook": "0x4D426b0608Fc6C2C5c7755a888a81eAa5e100A00"
   },
   {
     "anahtar": "robinhood",
@@ -38,7 +42,9 @@ export const AGLAR = [
     "launchpad": "0xE9c52F5E82a8D7d4a47742A53D234510d1634893",
     "quote": "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168",
     "dolar": "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168",
-    "dolarSembol": "USDG"
+    "dolarSembol": "USDG",
+    "ikizHavuzFabrika": "0xD20A7aBdeF2ff4EeC8282cA142D65F0eBbadD3b3",
+    "ikizHook": "0xB9Bc7794f9c9347764A5D190a4a1f2CFE8708a00"
   },
   {
     "anahtar": "base",
@@ -51,7 +57,9 @@ export const AGLAR = [
     "launchpad": "0x3072cecEa0aF148e1A1B433527E214f94FF679eF",
     "quote": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
     "dolar": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
-    "dolarSembol": "USDC"
+    "dolarSembol": "USDC",
+    "ikizHavuzFabrika": "0xb246f06e6cb222F5172e619f380B9066Ef604577",
+    "ikizHook": "0x9ffa53679f4cE6154551D5d190e692c46293Ca00"
   },
   {
     "anahtar": "arbitrum",
@@ -64,7 +72,9 @@ export const AGLAR = [
     "launchpad": "0xaD5f730fff704ae8C6e7b6E5FDcd2AaC7e635434",
     "quote": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
     "dolar": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
-    "dolarSembol": "USDC"
+    "dolarSembol": "USDC",
+    "ikizHavuzFabrika": "0x5BaaFd8b099BE7a119eA03d228E67F8375F65dfE",
+    "ikizHook": "0x08C267c7b76A83D1054715a95d4bb77f57E9cA00"
   },
   {
     "anahtar": "ethereum",
@@ -77,7 +87,9 @@ export const AGLAR = [
     "launchpad": "0xC0501179E64eC4632B4dA4056d72b2eD5aeE27a4",
     "quote": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
     "dolar": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
-    "dolarSembol": "USDC"
+    "dolarSembol": "USDC",
+    "ikizHavuzFabrika": "0x6dFEccfA596C19c33C655cecd071699bd3e6fDB2",
+    "ikizHook": "0x0a841cE673aa69f0363E18713f3dE7bA1B5a0a00"
   },
   {
     "anahtar": "bsc",
@@ -91,7 +103,9 @@ export const AGLAR = [
     "quote": "0xb233F129F7255F86d67BDAEA4e8c4f8274Fa70d9",
     "dolar": "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d",
     "dolarSembol": "USDC",
-    "sarmal": "0xb233F129F7255F86d67BDAEA4e8c4f8274Fa70d9"
+    "sarmal": "0xb233F129F7255F86d67BDAEA4e8c4f8274Fa70d9",
+    "ikizHavuzFabrika": "0x4e26a48A6F9020e0F32262C9568ed3FfB204fB1a",
+    "ikizHook": "0xC28281a97d9ea9EC3Ce5918200209C7A22240a00"
   },
   {
     "anahtar": "avalanche",
@@ -104,7 +118,9 @@ export const AGLAR = [
     "launchpad": "0xaD5f730fff704ae8C6e7b6E5FDcd2AaC7e635434",
     "quote": "0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E",
     "dolar": "0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E",
-    "dolarSembol": "USDC"
+    "dolarSembol": "USDC",
+    "ikizHavuzFabrika": "0x5BaaFd8b099BE7a119eA03d228E67F8375F65dfE",
+    "ikizHook": "0xbf2F6596f3e0e753C942100804328E6883d28a00"
   },
   {
     "anahtar": "monad",
@@ -117,7 +133,9 @@ export const AGLAR = [
     "launchpad": "0xaD5f730fff704ae8C6e7b6E5FDcd2AaC7e635434",
     "quote": "0x754704Bc059F8C67012fEd69BC8A327a5aafb603",
     "dolar": "0x754704Bc059F8C67012fEd69BC8A327a5aafb603",
-    "dolarSembol": "USDC"
+    "dolarSembol": "USDC",
+    "ikizHavuzFabrika": "0x5BaaFd8b099BE7a119eA03d228E67F8375F65dfE",
+    "ikizHook": "0xd1A23Ed60975edE343C6decd4c308f562FD4CA00"
   },
   {
     "anahtar": "hyperevm",
@@ -130,7 +148,9 @@ export const AGLAR = [
     "launchpad": "0x88eDBc0F18CdC763FDb9b6e355259fa25A20DE81",
     "quote": "0xb88339CB7199b77E23DB6E890353E22632Ba630f",
     "dolar": "0xb88339CB7199b77E23DB6E890353E22632Ba630f",
-    "dolarSembol": "USDC"
+    "dolarSembol": "USDC",
+    "ikizHavuzFabrika": "0x4e26a48A6F9020e0F32262C9568ed3FfB204fB1a",
+    "ikizHook": "0xF5e2d1Be525e1bBbb33ac80f201D09d363A84A00"
   }
 ];
 
