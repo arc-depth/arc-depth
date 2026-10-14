@@ -45,7 +45,7 @@ export const AGLAR = [
     ],
     "launchpad2": "0xF8c847252dd85Fd9Ff17FA7b3c0D0f147daC01c8",
     "poolManager": "0x8366a39CC670B4001A1121B8F6A443A643e40951",
-    "takasRouter": null,
+    "takasRouter": "0xa3e8dcb29CBbcd949972e89372672eC5712c99Cb",
     "ikizHavuzFabrika": "0x4372765aee45EA4c76b427B7f75Cdca9d7Fd3d69",
     "ikizHook": "0x4D426b0608Fc6C2C5c7755a888a81eAa5e100A00"
   },
@@ -70,7 +70,7 @@ export const AGLAR = [
     ],
     "launchpad2": "0xe4f95caA3F0052902270d5508073c8C981003A26",
     "poolManager": "0x8366a39CC670B4001A1121B8F6A443A643e40951",
-    "takasRouter": null,
+    "takasRouter": "0x2506122d951d2fCafC37b552960808C942e6Ba22",
     "ikizHavuzFabrika": "0xD20A7aBdeF2ff4EeC8282cA142D65F0eBbadD3b3",
     "ikizHook": "0xB9Bc7794f9c9347764A5D190a4a1f2CFE8708a00"
   },
@@ -94,7 +94,7 @@ export const AGLAR = [
     ],
     "launchpad2": "0x5D6c9B6FB89E4062e346b618CabF79F9d67e3930",
     "poolManager": "0x498581fF718922c3f8e6A244956aF099B2652b2b",
-    "takasRouter": null,
+    "takasRouter": "0x5ABCF3Dbe86F9ffC5e69E13686Ec2876b29124A6",
     "ikizHavuzFabrika": "0xb246f06e6cb222F5172e619f380B9066Ef604577",
     "ikizHook": "0x9ffa53679f4cE6154551D5d190e692c46293Ca00"
   },
@@ -118,7 +118,7 @@ export const AGLAR = [
     ],
     "launchpad2": "0xCeB8142CeCC347Ca65D751D50D8B9268c1B75648",
     "poolManager": "0x360E68faCcca8cA495c1B759Fd9EEe466db9FB32",
-    "takasRouter": null,
+    "takasRouter": "0xFDdb7868716cc0296fa6635F1cbC08677348db30",
     "ikizHavuzFabrika": "0x5BaaFd8b099BE7a119eA03d228E67F8375F65dfE",
     "ikizHook": "0x08C267c7b76A83D1054715a95d4bb77f57E9cA00"
   },
@@ -147,13 +147,16 @@ export const AGLAR = [
     "rpc": "https://bsc-dataseed.bnbchain.org",
     "gaz": "BNB",
     "kasif": "https://bscscan.com",
-    "launchpad": "0x88eDBc0F18CdC763FDb9b6e355259fa25A20DE81",
+    "launchpad": "0x6b3217979d41A9AF81524E2644665FfE727FF124",
     "quote": "0xb233F129F7255F86d67BDAEA4e8c4f8274Fa70d9",
     "dolar": "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d",
     "dolarSembol": "USDC",
     "sarmal": "0xb233F129F7255F86d67BDAEA4e8c4f8274Fa70d9",
     "domain": 17,
-    "nesil": 1,
+    "nesil": 3,
+    "launchpad2": "0x88eDBc0F18CdC763FDb9b6e355259fa25A20DE81",
+    "poolManager": "0x28e2Ea090877bF75740558f6BFB36A5ffeE9e9dF",
+    "takasRouter": "0x35B6109d4FbAAE7E04bB982668Dd90Cd830f02F6",
     "ikizHavuzFabrika": "0x4e26a48A6F9020e0F32262C9568ed3FfB204fB1a",
     "ikizHook": "0xC28281a97d9ea9EC3Ce5918200209C7A22240a00"
   },
@@ -178,7 +181,7 @@ export const AGLAR = [
     ],
     "launchpad2": "0xCeB8142CeCC347Ca65D751D50D8B9268c1B75648",
     "poolManager": "0x06380C0e0912312B5150364B9DC4542BA0DbBc85",
-    "takasRouter": null,
+    "takasRouter": "0xF710D994bBF59dEd747ede6E24c490b65158640e",
     "ikizHavuzFabrika": "0x5BaaFd8b099BE7a119eA03d228E67F8375F65dfE",
     "ikizHook": "0xbf2F6596f3e0e753C942100804328E6883d28a00"
   },
@@ -203,7 +206,7 @@ export const AGLAR = [
     ],
     "launchpad2": "0xCeB8142CeCC347Ca65D751D50D8B9268c1B75648",
     "poolManager": "0x188d586Ddcf52439676Ca21A244753fA19F9Ea8e",
-    "takasRouter": null,
+    "takasRouter": "0xF710D994bBF59dEd747ede6E24c490b65158640e",
     "ikizHavuzFabrika": "0x5BaaFd8b099BE7a119eA03d228E67F8375F65dfE",
     "ikizHook": "0xd1A23Ed60975edE343C6decd4c308f562FD4CA00"
   },
