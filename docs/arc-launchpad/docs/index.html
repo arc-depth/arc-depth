@@ -277,7 +277,7 @@ footer{border-top:1px solid var(--line);padding:40px 0 56px;color:var(--dim2);fo
   <div class="wrap">
     <div class="rozetler">
       <span class="tag"><span class="dot"></span>Live on Arc mainnet</span>
-      <span class="tag mor"><span class="dot mor"></span>Robinhood Chain — built &amp; tested, deploying</span>
+      <span class="tag mor"><span class="dot mor"></span>Live on Robinhood Chain</span>
     </div>
     <h1>Launch a memecoin with <em>real money underneath it.</em></h1>
     <p class="lead">
@@ -308,7 +308,7 @@ footer{border-top:1px solid var(--line);padding:40px 0 56px;color:var(--dim2);fo
     <h2>Everything the platform does, and where it stands.</h2>
     <p class="sub">
       Each card is marked with its real status. <span class="durum canli">Live</span>
-      means deployed on Arc mainnet and usable today.
+      means deployed on mainnet and usable today.
       <span class="durum hazir">Built &amp; tested</span> means written and passing its
       checks against real mainnet state, but not deployed yet.
     </p>
@@ -333,9 +333,9 @@ footer{border-top:1px solid var(--line);padding:40px 0 56px;color:var(--dim2);fo
         <h3>FTHM, staking and a DAO</h3>
         <p>The platform token has no mint and no owner. Developer funding only moves through a vote and a timelock.</p></div>
 
-      <div class="y"><span class="durum hazir">Built &amp; tested</span>
+      <div class="y"><span class="durum canli">Live</span>
         <h3>Launches on Robinhood Chain</h3>
-        <p>The same launchpad in USDG, measured end to end on Robinhood's real PoolManager — 21/21 checks.</p></div>
+        <p>The same launchpad, in USDG, deployed on Robinhood Chain and verified contract by contract from the chain.</p></div>
       <div class="y"><span class="durum hazir">Built &amp; tested</span>
         <h3>One token, two chains</h3>
         <p>Any launch token can get a twin on the other chain. Total supply stays exactly the same across both — 16/16.</p></div>
@@ -369,7 +369,7 @@ footer{border-top:1px solid var(--line);padding:40px 0 56px;color:var(--dim2);fo
         LayerZero
       </div>
       <div class="zblok">
-        <div class="zbas"><span class="znok rh"></span>Robinhood Chain <span class="durum hazir">Deploying</span></div>
+        <div class="zbas"><span class="znok rh"></span>Robinhood Chain <span class="durum canli">Live</span></div>
         <div class="zad">Where the traders are</div>
         <p>Home of tokenized stocks and one of the busiest memecoin markets on-chain.
         Launches there use <strong>USDG</strong>, and tokens can move between the two chains with supply kept whole.</p>
@@ -777,10 +777,9 @@ const A = {
   poolManager:"0x8366a39CC670B4001A1121B8F6A443A643e40951",
   usdc:     "0x3600000000000000000000000000000000000000"
 };
-/* Robinhood Chain: the same launchpad with USDG as the quote. Not deployed
-   yet, so null — and the table says so instead of showing a zero, which
-   would read as "deployed and empty". Fill these in when it is. */
-const RH = { chainId:4663, rpc:"https://rpc.mainnet.chain.robinhood.com", launchpad:null, devPool:null, likidite:null,
+/* Robinhood Chain: the same launchpad with USDG as the quote, deployed
+   14 Oct 2026 and verified from chain (dagitim-robinhood.json). */
+const RH = { chainId:4663, rpc:"https://rpc.mainnet.chain.robinhood.com", launchpad:"0xE9c52F5E82a8D7d4a47742A53D234510d1634893", devPool:"0x683D39831EF60b57E29BE4C55f1903f10Df857Bf", likidite:"0xc5B1839f48eF424413472aD0ff2E2A20bd936BcE",
              usdg:"0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168" };
 
 const read = new JsonRpcProvider(ARC.rpc,{chainId:ARC.chainId,name:"arc"},{staticNetwork:true,batchMaxCount:1});
@@ -852,6 +851,8 @@ async function canli(){
 }
 
 function adresler(){
+  const rh = (ad,a,not) => "<tr><td>"+ad+"</td><td class='mono'><a href='https://robin.etherscan.io/address/"+a+
+    "' target='_blank' rel='noopener'>"+kisa(a)+"</a></td><td>"+not+"</td></tr>";
   const r = (ad,a,not) => "<tr><td>"+ad+"</td><td class='mono'><a href='"+ARC.explorer+"/address/"+a+
     "' target='_blank' rel='noopener'>"+kisa(a)+"</a></td><td>"+not+"</td></tr>";
   $("adresler").innerHTML = "<tr><th>contract</th><th>address</th><th>what it can do</th></tr>"+
@@ -862,7 +863,10 @@ function adresler(){
     r("Marketplace",A.pazar,"launch services paid in USDC") +
     r("FTHM",A.fthm,"the platform token — no mint, no owner, no pause") +
     r("PoolManager",A.poolManager,"Uniswap v4, not ours") +
-    r("USDC",A.usdc,"Arc's native money and its gas");
+    r("USDC",A.usdc,"Arc's native money and its gas") +
+    rh("Launchpad · Robinhood",RH.launchpad,"the same launchpad, in USDG — has no owner") +
+    rh("Developer pool · Robinhood",RH.devPool,"pays out only on Arc DAO votes") +
+    rh("Liquidity vault · Robinhood",RH.likidite,"adds its share back into the pools — cannot withdraw");
 }
 
 adresler();
