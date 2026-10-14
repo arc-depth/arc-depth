@@ -125,6 +125,11 @@ export const ABI = {
   launchpadYaz: [
     "function launch(string ad, string sembol, address hedefVarlik, uint256 vergiPpm, uint256 alim, uint256 teminat) returns (address token, address kasa)"
   ],
+  /* second generation: the founder names the chain (CCTP domain) and the
+     asset on it; domain 0 keeps the collateral in dollars on this chain */
+  launchpad2Yaz: [
+    "function launch(string ad, string sembol, uint32 hedefDomain, address hedefVarlik, uint256 vergiPpm, uint256 alim, uint256 teminat) returns (address token, address kasa)"
+  ],
   /* BNB: the 1:1 six-decimal wrapper over 18-decimal USDC (Dolar6) */
   sarmalYaz: [
     "function sar(uint256 birim) returns (uint256)",

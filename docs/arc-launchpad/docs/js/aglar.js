@@ -10,6 +10,10 @@
  * USDC — `sarmal` names it, and the create flow wraps before it launches.
  *
  *   quote   what the launchpad takes (approve this)
+ *   nesil   2 where PulseLaunchpad2 is deployed: launch(ad, sembol,
+ *           hedefDomain, hedefVarlik, ...) and the collateral may be
+ *           converted on one of "uzaklar" (CCTP V2, dagitim-nesil2.json);
+ *           1 elsewhere, collateral stays the chain's dollar
  *   dolar   the chain's dollar as people hold it
  *   ikizHavuzFabrika / ikizHook   where a spread token's twin gets its pool
  *           on this chain (opened against the home price, liquidity locked)
@@ -24,10 +28,17 @@ export const AGLAR = [
     "rpc": "https://rpc.mainnet.arc.io",
     "gaz": "USDC",
     "kasif": "https://explorer.arc.io",
-    "launchpad": "0xB6AC82F391FD6A7f59af804e3BE1C4753f832300",
+    "launchpad": "0xF8c847252dd85Fd9Ff17FA7b3c0D0f147daC01c8",
     "quote": "0x3600000000000000000000000000000000000000",
     "dolar": "0x3600000000000000000000000000000000000000",
     "dolarSembol": "USDC",
+    "domain": 26,
+    "nesil": 2,
+    "launchpad1": "0xB6AC82F391FD6A7f59af804e3BE1C4753f832300",
+    "uzaklar": [
+      "base",
+      "arbitrum"
+    ],
     "ikizHavuzFabrika": "0x4372765aee45EA4c76b427B7f75Cdca9d7Fd3d69",
     "ikizHook": "0x4D426b0608Fc6C2C5c7755a888a81eAa5e100A00"
   },
@@ -39,10 +50,17 @@ export const AGLAR = [
     "rpc": "https://rpc.mainnet.chain.robinhood.com",
     "gaz": "ETH",
     "kasif": "https://robin.etherscan.io",
-    "launchpad": "0xE9c52F5E82a8D7d4a47742A53D234510d1634893",
-    "quote": "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168",
-    "dolar": "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168",
-    "dolarSembol": "USDG",
+    "launchpad": "0xe4f95caA3F0052902270d5508073c8C981003A26",
+    "quote": "0x3884564BA51B349e7661c7e28Ad947DEE327FeDF",
+    "dolar": "0x3884564BA51B349e7661c7e28Ad947DEE327FeDF",
+    "dolarSembol": "USDC",
+    "domain": 35,
+    "nesil": 2,
+    "launchpad1": "0xE9c52F5E82a8D7d4a47742A53D234510d1634893",
+    "uzaklar": [
+      "base",
+      "arbitrum"
+    ],
     "ikizHavuzFabrika": "0xD20A7aBdeF2ff4EeC8282cA142D65F0eBbadD3b3",
     "ikizHook": "0xB9Bc7794f9c9347764A5D190a4a1f2CFE8708a00"
   },
@@ -54,10 +72,16 @@ export const AGLAR = [
     "rpc": "https://mainnet.base.org",
     "gaz": "ETH",
     "kasif": "https://basescan.org",
-    "launchpad": "0x3072cecEa0aF148e1A1B433527E214f94FF679eF",
+    "launchpad": "0x5D6c9B6FB89E4062e346b618CabF79F9d67e3930",
     "quote": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
     "dolar": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
     "dolarSembol": "USDC",
+    "domain": 6,
+    "nesil": 2,
+    "launchpad1": "0x3072cecEa0aF148e1A1B433527E214f94FF679eF",
+    "uzaklar": [
+      "arbitrum"
+    ],
     "ikizHavuzFabrika": "0xb246f06e6cb222F5172e619f380B9066Ef604577",
     "ikizHook": "0x9ffa53679f4cE6154551D5d190e692c46293Ca00"
   },
@@ -69,10 +93,16 @@ export const AGLAR = [
     "rpc": "https://arb1.arbitrum.io/rpc",
     "gaz": "ETH",
     "kasif": "https://arbiscan.io",
-    "launchpad": "0xaD5f730fff704ae8C6e7b6E5FDcd2AaC7e635434",
+    "launchpad": "0xCeB8142CeCC347Ca65D751D50D8B9268c1B75648",
     "quote": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
     "dolar": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
     "dolarSembol": "USDC",
+    "domain": 3,
+    "nesil": 2,
+    "launchpad1": "0xaD5f730fff704ae8C6e7b6E5FDcd2AaC7e635434",
+    "uzaklar": [
+      "base"
+    ],
     "ikizHavuzFabrika": "0x5BaaFd8b099BE7a119eA03d228E67F8375F65dfE",
     "ikizHook": "0x08C267c7b76A83D1054715a95d4bb77f57E9cA00"
   },
@@ -88,6 +118,8 @@ export const AGLAR = [
     "quote": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
     "dolar": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
     "dolarSembol": "USDC",
+    "domain": 0,
+    "nesil": 1,
     "ikizHavuzFabrika": "0x6dFEccfA596C19c33C655cecd071699bd3e6fDB2",
     "ikizHook": "0x0a841cE673aa69f0363E18713f3dE7bA1B5a0a00"
   },
@@ -104,6 +136,8 @@ export const AGLAR = [
     "dolar": "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d",
     "dolarSembol": "USDC",
     "sarmal": "0xb233F129F7255F86d67BDAEA4e8c4f8274Fa70d9",
+    "domain": 17,
+    "nesil": 1,
     "ikizHavuzFabrika": "0x4e26a48A6F9020e0F32262C9568ed3FfB204fB1a",
     "ikizHook": "0xC28281a97d9ea9EC3Ce5918200209C7A22240a00"
   },
@@ -115,10 +149,17 @@ export const AGLAR = [
     "rpc": "https://avalanche-c-chain-rpc.publicnode.com",
     "gaz": "AVAX",
     "kasif": "https://snowscan.xyz",
-    "launchpad": "0xaD5f730fff704ae8C6e7b6E5FDcd2AaC7e635434",
+    "launchpad": "0xCeB8142CeCC347Ca65D751D50D8B9268c1B75648",
     "quote": "0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E",
     "dolar": "0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E",
     "dolarSembol": "USDC",
+    "domain": 1,
+    "nesil": 2,
+    "launchpad1": "0xaD5f730fff704ae8C6e7b6E5FDcd2AaC7e635434",
+    "uzaklar": [
+      "base",
+      "arbitrum"
+    ],
     "ikizHavuzFabrika": "0x5BaaFd8b099BE7a119eA03d228E67F8375F65dfE",
     "ikizHook": "0xbf2F6596f3e0e753C942100804328E6883d28a00"
   },
@@ -130,10 +171,17 @@ export const AGLAR = [
     "rpc": "https://rpc.monad.xyz",
     "gaz": "MON",
     "kasif": "https://monadvision.com",
-    "launchpad": "0xaD5f730fff704ae8C6e7b6E5FDcd2AaC7e635434",
+    "launchpad": "0xCeB8142CeCC347Ca65D751D50D8B9268c1B75648",
     "quote": "0x754704Bc059F8C67012fEd69BC8A327a5aafb603",
     "dolar": "0x754704Bc059F8C67012fEd69BC8A327a5aafb603",
     "dolarSembol": "USDC",
+    "domain": 15,
+    "nesil": 2,
+    "launchpad1": "0xaD5f730fff704ae8C6e7b6E5FDcd2AaC7e635434",
+    "uzaklar": [
+      "base",
+      "arbitrum"
+    ],
     "ikizHavuzFabrika": "0x5BaaFd8b099BE7a119eA03d228E67F8375F65dfE",
     "ikizHook": "0xd1A23Ed60975edE343C6decd4c308f562FD4CA00"
   },
@@ -145,10 +193,17 @@ export const AGLAR = [
     "rpc": "https://rpc.hyperliquid.xyz/evm",
     "gaz": "HYPE",
     "kasif": "https://hyperevmscan.io",
-    "launchpad": "0x88eDBc0F18CdC763FDb9b6e355259fa25A20DE81",
+    "launchpad": "0x6b3217979d41A9AF81524E2644665FfE727FF124",
     "quote": "0xb88339CB7199b77E23DB6E890353E22632Ba630f",
     "dolar": "0xb88339CB7199b77E23DB6E890353E22632Ba630f",
     "dolarSembol": "USDC",
+    "domain": 19,
+    "nesil": 2,
+    "launchpad1": "0x88eDBc0F18CdC763FDb9b6e355259fa25A20DE81",
+    "uzaklar": [
+      "base",
+      "arbitrum"
+    ],
     "ikizHavuzFabrika": "0x4e26a48A6F9020e0F32262C9568ed3FfB204fB1a",
     "ikizHook": "0xF5e2d1Be525e1bBbb33ac80f201D09d363A84A00"
   }

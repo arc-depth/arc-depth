@@ -73,14 +73,20 @@ export async function ciz({ kayit, param }) {
     ag: agBul(param && param.get && param.get("zincir")) || agBul("base")
   };
 
-  /* Arc launches are paused. The Arc launchpad (0xB6AC…2300) is wired to a
-     live cross-chain registry whose CCTP receive path cannot complete
-     (found 14 Oct 2026: the vaults wait for a hook call CCTP V2 never makes,
-     and the way home names a contract that cannot move USDC), while the
-     transfer trigger is permissionless. No launch has used it. Until Arc
-     gets a launchpad with that path closed, as on the eight other chains,
-     this screen does not send launches there. */
-  const ARC_DURDU = "Launching on Arc is paused while its cross-chain collateral path is replaced. Every other chain is open, and a token launched there can be spread to Arc with one more transaction.";
+  /* SECOND GENERATION (dagitim-nesil2.json). On chains with nesil 2 the
+     founder chooses where the collateral may be converted: an asset on one
+     of the chain's remotes (Base, Arbitrum), carried there by Circle's CCTP
+     and bought against a price floor, or no conversion at all. The choice
+     is written into the vault as immutables at launch. The first-generation
+     Arc launchpad (0xB6AC…2300) is no longer offered: its cross-chain path
+     could not complete (found and measured 14 Oct 2026). */
+  const ZINCIR_ADI = { base: "Base", arbitrum: "Arbitrum" };
+  const DOMAINI = { base: 6, arbitrum: 3 };
+  /* the remote chain the chosen asset will live on, for this home chain */
+  const uzakSec = (ag, v) => {
+    if (!v || ag.nesil !== 2) return null;
+    return (ag.uzaklar || []).find((u) => v.zincirler && v.zincirler[u]) || null;
+  };
 
   const ozetKap = el("div");
   const ozetiCiz = () => { temizle(ozetKap).append(odemeOzeti(durum)); };
@@ -93,16 +99,16 @@ export async function ciz({ kayit, param }) {
     for (const a of AGLAR) {
       agDugmeleri.append(el("button", {
         sinif: "dugme " + (a.id === durum.ag.id ? "dugme--marka" : "dugme--sessiz"),
-        attr: { type: "button" }, yazi: a.anahtar === "arc" ? a.ad + " (paused)" : a.ad,
+        attr: { type: "button" }, yazi: a.ad,
         on: { click: () => { durum.ag = a; agiCiz(); teminatiCiz(); } }
       }));
     }
-    temizle(agNotu).append(durum.ag.anahtar === "arc"
-      ? not(ARC_DURDU, "uyari")
+    temizle(agNotu).append(durum.ag.nesil === 2
+      ? not(durum.ag.ad + ": pay in USDC. The collateral can stay in dollars here, or be converted into an asset on " +
+          durum.ag.uzaklar.map((u) => ZINCIR_ADI[u]).join(" or ") + " — you choose below.", "bilgi")
       : not(durum.ag.ad + ": pay in " + durum.ag.dolarSembol +
           (durum.ag.sarmal ? " (wrapped 1:1 into 6-decimal pUSDC first, automatically)" : "") +
-          ". The collateral stays in " + durum.ag.dolarSembol + " on " + durum.ag.ad +
-          ". Converting it into another asset is not offered yet on any chain.", "bilgi"));
+          ". The collateral stays in " + durum.ag.dolarSembol + " on " + durum.ag.ad + ".", "bilgi"));
   };
   agiCiz();
   kap.append(panel("Chain", el("div", { sinif: "yigin" }, [
@@ -147,18 +153,24 @@ export async function ciz({ kayit, param }) {
 
   const teminatiCiz = () => {
     temizle(teminatKap);
-    if (durum.ag.anahtar !== "arc") {
+    if (durum.ag.nesil !== 2) {
       teminatKap.append(not("Collateral: " + durum.ag.dolarSembol + " on " + durum.ag.ad + ".", "bilgi"));
       return;
     }
     const v = durum.teminatVarlik;
+    const uzak = uzakSec(durum.ag, v);
 
     if (!v) {
       teminatKap.append(not(
-        "No collateral chosen yet. Pick one of the " + ONERILEN.length +
-        " suggestions below, or paste your own contract address.",
-        "uyari"
+        "Collateral stays in USDC on " + durum.ag.ad + ". To convert it, pick an asset on " +
+        durum.ag.uzaklar.map((u) => ZINCIR_ADI[u]).join(" or ") + " from the suggestions below, or paste a contract address.",
+        "bilgi"
       ));
+    } else if (!uzak) {
+      teminatKap.append(not(v.simge + " is not on " + durum.ag.uzaklar.map((u) => ZINCIR_ADI[u]).join(" or ") +
+        ", where collateral from " + durum.ag.ad + " can be converted. Pick another, or keep dollars.", "uyari"));
+      teminatKap.append(el("button", { sinif: "dugme dugme--sessiz", attr: { type: "button" }, yazi: "Keep dollars",
+        on: { click: () => { durum.teminatVarlik = null; teminatiCiz(); ozetiCiz(); } } }));
     } else {
       const zincirler = Object.keys(v.zincirler);
       teminatKap.append(el("div", { sinif: "satir satir--arasi" }, [
@@ -181,8 +193,9 @@ export async function ciz({ kayit, param }) {
       ]));
       teminatKap.append(el("div", {
         sinif: "yazi yazi--kucuk yazi--sessiz",
-        yazi: "Contract: " + Object.values(v.zincirler)[0].token
+        yazi: "Converted on " + ZINCIR_ADI[uzak] + " · contract " + v.zincirler[uzak].token
       }));
+      teminatKap.append(not("The dollars stay the guarantee: what is converted is upside for holders and is not counted in the redemption floor. It comes back as dollars when redemptions or the buyback need it.", "bilgi"));
       if (v.caIle) {
         teminatKap.append(not(
           "Not from the suggested list — chosen by contract address " +
@@ -315,7 +328,6 @@ export async function ciz({ kayit, param }) {
     });
 
     dugme.addEventListener("click", async () => {
-      if (durum.ag.anahtar === "arc") { durumSatiri.textContent = ARC_DURDU; return; }
       const ad = (adGirdi.value || "").trim();
       const sembol = (sembolGirdi.value || "").trim();
       const v = durum.teminatVarlik;
@@ -328,8 +340,9 @@ export async function ciz({ kayit, param }) {
         return;
       }
       const ag = durum.ag;
-      if (!v && ag.anahtar === "arc") {
-        durumSatiri.textContent = "No collateral asset chosen.";
+      const uzak = uzakSec(ag, v);
+      if (v && ag.nesil === 2 && !uzak) {
+        durumSatiri.textContent = v.simge + " cannot be the converted collateral for a launch on " + ag.ad + ".";
         return;
       }
       if (durum.alim < PULSE_KURAL.asgariAlim || durum.alim > PULSE_KURAL.azamiAlim) {
@@ -343,10 +356,10 @@ export async function ciz({ kayit, param }) {
         return;
       }
 
-      /* Off Arc the vault's conversion route is closed (KapaliKayit), so the
-         target recorded is the chain's own dollar — the collateral stays
-         dollars, which is what the screen said above. */
-      const hedef = ag.anahtar === "arc" ? Object.values(v.zincirler)[0].token : ag.quote;
+      /* Second generation: (domain, asset) of the chosen remote, or (0, the
+         dollar) to keep dollars. First generation: the dollar. */
+      const hedefDomain = uzak ? DOMAINI[uzak] : 0;
+      const hedef = uzak ? v.zincirler[uzak].token : ag.quote;
       /* Six decimals, because the quote has six. Rounded rather than
          truncated so a form showing 100 does not send 99,999999. */
       const alim = BigInt(Math.round(durum.alim * 1e6));
@@ -376,8 +389,9 @@ export async function ciz({ kayit, param }) {
         durumSatiri.textContent = "Sending the launch on " + ag.ad + "…";
         const hash = await cuzdan.agdaGonder(ag, {
           to: ag.launchpad,
-          data: cagriVerisi(ABI.launchpadYaz, "launch",
-            [ad, sembol, hedef, BigInt(durum.vergiPpm), alim, teminat])
+          data: ag.nesil === 2
+            ? cagriVerisi(ABI.launchpad2Yaz, "launch", [ad, sembol, hedefDomain, hedef, BigInt(durum.vergiPpm), alim, teminat])
+            : cagriVerisi(ABI.launchpadYaz, "launch", [ad, sembol, hedef, BigInt(durum.vergiPpm), alim, teminat])
         });
         durumSatiri.className = "yazi yazi--kucuk";
         durumSatiri.textContent = "Sent: " + hash + " — waiting for the receipt…";
