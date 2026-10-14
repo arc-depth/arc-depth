@@ -23,6 +23,7 @@ import { el, sayfaUst, panel, bos, not, olcum } from "../ui.js";
 import { agBul, agLaunchlari, cokluOku, havuzFiyatiAg, fiyat, kasif, ABI3 } from "../ag-okur.js";
 import { UNISWAP } from "../teminat-bul.js";
 import { cuzdan } from "../cuzdan.js";
+import { canli } from "../adresler.js";
 import { JsonRpcProvider, Contract, Interface, parseUnits, formatUnits } from "../../vendor/ethers.min.js";
 
 /* the launch dollar: on BNB the 6-decimal wrapper pUSDC, elsewhere the chain's dollar */
@@ -89,7 +90,8 @@ export async function ciz({ param }) {
   ].filter(Boolean)));
 
   /* ---- trade ---- */
-  const r = ag.takasRouter;
+  /* a well-formed address or nothing: the button exists only if the router does */
+  const r = canli(ag.takasRouter) ? ag.takasRouter : null;
   let alis = true;
   const miktar = el("input", { sinif: "girdi girdi--sayi", attr: { type: "number", min: "0", placeholder: "0.00" } });
   const birim = el("span", { sinif: "girdi-grup__son", yazi: qSembol(ag) });
