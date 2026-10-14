@@ -19,8 +19,7 @@ import { EKONOMI, PULSE, PULSE_KURAL, launchpadCanli, canli } from "../adresler.
 import { ABI, cagriVerisi } from "../zincir.js";
 import { cuzdan } from "../cuzdan.js";
 import { para, ppmYuzde } from "../bicim.js";
-import { ONERILEN } from "../teminat-listesi.js";
-import { oneriTablosu, caAlani, zincirEtiketi, tutarYaz } from "./teminat-sec.js";
+import { tokenOku, rotalar, asgariCikti } from "../teminat-bul.js";
 import { AGLAR, AG, IKIZ_SECENEK, agBul } from "../aglar.js";
 import { Interface } from "../../vendor/ethers.min.js";
 
@@ -67,34 +66,28 @@ export async function ciz({ kayit, param }) {
        zorunda. Form bes varlikli yuzdelik bir sepet sunuyordu ve o form
        hicbir zaman kabul edilemeyecek bir launch uretiyordu — gonderilmeden
        once degil, zincirde reddedilerek. */
-    teminatVarlik: null,
+    teminatToken: null,   // the pasted collateral token, read from the chain
+    rota: null,           // its best route, from teminat-bul.js
     /* Which chain the launch happens on. Any of the nine; the token can
        then be spread to all the others. */
     ag: agBul(param && param.get && param.get("zincir")) || agBul("base")
   };
 
-  /* SECOND GENERATION (dagitim-nesil2.json). On chains with nesil 2 the
-     founder chooses where the collateral may be converted: an asset on one
-     of the chain's remotes (Base, Arbitrum), carried there by Circle's CCTP
-     and bought against a price floor, or no conversion at all. The choice
-     is written into the vault as immutables at launch. The first-generation
-     Arc launchpad (0xB6AC…2300) is no longer offered: its cross-chain path
-     could not complete (found and measured 14 Oct 2026). */
-  const ZINCIR_ADI = { base: "Base", arbitrum: "Arbitrum" };
+  /* LOCAL COLLATERAL (nesil 3, dagitim-nesil3.json). On Arc, Robinhood,
+     Base, Arbitrum, Avalanche and Monad the founder pastes the contract
+     address of any token on that chain; teminat-bul.js finds where it
+     trades against the chain's dollar and quotes it; the launch converts
+     the collateral deposit into it in the same transaction. Leaving the
+     field empty keeps the collateral in dollars. Ethereum and BNB launch
+     in dollars (first-generation launchpads); HyperEVM cannot hold a
+     launch at all. */
   /* Chains where a launch cannot fit in a block an ordinary wallet can use.
      HyperEVM: small blocks are capped at 3,000,000 gas (read from the chain,
-     14 Oct 2026) and a launch costs ~11,000,000 (measured on forks of six
-     chains); the 30M big blocks are only for addresses that switched to
-     them on HyperCore. So the launch would always revert there. Tokens
-     launched elsewhere still reach HyperEVM: the spread is delivered by
-     LayerZero's executor, which uses big blocks. */
-  const LAUNCH_YOK = { hyperevm: "HyperEVM blocks hold 3M gas and a launch needs about 11M, so launches cannot run there. Launch on any other chain and spread the token to HyperEVM in the next step." };
-  const DOMAINI = { base: 6, arbitrum: 3 };
-  /* the remote chain the chosen asset will live on, for this home chain */
-  const uzakSec = (ag, v) => {
-    if (!v || ag.nesil !== 2) return null;
-    return (ag.uzaklar || []).find((u) => v.zincirler && v.zincirler[u]) || null;
-  };
+     14 Oct 2026) and a launch costs 7-11M (measured on forks); the 30M big
+     blocks are only for addresses that switched to them on HyperCore.
+     Tokens launched elsewhere still reach HyperEVM: the spread is delivered
+     by LayerZero's executor, which uses big blocks. */
+  const LAUNCH_YOK = { hyperevm: "HyperEVM blocks hold 3M gas and a launch needs about 7M, so launches cannot run there. Launch on any other chain and spread the token to HyperEVM in the next step." };
 
   const ozetKap = el("div");
   const ozetiCiz = () => { temizle(ozetKap).append(odemeOzeti(durum)); };
@@ -108,27 +101,22 @@ export async function ciz({ kayit, param }) {
       agDugmeleri.append(el("button", {
         sinif: "dugme " + (a.id === durum.ag.id ? "dugme--marka" : "dugme--sessiz"),
         attr: { type: "button" }, yazi: LAUNCH_YOK[a.anahtar] ? a.ad + " (spread only)" : a.ad,
-        on: { click: () => { durum.ag = a; agiCiz(); teminatiCiz(); } }
+        on: { click: () => { durum.ag = a; durum.teminatToken = null; durum.rota = null; agiCiz(); teminatiCiz(); } }
       }));
     }
-    temizle(agNotu).append(LAUNCH_YOK[durum.ag.anahtar] ? not(LAUNCH_YOK[durum.ag.anahtar], "uyari") : durum.ag.nesil === 2
-      ? not(durum.ag.ad + ": pay in USDC. The collateral can stay in dollars here, or be converted into an asset on " +
-          durum.ag.uzaklar.map((u) => ZINCIR_ADI[u]).join(" or ") + " — you choose below.", "bilgi")
+    temizle(agNotu).append(LAUNCH_YOK[durum.ag.anahtar] ? not(LAUNCH_YOK[durum.ag.anahtar], "uyari")
       : not(durum.ag.ad + ": pay in " + durum.ag.dolarSembol +
           (durum.ag.sarmal ? " (wrapped 1:1 into 6-decimal pUSDC first, automatically)" : "") +
-          ". The collateral stays in " + durum.ag.dolarSembol + " on " + durum.ag.ad + ".", "bilgi"));
+          (durum.ag.nesil === 3 ? ". Back the token with any token on " + durum.ag.ad + ": paste its address below." :
+            ". The collateral stays in " + durum.ag.dolarSembol + " on " + durum.ag.ad + "."), "bilgi"));
   };
   agiCiz();
   kap.append(panel("Chain", el("div", { sinif: "yigin" }, [
     agDugmeleri, agNotu,
-    el("div", { sinif: "alan__ipucu", yazi: "After the launch, one more transaction makes the token appear on the other eight chains at the same address." })
+    el("div", { sinif: "alan__ipucu", yazi: "After the launch, one more transaction makes the token appear on the other chains at the same address." })
   ])));
 
   /* ---- 1. identity -------------------------------------------------- */
-  /* Held by reference. The submit used to have no handler at all; now
-     that it does, it needs these values, and reading them back out of
-     the DOM by selector would find the wrong input the day a second
-     text field is added. */
   const adGirdi = el("input", {
     sinif: "girdi", attr: { type: "text", placeholder: "Example Coin", maxlength: "32" }
   });
@@ -156,99 +144,65 @@ export async function ciz({ kayit, param }) {
     ])
   ])));
 
-  /* ---- 2. collateral: ONE asset, chosen or pasted ------------------- */
+  /* ---- 2. collateral: paste a contract address ---------------------- */
   const teminatKap = el("div", { sinif: "yigin yigin--sik" });
+  const caGirdi = el("input", { sinif: "girdi mono", attr: { type: "text", placeholder: "0x… token contract on this chain", spellcheck: "false" } });
+  const bulDurum = el("div", { sinif: "yazi yazi--kucuk yazi--sessiz" });
+
+  const teminatBul = async () => {
+    const ca = (caGirdi.value || "").trim();
+    durum.teminatToken = null; durum.rota = null;
+    if (!ca) { teminatiCiz(); return; }
+    if (!/^0x[0-9a-fA-F]{40}$/.test(ca)) { bulDurum.textContent = "That is not a contract address."; return; }
+    bulDurum.textContent = "Looking for " + ca.slice(0, 10) + "… on " + durum.ag.ad + "…";
+    const t = await tokenOku(durum.ag, ca);
+    if (!t) { bulDurum.textContent = "No token at that address on " + durum.ag.ad + "."; return; }
+    if (t.adres.toLowerCase() === durum.ag.quote.toLowerCase()) { bulDurum.textContent = ""; teminatiCiz(); return; }
+    const r = await rotalar(durum.ag, t.adres, BigInt(Math.round(durum.teminat * 1e6)));
+    if (!r.length) { bulDurum.textContent = t.simge + " has no pool against " + durum.ag.dolarSembol + " on " + durum.ag.ad + " that the launch can buy through."; return; }
+    durum.teminatToken = t; durum.rota = r[0];
+    bulDurum.textContent = "";
+    teminatiCiz(); ozetiCiz();
+  };
+  caGirdi.addEventListener("change", teminatBul);
 
   const teminatiCiz = () => {
     temizle(teminatKap);
-    if (durum.ag.nesil !== 2) {
+    if (durum.ag.nesil !== 3) {
       teminatKap.append(not("Collateral: " + durum.ag.dolarSembol + " on " + durum.ag.ad + ".", "bilgi"));
       return;
     }
-    const v = durum.teminatVarlik;
-    const uzak = uzakSec(durum.ag, v);
-
-    if (!v) {
-      teminatKap.append(not(
-        "Collateral stays in USDC on " + durum.ag.ad + ". To convert it, pick an asset on " +
-        durum.ag.uzaklar.map((u) => ZINCIR_ADI[u]).join(" or ") + " from the suggestions below, or paste a contract address.",
-        "bilgi"
-      ));
-    } else if (!uzak) {
-      teminatKap.append(not(v.simge + " is not on " + durum.ag.uzaklar.map((u) => ZINCIR_ADI[u]).join(" or ") +
-        ", where collateral from " + durum.ag.ad + " can be converted. Pick another, or keep dollars.", "uyari"));
-      teminatKap.append(el("button", { sinif: "dugme dugme--sessiz", attr: { type: "button" }, yazi: "Keep dollars",
-        on: { click: () => { durum.teminatVarlik = null; teminatiCiz(); ozetiCiz(); } } }));
-    } else {
-      const zincirler = Object.keys(v.zincirler);
-      teminatKap.append(el("div", { sinif: "satir satir--arasi" }, [
-        el("div", { sinif: "jeton" }, [
-          el("div", { sinif: "jeton__logo jeton__logo--bos",
-            yazi: v.simge.slice(0, 3).toUpperCase() }),
-          el("div", { sinif: "jeton__yazi" }, [
-            el("div", { sinif: "jeton__sembol", yazi: v.simge }),
-            el("div", { sinif: "jeton__ad",
-              yazi: v.ad + " · " + v.ondalik + " decimals · " +
-                zincirler.map(zincirEtiketi).join(", ") }),
-            el("div", { sinif: "yazi yazi--kucuk yazi--sessiz",
-              yazi: "largest measured conversion " + tutarYaz(v.azamiTutar) })
-          ])
-        ]),
-        el("button", {
-          sinif: "dugme dugme--sessiz", attr: { type: "button" }, yazi: "Change",
-          on: { click: () => { durum.teminatVarlik = null; teminatiCiz(); ozetiCiz(); } }
-        })
-      ]));
-      teminatKap.append(el("div", {
-        sinif: "yazi yazi--kucuk yazi--sessiz",
-        yazi: "Converted on " + ZINCIR_ADI[uzak] + " · contract " + v.zincirler[uzak].token
-      }));
-      teminatKap.append(not("The dollars stay the guarantee: what is converted is upside for holders and is not counted in the redemption floor. It comes back as dollars when redemptions or the buyback need it.", "bilgi"));
-      if (v.caIle) {
-        teminatKap.append(not(
-          "Not from the suggested list — chosen by contract address " +
-          "and passed the same check: the deepest USDC pool was found " +
-          "and its liquidity and observation history were read.", "bilgi"));
-      }
+    teminatKap.append(el("div", { sinif: "satir", attr: { style: "gap:8px" } }, [
+      caGirdi,
+      el("button", { sinif: "dugme dugme--sessiz", attr: { type: "button" }, yazi: "Find", on: { click: teminatBul } })
+    ]));
+    teminatKap.append(bulDurum);
+    const t = durum.teminatToken;
+    if (!t) {
+      teminatKap.append(not("Empty: the collateral stays in " + durum.ag.dolarSembol + ". Paste a token's address to back the launch with that token instead.", "bilgi"));
+      return;
     }
+    const tutar = Number(durum.rota.cikti) / 10 ** t.ondalik;
+    teminatKap.append(el("div", { sinif: "jeton" }, [
+      el("div", { sinif: "jeton__logo jeton__logo--bos", yazi: t.simge.slice(0, 3).toUpperCase() }),
+      el("div", { sinif: "jeton__yazi" }, [
+        el("div", { sinif: "jeton__sembol", yazi: t.simge }),
+        el("div", { sinif: "jeton__ad", yazi: t.ad + " · " + t.adres }),
+        el("div", { sinif: "yazi yazi--kucuk yazi--sessiz",
+          yazi: para(durum.teminat) + " buys about " + tutar.toPrecision(6) + " " + t.simge + " now · " + durum.rota.aciklama })
+      ])
+    ]));
+    teminatKap.append(not("The vault holds " + t.simge + " from the start. Every trade's tax arrives in " + durum.ag.dolarSembol +
+      " and stays " + durum.ag.dolarSembol + ". Redeeming pays a share of both. The launch refuses if the conversion would give more than 3% less than quoted here.", "bilgi"));
   };
-
-  const teminatSecildi = (v) => {
-    durum.teminatVarlik = v;
-    teminatiCiz();
-    ozetiCiz();
-  };
-
-  /* A collateral address handed over by the selection screen
-     (#/olustur?teminat=0x…). Matched against the recommended list so the
-     symbol and decimals come from the measurement rather than from the
-     query string — a URL is not a source of truth about a token. */
-  const gelen = param && param.get && param.get("teminat");
-  if (gelen) {
-    const esles = ONERILEN.find((v) =>
-      Object.values(v.zincirler).some((d) =>
-        d.token.toLowerCase() === String(gelen).toLowerCase()));
-    if (esles) durum.teminatVarlik = esles;
-  }
   teminatiCiz();
 
   kap.append(panel("Collateral", [
     el("div", { sinif: "ikincil", attr: { style: "margin-bottom:12px" }, yazi:
-      "Choose which asset accumulates behind the token. The tax on " +
-      "every trade flows into it, and when the price falls below the " +
-      "collateral's value per token the buyback engages." }),
+      "Paste the contract address of the token that should back this launch. Your collateral deposit (at least " +
+      para(PULSE_KURAL.asgariTeminat) + ") is converted into it when the launch happens." }),
     teminatKap
   ]));
-
-  kap.append(panel("Use your own token", caAlani(teminatSecildi)));
-
-  kap.append(panel(
-    ONERILEN.length + " suggested",
-    oneriTablosu(teminatSecildi),
-    el("span", { sinif: "yazi yazi--kucuk yazi--sessiz",
-      yazi: "the list is a shortcut, not a gate" }),
-    true
-  ));
 
   /* ---- 3. tax -------------------------------------------------------- */
   const vergiEtiket = el("span", { sinif: "mono", yazi: ppmYuzde(durum.vergiPpm) });
@@ -338,8 +292,6 @@ export async function ciz({ kayit, param }) {
     dugme.addEventListener("click", async () => {
       const ad = (adGirdi.value || "").trim();
       const sembol = (sembolGirdi.value || "").trim();
-      const v = durum.teminatVarlik;
-
       /* Everything the contract will refuse, refused here first — with
          the reason, rather than letting the chain answer with a selector
          nobody can read. */
@@ -349,11 +301,6 @@ export async function ciz({ kayit, param }) {
       }
       const ag = durum.ag;
       if (LAUNCH_YOK[ag.anahtar]) { durumSatiri.textContent = LAUNCH_YOK[ag.anahtar]; return; }
-      const uzak = uzakSec(ag, v);
-      if (v && ag.nesil === 2 && !uzak) {
-        durumSatiri.textContent = v.simge + " cannot be the converted collateral for a launch on " + ag.ad + ".";
-        return;
-      }
       if (durum.alim < PULSE_KURAL.asgariAlim || durum.alim > PULSE_KURAL.azamiAlim) {
         durumSatiri.textContent = "The buy has to be between " +
           PULSE_KURAL.asgariAlim + " and " + PULSE_KURAL.azamiAlim + " USDC.";
@@ -365,18 +312,24 @@ export async function ciz({ kayit, param }) {
         return;
       }
 
-      /* Second generation: (domain, asset) of the chosen remote, or (0, the
-         dollar) to keep dollars. First generation: the dollar. */
-      const hedefDomain = uzak ? DOMAINI[uzak] : 0;
-      const hedef = uzak ? v.zincirler[uzak].token : ag.quote;
       /* Six decimals, because the quote has six. Rounded rather than
          truncated so a form showing 100 does not send 99,999999. */
       const alim = BigInt(Math.round(durum.alim * 1e6));
       const teminat = BigInt(Math.round(durum.teminat * 1e6));
 
+      /* The collateral route, quoted again for the amount actually sent: the
+         one shown was quoted for whatever the field said at the time. */
+      let tm = [ag.quote, 0, "0x", 0n];
+      if (ag.nesil === 3 && durum.teminatToken) {
+        durumSatiri.textContent = "Quoting " + durum.teminatToken.simge + " for " + para(durum.teminat) + "…";
+        const r = await rotalar(ag, durum.teminatToken.adres, teminat).catch(() => []);
+        if (!r.length) { durumSatiri.textContent = "No route to " + durum.teminatToken.simge + " right now; try again or clear the field to keep dollars."; return; }
+        tm = [durum.teminatToken.adres, r[0].tur, r[0].rota, asgariCikti(r[0].cikti)];
+      }
+
       try {
         durumSatiri.className = "yazi yazi--kucuk yazi--sessiz";
-        durumSatiri.textContent = "Asking for the USDC allowance…";
+        durumSatiri.textContent = "Asking for the " + ag.dolarSembol + " allowance…";
         /* Exactly what this launch needs, not an unlimited allowance: a
            standing allowance on a contract that moves money is a liability
            for no benefit. */
@@ -398,9 +351,9 @@ export async function ciz({ kayit, param }) {
         durumSatiri.textContent = "Sending the launch on " + ag.ad + "…";
         const hash = await cuzdan.agdaGonder(ag, {
           to: ag.launchpad,
-          data: ag.nesil === 2
-            ? cagriVerisi(ABI.launchpad2Yaz, "launch", [ad, sembol, hedefDomain, hedef, BigInt(durum.vergiPpm), alim, teminat])
-            : cagriVerisi(ABI.launchpadYaz, "launch", [ad, sembol, hedef, BigInt(durum.vergiPpm), alim, teminat])
+          data: ag.nesil === 3
+            ? cagriVerisi(ABI.launchpad3Yaz, "launch", [ad, sembol, tm, BigInt(durum.vergiPpm), alim, teminat])
+            : cagriVerisi(ABI.launchpadYaz, "launch", [ad, sembol, ag.quote, BigInt(durum.vergiPpm), alim, teminat])
         });
         durumSatiri.className = "yazi yazi--kucuk";
         durumSatiri.textContent = "Sent: " + hash + " — waiting for the receipt…";
@@ -513,8 +466,7 @@ function odemeOzeti(d) {
 
   const gecerli = d.alim >= PULSE_KURAL.asgariAlim
     && d.alim <= PULSE_KURAL.azamiAlim
-    && d.teminat >= PULSE_KURAL.asgariTeminat
-    && !!d.teminatVarlik;
+    && d.teminat >= PULSE_KURAL.asgariTeminat;
 
   const bin = (x) => Math.round(x).toLocaleString("tr-TR");
 

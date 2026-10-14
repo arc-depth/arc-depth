@@ -127,6 +127,11 @@ export const ABI = {
   ],
   /* second generation: the founder names the chain (CCTP domain) and the
      asset on it; domain 0 keeps the collateral in dollars on this chain */
+  /* local collateral: the pasted token, its route (0 = v3 path, 1 = v4
+     PoolKey) and the minimum the vault must receive */
+  launchpad3Yaz: [
+    "function launch(string ad, string sembol, (address varlik, uint8 tur, bytes rota, uint256 asgari) tm, uint256 vergiPpm, uint256 alim, uint256 teminat) returns (address token, address kasa)"
+  ],
   launchpad2Yaz: [
     "function launch(string ad, string sembol, uint32 hedefDomain, address hedefVarlik, uint256 vergiPpm, uint256 alim, uint256 teminat) returns (address token, address kasa)"
   ],
