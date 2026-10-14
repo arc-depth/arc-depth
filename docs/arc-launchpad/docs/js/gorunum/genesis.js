@@ -74,12 +74,15 @@ export async function bilgiler(ag) {
 
 const kelimeler = (s) => (s.toLocaleLowerCase("tr").match(/[\p{L}\p{N}]{3,}/gu) || []);
 export function ilgili(soru, liste, n = 3) {
-  const q = new Set(kelimeler(soru));
-  return liste.map((b) => {
-    const k = kelimeler(b.metin);
-    const ortak = k.filter((w) => q.has(w)).length;
-    return { ...b, puan: ortak / Math.sqrt(k.length + 1) };
-  }).filter((b) => b.puan > 0).sort((a, b) => b.puan - a.puan).slice(0, n);
+  /* words weighted by how rare they are in memory (idf): "launch" is in
+     half the records and says little, "fee" is in two and says a lot */
+  const belgeler = liste.map((b) => new Set(kelimeler(b.metin)));
+  const idf = (w) => Math.log((belgeler.length + 1) / (belgeler.filter((d) => d.has(w)).length + 0.5));
+  const q = [...new Set(kelimeler(soru))];
+  return liste.map((b, i) => {
+    const puan = q.filter((w) => belgeler[i].has(w)).reduce((t, w) => t + idf(w), 0) / Math.sqrt(belgeler[i].size + 1);
+    return { ...b, puan };
+  }).filter((b) => b.puan > 0).sort((x, y) => y.puan - x.puan).slice(0, n);
 }
 
 let uretici = null;
