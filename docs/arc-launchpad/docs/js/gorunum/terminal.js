@@ -284,7 +284,7 @@ function bilgiListesi(kayit, bilgi, dolasim) {
     ]));
   }
   liste.append(el("div", { sinif: "satir satir--arasi" }, [
-    el("span", { sinif: "ucuncul", yazi: "Kasa" }), adres(kayit.kasa)
+    el("span", { sinif: "ucuncul", yazi: "Vault" }), adres(kayit.kasa)
   ]));
   return liste;
 }
@@ -294,8 +294,8 @@ function rezervListesi(rezerv, hak, dolasim, tabanFiyat) {
     return bos("Reserve could not be read", "The vault call did not answer.");
   }
   const satirlar = [
-    ["Rezerv (USDC)", para(rezerv)],
-    ["Hak / token", hak == null ? "—" : para(Number(hak) / 1e36)],
+    ["Reserve (USDC)", para(rezerv)],
+    ["Claim / token", hak == null ? "—" : para(Number(hak) / 1e36)],
     ["Floor price", tabanFiyat == null ? "—" : para(tabanFiyat)],
     ["Per call", EKONOMI.islemTavaniBps / 100 + "%"],
     ["Per window", EKONOMI.donemTavaniBps / 100 + "%"]

@@ -219,8 +219,8 @@ function jetonTablosu(satirlar, sira) {
     el("tr", {}, [
       el("th", { yazi: "Token" }),
       el("th", { yazi: "Fiyat" }),
-      el("th", { yazi: "Rezerv" }),
-      el("th", { yazi: "Hak / token" }),
+      el("th", { yazi: "Reserve" }),
+      el("th", { yazi: "Claim / token" }),
       el("th", { yazi: "Vergi" }),
       el("th", { yazi: "" })
     ])
@@ -243,8 +243,8 @@ function jetonTablosu(satirlar, sira) {
          they are real reads and a row shows "—" until its read returns,
          never a placeholder number. */
       hucre("Fiyat", "—", "fiyat-" + s.id),
-      hucre("Rezerv", "—", "rezerv-" + s.id),
-      hucre("Hak / token", "—", "hak-" + s.id),
+      hucre("Reserve", "—", "rezerv-" + s.id),
+      hucre("Claim / token", "—", "hak-" + s.id),
       el("td", { sinif: "sayi", attr: { "data-et": "Vergi" },
         yazi: (s.vergiPpm / 10_000).toFixed(2).replace(".", ",") + "%" }),
       el("td", { attr: { "data-et": "" } }, [

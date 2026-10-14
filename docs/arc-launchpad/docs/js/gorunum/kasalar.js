@@ -20,7 +20,7 @@ export async function ciz() {
   kap.append(el("div", { sinif: "izgara izgara--olcum" }, [
     olcum("Per call", EKONOMI.islemTavaniBps / 100 + "%", "spendable in one buyback"),
     olcum("Per window", EKONOMI.donemTavaniBps / 100 + "%", "spend plus reward"),
-    olcum("Pencere", bloktanSure(EKONOMI.donemBlok), EKONOMI.donemBlok + " blok"),
+    olcum("Window", bloktanSure(EKONOMI.donemBlok), EKONOMI.donemBlok + " blocks"),
     olcum("Caller's share", EKONOMI.odulPayiBps / 100 + "%", "of the discount captured")
   ]));
 
@@ -34,7 +34,7 @@ export async function ciz() {
   const { dagitildiMi, liste } = await launchListesi();
 
   if (!dagitildiMi) {
-    kap.append(panel("Kasalar", bos(
+    kap.append(panel("Vaults", bos(
       "No vaults yet",
       "Every launch creates its own collateral vault. With the launchpad " +
       "not deployed there is no vault to read."
@@ -50,11 +50,11 @@ export async function ciz() {
   const tablo = el("table", { sinif: "tablo tablo--kart" });
   tablo.append(el("thead", {}, [el("tr", {}, [
     el("th", { yazi: "Token" }),
-    el("th", { yazi: "Rezerv" }),
+    el("th", { yazi: "Reserve" }),
     el("th", { yazi: "Circulating" }),
-    el("th", { yazi: "Hak / token" }),
+    el("th", { yazi: "Claim / token" }),
     el("th", { yazi: "Floor price" }),
-    el("th", { yazi: "Kasa" })
+    el("th", { yazi: "Vault" })
   ])]));
   const govde = el("tbody");
 
@@ -82,22 +82,22 @@ export async function ciz() {
           ])
         ])
       ]),
-      el("td", { sinif: "sayi", attr: { "data-et": "Rezerv" },
+      el("td", { sinif: "sayi", attr: { "data-et": "Reserve" },
         yazi: rez == null ? "—" : para(rez) }),
       el("td", { sinif: "sayi", attr: { "data-et": "Circulating" },
         yazi: dol == null ? "—" : jetonMiktar(dol) }),
-      el("td", { sinif: "sayi", attr: { "data-et": "Hak / token" },
+      el("td", { sinif: "sayi", attr: { "data-et": "Claim / token" },
         yazi: hak == null ? "—" : para(Number(hak) / 1e36) }),
       el("td", { sinif: "sayi", attr: { "data-et": "Floor price" },
         yazi: taban == null ? "—" : para(taban) }),
-      el("td", { attr: { "data-et": "Kasa" } }, [adres(l.kasa)])
+      el("td", { attr: { "data-et": "Vault" } }, [adres(l.kasa)])
     ]));
   }
   tablo.append(govde);
 
   kap.append(panel([
     el("span", { html: ikon("kalkan", "yol-oge__ikon") }),
-    el("span", { yazi: "Kasalar" })
+    el("span", { yazi: "Vaults" })
   ], el("div", { sinif: "tablo-sarmal" }, [tablo])));
 
   kap.append(not(

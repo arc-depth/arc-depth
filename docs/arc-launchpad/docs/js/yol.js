@@ -26,7 +26,7 @@
  * =========================================================================== */
 
 export const GRUPLAR = [
-  { anahtar: "piyasa", ad: "Piyasa" },
+  { anahtar: "piyasa", ad: "Market" },
   { anahtar: "varlik", ad: "My assets" },
   { anahtar: "yonetisim", ad: "Governance" },
   { anahtar: "guven", ad: "Trust" }
@@ -110,13 +110,13 @@ export const YOLLAR = [
     ad: "Platform analytics",
     grup: "piyasa",
     ikon: "grafik",
-    durum: "yapim",
-    ozet: "Total volume, launch count, fees collected, and the combined size of the reserves.",
-    gerekli: "An event indexer. These numbers cannot be read with one chain call; they need a service that walks Swap and fee events block by block, and that service does not exist yet.",
-    eksik: [
-      "An indexer that collects EgriHook's ParaUcreti and TokenUcreti events",
-      "A time-series store — recomputing the totals on every request would exhaust the RPC quota"
-    ]
+    /* LIVE since 14 Oct 2026. It was "yapim" because these numbers need an
+       event walk, not one call. scripts/analitik-ozet.js now does that walk
+       on both chains and writes veri/analitik.json; the page shows the
+       block each chain was read to, so it never pretends to be live. */
+    durum: "canli",
+    ozet: "Launches, volume, fees by slice and reserves, on Arc and Robinhood Chain.",
+    kaynak: "veri/analitik.json - Launched, Swap and Ucret events, balanceOf"
   },
 
   /* ---- holdings --------------------------------------------------- */
@@ -251,13 +251,15 @@ export const YOLLAR = [
   },
   {
     yol: "liderlik",
-    ad: "Liderlik Tablosu",
+    ad: "Leaderboards",
     grup: "yonetisim",
     ikon: "kupa",
-    durum: "yapim",
-    ozet: "Top founders, top traders, and who triggered the most buybacks.",
-    gerekli: "An indexer. A ranking is a sum over past trades, and that sum cannot be recomputed on every page load.",
-    eksik: ["An event indexer", "A ranking rule that cannot be gamed"]
+    /* LIVE from the same snapshot. Tokens by volume and by vault, founders
+       by launches. No trader ranking: the sender of a swap is the router,
+       so it would be a guess, and the page says so. */
+    durum: "canli",
+    ozet: "Top tokens by volume and by vault, and top founders, on both chains.",
+    kaynak: "veri/analitik.json"
   },
 
   /* ---- trust ------------------------------------------------------- */

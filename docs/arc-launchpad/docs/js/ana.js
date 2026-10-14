@@ -185,6 +185,8 @@ const GORUNUMLER = {
   portfoy: () => import("./gorunum/portfoy.js"),
   kalkan: () => import("./gorunum/kalkan.js"),
   zincirler: () => import("./gorunum/zincirler.js"),
+  analitik: () => import("./gorunum/analitik.js"),
+  liderlik: () => import("./gorunum/liderlik.js"),
   guvenlik: () => import("./gorunum/guvenlik.js"),
   /* Governance. These two read and WRITE to the live Governor, which is
      the one contract in this product that is already deployed. */
