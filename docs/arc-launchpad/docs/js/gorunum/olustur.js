@@ -81,6 +81,14 @@ export async function ciz({ kayit, param }) {
      Arc launchpad (0xB6AC…2300) is no longer offered: its cross-chain path
      could not complete (found and measured 14 Oct 2026). */
   const ZINCIR_ADI = { base: "Base", arbitrum: "Arbitrum" };
+  /* Chains where a launch cannot fit in a block an ordinary wallet can use.
+     HyperEVM: small blocks are capped at 3,000,000 gas (read from the chain,
+     14 Oct 2026) and a launch costs ~11,000,000 (measured on forks of six
+     chains); the 30M big blocks are only for addresses that switched to
+     them on HyperCore. So the launch would always revert there. Tokens
+     launched elsewhere still reach HyperEVM: the spread is delivered by
+     LayerZero's executor, which uses big blocks. */
+  const LAUNCH_YOK = { hyperevm: "HyperEVM blocks hold 3M gas and a launch needs about 11M, so launches cannot run there. Launch on any other chain and spread the token to HyperEVM in the next step." };
   const DOMAINI = { base: 6, arbitrum: 3 };
   /* the remote chain the chosen asset will live on, for this home chain */
   const uzakSec = (ag, v) => {
@@ -99,11 +107,11 @@ export async function ciz({ kayit, param }) {
     for (const a of AGLAR) {
       agDugmeleri.append(el("button", {
         sinif: "dugme " + (a.id === durum.ag.id ? "dugme--marka" : "dugme--sessiz"),
-        attr: { type: "button" }, yazi: a.ad,
+        attr: { type: "button" }, yazi: LAUNCH_YOK[a.anahtar] ? a.ad + " (spread only)" : a.ad,
         on: { click: () => { durum.ag = a; agiCiz(); teminatiCiz(); } }
       }));
     }
-    temizle(agNotu).append(durum.ag.nesil === 2
+    temizle(agNotu).append(LAUNCH_YOK[durum.ag.anahtar] ? not(LAUNCH_YOK[durum.ag.anahtar], "uyari") : durum.ag.nesil === 2
       ? not(durum.ag.ad + ": pay in USDC. The collateral can stay in dollars here, or be converted into an asset on " +
           durum.ag.uzaklar.map((u) => ZINCIR_ADI[u]).join(" or ") + " — you choose below.", "bilgi")
       : not(durum.ag.ad + ": pay in " + durum.ag.dolarSembol +
@@ -340,6 +348,7 @@ export async function ciz({ kayit, param }) {
         return;
       }
       const ag = durum.ag;
+      if (LAUNCH_YOK[ag.anahtar]) { durumSatiri.textContent = LAUNCH_YOK[ag.anahtar]; return; }
       const uzak = uzakSec(ag, v);
       if (v && ag.nesil === 2 && !uzak) {
         durumSatiri.textContent = v.simge + " cannot be the converted collateral for a launch on " + ag.ad + ".";
