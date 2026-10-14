@@ -73,6 +73,17 @@ export const YOLLAR = [
     sekme: true
   },
   {
+    yol: "fthm",
+    ad: "FTHM on any chain",
+    kisa: "FTHM",
+    grup: "piyasa",
+    ikon: "pusula",
+    durum: "canli",
+    ozet: "Buy FTHM with your chain's USDC or sell it, from any chain, through the one pool on Arc.",
+    kaynak: "relay.link + KapiAg + FTHM OFT",
+    sekme: true
+  },
+  {
     yol: "terminal",
     ad: "Trading terminal",
     kisa: "Trade",
