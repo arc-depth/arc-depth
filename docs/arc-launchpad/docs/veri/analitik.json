@@ -1,5 +1,5 @@
 {
- "olusturuldu": "2026-10-14T07:27:53.223Z",
+ "olusturuldu": "2026-10-14T09:27:52.251Z",
  "kaynak": "zincir — scripts/analitik-ozet.js",
  "zincirler": [
   {
@@ -7,7 +7,7 @@
    "etiket": "Arc",
    "para": "USDC",
    "ondalik": 6,
-   "okunanBlok": 25886516,
+   "okunanBlok": 25900725,
    "launch": 0,
    "islem": 0,
    "hacim": "0",
@@ -30,7 +30,7 @@
    "etiket": "Robinhood",
    "para": "USDG",
    "ondalik": 6,
-   "okunanBlok": 88187563,
+   "okunanBlok": 88259207,
    "launch": 0,
    "islem": 0,
    "hacim": "0",
