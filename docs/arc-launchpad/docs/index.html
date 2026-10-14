@@ -334,11 +334,18 @@ footer{border-top:1px solid var(--line);margin-top:30px;padding:34px 0 50px;colo
     <div class="dk">
       <div class="dk-bar">
         <input id="dk-q" type="search" placeholder="Search name, symbol or address" autocomplete="off" aria-label="Search tokens">
-        <div class="seg" role="group" aria-label="Chain">
-          <button type="button" data-z="" aria-pressed="true">All</button>
-          <button type="button" data-z="arc" aria-pressed="false">Arc</button>
-          <button type="button" data-z="robinhood" aria-pressed="false">Robinhood</button>
-        </div>
+        <select id="dk-z" aria-label="Chain">
+          <option value="">All chains</option>
+          <option value="arc">Arc</option>
+          <option value="robinhood">Robinhood</option>
+          <option value="base">Base</option>
+          <option value="arbitrum">Arbitrum</option>
+          <option value="ethereum">Ethereum</option>
+          <option value="bsc">BNB Chain</option>
+          <option value="avalanche">Avalanche</option>
+          <option value="monad">Monad</option>
+          <option value="hyperevm">HyperEVM</option>
+        </select>
         <select id="dk-s" aria-label="Sort">
           <option value="yeni">Newest</option>
           <option value="hacim">Volume</option>
@@ -428,11 +435,11 @@ footer{border-top:1px solid var(--line);margin-top:30px;padding:34px 0 50px;colo
         <h3>FTHM, staking and a DAO</h3><p>No mint, no owner. Developer funding on both chains moves only through an Arc DAO vote and timelock.</p></div>
       <div class="card cap"><div class="row"><div class="ic g"><svg><use href="#i-swap"/></svg></div><span class="chip built">Built &amp; tested</span></div>
         <h3>One token, two chains</h3><p>Any launch token can get a twin on the other chain over LayerZero. Total supply stays whole across both.</p></div>
-      <div class="card cap"><div class="row"><div class="ic g"><svg><use href="#i-link"/></svg></div><span class="chip built">Deployed · wiring</span></div>
-        <h3>FTHM bridge</h3><p>FTHM moves between Arc and Robinhood; the two chains together always hold exactly 1,000,000,000. Contracts are on both mainnets; the bridge opens once its verifier setup is done.</p></div>
+      <div class="card cap"><div class="row"><div class="ic g"><svg><use href="#i-link"/></svg></div><span class="chip live">Live</span></div>
+        <h3>FTHM bridge</h3><p>FTHM moves between Arc, eight EVM chains and Solana; together they always hold exactly 1,000,000,000. Two independent verifiers sign every message.</p></div>
       <div class="card cap"><div class="row"><div class="ic g"><svg><use href="#i-shield"/></svg></div><span class="chip built">Built &amp; tested</span></div>
         <h3>Price gaps go to the vault</h3><p>When the two chains disagree on price, the trade that would profit from the gap pays it into the vault instead.</p></div>
-      <div class="card cap"><div class="row"><div class="ic g"><svg><use href="#i-coins"/></svg></div><span class="chip built">Deployed · wiring</span></div>
+      <div class="card cap"><div class="row"><div class="ic g"><svg><use href="#i-coins"/></svg></div><span class="chip built">Deployed · pools pending</span></div>
         <h3>One FTHM market</h3><p>Sell FTHM from either chain into either pool and take USDC on Arc or USDG on Robinhood; buy on one chain and receive on the other.</p></div>
     </div>
     </div>
@@ -468,8 +475,8 @@ footer{border-top:1px solid var(--line);margin-top:30px;padding:34px 0 50px;colo
     <div class="duo">
       <div class="card fb">
         <div class="ic g"><svg><use href="#i-link"/></svg></div>
-        <h3>One token, one price, two chains</h3>
-        <p>FTHM lives on Arc. On Robinhood it exists only against FTHM locked on Arc, so the two chains together always hold exactly 1,000,000,000. A gate on each chain lets a holder reach either pool: sell from where the FTHM sits into the other chain's pool and take USDC on Arc or USDG on Robinhood, or buy on one chain and receive on the other.</p>
+        <h3>One token, one price, every chain</h3>
+        <p>FTHM lives on Arc. On every other chain it exists only against FTHM locked on Arc, at one address on all eight EVM chains, so together they always hold exactly 1,000,000,000. Solana is reached through Arc. Once the pools open, a gate on each chain lets a holder sell into any chain's pool and take that chain's dollar, or buy on one chain and receive on another.</p>
         <p>The Robinhood pool carries the Arc price. A trade that would profit from a gap between the two pays exactly that gap into the pool's depth, so a buyer pays the same price on either chain.</p>
       </div>
       <div class="card fb">
@@ -478,9 +485,10 @@ footer{border-top:1px solid var(--line);margin-top:30px;padding:34px 0 50px;colo
         <p>Every contract is on mainnet. Nothing below is open to use until it says so.</p>
         <div class="kv">
           <div><span>FTHM on Arc</span><b>Live</b></div>
-          <div><span>Bridge, price relay, gates</span><b>Deployed · verifier setup in progress</b></div>
-          <div><span>FTHM / USDG pool on Robinhood</span><b>Not opened yet</b></div>
-          <div><span>Owner after setup</span><b>None — burned</b></div>
+          <div><span>Bridge: Arc ↔ 8 EVM chains + Solana</span><b>Live</b></div>
+          <div><span>Price network, 9 chains</span><b>Live</b></div>
+          <div><span>FTHM pools outside Arc</span><b>Not opened yet</b></div>
+          <div><span>Arc bridge owner</span><b>Kept until Aptos and Sui are wired, then burned</b></div>
         </div>
       </div>
     </div>
@@ -657,18 +665,22 @@ function adresler(){
     rh("Launchpad · Robinhood",RH.launchpad,"the same launchpad, in USDG — has no owner") +
     rh("Developer pool · Robinhood",RH.devPool,"pays out only on Arc DAO votes") +
     rh("Liquidity vault · Robinhood",RH.likidite,"adds its share back into the pools — cannot withdraw") +
-    r("FTHM bridge · Arc",F2.adapter,"locks FTHM sent to Robinhood, releases what comes back — setup in progress") +
-    r("FTHM price relay · Arc",F2.elci,"sends the Arc FTHM price to Robinhood; anyone can trigger it, nobody can choose the price") +
-    r("FTHM gate · Arc",F2.kapiArc,"sell Robinhood FTHM in the Arc pool, or buy here and receive there — no owner") +
-    rh("FTHM · Robinhood",F2.oft,"minted only against FTHM locked on Arc — setup in progress") +
-    rh("FTHM pool hook · Robinhood",F2.hook,"charges a trade that captures the gap to the Arc price exactly that gap") +
-    rh("FTHM pool opener · Robinhood",F2.acici,"opens the FTHM/USDG pool once, locked; can only add") +
-    rh("FTHM gate · Robinhood",F2.kapiRh,"sell Arc FTHM in the Robinhood pool, or buy here and receive there — no owner");
+    r("FTHM bridge · Arc",F2.adapter,"locks FTHM that leaves Arc, releases what comes back; wired to 8 EVM chains and Solana, two required verifiers on every route") +
+    r("FTHM · 8 EVM chains",AGN.fthm,"the same address on Robinhood, Base, Arbitrum, Ethereum, BNB, Avalanche, Monad, HyperEVM — minted only against FTHM locked on Arc, no owner") +
+    r("Twin factory · all chains",AGN.yayici,"one call makes any launch token appear on the other eight chains at one address — no owner") +
+    r("Price network · all chains",AGN.fiyat,"carries a token's home price to every chain; nobody can choose the price — no owner") +
+    "<tr><td>FTHM · Solana</td><td class='mono'><a href='https://solscan.io/token/" + AGN.solMint + "' target='_blank' rel='noopener'>" + kisa(AGN.solMint) + "</a></td><td>OFT store on an immutable LayerZero OFT program; reached through Arc</td></tr>";
 }
 
+/* The network generation (dagitim-ag.json, dagitim-fthm-ag.json,
+   dagitim-sol-fthm.json), 14 Oct 2026. */
+const AGN = {
+  fthm:"0x933F764D62ff7C0D86626972003f6c5138B9eBdd", yayici:"0x24C644e7C29F6582B892cb5D89d7b23Bc34d1bD9",
+  fiyat:"0x18b8D56c8c2b8f36B06380f47796e40b65DE45C6", solMint:"Cx3gUyxZY3JzQaJ2w1V54gpg8PNZRtXbEoYpuZNtaQBb"
+};
+
 /* FTHM on two chains (dagitim-fthm-iki-zincir.json), deployed 14 Oct 2026.
-   The bridge carries nothing until its verifier setup is finished; the
-   page says so wherever these appear. */
+   Generation one; the Arc adapter is still in use, the rest superseded. */
 const F2 = {
   adapter:"0x6e591AfAf47A0Ff6aB26a4F5c077De7715C34bf0", elci:"0x971326596420b07bAC4E48D08fFa238bb6268465",
   kapiArc:"0x9795a46A0a88b73B63D4422E8b963aA04A7846cE", oft:"0x19c9C61Dc70cd52Ab98A562e62DF369EC300855A",
@@ -713,7 +725,7 @@ async function kesfet(){
      with its real state rather than left out or dressed up. */
   const sabit = [
     { sembol:"FTHM", ad:"Fathom · platform token", zincir:"arc", token:A.fthm, link:"fathom.html", sabit:true },
-    { sembol:"FTHM", ad:"Fathom on Robinhood", zincir:"robinhood", token:F2.oft, bekle:"Bridge setup in progress", sabit:true },
+    { sembol:"FTHM", ad:"Fathom · same address on 8 EVM chains, and on Solana", zincir:"", etiket:"8 chains + Solana", token:"0x933F764D62ff7C0D86626972003f6c5138B9eBdd", bekle:"Bridge live · pools not opened yet", sabit:true },
   ];
   let zaman = "";
   try{
@@ -721,12 +733,12 @@ async function kesfet(){
     if (r.ok){
       const o = await r.json();
       zaman = o.olusturuldu;
-      for (const z of o.zincirler || []) for (const t of z.tokenler || []) D.tum.push({ ...t, zincir: z.ad });
+      for (const z of o.zincirler || []) for (const t of z.tokenler || []) D.tum.push({ ...t, zincir: z.ad, etiket: z.etiket });
     }
   }catch(e){ /* the pinned rows still render */ }
 
   const satir = (t) => {
-    const z = t.zincir === "robinhood" ? "<span class='zc rh'>Robinhood</span>" : "<span class='zc arc'>Arc</span>";
+    const z = "<span class='zc " + (t.zincir === "robinhood" ? "rh" : "arc") + "'>" + kacEs(t.etiket || t.zincir || "") + "</span>";
     const eylem = t.bekle ? "<span class='wait'>" + kacEs(t.bekle) + "</span>"
       : "<a class='go' href='" + (t.link || ("app.html#/terminal?t=" + t.token)) + "'>" + (t.link ? "View" : "Trade") + "</a>";
     return "<div class='dk-row'><div class='dk-tok'><span class='dk-av' style='background:" + renk(t.token) + "'>" +
@@ -753,8 +765,8 @@ async function kesfet(){
     $("dk-list").scrollTop = 0;
     devam();
     const n = D.tum.length;
-    $("dk-sayi").textContent = n ? n + " launched token" + (n === 1 ? "" : "s") + " across both chains" :
-      "No launches yet on either chain — the first one will appear here.";
+    $("dk-sayi").textContent = n ? n + " launched token" + (n === 1 ? "" : "s") + " across nine chains" :
+      "No launches yet on any of the nine chains — the first one will appear here.";
     $("dk-zaman").textContent = zaman ? "Snapshot " + new Date(zaman).toUTCString().replace(" GMT", " UTC") : "";
   };
 
@@ -773,12 +785,7 @@ async function kesfet(){
   let bekleme;
   $("dk-q").addEventListener("input", (e) => { clearTimeout(bekleme); bekleme = setTimeout(() => { D.q = e.target.value.trim(); ciz(); }, 150); });
   $("dk-s").addEventListener("change", (e) => { D.s = e.target.value; ciz(); });
-  for (const b of document.querySelectorAll(".seg button")){
-    b.addEventListener("click", () => {
-      for (const x of document.querySelectorAll(".seg button")) x.setAttribute("aria-pressed", x === b ? "true" : "false");
-      D.z = b.dataset.z; ciz();
-    });
-  }
+  $("dk-z").addEventListener("change", (e) => { D.z = e.target.value; ciz(); });
   ciz();
 }
 

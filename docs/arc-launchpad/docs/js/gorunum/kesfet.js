@@ -26,6 +26,36 @@ import { ikon } from "../ikon.js";
 import { launchListesi, jetonBilgileri, besleyiciFiyat, oku, ABI } from "../zincir.js";
 import { PULSE, EKONOMI, TEMINAT_EVRENI, launchpadCanli } from "../adresler.js";
 import { para, kisaBuyuk, jetonMiktar, tamSayidanSayi } from "../bicim.js";
+import { ozetOku, dolar } from "./analitik.js";
+
+/* The other eight chains, from the same chain-read snapshot the analytics
+   page uses (scripts/analitik-ozet.js, refreshed every two hours). Arc's
+   list below is read live; these are as of the snapshot, and say so. */
+async function digerZincirler() {
+  let o;
+  try { o = await ozetOku(); } catch (e) { return panel("Other chains", bos("Not available", "The snapshot could not be loaded: " + e.message)); }
+  const tokenler = (o.zincirler || []).filter((z) => z.ad !== "arc").flatMap((z) => (z.tokenler || []).map((t) => ({ ...t, etiket: z.etiket })));
+  const zincirler = (o.zincirler || []).filter((z) => z.ad !== "arc").map((z) => z.etiket).join(" · ");
+  if (!tokenler.length) {
+    return panel("Other chains", bos("No launches on the other eight chains yet",
+      zincirler + " — launchpads live, none used yet. Snapshot " + new Date(o.olusturuldu).toUTCString() + "."));
+  }
+  const t = el("table", { sinif: "tablo" });
+  t.append(el("thead", {}, [el("tr", {}, ["Token", "Chain", "In vault", "Volume", ""].map((b) => el("th", { yazi: b })))]));
+  const g = el("tbody");
+  for (const x of tokenler) {
+    g.append(el("tr", {}, [
+      el("td", { yazi: (x.sembol || "?") + " · " + (x.ad || "") }),
+      el("td", { yazi: x.etiket }),
+      el("td", { sinif: "sayi", yazi: para(dolar(x.kasadaki)) }),
+      el("td", { sinif: "sayi", yazi: para(dolar(x.hacim)) }),
+      el("td", { yazi: x.token })
+    ]));
+  }
+  t.append(g);
+  return panel("Other chains", el("div", { sinif: "tablo-sarmal" }, [t]),
+    el("span", { sinif: "yazi yazi--kucuk yazi--sessiz", yazi: "snapshot " + new Date(o.olusturuldu).toUTCString() }));
+}
 
 /* The five lists. `canliSiralama` marks the ones that can be ordered from a
    single read; the rest need the indexer and say so instead of guessing. */
@@ -46,7 +76,7 @@ export async function ciz({ param }) {
 
   kap.append(sayfaUst(
     "Discover",
-    "Collateral-backed tokens on Arc",
+    "Collateral-backed tokens on nine chains",
     [
       el("a", { sinif: "dugme dugme--marka", attr: { href: "#/olustur" } }, [
         el("span", { html: ikon("arti", "yol-oge__ikon") }),
@@ -58,11 +88,14 @@ export async function ciz({ param }) {
   /* ---- platform-level facts that ARE readable now ------------------ */
   kap.append(await ozetSeridi());
 
+  /* ---- the other eight chains, from the snapshot ------------------- */
+  kap.append(await digerZincirler());
+
   /* ---- the launch list -------------------------------------------- */
   const { dagitildiMi, liste } = await launchListesi();
 
   if (!dagitildiMi) {
-    kap.append(panel("Tokenler", bos(
+    kap.append(panel("Tokens on Arc", bos(
       "No tokens on chain yet",
       "The launchpad contracts are written and measured against Arc " +
       "mainnet, but not deployed — so there is no record to read. We do " +
@@ -74,7 +107,7 @@ export async function ciz({ param }) {
   }
 
   if (!liste.length) {
-    kap.append(panel("Tokenler", bos(
+    kap.append(panel("Tokens on Arc", bos(
       "The record is empty",
       "The launchpad is deployed but nothing has been launched yet."
     )));
@@ -198,7 +231,7 @@ function listeSekmeleri(satirlar) {
     el("div", { sinif: "panel__ust" }, [
       el("div", { sinif: "panel__baslik" }, [
         el("span", { html: ikon("pusula", "yol-oge__ikon") }),
-        el("span", { yazi: "Tokenler" })
+        el("span", { yazi: "Tokens" })
       ]),
       el("div", { sinif: "ucuncul", yazi: satirlar.length + " token" })
     ]),
