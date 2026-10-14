@@ -27,6 +27,7 @@ import { launchListesi, jetonBilgileri, besleyiciFiyat, oku, ABI } from "../zinc
 import { PULSE, EKONOMI, TEMINAT_EVRENI, launchpadCanli } from "../adresler.js";
 import { para, kisaBuyuk, jetonMiktar, tamSayidanSayi } from "../bicim.js";
 import { ozetOku, dolar } from "./analitik.js";
+import { zincirLaunchPaneli } from "./tum-zincirler.js";
 
 /* The other eight chains, from the same chain-read snapshot the analytics
    page uses (scripts/analitik-ozet.js, refreshed every two hours). Arc's
@@ -90,6 +91,9 @@ export async function ciz({ param }) {
 
   /* ---- the other eight chains, from the snapshot ------------------- */
   kap.append(await digerZincirler());
+
+  /* ---- launches on every local-collateral chain ------------------- */
+  kap.append(await zincirLaunchPaneli("Launches on every chain"));
 
   /* ---- the launch list -------------------------------------------- */
   const { dagitildiMi, liste } = await launchListesi();

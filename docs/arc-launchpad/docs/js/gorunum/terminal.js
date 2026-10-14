@@ -30,6 +30,9 @@ const HAVUZ_UCRET = 0;        /* the hook takes the fee, not the pool */
 const TICK_ARALIK = 60;
 
 export async function ciz({ param }) {
+  /* A launch on any local-collateral chain (Arc included) has its own
+     terminal; this one stays the Arc first-generation view. */
+  if (param.get("ag")) return (await import("./terminal-ag.js")).ciz({ param });
   const kap = el("div", { sinif: "yigin" });
   const istenen = (param.get("t") || "").trim();
 

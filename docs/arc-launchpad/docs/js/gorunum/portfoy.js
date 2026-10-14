@@ -15,6 +15,7 @@ import { ikon } from "../ikon.js";
 import { launchListesi, jetonBilgileri, oku, cokluCagri, cagriVerisi, sonucCoz, ABI } from "../zincir.js";
 import { DIS } from "../adresler.js";
 import { para, jetonMiktar, tamSayidanSayi } from "../bicim.js";
+import { zincirLaunchPaneli } from "./tum-zincirler.js";
 
 export async function ciz({ cuzdan }) {
   const kap = el("div", { sinif: "yigin" });
@@ -36,6 +37,10 @@ export async function ciz({ cuzdan }) {
     ));
     return kap;
   }
+
+  /* Launch tokens on every chain are read from each chain directly, so
+     this part does not care which network the wallet is on. */
+  kap.append(await zincirLaunchPaneli("Launch tokens on every chain", hesap));
 
   if (!cuzdan.zincirdeMi()) {
     kap.append(bos(

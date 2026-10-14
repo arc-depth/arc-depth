@@ -12,6 +12,7 @@ import { ikon } from "../ikon.js";
 import { launchListesi, jetonBilgileri, oku, ABI } from "../zincir.js";
 import { TEMINAT_EVRENI, EKONOMI, DIS } from "../adresler.js";
 import { para, jetonMiktar, tamSayidanSayi, bloktanSure } from "../bicim.js";
+import { zincirLaunchPaneli } from "./tum-zincirler.js";
 
 export async function ciz() {
   const kap = el("div", { sinif: "yigin" });
@@ -30,6 +31,8 @@ export async function ciz() {
     "a separate detector but the invariant itself.",
     "bilgi"
   ));
+
+  kap.append(await zincirLaunchPaneli("Vaults on every chain"));
 
   const { dagitildiMi, liste } = await launchListesi();
 

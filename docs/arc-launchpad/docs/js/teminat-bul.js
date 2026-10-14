@@ -27,6 +27,7 @@ export const UNISWAP = {
   arbitrum:  { router: "0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45", quoter: "0x61fFE014bA17989E743c5F6cB21bF9697530B21e", v4quoter: "0x3972c00f7ed4885e145823eb7c655375d275a1c5" },
   avalanche: { router: "0xbb00FF08d01D300023C629E8fFfFcb65A5a578cE", quoter: "0xbe0F5544EC67e9B3b2D979aaA43f18Fd87E6257F", v4quoter: "0xbe40675bb704506a3c2ccfb762dcfd1e979845c2" },
   monad:     { router: "0xfE31F71C1b106EAc32F1A19239c9a9A72ddfb900", quoter: "0x661E93cca42AfacB172121EF892830cA3b70F08d", v4quoter: "0xa222dd357a9076d1091ed6aa2e16c9742dd26891" },
+  bsc:       { router: "0xB971eF87ede563556b2ED4b1C0b0019111Dd85d2", quoter: "0x78D78E420Da98ad378D7799bE8f4AF69033EB077", v4quoter: "0x9f75dd27d6664c475b90e105573e550ff69437b0" },
 };
 
 /* Pools of the platform's own tokens carry our hooks, so a hookless search
@@ -73,8 +74,16 @@ export async function rotalar(ag, adres, miktar) {
   const u = UNISWAP[ag.anahtar];
   if (!u) return [];
   const p = saglayici(ag);
-  const dolar = getAddress(ag.quote);
+  /* Where the launch dollar is the 6-decimal wrapper (BNB), the converter
+     unwraps first: routes start at the 18-decimal dollar it wraps, for
+     the same amount in that dollar's units. */
+  const sarmal = !!ag.sarmal;
+  const dolar = getAddress(sarmal ? ag.dolar : ag.quote);
   const hedef = getAddress(adres);
+  if (sarmal) {
+    miktar = miktar * 10n ** 12n;
+    if (hedef === dolar) return [{ tur: 0, rota: "0x", cikti: miktar, aciklama: ag.dolarSembol + " itself, unwrapped 1:1" }];
+  }
   const q = new Contract(u.quoter, QUOTER_ABI, p);
   const q4 = new Contract(u.v4quoter, V4_QUOTER_ABI, p);
   const coder = AbiCoder.defaultAbiCoder();
@@ -112,7 +121,9 @@ export async function rotalar(ag, adres, miktar) {
   /* the platform's own pools */
   const ozel = [];
   for (const b of BILINEN[ag.anahtar] || []) if (getAddress(b.token) === hedef) ozel.push([b.key, b.aciklama]);
-  for (const lp of [ag.launchpad, ag.launchpad3].filter(Boolean)) {
+  /* launch pools trade against the wrapper, which the converter does not
+     route from, so they are not offered where the dollar is wrapped */
+  for (const lp of (sarmal ? [] : [ag.launchpad, ag.launchpad3]).filter(Boolean)) {
     const key = await dene(() => new Contract(lp, ["function havuzAnahtari(address) view returns ((address,address,uint24,int24,address))"], p).havuzAnahtari(hedef));
     if (key) ozel.push([[key[0], key[1], Number(key[2]), Number(key[3]), key[4]], "its ARC PULSE pool"]);
   }
