@@ -180,6 +180,7 @@ const GORUNUMLER = {
   kesfet: () => import("./gorunum/kesfet.js"),
   olustur: () => import("./gorunum/olustur.js"),
   fthm: () => import("./gorunum/fthm-al-sat.js"),
+  genesis: () => import("./gorunum/genesis.js"),
   terminal: () => import("./gorunum/terminal.js"),
   kasalar: () => import("./gorunum/kasalar.js"),
   teminat: () => import("./gorunum/teminat-sec.js"),

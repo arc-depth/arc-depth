@@ -73,6 +73,19 @@ export const YOLLAR = [
     sekme: true
   },
   {
+    yol: "genesis",
+    ad: "PULSE GENESIS",
+    kisa: "GENESIS",
+    grup: "piyasa",
+    ikon: "sohbet",
+    /* The page reads every chain for the contract and says plainly when it
+       is not there; what it shows is what is on chain. */
+    durum: "canli",
+    ozet: "Talk to GENESIS. Answers come from its on-chain memory; its own model learns and speaks on chain.",
+    kaynak: "GenesisCekirdek + GenesisDil + GenesisHesap",
+    sekme: true
+  },
+  {
     yol: "fthm",
     ad: "FTHM on any chain",
     kisa: "FTHM",
