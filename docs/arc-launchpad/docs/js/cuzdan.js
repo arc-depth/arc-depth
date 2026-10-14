@@ -142,6 +142,48 @@ export const cuzdan = {
     return p.request({ method: "eth_sendTransaction", params: [{ from: _hesap, ...islem }] });
   },
 
+  /* ---- any of the nine chains (aglar.js) -------------------------- */
+
+  /** True when the wallet sits on chain `ag` (an AGLAR entry). */
+  agdaMi(ag) { return _zincir != null && parseInt(_zincir, 16) === ag.id; },
+
+  /**
+   * Switch the wallet to `ag`, adding it when the wallet does not know it.
+   * Native currency is 18 decimals on every one of them — on Arc too, where
+   * the gas token is USDC (see arcaGec for the measurement).
+   */
+  async agaGec(ag) {
+    if (ag.id === ZINCIR.id) return this.arcaGec();
+    const p = saglayici();
+    if (!p) throw new Error("No wallet");
+    const hex = "0x" + ag.id.toString(16);
+    try {
+      await p.request({ method: "wallet_switchEthereumChain", params: [{ chainId: hex }] });
+    } catch (e) {
+      if (e && e.code === 4902) {
+        await p.request({ method: "wallet_addEthereumChain", params: [{
+          chainId: hex, chainName: ag.ad, rpcUrls: [ag.rpc],
+          nativeCurrency: { name: ag.gaz, symbol: ag.gaz, decimals: 18 },
+          blockExplorerUrls: ag.kasif ? [ag.kasif] : undefined
+        }] });
+      } else {
+        throw e;
+      }
+    }
+    await zinciriOku();
+    duyur();
+  },
+
+  /** Send on chain `ag`. The chain is verified first, every time. */
+  async agdaGonder(ag, islem) {
+    const p = saglayici();
+    if (!p) throw new Error("No wallet");
+    if (!_hesap) throw new Error("Wallet not connected");
+    if (!this.agdaMi(ag)) await this.agaGec(ag);
+    if (!this.agdaMi(ag)) throw new Error("Wallet is not on " + ag.ad);
+    return p.request({ method: "eth_sendTransaction", params: [{ from: _hesap, ...islem }] });
+  },
+
   dinle(f) {
     _dinleyiciler.add(f);
     return () => _dinleyiciler.delete(f);

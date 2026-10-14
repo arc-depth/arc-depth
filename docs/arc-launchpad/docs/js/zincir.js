@@ -125,6 +125,23 @@ export const ABI = {
   launchpadYaz: [
     "function launch(string ad, string sembol, address hedefVarlik, uint256 vergiPpm, uint256 alim, uint256 teminat) returns (address token, address kasa)"
   ],
+  /* BNB: the 1:1 six-decimal wrapper over 18-decimal USDC (Dolar6) */
+  sarmalYaz: [
+    "function sar(uint256 birim) returns (uint256)",
+    "function coz(uint256 birim) returns (uint256)"
+  ],
+  /* IkizYayici: one address on all nine chains */
+  yayici: [
+    "function ucret(address token, uint32[] hedefler, bytes secenekler) view returns (uint256)",
+    "function ikizAdresi(address token) view returns (address)",
+    "function adapterAdresi(address token) view returns (address)"
+  ],
+  yayiciYaz: [
+    "function yay(address token, uint32[] hedefler, bytes secenekler) payable"
+  ],
+  launchedOlay: [
+    "event Launched(uint256 indexed id, address indexed token, address indexed kurucu, address acici, address kasa, string ad, string sembol)"
+  ],
 
   kasa: [
     "function hak(address) view returns (uint256)",

@@ -67,8 +67,8 @@ export function oneriTablosu(secildi) {
   tablo.append(el("thead", {}, [el("tr", {}, [
     el("th", { yazi: "#" }),
     el("th", { yazi: "Asset" }),
-    el("th", { yazi: "Zincir" }),
-    el("th", { yazi: "Havuz" }),
+    el("th", { yazi: "Chain" }),
+    el("th", { yazi: "Pool" }),
     el("th", { yazi: "Up to" }),
     el("th", { yazi: "" })
   ])]));
@@ -123,7 +123,7 @@ export function caAlani(secildi) {
   const dugme = el("button", {
     sinif: "dugme dugme--marka",
     attr: { type: "button" },
-    yazi: "Kontrol et"
+    yazi: "Check"
   });
   const sonuc = el("div", { sinif: "yigin yigin--sik" });
 
@@ -154,12 +154,12 @@ export function caAlani(secildi) {
     } catch (e) {
       sonuc.replaceChildren(hata("The scan failed", (e && e.message) || String(e)));
       dugme.disabled = false;
-      dugme.textContent = "Kontrol et";
+      dugme.textContent = "Check";
       return;
     }
 
     dugme.disabled = false;
-    dugme.textContent = "Kontrol et";
+    dugme.textContent = "Check";
     sonuc.replaceChildren();
 
     /* Identity first: twenty bytes look like any other twenty bytes, and
@@ -176,12 +176,12 @@ export function caAlani(secildi) {
        lists the chains that worked cannot be checked by the reader. */
     const tablo = el("table", { sinif: "tablo tablo--kart" });
     tablo.append(el("thead", {}, [el("tr", {}, [
-      el("th", { yazi: "Zincir" }),
+      el("th", { yazi: "Chain" }),
       el("th", { yazi: "Durum" }),
       el("th", { yazi: "Kademe" }),
-      el("th", { yazi: "Derinlik" }),
+      el("th", { yazi: "Depth" }),
       el("th", { yazi: "Observations" }),
-      el("th", { yazi: "Havuz" })
+      el("th", { yazi: "Pool" })
     ])]));
     const govde = el("tbody");
 
@@ -297,7 +297,7 @@ export async function ciz({ param }) {
       el("div", { sinif: "izgara izgara--olcum" }, [
         olcum("Asset", v.simge, v.ad),
         olcum("Decimals", String(v.ondalik), null),
-        olcum("Zincir", String(Object.keys(v.zincirler).length),
+        olcum("Chain", String(Object.keys(v.zincirler).length),
           Object.keys(v.zincirler).map(zincirEtiketi).join(", ")),
         olcum("Pools", String(v.havuz), "all fee tiers"),
         olcum("Convertible", tutarYaz(v.azamiTutar), "the largest amount measured")
@@ -326,7 +326,7 @@ export async function ciz({ param }) {
 
   kap.append(secim);
 
-  kap.append(panel("Kendi tokenini kullan", caAlani(secildi)));
+  kap.append(panel("Use your own token", caAlani(secildi)));
 
   kap.append(panel(
     ONERILEN.length + " suggested",

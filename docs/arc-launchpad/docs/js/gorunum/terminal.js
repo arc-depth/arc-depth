@@ -103,7 +103,7 @@ export async function ciz({ param }) {
   kap.append(el("div", { sinif: "izgara izgara--olcum" }, [
     olcum("Price", fiyat == null ? "—" : para(fiyat), fiyat == null ? "the pool could not be read" : null),
     olcum("Market cap", mcap == null ? "—" : para(mcap, { kisalt: true })),
-    olcum("Teminat rezervi", rezerv == null ? "—" : para(rezerv)),
+    olcum("Collateral reserve", rezerv == null ? "—" : para(rezerv)),
     olcum("Floor price", tabanFiyat == null ? "—" : para(tabanFiyat),
       "below this level a buyback opens"),
     olcum("Circulating", dol == null ? "—" : jetonMiktar(dol))
@@ -157,7 +157,7 @@ export async function ciz({ param }) {
           "indexer that would do that does not exist yet, and we do not " +
           "show an estimated distribution."
         )),
-        panel("Teminat rezervi", rezervListesi(rezerv, hak, dol, tabanFiyat)),
+        panel("Collateral reserve", rezervListesi(rezerv, hak, dol, tabanFiyat)),
         panel("Buyback history", bos(
           "No buybacks",
           "Buybacks are read from the vault's events. This vault has not " +
@@ -268,11 +268,11 @@ function islemPaneli(bilgi) {
 
 function bilgiListesi(kayit, bilgi, dolasim) {
   const satirlar = [
-    ["Sembol", (bilgi && bilgi.sembol) || "—"],
+    ["Symbol", (bilgi && bilgi.sembol) || "—"],
     ["Toplam arz", bilgi && bilgi.arz != null
       ? jetonMiktar(tamSayidanSayi(bilgi.arz, bilgi.ondalik || 18)) : "—"],
     ["Circulating", dolasim == null ? "—" : jetonMiktar(dolasim)],
-    ["Teminat vergisi", (kayit.vergiPpm / 10_000).toFixed(2).replace(".", ",") + "%"],
+    ["Collateral tax", (kayit.vergiPpm / 10_000).toFixed(2).replace(".", ",") + "%"],
     ["Founder's share", "0.30% of every trade"],
     ["Kurucuya bedava token", "0"]
   ];

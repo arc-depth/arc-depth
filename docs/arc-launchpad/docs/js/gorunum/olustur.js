@@ -21,6 +21,25 @@ import { cuzdan } from "../cuzdan.js";
 import { para, ppmYuzde } from "../bicim.js";
 import { ONERILEN } from "../teminat-listesi.js";
 import { oneriTablosu, caAlani, zincirEtiketi, tutarYaz } from "./teminat-sec.js";
+import { AGLAR, AG, IKIZ_SECENEK, agBul } from "../aglar.js";
+import { Interface } from "../../vendor/ethers.min.js";
+
+/* ---- reads on whichever chain the launch is on ----------------------- */
+async function agCagri(ag, method, params) {
+  const r = await fetch(ag.rpc, { method: "POST", headers: { "content-type": "application/json" },
+    body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }) }).then((x) => x.json());
+  if (r.error) throw new Error(r.error.message || "RPC error");
+  return r.result;
+}
+async function makbuzBekle(ag, hash) {
+  for (let i = 0; i < 120; i++) {
+    const m = await agCagri(ag, "eth_getTransactionReceipt", [hash]).catch(() => null);
+    if (m) return m;
+    await new Promise((ok) => setTimeout(ok, 2500));
+  }
+  throw new Error("No receipt yet for " + hash);
+}
+const gazBirim = (wei, ag) => (Number(BigInt(wei)) / 1e18).toPrecision(3) + " " + ag.gaz;
 
 export async function ciz({ kayit, param }) {
   const kap = el("div", { sinif: "yigin" });
@@ -48,11 +67,39 @@ export async function ciz({ kayit, param }) {
        zorunda. Form bes varlikli yuzdelik bir sepet sunuyordu ve o form
        hicbir zaman kabul edilemeyecek bir launch uretiyordu — gonderilmeden
        once degil, zincirde reddedilerek. */
-    teminatVarlik: null
+    teminatVarlik: null,
+    /* Which chain the launch happens on. Any of the nine; the token can
+       then be spread to all the others. */
+    ag: agBul(param && param.get && param.get("zincir")) || agBul("arc")
   };
 
   const ozetKap = el("div");
   const ozetiCiz = () => { temizle(ozetKap).append(odemeOzeti(durum)); };
+
+  /* ---- 0. chain ------------------------------------------------------ */
+  const agNotu = el("div");
+  const agDugmeleri = el("div", { sinif: "satir", attr: { style: "flex-wrap:wrap;gap:8px" } });
+  const agiCiz = () => {
+    temizle(agDugmeleri);
+    for (const a of AGLAR) {
+      agDugmeleri.append(el("button", {
+        sinif: "dugme " + (a.id === durum.ag.id ? "dugme--marka" : "dugme--sessiz"),
+        attr: { type: "button" }, yazi: a.ad,
+        on: { click: () => { durum.ag = a; agiCiz(); teminatiCiz(); } }
+      }));
+    }
+    temizle(agNotu).append(durum.ag.anahtar === "arc"
+      ? not("Arc: pay in USDC; the collateral can be any asset from the list below, on any supported chain.", "bilgi")
+      : not(durum.ag.ad + ": pay in " + durum.ag.dolarSembol +
+          (durum.ag.sarmal ? " (wrapped 1:1 into 6-decimal pUSDC first, automatically)" : "") +
+          ". The collateral stays in " + durum.ag.dolarSembol + " on " + durum.ag.ad +
+          " — converting it into another asset is offered for launches on Arc.", "bilgi"));
+  };
+  agiCiz();
+  kap.append(panel("Chain", el("div", { sinif: "yigin" }, [
+    agDugmeleri, agNotu,
+    el("div", { sinif: "alan__ipucu", yazi: "After the launch, one more transaction makes the token appear on the other eight chains at the same address." })
+  ])));
 
   /* ---- 1. identity -------------------------------------------------- */
   /* Held by reference. The submit used to have no handler at all; now
@@ -63,10 +110,10 @@ export async function ciz({ kayit, param }) {
     sinif: "girdi", attr: { type: "text", placeholder: "Example Coin", maxlength: "32" }
   });
   const sembolGirdi = el("input", {
-    sinif: "girdi mono", attr: { type: "text", placeholder: "ORNEK", maxlength: "8" }
+    sinif: "girdi mono", attr: { type: "text", placeholder: "EXMPL", maxlength: "8" }
   });
 
-  kap.append(panel("Kimlik", el("div", { sinif: "yigin" }, [
+  kap.append(panel("Identity", el("div", { sinif: "yigin" }, [
     el("div", { sinif: "alan" }, [
       el("label", { sinif: "alan__etiket", yazi: "Logo" }),
       el("input", { sinif: "girdi", attr: { type: "file", accept: "image/*" } }),
@@ -74,7 +121,7 @@ export async function ciz({ kayit, param }) {
     ]),
     el("div", { sinif: "izgara izgara--genis" }, [
       alan("Token name", adGirdi),
-      alan("Sembol", sembolGirdi)
+      alan("Symbol", sembolGirdi)
     ]),
     alan("Description", el("textarea", {
       sinif: "girdi", attr: { placeholder: "What is this token?", maxlength: "500" }
@@ -91,6 +138,10 @@ export async function ciz({ kayit, param }) {
 
   const teminatiCiz = () => {
     temizle(teminatKap);
+    if (durum.ag.anahtar !== "arc") {
+      teminatKap.append(not("Collateral: " + durum.ag.dolarSembol + " on " + durum.ag.ad + ".", "bilgi"));
+      return;
+    }
     const v = durum.teminatVarlik;
 
     if (!v) {
@@ -121,7 +172,7 @@ export async function ciz({ kayit, param }) {
       ]));
       teminatKap.append(el("div", {
         sinif: "yazi yazi--kucuk yazi--sessiz",
-        yazi: "Kontrat: " + Object.values(v.zincirler)[0].token
+        yazi: "Contract: " + Object.values(v.zincirler)[0].token
       }));
       if (v.caIle) {
         teminatKap.append(not(
@@ -151,7 +202,7 @@ export async function ciz({ kayit, param }) {
   }
   teminatiCiz();
 
-  kap.append(panel("Teminat", [
+  kap.append(panel("Collateral", [
     el("div", { sinif: "ikincil", attr: { style: "margin-bottom:12px" }, yazi:
       "Choose which asset accumulates behind the token. The tax on " +
       "every trade flows into it, and when the price falls below the " +
@@ -159,7 +210,7 @@ export async function ciz({ kayit, param }) {
     teminatKap
   ]));
 
-  kap.append(panel("Kendi tokenini kullan", caAlani(teminatSecildi)));
+  kap.append(panel("Use your own token", caAlani(teminatSecildi)));
 
   kap.append(panel(
     ONERILEN.length + " suggested",
@@ -171,7 +222,7 @@ export async function ciz({ kayit, param }) {
 
   /* ---- 3. tax -------------------------------------------------------- */
   const vergiEtiket = el("span", { sinif: "mono", yazi: ppmYuzde(durum.vergiPpm) });
-  kap.append(panel("Teminat vergisi", el("div", { sinif: "yigin" }, [
+  kap.append(panel("Collateral tax", el("div", { sinif: "yigin" }, [
     el("div", { sinif: "satir satir--arasi" }, [
       el("span", { sinif: "ikincil", yazi: "The share of every trade that goes to the vault" }),
       vergiEtiket
@@ -210,7 +261,7 @@ export async function ciz({ kayit, param }) {
           on: { input: (ev) => { durum.odeme = Number(ev.target.value) || 0; ozetiCiz(); } }
         }),
         el("span", { sinif: "girdi-grup__son", yazi: "USDC" })
-      ]), "En az " + para(EKONOMI.asgariOdeme)),
+      ]), "At least " + para(EKONOMI.asgariOdeme)),
       alan("Set aside for the vault", el("div", { sinif: "girdi-grup" }, [
         el("input", {
           sinif: "girdi girdi--sayi",
@@ -218,7 +269,7 @@ export async function ciz({ kayit, param }) {
           on: { input: (ev) => { durum.teminat = Number(ev.target.value) || 0; ozetiCiz(); } }
         }),
         el("span", { sinif: "girdi-grup__son", yazi: "USDC" })
-      ]), "En az " + para(EKONOMI.asgariTeminat)),
+      ]), "At least " + para(EKONOMI.asgariTeminat)),
       alan("Optional first buy", el("div", { sinif: "girdi-grup" }, [
         el("input", {
           sinif: "girdi girdi--sayi",
@@ -245,8 +296,9 @@ export async function ciz({ kayit, param }) {
        An assertion for exactly this now lives in denetim-sayfa.js: a
        large brand button must carry a click handler. */
   const durumSatiri = el("div", { sinif: "yazi yazi--kucuk yazi--sessiz" });
+  const yayKap = el("div", { sinif: "yigin" });
 
-  if (launchpadCanli()) {
+  if (launchpadCanli() || durum.ag.anahtar !== "arc") {
     const dugme = el("button", {
       sinif: "dugme dugme--marka dugme--buyuk dugme--tam",
       yazi: "CREATE TOKEN",
@@ -265,7 +317,8 @@ export async function ciz({ kayit, param }) {
         durumSatiri.textContent = "Name and symbol cannot be empty.";
         return;
       }
-      if (!v) {
+      const ag = durum.ag;
+      if (!v && ag.anahtar === "arc") {
         durumSatiri.textContent = "No collateral asset chosen.";
         return;
       }
@@ -280,7 +333,10 @@ export async function ciz({ kayit, param }) {
         return;
       }
 
-      const hedef = Object.values(v.zincirler)[0].token;
+      /* Off Arc the vault's conversion route is closed (KapaliKayit), so the
+         target recorded is the chain's own dollar — the collateral stays
+         dollars, which is what the screen said above. */
+      const hedef = ag.anahtar === "arc" ? Object.values(v.zincirler)[0].token : ag.quote;
       /* Six decimals, because the quote has six. Rounded rather than
          truncated so a form showing 100 does not send 99,999999. */
       const alim = BigInt(Math.round(durum.alim * 1e6));
@@ -292,22 +348,43 @@ export async function ciz({ kayit, param }) {
         /* Exactly what this launch needs, not an unlimited allowance: a
            standing allowance on a contract that moves money is a liability
            for no benefit. */
-        await cuzdan.gonder({
-          to: EKONOMI.quote,
-          data: cagriVerisi(ABI.erc20Yaz, "approve", [PULSE.launchpad, alim + teminat])
-        });
+        if (ag.sarmal) {
+          /* BNB: 18-decimal USDC in, the same dollars as 6-decimal pUSDC
+             out, 1:1 and redeemable any time (Dolar6.coz). */
+          const olcek = 10n ** 12n;
+          await makbuzBekle(ag, await cuzdan.agdaGonder(ag, { to: ag.dolar,
+            data: cagriVerisi(ABI.erc20Yaz, "approve", [ag.sarmal, (alim + teminat) * olcek]) }));
+          durumSatiri.textContent = "Wrapping USDC 1:1 into pUSDC…";
+          await makbuzBekle(ag, await cuzdan.agdaGonder(ag, { to: ag.sarmal,
+            data: cagriVerisi(ABI.sarmalYaz, "sar", [alim + teminat]) }));
+        }
+        await makbuzBekle(ag, await cuzdan.agdaGonder(ag, {
+          to: ag.quote,
+          data: cagriVerisi(ABI.erc20Yaz, "approve", [ag.launchpad, alim + teminat])
+        }));
 
-        durumSatiri.textContent = "Sending the launch…";
-        const hash = await cuzdan.gonder({
-          to: PULSE.launchpad,
+        durumSatiri.textContent = "Sending the launch on " + ag.ad + "…";
+        const hash = await cuzdan.agdaGonder(ag, {
+          to: ag.launchpad,
           data: cagriVerisi(ABI.launchpadYaz, "launch",
             [ad, sembol, hedef, BigInt(durum.vergiPpm), alim, teminat])
         });
         durumSatiri.className = "yazi yazi--kucuk";
-        /* The hash and nothing else. Saying "your token is live" here
-           would be claiming something only the chain can say, and it says
-           it on the next read. */
-        durumSatiri.textContent = "Sent: " + hash;
+        durumSatiri.textContent = "Sent: " + hash + " — waiting for the receipt…";
+
+        /* The token's address from the launchpad's own event, not assumed:
+           "live" is said only after the chain says it. */
+        const m = await makbuzBekle(ag, hash);
+        if (m.status !== "0x1") throw new Error("The launch reverted on chain: " + hash);
+        const olay = new Interface(ABI.launchedOlay);
+        let token = null;
+        for (const l of m.logs) {
+          if (l.address.toLowerCase() !== ag.launchpad.toLowerCase()) continue;
+          try { const e = olay.parseLog(l); if (e && e.name === "Launched") token = e.args.token; } catch (x) { /* another event */ }
+        }
+        if (!token) throw new Error("Launched, but the token address could not be read from " + hash);
+        durumSatiri.textContent = "Live on " + ag.ad + ": " + token;
+        yayKap.append(yayPaneli(ag, token));
       } catch (e) {
         durumSatiri.className = "yazi yazi--kucuk yazi--hata";
         durumSatiri.textContent = (e && e.message) || "The transaction could not be sent.";
@@ -316,11 +393,54 @@ export async function ciz({ kayit, param }) {
 
     kap.append(dugme);
     kap.append(durumSatiri);
+    kap.append(yayKap);
   } else {
     kap.append(dagitimBekliyor(kayit));
   }
 
   return kap;
+}
+
+/**
+ * After a launch: put the token on the other eight chains. One transaction
+ * on the home chain (IkizYayici, the same address everywhere); its fee is
+ * the real LayerZero price, read from the chain, for a twin deployment on
+ * each target (6M gas — see aglar.js).
+ */
+function yayPaneli(ag, token) {
+  const hedefler = AGLAR.filter((a) => a.id !== ag.id);
+  const durum = el("div", { sinif: "yazi yazi--kucuk yazi--sessiz", yazi: "Reading the fee…" });
+  const dugme = el("button", { sinif: "dugme dugme--marka dugme--tam", attr: { type: "button", disabled: "" },
+    yazi: "MAKE IT LIVE ON ALL " + hedefler.length + " OTHER CHAINS" });
+  const eids = hedefler.map((a) => a.eid);
+  let ucret = null;
+  (async () => {
+    try {
+      ucret = BigInt(await agCagri(ag, "eth_call",
+        [{ to: AG.yayici, data: cagriVerisi(ABI.yayici, "ucret", [token, eids, IKIZ_SECENEK]) }, "latest"]));
+      const ikiz = await agCagri(ag, "eth_call",
+        [{ to: AG.yayici, data: cagriVerisi(ABI.yayici, "ikizAdresi", [token]) }, "latest"]);
+      durum.textContent = "Fee " + gazBirim(ucret, ag) + " (LayerZero, paid once). Address on every other chain: 0x" + ikiz.slice(26);
+      dugme.removeAttribute("disabled");
+    } catch (e) {
+      durum.textContent = "The fee could not be read: " + e.message;
+    }
+  })();
+  dugme.addEventListener("click", async () => {
+    try {
+      dugme.setAttribute("disabled", "");
+      durum.textContent = "Sending…";
+      const hash = await cuzdan.agdaGonder(ag, { to: AG.yayici, value: "0x" + ucret.toString(16),
+        data: cagriVerisi(ABI.yayiciYaz, "yay", [token, eids, IKIZ_SECENEK]) });
+      durum.textContent = "Sent: " + hash + ". Each chain shows the token once LayerZero delivers (minutes) — layerzeroscan.com/tx/" + hash;
+    } catch (e) {
+      dugme.removeAttribute("disabled");
+      durum.textContent = (e && e.message) || "Could not send.";
+    }
+  });
+  return panel("Every chain", el("div", { sinif: "yigin" }, [
+    el("div", { sinif: "ikincil", yazi: hedefler.map((a) => a.ad).join(" · ") }), dugme, durum
+  ]));
 }
 
 function alan(etiket, girdi, ipucu) {
@@ -371,7 +491,7 @@ function odemeOzeti(d) {
     ["— to you as tokens", para(net)],
     ["Tokens you receive", bin(kurucuToken) + "  (" + pay.toFixed(2) + "% of supply)"],
     ["Real bid in the pool", para(net)],
-    ["Havuza token merdiveni", bin(merdiven)],
+    ["Token ladder in the pool", bin(merdiven)],
     ["To the collateral vault", para(d.teminat)],
     ["Free tokens", "0 — you buy your share at the opening price"]
   ];
