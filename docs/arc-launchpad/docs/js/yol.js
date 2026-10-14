@@ -81,7 +81,7 @@ export const YOLLAR = [
     /* The page reads every chain for the contract and says plainly when it
        is not there; what it shows is what is on chain. */
     durum: "canli",
-    ozet: "Talk to GENESIS. Answers come from its on-chain memory; its own model learns and speaks on chain.",
+    ozet: "Talk to GENESIS; explore the Atlas map of chains and capital flows; find routes between chains. Answers come from on-chain memory.",
     kaynak: "GenesisCekirdek + GenesisDil + GenesisHesap",
     sekme: true
   },

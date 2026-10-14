@@ -3,7 +3,7 @@
 export const GENESIS = {
   "ajan": "0x7A9E4DCDC4F9bE40b0dA01c1d1a9aBaD2A508541",
   "cekirdek": "0x2D5fE4f6a1b91bbB2CAA8897587e1cE1B66793bD",
-  "dil": "0xac85f63Dd9aA8080AfF1d4D8C7ED5a1244504520",
+  "dil": "0x66dc9B822Ba87b4fCF774BF50C072fe72ae2Ca06",
   "zincirler": [
     "arc",
     "robinhood",
@@ -13,5 +13,6 @@ export const GENESIS = {
     "monad",
     "bsc"
   ],
-  "hesap": {}
+  "hesap": {},
+  "atlasAbonelik": null
 };

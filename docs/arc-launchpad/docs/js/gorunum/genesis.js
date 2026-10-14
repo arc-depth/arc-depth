@@ -182,6 +182,11 @@ export async function ciz() {
       }
       kayit.prepend(cevap);
 
+      /* GENESIS ATLAS from the chat: a question naming a chain gets the map's research on it */
+      const at = await (await import("./atlas.js")).atlasSoru(q).catch(() => null);
+      if (at) kayit.prepend(balon("GENESIS ATLAS", el("div", { sinif: "yigin yigin--sik" }, at.satirlar.map((t) => el("div", { sinif: "yazi yazi--kucuk", yazi: t }))),
+        "on-chain data for " + at.zincir + ", read by the Atlas indexer"));
+
       if (arcCanli) {
         const v = toUtf8Bytes(q.slice(-120));
         const [u] = await cokluOku(arc, [[GENESIS.dil, DIL, "uret", [v, 120, BigInt(Date.now()), true]]]);
@@ -216,6 +221,9 @@ export async function ciz() {
     el("div", { sinif: "alan__ipucu", yazi: "Proposals are public and signed by your wallet. GENESIS learns only what passes its rules." }),
     oneriMetin, oneriD, oneriDurum
   ])));
+
+  /* GENESIS ATLAS: the map, navigation and the API, as part of GENESIS */
+  kap.append(await (await import("./atlas.js")).atlasBolumu());
 
   if (arcCanli) {
     const [korkuluk] = await cokluOku(arc, [[GENESIS.cekirdek, CEKIRDEK, "KORKULUK_METNI"]]);
