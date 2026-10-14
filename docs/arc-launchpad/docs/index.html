@@ -4,427 +4,300 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="dark">
-<title>ARC PULSE — memecoins with a floor you can redeem</title>
-<meta name="description" content="ARC PULSE is a memecoin launchpad where every token has its own collateral vault. Holders can redeem against it anytime; liquidity is locked from the first block; no owner, no mint, no withdraw. Live on Arc, Robinhood Chain built and deploying.">
+<title>ARC PULSE — two chains, one collateral-backed launchpad</title>
+<meta name="description" content="ARC PULSE is a memecoin launchpad live on Arc and Robinhood Chain. Every token is born with its own collateral vault you can redeem against, liquidity is locked from the first block, and the contracts have no owner, no mint and no withdraw.">
 <meta property="og:title" content="ARC PULSE">
-<meta property="og:description" content="A meme coin with a floor: collateral in a locked vault, liquidity locked forever, and every trade's fee going to the floor.">
+<meta property="og:description" content="Two chains, one protocol. Memecoins with a collateral vault you can redeem against — live on Arc and Robinhood Chain.">
 <meta property="og:type" content="website">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#090a0c; --panel:#12141a; --panel2:#171a21; --raise:#1d212a;
-  --line:#242934; --line2:#2f3542;
-  --tx:#e9ebf0; --dim:#8d95a4; --dim2:#646c7a;
-  --acc:#4fe3a3; --acc-dim:#1d7a58; --acc-bg:rgba(79,227,163,.10);
-  --vio:#7d8cff; --vio-bg:rgba(125,140,255,.10);
-  --warn:#ffb65c; --bad:#ff6f6f;
-  --r:16px; --r2:11px;
-  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --bg:#050a1a; --bg2:#081028; --panel:rgba(14,24,54,.72); --panel-solid:#0d1733;
+  --line:rgba(96,140,255,.16); --line2:rgba(120,160,255,.30);
+  --tx:#eef3ff; --dim:#9aa8c7; --dim2:#6b7899;
+  --arc:#3d8bff; --arc2:#6fb1ff; --arc-bg:rgba(61,139,255,.12);
+  --rh:#2ee59d; --rh2:#7af5c4; --rh-bg:rgba(46,229,157,.11);
+  --pulse:#8b6bff; --pulse-bg:rgba(139,107,255,.13);
+  --r:18px; --r2:12px;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html{scroll-behavior:smooth}
 html,body{margin:0;padding:0}
-body{
-  background:var(--bg); color:var(--tx);
-  font:400 16px/1.65 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
-  -webkit-font-smoothing:antialiased; overflow-x:hidden;
-}
-a{color:var(--acc);text-decoration:none}
+body{background:var(--bg);color:var(--tx);overflow-x:hidden;
+  font:400 16px/1.6 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;
+  background:radial-gradient(1200px 700px at 15% -10%,rgba(61,139,255,.16),transparent 60%),
+             radial-gradient(1000px 700px at 95% 10%,rgba(46,229,157,.10),transparent 60%),
+             radial-gradient(900px 900px at 50% 120%,rgba(139,107,255,.12),transparent 60%),var(--bg)}
+a{color:var(--arc2);text-decoration:none}
 a:hover{text-decoration:underline}
 .mono{font-family:var(--mono);font-size:.9em}
-.arabaslik{font:600 19px Inter,sans-serif;margin:38px 0 8px}
-.sub.kisa{margin-top:0}
-.bgov u{text-decoration-color:var(--acc);text-underline-offset:3px}
-.iptal{background:rgba(255,111,111,.08);border:1px solid rgba(255,111,111,.3);
-  border-radius:var(--r);padding:16px 18px;margin:0 0 22px;line-height:1.6}
-.iptal b{color:#ffb3b3;display:block;font:700 15px Inter,sans-serif;margin-bottom:6px}
-.iptal p{color:var(--dim);font-size:13.5px;margin:0 0 7px}
-.iptal a{color:var(--acc)}
-.boru{display:flex;flex-direction:column;gap:0;margin-top:26px}
-.bas{display:grid;grid-template-columns:30px 1fr;gap:14px;align-items:start}
-.bno{width:30px;height:30px;border-radius:50%;border:1px solid var(--line);background:var(--panel);
-  display:flex;align-items:center;justify-content:center;font:600 12px Inter,sans-serif;color:var(--dim)}
-.bas.son .bno{border-color:var(--acc);color:var(--acc)}
-.bgov{padding-bottom:20px}
-.bgov b{display:block;font:600 15px Inter,sans-serif}
-.bgov .ne{color:var(--dim);font-size:13.5px;margin-top:3px}
-.bgov .kim{display:inline-block;margin-top:7px;font-family:var(--mono);font-size:11.5px;
-  color:var(--dim2);background:var(--panel);border:1px solid var(--line);
-  border-radius:6px;padding:3px 8px}
-.bgov .kim a{color:var(--dim2);text-decoration:none}
-.bgov .kim a:hover{color:var(--acc)}
-.zin{display:inline-block;font:600 10px Inter,sans-serif;letter-spacing:.04em;
-  text-transform:uppercase;padding:2px 7px;border-radius:5px;margin-left:8px;vertical-align:1px}
-.zin.arc{background:rgba(110,168,254,.12);color:#6ea8fe}
-.zin.rhc{background:rgba(120,220,160,.12);color:#78dca0}
-.cizgi{grid-column:1;width:1px;background:var(--line);margin:0 auto;height:100%}
-.ca{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:18px 0 6px;
-  padding:13px 15px;border:1px solid var(--line);border-radius:11px;background:var(--panel)}
-.ca code{font-family:var(--mono);font-size:13px;word-break:break-all;color:var(--tx)}
-.ca .et{font:600 10.5px Inter,sans-serif;letter-spacing:.05em;text-transform:uppercase;
-  color:var(--dim);white-space:nowrap}
-.ca button{background:var(--raise);border:1px solid var(--line);color:var(--tx);
-  font:500 12px Inter,sans-serif;padding:6px 11px;border-radius:7px;cursor:pointer;white-space:nowrap}
-.ca button:hover{border-color:var(--acc)}
-.arz{display:flex;flex-direction:column;gap:9px;margin-top:16px;font-size:13.5px}
-.arz .a{display:flex;justify-content:space-between;gap:14px;align-items:baseline;
-  padding-bottom:9px;border-bottom:1px solid var(--line)}
-.arz .a:last-child{border-bottom:0;padding-bottom:0}
-.arz .a > span{color:var(--dim)}
-.arz .a b{font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
-.arz .note{display:block;color:var(--dim2);font-size:12px;font-weight:400;margin-top:2px}
-.num{font-variant-numeric:tabular-nums}
-.wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+.wrap{max-width:1200px;margin:0 auto;padding:0 24px}
 @media(max-width:600px){.wrap{padding:0 16px}}
+svg.i{width:22px;height:22px;flex:0 0 auto}
 
-/* ---------------- header ---------------- */
-header{
-  position:sticky;top:0;z-index:40;
-  background:rgba(9,10,12,.82);backdrop-filter:blur(16px);
-  border-bottom:1px solid var(--line);
-}
-.hin{display:flex;align-items:center;gap:14px;height:62px}
-.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:16.5px;letter-spacing:-.02em}
-.mark{width:27px;height:27px;border-radius:9px;flex:0 0 auto;
-  background:linear-gradient(135deg,var(--acc),var(--vio));
-  box-shadow:0 0 0 1px rgba(255,255,255,.08) inset,0 0 24px rgba(79,227,163,.25)}
-nav.top{display:flex;gap:4px;margin-left:10px}
-nav.top a{color:var(--dim);font:500 14.5px Inter,sans-serif;padding:8px 12px;border-radius:9px;text-decoration:none}
-nav.top a:hover{color:var(--tx);background:var(--panel);text-decoration:none}
+/* header */
+header{position:sticky;top:0;z-index:50;background:rgba(5,10,26,.78);backdrop-filter:blur(18px);border-bottom:1px solid var(--line)}
+.hin{display:flex;align-items:center;gap:18px;height:68px}
+.brand{display:flex;align-items:center;gap:11px;color:var(--tx);text-decoration:none;white-space:nowrap}
+.brand:hover{text-decoration:none}
+.brand svg{width:34px;height:34px}
+.brand b{font:800 19px Inter,sans-serif;letter-spacing:.02em;display:block;line-height:1.05}
+.brand small{display:block;font:600 9.5px Inter,sans-serif;letter-spacing:.14em;color:var(--arc2);text-transform:uppercase}
+nav.top{display:flex;gap:2px;margin-left:8px}
+nav.top a{color:var(--dim);font:500 14px Inter,sans-serif;padding:8px 12px;border-radius:9px;white-space:nowrap}
+nav.top a:hover{color:var(--tx);background:rgba(255,255,255,.04);text-decoration:none}
 .sp{flex:1}
-.cta{background:var(--acc);color:#04120c;border:0;border-radius:10px;
-  font:600 14px Inter,sans-serif;padding:10px 17px;cursor:pointer;text-decoration:none;white-space:nowrap}
-.cta:hover{filter:brightness(1.08);text-decoration:none}
-.cta.ghost{background:var(--panel2);color:var(--tx);border:1px solid var(--line2)}
-.cta.ghost:hover{background:var(--raise)}
-@media(max-width:780px){nav.top{display:none}}
+.pills{display:flex;gap:6px}
+.pill{display:flex;align-items:center;gap:7px;font:600 12.5px Inter,sans-serif;padding:7px 11px;border-radius:10px;border:1px solid var(--line2);white-space:nowrap}
+.pill.arc{color:var(--arc2);background:var(--arc-bg)}
+.pill.rh{color:var(--rh);background:var(--rh-bg);border-color:rgba(46,229,157,.3)}
+.pill i{width:7px;height:7px;border-radius:50%;background:currentColor;box-shadow:0 0 8px currentColor}
+.cta{display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#4a7dff,#7a5cff);color:#fff;border:0;
+  border-radius:11px;font:600 14px Inter,sans-serif;padding:11px 18px;text-decoration:none;white-space:nowrap;
+  box-shadow:0 8px 28px rgba(80,110,255,.35),inset 0 1px 0 rgba(255,255,255,.18)}
+.cta:hover{filter:brightness(1.1);text-decoration:none}
+.cta.ghost{background:rgba(255,255,255,.03);border:1px solid var(--line2);box-shadow:none;color:var(--tx)}
+.cta.green{background:linear-gradient(135deg,#14c785,#2ee59d);color:#03140d;box-shadow:0 8px 28px rgba(46,229,157,.25)}
+@media(max-width:1080px){nav.top{display:none}}
+@media(max-width:640px){.pills{display:none}}
 
-/* ---------------- hero ---------------- */
-.hero{position:relative;padding:76px 0 56px;overflow:hidden}
-.hero::before{
-  content:"";position:absolute;inset:-200px 0 auto;height:560px;pointer-events:none;
-  background:radial-gradient(ellipse 60% 50% at 50% 50%,rgba(79,227,163,.11),transparent 70%),
-             radial-gradient(ellipse 40% 40% at 78% 30%,rgba(125,140,255,.10),transparent 70%);
-}
-.tag{display:inline-flex;align-items:center;gap:7px;
-  font:600 11.5px Inter,sans-serif;letter-spacing:.06em;text-transform:uppercase;
-  color:var(--acc);background:var(--acc-bg);border:1px solid rgba(79,227,163,.22);
-  padding:6px 12px;border-radius:99px;margin-bottom:22px}
-.dot{width:6px;height:6px;border-radius:50%;background:var(--acc);box-shadow:0 0 8px var(--acc)}
-h1{font:800 clamp(34px,6.4vw,58px)/1.06 Inter,sans-serif;letter-spacing:-.035em;margin:0 0 20px;max-width:19ch}
-h1 em{font-style:normal;background:linear-gradient(100deg,var(--acc),var(--vio));
-  -webkit-background-clip:text;background-clip:text;color:transparent}
-.lead{font-size:clamp(16.5px,2.1vw,19px);color:var(--dim);max-width:60ch;margin:0 0 30px;line-height:1.6}
-.lead strong{color:var(--tx);font-weight:600}
-.btns{display:flex;gap:11px;flex-wrap:wrap}
-.btns .cta{padding:13px 22px;font-size:15px}
+/* hero */
+.hero{position:relative;padding:64px 0 40px}
+.hgrid{display:grid;grid-template-columns:1.05fr 1fr;gap:36px;align-items:center}
+@media(max-width:980px){.hgrid{grid-template-columns:1fr}}
+.eye{font:700 12.5px Inter,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:var(--rh)}
+h1{font:900 clamp(54px,9vw,104px)/.95 Inter,sans-serif;letter-spacing:-.04em;margin:14px 0 18px}
+h1 span{background:linear-gradient(100deg,var(--arc2) 0%,var(--arc) 35%,var(--pulse) 70%,var(--rh) 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hsub{font:700 clamp(19px,2.3vw,24px)/1.3 Inter,sans-serif;margin:0 0 14px;letter-spacing:-.015em}
+.lead{color:var(--dim);font-size:16.5px;max-width:56ch;margin:0 0 28px}
+.lead b{color:var(--tx);font-weight:600}
+.btns{display:flex;gap:12px;flex-wrap:wrap}
+.btns .cta{padding:14px 22px;font-size:15px}
+.hfeat{display:flex;gap:22px;flex-wrap:wrap;margin-top:34px}
+.hfeat div{display:flex;align-items:center;gap:10px;color:var(--dim);font-size:13px;line-height:1.35}
+.hfeat div b{display:block;color:var(--tx);font-weight:600;font-size:13.5px}
+.hfeat svg{color:var(--arc2);width:30px;height:30px;padding:6px;border-radius:9px;background:var(--arc-bg);border:1px solid var(--line)}
 
-/* ---------------- strip ---------------- */
-.strip{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:52px}
-@media(max-width:860px){.strip{grid-template-columns:repeat(2,1fr)}}
-.sbox{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:17px 18px}
-.sbox b{display:block;font:700 23px/1.15 Inter,sans-serif;letter-spacing:-.025em;font-variant-numeric:tabular-nums}
-.sbox span{display:block;color:var(--dim);font-size:12.5px;margin-top:5px;line-height:1.45}
+/* hero visual */
+.orbs{position:relative;aspect-ratio:1.25/1;width:100%;max-width:600px;margin:0 auto}
+.orb{position:absolute;top:16%;width:52%;aspect-ratio:1;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.orb.arc{left:0;padding-right:9%;background:radial-gradient(circle at 40% 35%,rgba(111,177,255,.32),rgba(20,40,110,.55) 55%,rgba(8,16,40,.4) 75%);
+  border:1.5px solid rgba(111,177,255,.55);box-shadow:0 0 60px rgba(61,139,255,.45),inset 0 0 50px rgba(61,139,255,.25)}
+.orb.rh{right:0;padding-left:9%;background:radial-gradient(circle at 60% 35%,rgba(122,245,196,.28),rgba(8,80,60,.55) 55%,rgba(6,24,22,.4) 75%);
+  border:1.5px solid rgba(122,245,196,.55);box-shadow:0 0 60px rgba(46,229,157,.38),inset 0 0 50px rgba(46,229,157,.2)}
+.orb svg{width:24%;height:24%;margin-bottom:6px}
+.orb b{font:800 clamp(18px,2.4vw,26px) Inter,sans-serif;letter-spacing:-.01em}
+.orb small{color:var(--dim);font-size:clamp(11px,1.2vw,13px)}
+.orb.arc svg{color:var(--arc2)} .orb.rh svg{color:var(--rh)}
+.loop{position:absolute;left:36%;right:36%;top:2%;height:16%;filter:drop-shadow(0 0 10px rgba(139,107,255,.8))}
+.otxt{position:absolute;left:0;right:0;bottom:4%;text-align:center;font:800 13px Inter,sans-serif;letter-spacing:.18em;color:var(--dim);line-height:1.7}
+.otxt b{color:var(--tx)}
+.ostat{position:absolute;bottom:22%;font:600 11px Inter,sans-serif;letter-spacing:.08em;text-transform:uppercase;padding:5px 10px;border-radius:99px}
+.ostat.arc{left:15%;color:var(--arc2);background:var(--arc-bg);border:1px solid var(--line2)}
+.ostat.rh{right:15%;color:var(--rh);background:var(--rh-bg);border:1px solid rgba(46,229,157,.3)}
 
-/* ---------------- sections ---------------- */
-section{padding:72px 0;border-top:1px solid var(--line)}
-section:first-of-type{border-top:0}
-.eyebrow{font:600 11.5px Inter,sans-serif;letter-spacing:.09em;text-transform:uppercase;color:var(--acc);margin:0 0 12px}
-h2{font:700 clamp(25px,3.4vw,34px)/1.18 Inter,sans-serif;letter-spacing:-.028em;margin:0 0 14px;max-width:24ch}
-.sub{color:var(--dim);font-size:16.5px;max-width:64ch;margin:0 0 36px;line-height:1.62}
+/* sections */
+section{padding:56px 0}
+.sh{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap;margin-bottom:26px}
+.k{font:700 12px Inter,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:var(--arc2);margin:0 0 10px}
+h2{font:800 clamp(28px,3.6vw,40px)/1.12 Inter,sans-serif;letter-spacing:-.03em;margin:0;max-width:22ch}
+.sub{color:var(--dim);font-size:16px;max-width:60ch;margin:12px 0 0}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:24px;backdrop-filter:blur(8px)}
+.card:hover{border-color:var(--line2)}
+.ic{width:46px;height:46px;border-radius:13px;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(140deg,rgba(74,125,255,.22),rgba(139,107,255,.16));border:1px solid var(--line2);color:var(--arc2)}
+.ic.g{background:linear-gradient(140deg,rgba(46,229,157,.2),rgba(20,140,120,.12));color:var(--rh);border-color:rgba(46,229,157,.3)}
+.ic svg{width:24px;height:24px}
 
-/* flow */
-.flow{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
-@media(max-width:860px){.flow{grid-template-columns:1fr}}
-.step{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:22px;position:relative}
-.step .n{font:700 12px var(--mono);color:var(--acc);background:var(--acc-bg);
-  width:28px;height:28px;border-radius:9px;display:flex;align-items:center;justify-content:center;margin-bottom:14px}
-.step h3{font:600 17px Inter,sans-serif;margin:0 0 8px;letter-spacing:-.015em}
-.step p{margin:0;color:var(--dim);font-size:14.5px;line-height:1.6}
-.step p em{font-style:normal;color:var(--tx)}
+/* stats strip */
+.stats{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+@media(max-width:980px){.stats{grid-template-columns:repeat(2,1fr)}}
+.st{background:var(--panel);border:1px solid var(--line);border-radius:var(--r2);padding:18px 20px}
+.st b{display:block;font:800 30px/1.05 Inter,sans-serif;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.st span{display:block;font-weight:600;font-size:13.5px;margin-top:6px}
+.st small{display:block;color:var(--dim2);font-size:12px;margin-top:2px}
+.st.arc b{color:var(--arc2)} .st.rh b{color:var(--rh)}
 
-/* guarantees */
-.gs{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-@media(max-width:860px){.gs{grid-template-columns:1fr}}
-.g{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:22px}
-.g h3{font:600 17px Inter,sans-serif;margin:0 0 9px;letter-spacing:-.015em;display:flex;gap:9px;align-items:baseline}
-.g h3 svg{width:17px;height:17px;flex:0 0 auto;color:var(--acc);margin-top:3px}
-.g p{margin:0;color:var(--dim);font-size:14.5px;line-height:1.62}
-.g .why{display:block;margin-top:11px;padding-top:11px;border-top:1px solid var(--line);
-  font-size:13px;color:var(--dim2)}
-.g .why b{color:var(--tx);font-weight:600}
+/* ecosystems */
+.eco{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:860px){.eco{grid-template-columns:1fr}}
+.ec{position:relative;overflow:hidden;border-radius:var(--r);padding:28px;border:1px solid}
+.ec.arc{background:linear-gradient(150deg,rgba(40,80,190,.32),rgba(10,20,50,.7));border-color:rgba(111,177,255,.32)}
+.ec.rh{background:linear-gradient(150deg,rgba(20,140,100,.28),rgba(6,26,26,.7));border-color:rgba(46,229,157,.32)}
+.ec .top{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.ec h3{font:800 20px Inter,sans-serif;letter-spacing:.01em;margin:0}
+.ec .chip{margin-left:auto}
+.ec p{color:var(--dim);margin:0 0 16px;font-size:15px}
+.ec ul{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.ec li{display:flex;align-items:center;gap:9px;font-size:14px;padding:10px 12px;border-radius:10px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.06)}
+.ec.arc li svg{color:var(--arc2)} .ec.rh li svg{color:var(--rh)}
+.ec li svg{width:17px;height:17px}
 
-/* fee */
-.fee{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:26px;max-width:620px}
-.bar{display:flex;height:40px;border-radius:10px;overflow:hidden;margin:18px 0 16px}
-.bar div{display:flex;align-items:center;justify-content:center;font:600 12.5px Inter,sans-serif;color:#04120c}
-.bar .h{background:var(--acc);flex:30}
-.bar .d{background:#3fc98f;flex:30}
-.bar .p{background:var(--vio);flex:40;color:#0b0d18}
-.leg{display:flex;flex-direction:column;gap:9px;font-size:14px}
-.leg div{display:flex;justify-content:space-between;gap:12px}
-.leg span{color:var(--dim)}
-.leg b{font-variant-numeric:tabular-nums}
+.chip{display:inline-block;font:700 10.5px Inter,sans-serif;letter-spacing:.07em;text-transform:uppercase;padding:4px 9px;border-radius:7px;white-space:nowrap}
+.chip.live{background:var(--rh-bg);color:var(--rh);border:1px solid rgba(46,229,157,.3)}
+.chip.built{background:var(--pulse-bg);color:#b8a6ff;border:1px solid rgba(139,107,255,.35)}
 
-/* table */
-.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;
-  border:1px solid var(--line);border-radius:var(--r);background:var(--panel)}
-table{width:100%;border-collapse:collapse;font-size:14px;min-width:460px}
-th{text-align:left;font:600 11px Inter,sans-serif;letter-spacing:.08em;text-transform:uppercase;
-  color:var(--dim2);padding:13px 16px;border-bottom:1px solid var(--line);white-space:nowrap}
-td{padding:13px 16px;border-bottom:1px solid var(--line)}
-tr:last-child td{border-bottom:0}
+/* steps */
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+@media(max-width:980px){.steps{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:560px){.steps{grid-template-columns:1fr}}
+.stp h3{font:700 16.5px Inter,sans-serif;margin:16px 0 8px;letter-spacing:-.01em}
+.stp h3 em{font-style:normal;color:var(--arc2);margin-right:6px}
+.stp p{color:var(--dim);font-size:14px;margin:0}
+
+/* capabilities */
+.caps{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media(max-width:980px){.caps{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:600px){.caps{grid-template-columns:1fr}}
+.cap .row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.cap h3{font:700 16.5px Inter,sans-serif;margin:16px 0 7px;letter-spacing:-.01em}
+.cap p{color:var(--dim);font-size:14px;margin:0}
+
+/* two-col feature blocks */
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:900px){.duo{grid-template-columns:1fr}}
+.fb h3{font:800 22px Inter,sans-serif;letter-spacing:-.02em;margin:14px 0 8px}
+.fb p{color:var(--dim);font-size:15px;margin:0 0 14px}
+.kv{display:flex;flex-direction:column;gap:0;border:1px solid var(--line);border-radius:var(--r2);overflow:hidden;margin-top:6px}
+.kv div{display:flex;justify-content:space-between;gap:12px;padding:11px 14px;font-size:14px;border-bottom:1px solid var(--line)}
+.kv div:last-child{border-bottom:0}
+.kv span{color:var(--dim)} .kv b{font-variant-numeric:tabular-nums;text-align:right}
+.bar{display:flex;height:12px;border-radius:99px;overflow:hidden;margin:14px 0 4px}
+.bar i{display:block}
+
+/* tables */
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--line);border-radius:var(--r);background:var(--panel)}
+table{width:100%;border-collapse:collapse;font-size:14px;min-width:520px}
+th{text-align:left;font:700 11px Inter,sans-serif;letter-spacing:.09em;text-transform:uppercase;color:var(--dim2);padding:14px 18px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:14px 18px;border-bottom:1px solid var(--line)}
+tr:last-child td,tr:last-child th{border-bottom:0}
 td.r,th.r{text-align:right;font-variant-numeric:tabular-nums}
-.ok{color:var(--acc)}
 
 /* faq */
-details{background:var(--panel);border:1px solid var(--line);border-radius:var(--r2);
-  margin-bottom:10px;overflow:hidden}
-details[open]{border-color:var(--line2)}
-summary{padding:17px 20px;cursor:pointer;font:600 15.5px Inter,sans-serif;
-  letter-spacing:-.01em;list-style:none;display:flex;justify-content:space-between;gap:14px;align-items:center}
-summary::-webkit-details-marker{display:none}
-summary::after{content:"+";color:var(--dim);font-weight:400;font-size:20px;line-height:1}
-details[open] summary::after{content:"−"}
-details p{margin:0;padding:0 20px 18px;color:var(--dim);font-size:14.5px;line-height:1.65}
-details p + p{padding-top:0}
+.faq{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:860px){.faq{grid-template-columns:1fr}}
+.faq h3{font:700 16px Inter,sans-serif;margin:0 0 8px}
+.faq p{color:var(--dim);font-size:14.5px;margin:0}
 
-/* notice */
-.notice{background:rgba(255,182,92,.07);border:1px solid rgba(255,182,92,.24);
-  border-radius:var(--r);padding:20px 22px;color:#ffd49b;font-size:14.5px;line-height:1.62}
-.notice b{color:#ffe3bd}
-
-.zincirler{display:grid;grid-template-columns:1fr auto 1fr;gap:16px;align-items:stretch;margin-bottom:22px}
-@media(max-width:820px){.zincirler{grid-template-columns:1fr}}
-.zblok{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:22px}
-.zbas{display:flex;align-items:center;gap:8px;font:600 12px Inter,sans-serif;
-  letter-spacing:.07em;text-transform:uppercase;color:var(--dim2);margin-bottom:12px}
-.znok{width:8px;height:8px;border-radius:50%}
-.znok.rh{background:var(--vio);box-shadow:0 0 8px var(--vio)}
-.znok.arc{background:var(--acc);box-shadow:0 0 8px var(--acc)}
-.zad{font:600 17px Inter,sans-serif;letter-spacing:-.015em;margin-bottom:8px}
-.zblok p{margin:0;color:var(--dim);font-size:14.5px;line-height:1.6}
-.zblok p strong{color:var(--tx);font-weight:600}
-.zok{display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:7px;color:var(--dim2);font:600 11px Inter,sans-serif;letter-spacing:.07em;text-transform:uppercase}
-.zok svg{width:26px;height:26px}
-@media(max-width:820px){.zok{flex-direction:row;padding:4px 0}.zok svg{transform:rotate(90deg)}}
-.ornek{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:20px 22px}
-.obas{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;
-  color:var(--dim);font-size:13.5px}
-.pill-rwa{font:600 10.5px Inter,sans-serif;letter-spacing:.04em;text-transform:uppercase;
-  padding:4px 9px;border-radius:7px;background:var(--vio-bg);color:var(--vio)}
-.orows{display:flex;flex-direction:column;gap:7px;font-size:13.5px}
-.orow{display:flex;justify-content:space-between;gap:12px;align-items:baseline}
-.orow span{color:var(--dim)}
-.orow b{font-variant-numeric:tabular-nums;text-align:right;word-break:break-all}
-.orow .ok{color:var(--acc)}
-.onot{margin-top:14px;padding-top:13px;border-top:1px solid var(--line);
-  color:var(--dim2);font-size:12.5px;line-height:1.55}
-.onot strong{color:var(--dim)}
-/* brand, status chips, capability grid */
-a.brand{color:var(--tx);text-decoration:none}
-a.brand:hover{text-decoration:none}
-.brand{white-space:nowrap;flex:0 0 auto}
-.brand span{letter-spacing:.02em}
-nav.top a{white-space:nowrap}
-.brand small{font:500 12px Inter,sans-serif;color:var(--dim2);letter-spacing:0;margin-left:2px}
-@media(max-width:1180px){.brand small{display:none}}
-.rozetler{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:22px}
-.rozetler .tag{margin-bottom:0}
-.tag.mor{color:var(--vio);background:var(--vio-bg);border-color:rgba(125,140,255,.25)}
-.dot.mor{background:var(--vio);box-shadow:0 0 8px var(--vio)}
-.durum{display:inline-block;font:600 10.5px Inter,sans-serif;letter-spacing:.05em;text-transform:uppercase;
-  padding:3px 8px;border-radius:6px;vertical-align:1px;white-space:nowrap}
-.durum.canli{background:var(--acc-bg);color:var(--acc)}
-.durum.hazir{background:var(--vio-bg);color:var(--vio)}
-.zbas .durum{margin-left:auto}
-.yg{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
-@media(max-width:900px){.yg{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:600px){.yg{grid-template-columns:1fr}}
-.y{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:20px 22px;
-  transition:border-color .15s}
-.y:hover{border-color:var(--line2)}
-.y h3{font:600 16.5px Inter,sans-serif;letter-spacing:-.015em;margin:12px 0 7px}
-.y p{margin:0;color:var(--dim);font-size:14px;line-height:1.6}
-footer{border-top:1px solid var(--line);padding:40px 0 56px;color:var(--dim2);font-size:13.5px}
-.fl{display:flex;gap:20px;flex-wrap:wrap;margin-bottom:14px}
+/* cta band */
+.band{display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap;padding:34px;border-radius:22px;
+  background:linear-gradient(120deg,rgba(61,139,255,.22),rgba(139,107,255,.18) 50%,rgba(46,229,157,.16));border:1px solid var(--line2)}
+.band h2{max-width:none}
+footer{border-top:1px solid var(--line);margin-top:30px;padding:34px 0 50px;color:var(--dim2);font-size:13.5px}
+.fin{display:flex;align-items:center;gap:24px;flex-wrap:wrap;justify-content:space-between}
+.fl{display:flex;gap:18px;flex-wrap:wrap}
 .fl a{color:var(--dim)}
 </style>
 </head>
 <body>
 
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="gA" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6fb1ff"/><stop offset=".55" stop-color="#8b6bff"/><stop offset="1" stop-color="#2ee59d"/></linearGradient>
+    <symbol id="logo" viewBox="0 0 40 40"><path d="M20 4 34 34h-6.2L20 16.5 12.2 34H6Z" fill="url(#gA)"/><path d="M4 26h8l3-5 4 9 4-12 3 8h10" fill="none" stroke="#eef3ff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-rocket" viewBox="0 0 24 24"><path d="M5 15c-1.5 1.3-2 4-2 6 2 0 4.7-.5 6-2M9 12a22 22 0 0 1 4-8.5C15.4 1.6 19 1.5 21.5 2.5c1 2.5.9 6.1-1 8.5A22 22 0 0 1 12 15ZM9 12H4l3-4h5M12 15v5l4-3v-5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></symbol>
+    <symbol id="i-vault" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 8v1.5M12 14.5V16M8 12h1.5M14.5 12H16M6 20v1.5M18 20v1.5" stroke="currentColor" stroke-width="1.7"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14.5v2.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
+    <symbol id="i-swap" viewBox="0 0 24 24"><path d="M4 8h14l-3.5-3.5M20 16H6l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-flame" viewBox="0 0 24 24"><path d="M12 21c-4 0-7-2.8-7-6.7C5 10 9 8.5 9 3.5c3 1.5 4.6 4.2 4.6 6.3 1-.6 1.9-1.8 2.2-3.3C18 8.5 19 11.3 19 14.3 19 18.2 16 21 12 21Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></symbol>
+    <symbol id="i-chart" viewBox="0 0 24 24"><path d="M3 20h18M6 16l4-5 3 3 5-7" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-dao" viewBox="0 0 24 24"><path d="M3 9 12 4l9 5M5 9v9M9.5 9v9M14.5 9v9M19 9v9M3 20h18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-link" viewBox="0 0 24 24"><path d="M9 15 15 9M10.5 6.5l1.8-1.8a4.2 4.2 0 0 1 6 6l-1.8 1.8M13.5 17.5l-1.8 1.8a4.2 4.2 0 0 1-6-6l1.8-1.8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
+    <symbol id="i-coins" viewBox="0 0 24 24"><ellipse cx="9" cy="7" rx="6" ry="3" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M3 7v5c0 1.7 2.7 3 6 3s6-1.3 6-3V7M9 15v2c0 1.7 2.7 3 6 3s6-1.3 6-3v-5c0-1.4-1.7-2.5-4-2.9" fill="none" stroke="currentColor" stroke-width="1.7"/></symbol>
+    <symbol id="i-store" viewBox="0 0 24 24"><path d="M4 9.5 5.5 4h13L20 9.5M4 9.5h16v.5a3 3 0 0 1-5.3 1.9A3 3 0 0 1 12 13a3 3 0 0 1-2.7-1.1A3 3 0 0 1 4 10ZM5.5 13v7h13v-7" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 4.5 6v5.5c0 4.6 3.2 8 7.5 9.5 4.3-1.5 7.5-4.9 7.5-9.5V6Z M8.5 12l2.5 2.5 4.5-5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"/></symbol>
+    <symbol id="i-arc" viewBox="0 0 24 24"><path d="M12 3 21 21h-3.6L12 10.4 6.6 21H3Z" fill="currentColor"/></symbol>
+    <symbol id="i-feather" viewBox="0 0 24 24"><path d="M20 4c-7 0-12 4-14 11l-2 5 4-2c7-1 11-6 12-14ZM6 15h7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M4 4l16 16M20 4 4 20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  </defs>
+</svg>
+
 <header>
   <div class="wrap hin">
-    <a class="brand" href="#"><div class="mark"></div><span>ARC PULSE</span><small>collateral-backed launchpad</small></a>
+    <a class="brand" href="#"><svg><use href="#logo"/></svg><span><b>ARC PULSE</b><small>Two chains. One protocol.</small></span></a>
     <nav class="top">
-      <a href="#yetenekler">Capabilities</a>
-      <a href="#zincirler">Two chains</a>
+      <a href="#ekosistem">Ecosystems</a>
       <a href="#nasil">How it works</a>
+      <a href="#yetenekler">Capabilities</a>
+      <a href="#kasa">Vaults</a>
       <a href="#ucret">Fees</a>
-      <a href="#sayilar">Live numbers</a>
+      <a href="#sayilar">Live data</a>
       <a href="#sss">FAQ</a>
     </nav>
     <div class="sp"></div>
-    <a class="cta" href="app.html">Open the app</a>
+    <div class="pills"><span class="pill arc"><i></i>Arc</span><span class="pill rh"><i></i>Robinhood</span></div>
+    <a class="cta" href="app.html">Open app</a>
   </div>
 </header>
 
-
 <div class="hero">
-  <div class="wrap">
-    <div class="rozetler">
-      <span class="tag"><span class="dot"></span>Live on Arc mainnet</span>
-      <span class="tag mor"><span class="dot mor"></span>Live on Robinhood Chain</span>
+  <div class="wrap hgrid">
+    <div>
+      <div class="eye">Two chains. One protocol.</div>
+      <h1><span>ARC PULSE</span></h1>
+      <p class="hsub">Token launchpad, collateral vaults and a cross-chain memecoin economy.</p>
+      <p class="lead">Launch a token on <b>Arc</b> or <b>Robinhood Chain</b>. Every token is born with its own
+        collateral vault you can redeem against at any time, and its liquidity is locked from the first block.
+        <b>No owner, no mint, no withdraw function.</b></p>
+      <div class="btns">
+        <a class="cta" href="app.html">Create a token <svg class="i"><use href="#i-swap"/></svg></a>
+        <a class="cta ghost" href="#yetenekler">Explore</a>
+      </div>
+      <div class="hfeat">
+        <div><svg><use href="#i-vault"/></svg><span><b>Collateral vaults</b>one per token</span></div>
+        <div><svg><use href="#i-lock"/></svg><span><b>Locked liquidity</b>no rug path</span></div>
+        <div><svg><use href="#i-dao"/></svg><span><b>FTHM &amp; DAO</b>vote-governed funds</span></div>
+      </div>
     </div>
-    <h1>Launch a memecoin with <em>real money underneath it.</em></h1>
-    <p class="lead">
-      <strong>ARC PULSE</strong> is a token launchpad where every coin is born
-      with its own collateral vault. Holders can burn their tokens and take
-      their share of that vault at any time — no permission, no queue, no fee.
-      Liquidity is locked from the first block, and the contracts have
-      <strong>no owner, no mint and no withdraw function.</strong>
-    </p>
-    <div class="btns">
-      <a class="cta" href="app.html">Launch a token</a>
-      <a class="cta ghost" href="#yetenekler">See what it does</a>
-    </div>
-
-    <div class="strip" id="strip">
-      <div class="sbox"><b>2% + 1-5%</b><span>protocol fee, plus the creator's tax that goes into the vault</span></div>
-      <div class="sbox"><b id="s-launch">—</b><span>launches so far, read live from Arc</span></div>
-      <div class="sbox"><b id="s-kasa">—</b><span>collateral in launch vaults, read live</span></div>
-      <div class="sbox"><b>811</b><span>automated checks passing, 0 failing</span></div>
+    <div class="orbs" aria-hidden="true">
+      <div class="orb arc"><svg><use href="#i-arc"/></svg><b>ARC</b><small>L1 · chain 5042<br>USDC economy</small></div>
+      <div class="orb rh"><svg><use href="#i-feather"/></svg><b>Robinhood</b><small>Robinhood Chain<br>USDG economy</small></div>
+      <svg class="loop" viewBox="0 0 200 80" preserveAspectRatio="none"><path d="M100 40C80 10 30 10 30 40s50 30 70 0 50-30 70 0-50 30-70 0" fill="none" stroke="url(#gA)" stroke-width="7" stroke-linecap="round"/></svg>
+      <span class="ostat arc">Live</span><span class="ostat rh">Live</span>
+      <div class="otxt"><b>ONE TOKEN</b> · TWO CHAINS · <b>ONE FLOOR</b></div>
     </div>
   </div>
 </div>
 
-<!-- =============== YETENEKLER =============== -->
-<section id="yetenekler">
-  <div class="wrap">
-    <p class="eyebrow">Capabilities</p>
-    <h2>Everything the platform does, and where it stands.</h2>
-    <p class="sub">
-      Each card is marked with its real status. <span class="durum canli">Live</span>
-      means deployed on mainnet and usable today.
-      <span class="durum hazir">Built &amp; tested</span> means written and passing its
-      checks against real mainnet state, but not deployed yet.
-    </p>
-
-    <div class="yg">
-      <div class="y"><span class="durum canli">Live</span>
-        <h3>One-transaction launch</h3>
-        <p>Token, vault and Uniswap v4 pool created together. The founder's buy lands at the opening price, with nothing to front-run.</p></div>
-      <div class="y"><span class="durum canli">Live</span>
-        <h3>Redeem against the vault</h3>
-        <p>Burn tokens, receive your share of the collateral. The floor never drops for the holders who stay.</p></div>
-      <div class="y"><span class="durum canli">Live</span>
-        <h3>Liquidity that can't be pulled</h3>
-        <p>The pool's hook rejects every liquidity removal. Nobody, the team included, can take the pool's money out.</p></div>
-      <div class="y"><span class="durum canli">Live</span>
-        <h3>Every trade feeds the floor</h3>
-        <p>The 1-5% creator tax on each buy and sell goes straight into that token's vault, in dollars.</p></div>
-      <div class="y"><span class="durum canli">Live</span>
-        <h3>Any collateral</h3>
-        <p>USDC, cirBTC, WETH, EURC or any token you choose. No allow list.</p></div>
-      <div class="y"><span class="durum canli">Live</span>
-        <h3>FTHM, staking and a DAO</h3>
-        <p>The platform token has no mint and no owner. Developer funding only moves through a vote and a timelock.</p></div>
-
-      <div class="y"><span class="durum canli">Live</span>
-        <h3>Launches on Robinhood Chain</h3>
-        <p>The same launchpad, in USDG, deployed on Robinhood Chain and verified contract by contract from the chain.</p></div>
-      <div class="y"><span class="durum hazir">Built &amp; tested</span>
-        <h3>One token, two chains</h3>
-        <p>Any launch token can get a twin on the other chain. Total supply stays exactly the same across both — 16/16.</p></div>
-      <div class="y"><span class="durum hazir">Built &amp; tested</span>
-        <h3>Price gaps go to the vault</h3>
-        <p>When the two chains disagree on price, the trade that would profit from the gap pays it instead — 15/15.</p></div>
-      <div class="y"><span class="durum hazir">Built &amp; tested</span>
-        <h3>One DAO for both chains</h3>
-        <p>Governance stays on Arc. Robinhood revenue moves only on Arc votes carried over LayerZero — 9/9.</p></div>
-    </div>
+<section style="padding-top:8px">
+  <div class="wrap stats">
+    <div class="st"><b>2</b><span>Chains live</span><small>Arc + Robinhood</small></div>
+    <div class="st arc"><b id="s-launch">—</b><span>Launches on Arc</span><small>read live from the chain</small></div>
+    <div class="st rh"><b id="s-rh">—</b><span>Launches on Robinhood</span><small>read live from the chain</small></div>
+    <div class="st"><b id="s-kasa">—</b><span>In launch vaults</span><small>Arc, read live</small></div>
+    <div class="st"><b>0</b><span>Owners</span><small>no admin key on any contract</small></div>
   </div>
 </section>
 
-<!-- =============== ZINCIRLER =============== -->
-<section id="zincirler">
+<!-- =============== EKOSISTEM =============== -->
+<section id="ekosistem">
   <div class="wrap">
-    <p class="eyebrow">Two chains</p>
-    <h2>Dollar floors on Arc. Memecoin volume on Robinhood.</h2>
-    <p class="sub">
-      Each chain does what it is best at, and one token can live on both.
-    </p>
-    <div class="zincirler">
-      <div class="zblok">
-        <div class="zbas"><span class="znok arc"></span>Arc · Circle's L1 <span class="durum canli">Live</span></div>
-        <div class="zad">Where the floor lives</div>
-        <p>USDC is both the gas and the collateral, so <strong>every vault and every floor is in dollars</strong>.
-        Sub-second finality, and Circle's CCTP for moving USDC between chains. The DAO and FTHM live here.</p>
+    <div class="sh"><div><p class="k">Two ecosystems, one platform</p>
+      <h2>Dollar floors on Arc. Memecoin volume on Robinhood.</h2></div></div>
+    <div class="eco">
+      <div class="ec arc">
+        <div class="top"><div class="ic"><svg><use href="#i-arc"/></svg></div><h3>ARC ECOSYSTEM</h3><span class="chip live">Live · USDC</span></div>
+        <p>Circle's L1, where USDC is both the gas and the collateral — so every vault and every floor is in dollars. Sub-second finality. FTHM and the DAO live here.</p>
+        <ul>
+          <li><svg><use href="#i-rocket"/></svg>Launch tokens</li>
+          <li><svg><use href="#i-swap"/></svg>Trade on Arc</li>
+          <li><svg><use href="#i-vault"/></svg>Token vaults</li>
+          <li><svg><use href="#i-flame"/></svg>Redeem (burn for value)</li>
+        </ul>
       </div>
-      <div class="zok">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 9h14l-4-4M20 15H6l4 4"/></svg>
-        LayerZero
-      </div>
-      <div class="zblok">
-        <div class="zbas"><span class="znok rh"></span>Robinhood Chain <span class="durum canli">Live</span></div>
-        <div class="zad">Where the traders are</div>
-        <p>Home of tokenized stocks and one of the busiest memecoin markets on-chain.
-        Launches there use <strong>USDG</strong>, and tokens can move between the two chains with supply kept whole.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- =============== AMAC =============== -->
-<section id="amac">
-  <div class="wrap">
-    <p class="eyebrow">What the project does</p>
-    <h2>The floor is not a promise. It is a function.</h2>
-    <p class="sub">
-      Every launch has its own vault. Collateral goes in, and there is
-      exactly one way out: <strong>by burning tokens</strong>. The burn
-      shrinks the supply and the payout shrinks the collateral by the same
-      proportion, so the ratio never moves — somebody leaving does not
-      lower the floor for whoever stays.
-    </p>
-
-    <div class="g">
-      <div class="bgov">
-        <div class="bno">01</div>
-        <h3>There is one way out</h3>
-        <p><code>redeem()</code> is open to everyone and free:
-        <em>payout = collateral × amount ÷ supply</em>. A rescue function,
-        a sweep, an emergency withdraw, a recipient-address parameter —
-        none of them exist. A function like that gets written in good
-        faith, and then it is either used or stolen.</p>
-      </div>
-      <div class="bgov">
-        <div class="bno">02</div>
-        <h3>The price cannot stay below the floor</h3>
-        <p>If it does, anyone may buy there and redeem at the vault for
-        more. Nobody has to defend the floor; <u>defending it pays</u>.
-        A redemption carries no fee at all, because a fee on the way out
-        would let the price sit that much further below the floor.</p>
-      </div>
-      <div class="bgov">
-        <div class="bno">03</div>
-        <h3>Liquidity cannot be pulled</h3>
-        <p>The launch's pool position is burned the moment it is born. A
-        removal is refused at the contract level, and there is no owner
-        to do the refusing either: <u>nobody owns the position</u>. A rug
-        pull is technically impossible, not merely promised against.</p>
-      </div>
-      <div class="bgov">
-        <div class="bno">04</div>
-        <h3>And it cannot be added later</h3>
-        <p>The vault's bytecode contains <u>no</u> <code>DELEGATECALL</code>,
-        <code>CALLCODE</code> or <code>SELFDESTRUCT</code> — not one
-        instruction that could change its code. "We will not add one" is a
-        promise; "we cannot add one" is a measurable property. Every
-        contract on this page is scanned for it separately.</p>
+      <div class="ec rh">
+        <div class="top"><div class="ic g"><svg><use href="#i-feather"/></svg></div><h3>ROBINHOOD CHAIN</h3><span class="chip live">Live · USDG</span></div>
+        <p>Home of tokenized stocks and one of the busiest memecoin markets on-chain. The same launchpad, in USDG, deployed and verified contract by contract.</p>
+        <ul>
+          <li><svg><use href="#i-rocket"/></svg>Launch tokens</li>
+          <li><svg><use href="#i-swap"/></svg>Trade on Robinhood</li>
+          <li><svg><use href="#i-vault"/></svg>Token vaults</li>
+          <li><svg><use href="#i-flame"/></svg>Redeem (burn for value)</li>
+        </ul>
       </div>
     </div>
   </div>
@@ -433,221 +306,74 @@ footer{border-top:1px solid var(--line);padding:40px 0 56px;color:var(--dim2);fo
 <!-- =============== NASIL =============== -->
 <section id="nasil">
   <div class="wrap">
-    <p class="eyebrow">How it works</p>
-    <h2>One transaction. Four things at once.</h2>
-    <p class="sub">
-      You bring the collateral; the rest finishes inside a single
-      transaction. No waiting, no operator, nothing to be delivered to you
-      later.
-    </p>
-
-    <div class="flow">
-      <div class="step">
-        <div class="n">1</div>
-        <h3>Choose the collateral and deposit it</h3>
-        <p>USDC, cirBTC, WETH, EURC — or any other token whose address
-        you paste. There is no allow list. You pick the trade tax that
-        funds the floor too, anywhere from <em>1% to 5%</em>. The launch
-        fee is a flat <em>2%</em> of your first buy, whatever the
-        collateral is.</p>
-      </div>
-      <div class="step">
-        <div class="n">2</div>
-        <h3>The vault fills and the floor is born</h3>
-        <p>All of the collateral goes into this token's own vault.
-        <em>Floor = vault ÷ circulating</em>, where unsold inventory
-        sitting in the pool is not counted as somebody's holding. That
-        number never falls: a redemption shrinks both sides by the same
-        proportion.</p>
-      </div>
-      <div class="step">
-        <div class="n">3</div>
-        <h3>The pool opens with both sides real</h3>
-        <p>The supply left after your own share goes in as a ladder
-        <em>above</em> the opening price, and your payment, less the fee,
-        is placed <em>below</em> it as an actual bid. An earlier design put
-        only tokens in: the launch reported success and the pool came back
-        holding <em>$0.00</em> of money, so there was nothing to sell into.
-        Neither side can be withdrawn again.</p>
-      </div>
-      <div class="step">
-        <div class="n">4</div>
-        <h3>Your own share</h3>
-        <p>Your payment, less the 2% fee, becomes tokens at the opening
-        price and lands in your wallet in the same transaction. It is not
-        a swap, so there is no slippage and the snipe tax has nothing to
-        apply to. It is not free either: at the opening price the whole
-        supply is worth <em>$3,500</em>, and what you receive is worth
-        exactly what you paid net — measured across five payments, to
-        within 0 raw units.</p>
-      </div>
+    <div class="sh"><div><p class="k">How it works</p><h2>One transaction. Four things at once.</h2></div></div>
+    <div class="steps">
+      <div class="card stp"><div class="ic"><svg><use href="#i-rocket"/></svg></div>
+        <h3><em>01</em>Create the token</h3><p>Pick a chain, a name, the collateral and a 1-5% floor tax. The founder's buy lands at the opening price — no discount, nothing to front-run.</p></div>
+      <div class="card stp"><div class="ic"><svg><use href="#i-vault"/></svg></div>
+        <h3><em>02</em>The vault is born</h3><p>All of the collateral goes into this token's own vault. Floor = vault ÷ circulating supply, and it never drops when someone redeems.</p></div>
+      <div class="card stp"><div class="ic"><svg><use href="#i-lock"/></svg></div>
+        <h3><em>03</em>The pool opens, locked</h3><p>A Uniswap v4 pool opens with real dollars on the bid side. Its hook rejects every liquidity removal, so the pool can't be pulled.</p></div>
+      <div class="card stp"><div class="ic g"><svg><use href="#i-link"/></svg></div>
+        <h3><em>04</em>Trade, feed, redeem</h3><p>Every buy and sell sends the floor tax into the vault. Holders can burn and take their share of the vault whenever they want.</p></div>
     </div>
   </div>
 </section>
 
-<!-- =============== UCRET =============== -->
-<section id="ucret">
+<!-- =============== YETENEKLER =============== -->
+<section id="yetenekler">
   <div class="wrap">
-    <p class="eyebrow">Fees</p>
-    <h2>2% to the protocol, 1% to 5% to the floor.</h2>
-    <p class="sub">
-      Two separate things come off a trade and it is worth keeping them
-      apart. The protocol takes <strong>2%</strong>, split five ways and
-      fixed in the code. On top of that sits the tax the token's creator
-      chose, <strong>1% to 5%</strong>, and that part does not reach the
-      protocol at all — it goes into that token's vault and raises the
-      floor for everyone still holding.
-    </p>
-
-    <div class="g">
-      <div class="fee">
-        <h3>Where the 2% goes</h3>
-        <p><strong>0.70%</strong> to pool depth, <strong>0.50%</strong> to
-        protocol liquidity, <strong>0.30%</strong> to the token's founder,
-        <strong>0.30%</strong> to the developer pool and
-        <strong>0.20%</strong> to operations. The first two are locked and
-        cannot be withdrawn by anyone, us included. The developer pool
-        pays out only through a vote that has to survive a timelock.</p>
-      </div>
-      <div class="fee">
-        <h3>Where the creator's tax goes</h3>
-        <p>Straight into that token's vault, on a buy and on a sell alike,
-        as <strong>money</strong>. No conversion, no price lookup, no
-        bridge. The collateral grows while the supply does not, so the
-        floor rises for everyone still holding — and a large sale pays an
-        extra slice that rides with the vault's share, not the
-        protocol's.</p>
-      </div>
-      <div class="fee">
-        <h3>The first five seconds</h3>
-        <p>At the opening a sniper pays a surcharge of <strong>up to
-        99%</strong>, quartering every second and gone after five. It
-        applies to buys only. The founder's own first buy is not exempted
-        by a flag: it is not a swap at all, so there is nothing for the
-        surcharge to apply to.</p>
-      </div>
-      <div class="fee">
-        <h3>Whichever route you come through</h3>
-        <p>The hook is part of the pool's identity —
-        <em>keccak(PoolKey)</em> includes the hook address. So the Uniswap
-        interface, an aggregator, a relay or a cross-chain router: all of
-        them pay the same fee. Asking for an exact <em>output</em> used to
-        escape it entirely; that hole is closed, and the fix is readable
-        in the hook's address, which ends in <em>0xacc</em>.</p>
-      </div>
-    </div>
-
-    <p class="sub kisa" style="margin-top:22px">
-      Of that 2%, the part we can actually spend is
-      <strong>0.20%</strong> — operations. Depth and liquidity are locked
-      and nobody can withdraw them, the founder's 0.30% is the token's
-      founder and not us, and the developer pool pays out only through a
-      vote that has to clear a timelock. It is worth stating the small
-      number rather than the big one: a protocol that takes a cut of swaps
-      in its own pools has a reason to <em>want</em> a lot of trading, and
-      that is a reason worth keeping small.
-    </p>
-  </div>
-</section>
-
-<!-- =============== TEMINAT =============== -->
-<section id="teminat">
-  <div class="wrap">
-    <p class="eyebrow">Collateral</p>
-    <h2>Nothing is banned. Nothing is blessed either.</h2>
-    <p class="sub">
-      Collateral is not picked from an allow list, it is
-      <strong>measured</strong>. At launch the collateral's report card is
-      written to the chain once and never changes again — a buyer reads a
-      measurement, not a promise.
-    </p>
-
-    <div class="g">
-      <div class="bgov">
-        <div class="bno">?</div>
-        <h3>Why not a list</h3>
-        <p>Maintaining a list needs an <u>owner</u>, and nothing in this
-        project has one. It also cannot be written honestly: "has a USDC
-        pair" is true of <em>31,787</em> tokens on Arc. "Top 100" is data
-        the chain cannot see. And "deep pool" can be gamed — liquidity
-        placed for one block is pulled in the next.</p>
-      </div>
-      <div class="bgov">
-        <div class="bno">!</div>
-        <h3>What the report card says</h3>
-        <p>Decimals, supply, code size; whether it has an owner, whether
-        it can mint, freeze, pause or upgrade. All of it through
-        <code>staticcall</code> — that is, by asking <u>the real code
-        behind the proxy</u>, not by looking at bytecode.</p>
-      </div>
-      <div class="bgov">
-        <div class="bno">⚠</div>
-        <h3>The symbol is not trusted</h3>
-        <p>There is a <strong>live token on Arc</strong> whose symbol is
-        <code>USDC</code> and whose name is "Unconditional Support Dog
-        Coin": 18 decimals, a billion supply, 26 USDC pools. A screen that
-        trusted the symbol would describe a launch backed by it as
-        "dollar-backed". The report card looks at the <u>address</u>, not
-        the symbol.</p>
-      </div>
-      <div class="bgov">
-        <div class="bno">=</div>
-        <h3>The report card is not a verdict</h3>
-        <p>These are facts about a contract, not judgements about an
-        asset. <strong>All four</strong> of Arc's major assets are
-        upgradeable proxies with an owner and a pause — a screen that
-        painted that red would be saying USDC cannot be trusted. The fact
-        is written down; the reader makes the call.</p>
-      </div>
+    <div class="sh"><div><p class="k">Capabilities</p><h2>Everything the platform does, and where it stands.</h2>
+      <p class="sub"><span class="chip live">Live</span> deployed on mainnet and usable today. &nbsp;
+        <span class="chip built">Built &amp; tested</span> written and passing its checks against real mainnet state, deployment pending.</p></div></div>
+    <div class="caps">
+      <div class="card cap"><div class="row"><div class="ic"><svg><use href="#i-rocket"/></svg></div><span class="chip live">Live</span></div>
+        <h3>One-transaction launch</h3><p>Token, vault and Uniswap v4 pool created together, on Arc or Robinhood Chain.</p></div>
+      <div class="card cap"><div class="row"><div class="ic"><svg><use href="#i-flame"/></svg></div><span class="chip live">Live</span></div>
+        <h3>Redeem against the vault</h3><p>Burn tokens, receive your share of the collateral. No permission, no queue, no fee.</p></div>
+      <div class="card cap"><div class="row"><div class="ic"><svg><use href="#i-lock"/></svg></div><span class="chip live">Live</span></div>
+        <h3>Liquidity that can't be pulled</h3><p>The hook rejects every liquidity removal. Nobody, the team included, can take the pool's money.</p></div>
+      <div class="card cap"><div class="row"><div class="ic"><svg><use href="#i-chart"/></svg></div><span class="chip live">Live</span></div>
+        <h3>Every trade feeds the floor</h3><p>The 1-5% creator tax on each buy and sell goes straight into that token's vault.</p></div>
+      <div class="card cap"><div class="row"><div class="ic"><svg><use href="#i-coins"/></svg></div><span class="chip live">Live</span></div>
+        <h3>Any collateral</h3><p>USDC, USDG, cirBTC, WETH, EURC or any token you choose. No allow list.</p></div>
+      <div class="card cap"><div class="row"><div class="ic"><svg><use href="#i-dao"/></svg></div><span class="chip live">Live</span></div>
+        <h3>FTHM, staking and a DAO</h3><p>No mint, no owner. Developer funding on both chains moves only through an Arc DAO vote and timelock.</p></div>
+      <div class="card cap"><div class="row"><div class="ic g"><svg><use href="#i-swap"/></svg></div><span class="chip built">Built &amp; tested</span></div>
+        <h3>One token, two chains</h3><p>Any launch token can get a twin on the other chain over LayerZero. Total supply stays whole across both.</p></div>
+      <div class="card cap"><div class="row"><div class="ic g"><svg><use href="#i-link"/></svg></div><span class="chip built">Built &amp; tested</span></div>
+        <h3>FTHM bridge</h3><p>FTHM moves between Arc and Robinhood; the two chains together always hold exactly 1,000,000,000.</p></div>
+      <div class="card cap"><div class="row"><div class="ic g"><svg><use href="#i-shield"/></svg></div><span class="chip built">Built &amp; tested</span></div>
+        <h3>Price gaps go to the vault</h3><p>When the two chains disagree on price, the trade that would profit from the gap pays it into the vault instead.</p></div>
     </div>
   </div>
 </section>
 
-<!-- =============== GUVENCE =============== -->
-<section id="guvence">
-  <div class="wrap">
-    <p class="eyebrow">Guarantees</p>
-    <h2>Structure, not a promise.</h2>
-    <p class="sub">
-      None of the following is a commitment. Each one is either a
-      function the contract does not have, an instruction its bytecode
-      does not contain, or a number you can read off the chain.
-    </p>
-
-    <div class="g">
-      <div class="bgov">
-        <div class="bno">01</div>
-        <h3>There are no keys</h3>
-        <p>Seven live contracts were searched for
-        <code>withdraw</code>, <code>sweep</code>, <code>rescue</code>,
-        <code>owner</code>, <code>transferOwnership</code>,
-        <code>pause</code>, <code>setFee</code> and
-        <code>upgradeTo</code>. None of those selectors is present in any
-        of them — not set to zero, not guarded: absent.</p>
+<!-- =============== KASA + UCRET =============== -->
+<section id="kasa">
+  <div class="wrap duo">
+    <div class="card fb">
+      <div class="ic"><svg><use href="#i-vault"/></svg></div>
+      <h3>Collateral vaults</h3>
+      <p>Each token has its own vault. There is exactly one way out: burning tokens. The burn shrinks supply and payout shrinks collateral in the same proportion, so the floor never moves for whoever stays. If the market price drops below the floor, buying there and redeeming is profit — so the market defends it.</p>
+      <div class="kv">
+        <div><span>Way out of the vault</span><b>Burn &amp; redeem only</b></div>
+        <div><span>Withdraw function</span><b>None</b></div>
+        <div><span>Owner / upgrade path</span><b>None</b></div>
+        <div><span>Redemption fee</span><b>0%</b></div>
       </div>
-      <div class="bgov">
-        <div class="bno">02</div>
-        <h3>The code cannot change</h3>
-        <p>The bytecode is scanned instruction by instruction for anything
-        that could replace it, and the running code is compared against
-        the compiler's output byte for byte. Both are re-checked on every
-        test run, not once at deployment.</p>
-      </div>
-      <div class="bgov">
-        <div class="bno">03</div>
-        <h3>Every exit is named</h3>
-        <p>The ways value can leave a vault are a short closed list, and
-        each one has its recipient fixed in the code rather than passed in
-        by whoever calls it. An exit that is not on the list fails the
-        audit even if it looks harmless — the point is that the list
-        cannot grow.</p>
-      </div>
-      <div class="bgov">
-        <div class="bno">04</div>
-        <h3>The floor is written from measurement</h3>
-        <p>The floor price is computed on a 1e36 scale. It used to be
-        1e18, which rounded six-decimal collateral down to <em>1</em> —
-        every significant digit gone. A test caught that, not a user.</p>
+    </div>
+    <div class="card fb" id="ucret">
+      <div class="ic g"><svg><use href="#i-chart"/></svg></div>
+      <h3>2% to the protocol, 1-5% to the floor</h3>
+      <p>Two separate charges per trade. The protocol's 2% is split five ways, fixed in the code. The creator's 1-5% tax never touches the protocol — it goes into that token's vault.</p>
+      <div class="bar"><i style="flex:35;background:#3d8bff"></i><i style="flex:25;background:#6fb1ff"></i><i style="flex:15;background:#8b6bff"></i><i style="flex:15;background:#2ee59d"></i><i style="flex:10;background:#9aa8c7"></i></div>
+      <div class="kv">
+        <div><span>Pool depth (locked)</span><b>0.70%</b></div>
+        <div><span>Protocol liquidity (locked)</span><b>0.50%</b></div>
+        <div><span>Token founder</span><b>0.30%</b></div>
+        <div><span>Developer pool (DAO vote)</span><b>0.30%</b></div>
+        <div><span>Operations</span><b>0.20%</b></div>
       </div>
     </div>
   </div>
@@ -656,97 +382,50 @@ footer{border-top:1px solid var(--line);padding:40px 0 56px;color:var(--dim2);fo
 <!-- =============== SAYILAR =============== -->
 <section id="sayilar">
   <div class="wrap">
-    <p class="eyebrow">Numbers</p>
-    <h2>Measured, not assumed.</h2>
-    <p class="sub">
-      Everything below is read from the chain as the page loads, one row per chain. It is not a
-      number typed in; if it cannot be read it says "unreadable" rather
-      than guessing.
-    </p>
-    <div class="scroll"><table class="ornek" id="orows"></table></div>
+    <div class="sh"><div><p class="k">Live data</p><h2>Measured, not assumed.</h2>
+      <p class="sub">Read from both chains as the page loads. Nothing here is typed in; if a chain can't be read, the row says so.</p></div></div>
+    <div class="scroll"><table id="orows"></table></div>
   </div>
 </section>
 
 <!-- =============== KONTRATLAR =============== -->
 <section id="kontratlar">
   <div class="wrap">
-    <p class="eyebrow">Contracts</p>
-    <h2>All of them public, all of them readable.</h2>
-    <p class="sub">
-      None of them has an owner and none of them can be upgraded. The
-      last column says what that contract <strong>can do</strong>.
-    </p>
-    <div class="scroll"><table class="ornek" id="adresler"></table></div>
+    <div class="sh"><div><p class="k">Contracts</p><h2>All public. None of them has an owner.</h2>
+      <p class="sub">The last column says what each contract <b>can do</b>. 811 automated checks pass against real mainnet state.</p></div></div>
+    <div class="scroll"><table id="adresler"></table></div>
   </div>
 </section>
 
 <!-- =============== SSS =============== -->
 <section id="sss">
   <div class="wrap">
-    <p class="eyebrow">FAQ</p>
-    <h2>Honest answers.</h2>
+    <div class="sh"><div><p class="k">FAQ</p><h2>Straight answers.</h2></div></div>
+    <div class="faq">
+      <div class="card"><h3>Can anyone withdraw the money?</h3><p>No. The vault has no withdraw function, and it carries no instruction that could change its code, so one cannot be added later.</p></div>
+      <div class="card"><h3>Can the token go to zero?</h3><p>Only if its collateral does. A USDC- or USDG-backed floor is in dollars; one backed by BTC moves with BTC. What is guaranteed is that the ratio doesn't break.</p></div>
+      <div class="card"><h3>Can the founder sell everything?</h3><p>Yes — their tokens are theirs. What they can't do is pull the pool's money or the vault's collateral, and their sale's tax goes into the vault too.</p></div>
+      <div class="card"><h3>Has it been audited?</h3><p>Not externally. 811 automated checks run against real mainnet state, and every defect they found is documented in the code. That is not a substitute for an audit.</p></div>
+      <div class="card"><h3>Can I skip the fee through an aggregator?</h3><p>No. The hook is part of the pool's identity, so it runs whichever interface you come through — including exact-output trades.</p></div>
+      <div class="card"><h3>Is this investment advice?</h3><p>No. These are memecoins. A floor doesn't make one a good investment; it makes the location of zero something you can know.</p></div>
+    </div>
+  </div>
+</section>
 
-    <div class="g">
-      <div class="bgov">
-        <h3>Can you withdraw the money?</h3>
-        <p>No, and that is not a promise: the vault has no withdraw
-        function. With no function there is nothing to call, and adding
-        one by changing the code is impossible because the vault carries
-        no instruction that could change its code.</p>
-      </div>
-      <div class="bgov">
-        <h3>Can the token go to zero?</h3>
-        <p>If the collateral goes to zero, yes. The floor is worth what
-        the collateral is worth: a launch backed by USDC has a floor in
-        dollars, one backed by cirBTC has a floor in BTC, and if BTC falls
-        the floor falls with it. What is guaranteed is that <em>the ratio
-        does not break</em>, not the price of the collateral.</p>
-      </div>
-      <div class="bgov">
-        <h3>Can the founder sell everything and run?</h3>
-        <p>They can. Their tokens are theirs from the first transaction —
-        there is no vesting in a launch, and saying otherwise would be
-        inventing a lock that does not exist. What they cannot take back
-        is the money they put into the pool, and their selling does not
-        lower the floor: the collateral is already in the vault, and the
-        tax on that sale goes into it too.</p>
-      </div>
-      <div class="bgov">
-        <h3>Has it been audited?</h3>
-        <p><strong>Not externally audited.</strong> 811 automated checks
-        run against the real Arc chain, and the defects they found are
-        written into the code as comments — what was wrong and why. That
-        does not take the place of an audit report.</p>
-      </div>
-      <div class="bgov">
-        <h3>Can I avoid the fee through an aggregator?</h3>
-        <p>No. The hook is part of the pool's identity, so whichever
-        interface you come through, <code>afterSwap</code> runs. Escaping
-        by fixing the output side (exact-output) is closed too — it was
-        open for a while, it was measured, and it was closed.</p>
-      </div>
-      <div class="bgov">
-        <h3>Is this investment advice?</h3>
-        <p>It is not. This is a meme coin, and having a floor does not
-        make it a good investment — it only makes the location of zero
-        something you can know.</p>
-      </div>
+<section style="padding-top:20px">
+  <div class="wrap">
+    <div class="band">
+      <div><p class="k">Get started</p><h2>Launch on Arc or Robinhood Chain.</h2></div>
+      <div class="btns"><a class="cta" href="app.html">Create a token</a><a class="cta ghost" href="https://x.com/Arcdepthoock" target="_blank" rel="noopener">Follow on X</a></div>
     </div>
   </div>
 </section>
 
 <footer>
-  <div class="wrap">
-    <div class="fl">
-      <a href="app.html">The app</a>
-      <a href="https://explorer.arc.io" target="_blank" rel="noopener">Arc Explorer</a>
-      <a href="#kontratlar">Contracts</a>
-      <a href="#sss">FAQ</a>
-    </div>
-    <div>
-      Arc · chain 5042. The contracts are not audited and cannot be
-      upgraded. This is not investment advice.
-    </div>
+  <div class="wrap fin">
+    <a class="brand" href="#"><svg><use href="#logo"/></svg><span><b>ARC PULSE</b><small>Two chains. One protocol.</small></span></a>
+    <div class="fl"><a href="app.html">App</a><a href="#ekosistem">Ecosystems</a><a href="#kontratlar">Contracts</a><a href="#sss">FAQ</a><a href="https://x.com/Arcdepthoock" target="_blank" rel="noopener">@Arcdepthoock</a></div>
+    <div>Arc · chain 5042 &nbsp;·&nbsp; Robinhood Chain · 4663. Not audited. Not investment advice.</div>
   </div>
 </footer>
 
@@ -840,6 +519,7 @@ async function canli(){
       const rp = new JsonRpcProvider(RH.rpc,{chainId:RH.chainId,name:"robinhood"},{staticNetwork:true,batchMaxCount:1});
       const r = await zincirOku(rp, RH, RH.usdg);
       tablo += satir("Robinhood · USDG", String(r.n), usd(r.kasa), usd(r.fon));
+      $("s-rh").textContent = String(r.n);
       if (arc) tablo += "<tr><th>both</th><th class='r'>"+(arc.n+r.n)+"</th><th class='r'>"+usd(arc.kasa+r.kasa)+"</th><th class='r'>"+usd(arc.fon+r.fon)+"</th></tr>";
     }catch(e){
       tablo += "<tr><td>Robinhood · USDG</td><td colspan='3'>could not be read from the chain</td></tr>";
@@ -872,6 +552,5 @@ function adresler(){
 adresler();
 canli();
 </script>
-
 </body>
 </html>
