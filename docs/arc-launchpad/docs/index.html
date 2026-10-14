@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="dark">
-<title>Arc Launchpad — the meme coin with a floor</title>
-<meta name="description" content="A collateral-backed meme coin launchpad on Arc. The collateral sits in a locked vault and nobody can withdraw it: the vault has no withdraw function and one cannot be added later. Liquidity is locked forever and the fee on every trade goes to the floor.">
-<meta property="og:title" content="Arc Launchpad">
+<title>ARC PULSE — memecoins with a floor you can redeem</title>
+<meta name="description" content="ARC PULSE is a memecoin launchpad where every token has its own collateral vault. Holders can redeem against it anytime; liquidity is locked from the first block; no owner, no mint, no withdraw. Live on Arc, Robinhood Chain built and deploying.">
+<meta property="og:title" content="ARC PULSE">
 <meta property="og:description" content="A meme coin with a floor: collateral in a locked vault, liquidity locked forever, and every trade's fee going to the floor.">
 <meta property="og:type" content="website">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -224,6 +224,31 @@ details p + p{padding-top:0}
 .onot{margin-top:14px;padding-top:13px;border-top:1px solid var(--line);
   color:var(--dim2);font-size:12.5px;line-height:1.55}
 .onot strong{color:var(--dim)}
+/* brand, status chips, capability grid */
+a.brand{color:var(--tx);text-decoration:none}
+a.brand:hover{text-decoration:none}
+.brand{white-space:nowrap;flex:0 0 auto}
+.brand span{letter-spacing:.02em}
+nav.top a{white-space:nowrap}
+.brand small{font:500 12px Inter,sans-serif;color:var(--dim2);letter-spacing:0;margin-left:2px}
+@media(max-width:1180px){.brand small{display:none}}
+.rozetler{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:22px}
+.rozetler .tag{margin-bottom:0}
+.tag.mor{color:var(--vio);background:var(--vio-bg);border-color:rgba(125,140,255,.25)}
+.dot.mor{background:var(--vio);box-shadow:0 0 8px var(--vio)}
+.durum{display:inline-block;font:600 10.5px Inter,sans-serif;letter-spacing:.05em;text-transform:uppercase;
+  padding:3px 8px;border-radius:6px;vertical-align:1px;white-space:nowrap}
+.durum.canli{background:var(--acc-bg);color:var(--acc)}
+.durum.hazir{background:var(--vio-bg);color:var(--vio)}
+.zbas .durum{margin-left:auto}
+.yg{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media(max-width:900px){.yg{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:600px){.yg{grid-template-columns:1fr}}
+.y{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:20px 22px;
+  transition:border-color .15s}
+.y:hover{border-color:var(--line2)}
+.y h3{font:600 16.5px Inter,sans-serif;letter-spacing:-.015em;margin:12px 0 7px}
+.y p{margin:0;color:var(--dim);font-size:14px;line-height:1.6}
 footer{border-top:1px solid var(--line);padding:40px 0 56px;color:var(--dim2);font-size:13.5px}
 .fl{display:flex;gap:20px;flex-wrap:wrap;margin-bottom:14px}
 .fl a{color:var(--dim)}
@@ -233,15 +258,13 @@ footer{border-top:1px solid var(--line);padding:40px 0 56px;color:var(--dim2);fo
 
 <header>
   <div class="wrap hin">
-    <div class="brand"><div class="mark"></div>Arc Launchpad</div>
+    <a class="brand" href="#"><div class="mark"></div><span>ARC PULSE</span><small>collateral-backed launchpad</small></a>
     <nav class="top">
-      <a href="#amac">What it does</a>
+      <a href="#yetenekler">Capabilities</a>
+      <a href="#zincirler">Two chains</a>
       <a href="#nasil">How it works</a>
-      <a href="#guvence">Guarantees</a>
       <a href="#ucret">Fees</a>
-      <a href="#teminat">Collateral</a>
-      <a href="#sayilar">Numbers</a>
-      <a href="#kontratlar">Contracts</a>
+      <a href="#sayilar">Live numbers</a>
       <a href="#sss">FAQ</a>
     </nav>
     <div class="sp"></div>
@@ -252,29 +275,108 @@ footer{border-top:1px solid var(--line);padding:40px 0 56px;color:var(--dim2);fo
 
 <div class="hero">
   <div class="wrap">
-    <div class="tag"><span class="dot"></span>Live on Arc mainnet</div>
-    <h1>A <em>meme coin</em> with a bottom.</h1>
+    <div class="rozetler">
+      <span class="tag"><span class="dot"></span>Live on Arc mainnet</span>
+      <span class="tag mor"><span class="dot mor"></span>Robinhood Chain — built &amp; tested, deploying</span>
+    </div>
+    <h1>Launch a memecoin with <em>real money underneath it.</em></h1>
     <p class="lead">
-      An ordinary meme coin can go to zero. These cannot:
-      <strong>each one has real collateral locked behind it and nobody can
-      take that collateral out</strong> — not the founder, not us, not a
-      vote. The vault has no withdraw function, no owner and no upgrade
-      path. Whenever you want, you burn your token and take your share of
-      the collateral: no permission, no queue.
+      <strong>ARC PULSE</strong> is a token launchpad where every coin is born
+      with its own collateral vault. Holders can burn their tokens and take
+      their share of that vault at any time — no permission, no queue, no fee.
+      Liquidity is locked from the first block, and the contracts have
+      <strong>no owner, no mint and no withdraw function.</strong>
     </p>
     <div class="btns">
       <a class="cta" href="app.html">Launch a token</a>
-      <a class="cta ghost" href="#nasil">How it works</a>
+      <a class="cta ghost" href="#yetenekler">See what it does</a>
     </div>
 
     <div class="strip" id="strip">
-      <div class="sbox"><b>2% + 1-5%</b><span>protocol fee, then the creator's share to the floor</span></div>
-      <div class="sbox"><b id="s-launch">—</b><span>launches so far</span></div>
-      <div class="sbox"><b id="s-kasa">—</b><span>collateral in the vaults</span></div>
-      <div class="sbox"><b>806</b><span>automated checks passing</span></div>
+      <div class="sbox"><b>2% + 1-5%</b><span>protocol fee, plus the creator's tax that goes into the vault</span></div>
+      <div class="sbox"><b id="s-launch">—</b><span>launches so far, read live from Arc</span></div>
+      <div class="sbox"><b id="s-kasa">—</b><span>collateral in launch vaults, read live</span></div>
+      <div class="sbox"><b>811</b><span>automated checks passing, 0 failing</span></div>
     </div>
   </div>
 </div>
+
+<!-- =============== YETENEKLER =============== -->
+<section id="yetenekler">
+  <div class="wrap">
+    <p class="eyebrow">Capabilities</p>
+    <h2>Everything the platform does, and where it stands.</h2>
+    <p class="sub">
+      Each card is marked with its real status. <span class="durum canli">Live</span>
+      means deployed on Arc mainnet and usable today.
+      <span class="durum hazir">Built &amp; tested</span> means written and passing its
+      checks against real mainnet state, but not deployed yet.
+    </p>
+
+    <div class="yg">
+      <div class="y"><span class="durum canli">Live</span>
+        <h3>One-transaction launch</h3>
+        <p>Token, vault and Uniswap v4 pool created together. The founder's buy lands at the opening price, with nothing to front-run.</p></div>
+      <div class="y"><span class="durum canli">Live</span>
+        <h3>Redeem against the vault</h3>
+        <p>Burn tokens, receive your share of the collateral. The floor never drops for the holders who stay.</p></div>
+      <div class="y"><span class="durum canli">Live</span>
+        <h3>Liquidity that can't be pulled</h3>
+        <p>The pool's hook rejects every liquidity removal. Nobody, the team included, can take the pool's money out.</p></div>
+      <div class="y"><span class="durum canli">Live</span>
+        <h3>Every trade feeds the floor</h3>
+        <p>The 1-5% creator tax on each buy and sell goes straight into that token's vault, in dollars.</p></div>
+      <div class="y"><span class="durum canli">Live</span>
+        <h3>Any collateral</h3>
+        <p>USDC, cirBTC, WETH, EURC or any token you choose. No allow list.</p></div>
+      <div class="y"><span class="durum canli">Live</span>
+        <h3>FTHM, staking and a DAO</h3>
+        <p>The platform token has no mint and no owner. Developer funding only moves through a vote and a timelock.</p></div>
+
+      <div class="y"><span class="durum hazir">Built &amp; tested</span>
+        <h3>Launches on Robinhood Chain</h3>
+        <p>The same launchpad in USDG, measured end to end on Robinhood's real PoolManager — 21/21 checks.</p></div>
+      <div class="y"><span class="durum hazir">Built &amp; tested</span>
+        <h3>One token, two chains</h3>
+        <p>Any launch token can get a twin on the other chain. Total supply stays exactly the same across both — 16/16.</p></div>
+      <div class="y"><span class="durum hazir">Built &amp; tested</span>
+        <h3>Price gaps go to the vault</h3>
+        <p>When the two chains disagree on price, the trade that would profit from the gap pays it instead — 15/15.</p></div>
+      <div class="y"><span class="durum hazir">Built &amp; tested</span>
+        <h3>One DAO for both chains</h3>
+        <p>Governance stays on Arc. Robinhood revenue moves only on Arc votes carried over LayerZero — 9/9.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- =============== ZINCIRLER =============== -->
+<section id="zincirler">
+  <div class="wrap">
+    <p class="eyebrow">Two chains</p>
+    <h2>Dollar floors on Arc. Memecoin volume on Robinhood.</h2>
+    <p class="sub">
+      Each chain does what it is best at, and one token can live on both.
+    </p>
+    <div class="zincirler">
+      <div class="zblok">
+        <div class="zbas"><span class="znok arc"></span>Arc · Circle's L1 <span class="durum canli">Live</span></div>
+        <div class="zad">Where the floor lives</div>
+        <p>USDC is both the gas and the collateral, so <strong>every vault and every floor is in dollars</strong>.
+        Sub-second finality, and Circle's CCTP for moving USDC between chains. The DAO and FTHM live here.</p>
+      </div>
+      <div class="zok">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 9h14l-4-4M20 15H6l4 4"/></svg>
+        LayerZero
+      </div>
+      <div class="zblok">
+        <div class="zbas"><span class="znok rh"></span>Robinhood Chain <span class="durum hazir">Deploying</span></div>
+        <div class="zad">Where the traders are</div>
+        <p>Home of tokenized stocks and one of the busiest memecoin markets on-chain.
+        Launches there use <strong>USDG</strong>, and tokens can move between the two chains with supply kept whole.</p>
+      </div>
+    </div>
+  </div>
+</section>
 
 <!-- =============== AMAC =============== -->
 <section id="amac">
@@ -611,7 +713,7 @@ footer{border-top:1px solid var(--line);padding:40px 0 56px;color:var(--dim2);fo
       </div>
       <div class="bgov">
         <h3>Has it been audited?</h3>
-        <p><strong>Not externally audited.</strong> 806 automated checks
+        <p><strong>Not externally audited.</strong> 811 automated checks
         run against the real Arc chain, and the defects they found are
         written into the code as comments — what was wrong and why. That
         does not take the place of an audit report.</p>
