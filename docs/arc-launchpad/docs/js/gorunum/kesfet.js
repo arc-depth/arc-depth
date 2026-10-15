@@ -38,8 +38,11 @@ async function digerZincirler() {
   const tokenler = (o.zincirler || []).filter((z) => z.ad !== "arc").flatMap((z) => (z.tokenler || []).map((t) => ({ ...t, etiket: z.etiket })));
   const zincirler = (o.zincirler || []).filter((z) => z.ad !== "arc").map((z) => z.etiket).join(" · ");
   if (!tokenler.length) {
+    /* Ethereum and HyperEVM carry twins and FTHM but no launchpad
+       (dagitim-nesil3.json); the list is what the snapshot scanned. */
     return panel("Other chains", bos("No launches on the other eight chains yet",
-      zincirler + " — launchpads live, none used yet. Snapshot " + new Date(o.olusturuldu).toUTCString() + "."));
+      zincirler + " scanned, nothing launched yet. Launchpads run on Robinhood, Base, Arbitrum, BNB Chain, Avalanche and Monad; " +
+      "Ethereum and HyperEVM carry token twins and FTHM only. Snapshot " + new Date(o.olusturuldu).toUTCString() + "."));
   }
   const t = el("table", { sinif: "tablo" });
   t.append(el("thead", {}, [el("tr", {}, ["Token", "Chain", "In vault", "Volume", ""].map((b) => el("th", { yazi: b })))]));
