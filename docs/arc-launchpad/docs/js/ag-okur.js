@@ -48,6 +48,31 @@ export const ABI3 = {
 export const launchAglari = () => AGLAR.filter((a) => a.nesil === 3);
 export const agBul = (anahtar) => AGLAR.find((a) => a.anahtar === anahtar) || null;
 
+/* Backup public RPCs, tried in order when the main one refuses. Arc's own
+   RPC answers 429 as soon as a page reads several things at once (15 Oct
+   2026: the GENESIS page showed Arc as "could not read" after five
+   retries); both backups returned chain id 5042 with open CORS. */
+const YEDEK = {
+  arc: ["https://arc-mainnet.drpc.org", "https://arc-rpc.publicnode.com"],
+};
+const sinirli = (j) => (Array.isArray(j) ? j : [j]).some((x) => x && x.error && (x.error.code === -32005 || /rate limit/i.test(x.error.message || "")));
+
+/** One JSON-RPC request (single or batch) to a chain, falling over to its
+    backup RPCs on an HTTP error, a network error or a rate-limit answer. */
+export async function rpcPost(ag, govde) {
+  let son = null;
+  for (const url of [ag.rpc, ...(YEDEK[ag.anahtar] || [])]) {
+    try {
+      const r = await fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(govde) });
+      if (!r.ok) { son = new Error(ag.ad + " RPC " + r.status); continue; }
+      const j = await r.json();
+      if (sinirli(j)) { son = new Error(ag.ad + " RPC rate limited"); continue; }
+      return j;
+    } catch (e) { son = e; }
+  }
+  throw son || new Error(ag.ad + " RPC did not answer");
+}
+
 /** Many eth_calls on one chain, one request; null where a call failed. */
 export async function cokluOku(ag, cagrilar) {
   if (!cagrilar.length) return [];
@@ -55,9 +80,7 @@ export async function cokluOku(ag, cagrilar) {
     jsonrpc: "2.0", id: sayac++, method: "eth_call",
     params: [{ to, data: new Interface(abi).encodeFunctionData(ad, args || []) }, "latest"]
   }));
-  const r = await fetch(ag.rpc, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(govde) });
-  if (!r.ok) throw new Error(ag.ad + " RPC " + r.status);
-  const j = await r.json();
+  const j = await rpcPost(ag, govde);
   const esle = new Map((Array.isArray(j) ? j : [j]).map((x) => [x.id, x]));
   return govde.map((g, i) => {
     const c = esle.get(g.id);

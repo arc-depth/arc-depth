@@ -10,6 +10,10 @@
  *   GET /v1/history                compact history windows
  *   GET /v1/route?from=&to=&amount=   Circle CCTP V2 fees + relay.link quote
  *   GET /v1/access                 what the calling wallet has bought
+ *   GET /v1/genesis/topics         GENESIS's topic titles + content hashes (free)
+ *   POST /v1/genesis/ask {question}   an answer from GENESIS's private
+ *                                  knowledge, voiced by the local model (paid)
+ *   GET /v1/genesis/topic?id=      one topic's full text (paid)
  *   GET /                          short documentation (free)
  *
  * AUTH: the paying wallet is the key
@@ -69,7 +73,7 @@ function kullanimDeposu(dosya) {
 }
 
 /* ---- the server ----------------------------------------------------- */
-function sunucu({ erisim, depo, veri, rotaBul, saat = () => Math.floor(Date.now() / 1000) }) {
+function sunucu({ erisim, depo, veri, rotaBul, genesis = genesisVarsayilan(), saat = () => Math.floor(Date.now() / 1000) }) {
   const pencere = new Map();     // wallet -> timestamps of the last minute
   const yanit = (r, kod, govde) => { r.writeHead(kod, { "content-type": "application/json", "access-control-allow-origin": "*" }); r.end(JSON.stringify(govde)); };
 
@@ -98,9 +102,11 @@ function sunucu({ erisim, depo, veri, rotaBul, saat = () => Math.floor(Date.now(
   return http.createServer(async (q, r) => {
     try {
       const u = new URL(q.url, "http://atlas");
-      if (u.pathname === "/") return yanit(r, 200, { ad: "GENESIS ATLAS API", uclar: ["/v1/map", "/v1/flows?chain=", "/v1/history", "/v1/route?from=&to=&amount=", "/v1/access"],
+      if (u.pathname === "/") return yanit(r, 200, { ad: "GENESIS ATLAS API", uclar: ["/v1/map", "/v1/flows?chain=", "/v1/history", "/v1/route?from=&to=&amount=", "/v1/access", "/v1/genesis/topics", "POST /v1/genesis/ask", "/v1/genesis/topic?id="],
         imza: "personal_sign(\"ATLAS <METHOD> <PATH+QUERY> <UNIX_TIME>\")", odeme: "AtlasAbonelik on Arc, USDC" });
       if (!u.pathname.startsWith("/v1/")) return yanit(r, 404, { hata: "unknown endpoint" });
+      /* the topic list is the shop window: free, the same titles as on chain */
+      if (u.pathname === "/v1/genesis/topics") return yanit(r, 200, { konular: genesis.basliklar(), not: "titles are public; the text is served to paying wallets" });
       const d = await dogrula(q);
       if (d.hata) return yanit(r, d.kod, { hata: d.hata });
       const { atlas, gecmis } = veri();
@@ -115,10 +121,43 @@ function sunucu({ erisim, depo, veri, rotaBul, saat = () => Math.floor(Date.now(
           return yanit(r, 200, { dugum: n, kenarlar: atlas.kenarlar.filter((k) => k.kaynak === n.id || k.hedef === n.id), zaman: atlas.zaman });
         }
         case "/v1/route": return yanit(r, 200, await rotaBul(u.searchParams.get("from"), u.searchParams.get("to"), Number(u.searchParams.get("amount") || 0)));
+        case "/v1/genesis/ask": {
+          if (q.method !== "POST") return yanit(r, 405, { hata: "POST {\"question\": \"...\"}" });
+          const govde = await govdeOku(q);
+          const soru = String((govde && govde.question) || "").trim();
+          if (soru.length < 3 || soru.length > 1000) return yanit(r, 400, { hata: "question must be 3-1000 characters" });
+          const c = await genesis.cevapla(soru);
+          if (c.bilinmiyor) return yanit(r, 200, { cevap: null, not: "GENESIS has no verified knowledge on this yet", konular: [] });
+          return yanit(r, 200, c);
+        }
+        case "/v1/genesis/topic": {
+          const m = genesis.konu(u.searchParams.get("id"));
+          return m ? yanit(r, 200, m) : yanit(r, 404, { hata: "unknown topic" });
+        }
         default: return yanit(r, 404, { hata: "unknown endpoint" });
       }
     } catch (e) { return yanit(r, 500, { hata: (e.message || "error").slice(0, 120) }); }
   });
+}
+
+function govdeOku(q) {
+  return new Promise((ok) => {
+    let b = ""; q.on("data", (x) => { b += x; if (b.length > 8192) q.destroy(); });
+    q.on("end", () => { try { ok(JSON.parse(b)); } catch (e) { ok(null); } });
+  });
+}
+
+/* GENESIS knowledge: private text, public titles (scripts/genesis-bilgi.js) */
+function genesisVarsayilan() {
+  const bilgi = require("./genesis-bilgi");
+  return {
+    basliklar: bilgi.basliklar,
+    cevapla: (s) => require("./genesis-llm").cevapla(s),
+    konu: (id) => {
+      const m = bilgi.hepsi().find((x) => x.id === id && !bilgi.gizlilik(x));
+      return m && { id: m.id, baslik: m.baslik, metin: m.metin, kaynak: m.kaynak, icerikHash: bilgi.icerikHash(m) };
+    },
+  };
 }
 
 /* routes: the same two sources the map uses */

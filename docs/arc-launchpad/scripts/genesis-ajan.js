@@ -7,6 +7,9 @@
  *
  *   durum      memory and model state on every chain, read only
  *   tohum      write genesis/bilgi-tohum.json facts not yet in memory
+ *   basliklar  write the private knowledge's TOPIC TITLES (title + keccak of
+ *              the text, never the text) not yet in memory — see
+ *              scripts/genesis-bilgi.js; the text is sold by atlas-api.js
  *   oneriler   judge the public inbox by the rules below
  *   ogren      run on-chain learning over every learnable record
  *   olc        measure on-chain loss on genesis/dogrulama.json, record it
@@ -56,7 +59,7 @@ const anahtar = (dosya, ad) => fs.readFileSync(dosya, "utf8").match(new RegExp("
 const bekle = (ms) => new Promise((r) => setTimeout(r, ms));
 const EV = "arc";                       // where the agent writes; cheapest gas, USDC
 const ZINCIRLER = ["arc", "robinhood", "base", "arbitrum", "avalanche", "monad", "bsc"];
-const BILGI = 2, OGRENME = 3, GUVENLIK = 7, PERFORMANS = 9, ZINCIRDE = 0;
+const BILGI = 2, OGRENME = 3, GUVENLIK = 7, KESIF = 8, PERFORMANS = 9, ZINCIRDE = 0;
 /* lzReceive gas for a relayed batch: 150k + 120k per record */
 const secenek = (n) => solidityPacked(["uint16", "uint8", "uint16", "uint8", "uint128"], [3, 1, 17, 1, 150000 + 120000 * n]);
 
@@ -144,6 +147,25 @@ async function tohum() {
     yazilan++;
   }
   console.log("tohum: " + yazilan + " yeni bilgi" + (UYGULA ? "" : " (kuru)"));
+  return yazilan;
+}
+
+async function basliklar() {
+  const bilgi = require("./genesis-bilgi");
+  const r = bilgi.kontrol();
+  if (r.hatalar.length) throw new Error("bilgi tabani gizlilik denetiminden gecmedi: " + r.hatalar.join("; "));
+  const b = baglam(EV);
+  if (!(await canli(b))) throw new Error("cekirdek " + EV + " uzerinde yok");
+  const mevcut = new Set((await tumKayitlar(b)).map((k) => k.icerikHash));
+  let yazilan = 0;
+  for (const m of bilgi.hepsi()) {
+    const { v, h } = bilgi.zincirKaydi(m);
+    if (mevcut.has(h)) continue;
+    const tur = m.dosya === "arastirma.json" ? KESIF : BILGI;
+    await tx(b, "baslik " + m.baslik.slice(0, 30), () => b.c.yaz(tur, ZINCIRDE, h, v));
+    yazilan++;
+  }
+  console.log("basliklar: " + yazilan + " yeni konu basligi" + (UYGULA ? "" : " (kuru)"));
   return yazilan;
 }
 
@@ -331,6 +353,6 @@ async function icat() {
   }
 }
 
-const KOMUTLAR = { icat, durum, tohum, oneriler, ogren: () => ogren(), olc: () => olc(UYGULA), yay, modeller, dongu };
+const KOMUTLAR = { icat, durum, tohum, basliklar, oneriler, ogren: () => ogren(), olc: () => olc(UYGULA), yay, modeller, dongu };
 (KOMUTLAR[KOMUT] || (async () => console.log("komut: " + Object.keys(KOMUTLAR).join(" | "))))()
   .catch((e) => { console.error("HATA " + (e.shortMessage || e.message)); process.exit(1); });

@@ -22,7 +22,7 @@
 import { el, sayfaUst, panel, not, olcum } from "../ui.js";
 import { AGLAR } from "../aglar.js";
 import { GENESIS } from "../genesis-adres.js";
-import { cokluOku } from "../ag-okur.js";
+import { cokluOku, rpcPost } from "../ag-okur.js";
 import { cuzdan } from "../cuzdan.js";
 import { Interface, toUtf8Bytes, toUtf8String, hexlify } from "../../vendor/ethers.min.js";
 
@@ -45,20 +45,47 @@ const zincirler = () => GENESIS.zincirler.map((k) => AGLAR.find((a) => a.anahtar
 const kisa = (a) => a.slice(0, 6) + "…" + a.slice(-4);
 
 /* public RPCs (Arc's above all) answer 429 when the page reads many chains at
-   once; a rate-limit error is "not read yet", never "no code" */
+   once; rpcPost falls over to backup RPCs, and a chain still unread is
+   "not read yet", never "no code" */
 async function kodVar(ag, adres) {
-  for (let deneme = 0; deneme < 5; deneme++) {
+  for (let deneme = 0; deneme < 3; deneme++) {
     try {
-      const r = await fetch(ag.rpc, { method: "POST", headers: { "content-type": "application/json" },
-        body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "eth_getCode", params: [adres, "latest"] }) }).then((x) => x.json());
+      const r = await rpcPost(ag, { jsonrpc: "2.0", id: 1, method: "eth_getCode", params: [adres, "latest"] });
       if (typeof r.result === "string") return r.result.length > 2;
-    } catch (e) { /* network error: try again */ }
+    } catch (e) { /* every RPC refused: try again */ }
     await new Promise((s) => setTimeout(s, 800 * (deneme + 1)));
   }
   return null;
 }
 
 /* every verified-knowledge record stored on chain, read from Arc */
+/* A paid topic is written as {"v":1,"id","t":title,"h":keccak(text)}: the
+   title is public, the text is sold through the Atlas API. */
+function konuKaydi(metin) {
+  if (!metin.startsWith('{"v":1')) return null;
+  try { const o = JSON.parse(metin); return o.t && /^0x[0-9a-f]{64}$/.test(o.h) ? o : null; } catch (e) { return null; }
+}
+
+/* every paid topic title on chain (knowledge = category 2, research = 8) */
+export async function konular(ag) {
+  const sayilar = await cokluOku(ag, zincirler().map((z) => [GENESIS.cekirdek, CEKIRDEK, "kayitSayisi", [z.eid]]));
+  const istek = [];
+  zincirler().forEach((z, i) => { for (let s = 0; s < Number(sayilar[i] || 0); s++) istek.push([GENESIS.cekirdek, CEKIRDEK, "kayitVeri", [z.eid, s]]); });
+  const out = new Map();
+  for (let i = 0; i < istek.length; i += 40) {
+    const r = await cokluOku(ag, istek.slice(i, i + 40));
+    r.forEach((x) => {
+      if (!x) return;
+      const [k, v] = x;
+      if (![2, 8].includes(Number(k.tur)) || Number(k.saklama) !== 0) return;
+      let metin; try { metin = toUtf8String(v); } catch (e) { return; }
+      const o = konuKaydi(metin);
+      if (o) out.set(o.id, { baslik: o.t, hash: o.h, arastirma: Number(k.tur) === 8 });
+    });
+  }
+  return [...out.values()];
+}
+
 export async function bilgiler(ag) {
   const sayilar = await cokluOku(ag, zincirler().map((z) => [GENESIS.cekirdek, CEKIRDEK, "kayitSayisi", [z.eid]]));
   const istek = [];
@@ -72,6 +99,7 @@ export async function bilgiler(ag) {
       const [k, v] = x;
       if (Number(k.tur) !== 2 || Number(k.saklama) !== 0) return;
       let metin; try { metin = toUtf8String(v); } catch (e) { return; }
+      if (konuKaydi(metin)) return;          // a paid topic's title, not a free fact
       out.push({ metin, zincir: parca[j][4].ad, sira: parca[j][5] });
     });
   }
@@ -223,6 +251,16 @@ export async function ciz() {
   kap.append(panel("Talk to GENESIS", el("div", { sinif: "yigin" }, [
     not("Nothing you type here is stored or sent anywhere. Answers about ARC PULSE come only from GENESIS's verified on-chain memory; when it has nothing verified, it says so.", "bilgi"),
     soru, el("div", { sinif: "satir" }, [sor, yukle]), durum, kayit
+  ])));
+
+  /* paid knowledge: titles are on chain, the text is sold through the Atlas API */
+  const kl = arcCanli ? await konular(arc).catch(() => []) : [];
+  kap.append(panel("What GENESIS knows (paid answers)", el("div", { sinif: "yigin" }, [
+    not("Topic titles are public and written on chain, each with a hash of its text, so a bought answer can be checked against what GENESIS committed to. " +
+      "The text and GENESIS's answers on these topics are paid in USDC through the Atlas API, with the same packages. No wallet, position or trade of anyone is in it.", "bilgi"),
+    kl.length
+      ? el("div", { sinif: "yigin yigin--sik" }, kl.map((k) => el("div", { sinif: "yazi yazi--kucuk", yazi: (k.arastirma ? "◆ research · " : "• ") + k.baslik })))
+      : el("div", { sinif: "yazi yazi--kucuk yazi--sessiz", yazi: "No paid topics on chain yet." })
   ])));
   kap.append(panel("Teach GENESIS", el("div", { sinif: "yigin" }, [
     el("div", { sinif: "alan__ipucu", yazi: "Proposals are public and signed by your wallet. GENESIS learns only what passes its rules." }),

@@ -33,3 +33,6 @@ tarayici-profil/
 .aptos/
 aptos/**/.aptos/
 aptos/**/build/
+
+# GENESIS private knowledge: never committed, never mirrored to the site
+ozel/
