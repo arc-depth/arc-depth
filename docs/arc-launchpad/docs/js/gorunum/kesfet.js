@@ -170,8 +170,10 @@ async function ozetSeridi() {
 
   izgara.append(olcum("Opening market cap", para(EKONOMI.acilisMcap, { kisalt: true }),
     "the same price every launch"));
-  izgara.append(olcum("Graduation threshold", para(EKONOMI.esik, { kisalt: true }),
-    "the pool deepens once the curve has taken this much"));
+  /* No curve and no graduation since the third generation: the pool is
+     the market from the first block, so the card shows the fee instead. */
+  izgara.append(olcum("Trading fee", "2%",
+    "on every buy and sell, aggregators included"));
 
   return izgara;
 }
