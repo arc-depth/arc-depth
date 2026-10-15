@@ -51,9 +51,19 @@ const TR = /[çğıöşüâîûÇĞİÖŞÜÂÎÛ]/;
  *
  * Contract and ABI names are Turkish ("urunler", "okunamadi") and they
  * are NOT TRANSLATED: they have to match the signature on chain. The list
- * leaves them alone. */
+ * leaves them alone.
+ *
+ * The last group is matched CASE-SENSITIVELY, capitalised, as whole
+ * strings' words: "Rezerv", "Kasalar", "Pencere" and "Piyasa" were on
+ * screen until 14 Oct 2026 — headings with no Turkish character, which
+ * nothing above could see. Lower case they are identifiers (kasa, piyasa
+ * as a route group key) and must not trip the check. */
 const TR_KELIME =
   /\b(ve|bir|bu|ile|ama|veya|olarak|kadar|sonra|gibi|ancak|yalnizca|oran|sayfada|sayfadaki|kurucusu|kilitli|likiditesi|teklifi|bekleniyor|yetersiz|basarisiz|secildi|gerekiyor|olmali|edilen|verildi)\b/i;
+/* Extended 14 Oct 2026: "Zincir", "Havuz", "Derinlik", "Kimlik", "Sembol"
+   and "Teminat" were column and panel titles on screen, none with a
+   Turkish-only letter. */
+const TR_BASLIK = /\b(Rezerv|Kasalar|Kasa|Pencere|Piyasa|Hak|Zincir|Havuz|Derinlik|Kimlik|Sembol|Teminat|Kontrat|Kendi|Kontrol|Ornek|ORNEK|Tamam|Kapat|Yukleniyor|Bekleniyor)\b/;
 
 /* Three kinds of quote. A single- or double-quoted string has to close
    on the same line; a template literal does not. */
@@ -189,12 +199,12 @@ function tara(kok) {
   for (const f of dosyalar(kok)) {
     const ham = fs.readFileSync(f, "utf8");
     const bulunan = (String(yorumsuz(ham)).match(DIZGE) || [])
-      .filter((x) => TR.test(x) || TR_KELIME.test(x));
+      .filter((x) => TR.test(x) || TR_KELIME.test(x) || TR_BASLIK.test(x));
 
     /* For an HTML file, the plain text in the body counts as well. */
     if (f.endsWith(".html")) {
       for (const parca of htmlMetinleri(ham)) {
-        if (TR.test(parca) || TR_KELIME.test(parca)) bulunan.push(parca);
+        if (TR.test(parca) || TR_KELIME.test(parca) || TR_BASLIK.test(parca)) bulunan.push(parca);
       }
     }
     if (!bulunan.length) continue;
@@ -205,7 +215,7 @@ function tara(kok) {
   return { kalan, dosyalar: liste, ornek };
 }
 
-module.exports = { tara, TR, TR_KELIME, dilEtiketleri };
+module.exports = { tara, TR, TR_KELIME, TR_BASLIK, dilEtiketleri };
 
 if (require.main === module) {
   const kok = process.argv[2] || path.join(__dirname, "..", "docs");

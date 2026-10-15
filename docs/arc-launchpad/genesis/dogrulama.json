@@ -1,0 +1,10 @@
+{
+  "aciklama": "Held-out text GENESIS is measured on and never learns from. The on-chain loss (GenesisDil.kayip, milli-bits per byte; 8000 = no better than chance) on these sentences is recorded to memory as category 9 after every learning round, so whether learning helped is a number on chain, not a claim.",
+  "metinler": [
+    "Any holder can redeem tokens against the collateral vault at any time.",
+    "Every trade pays a collateral tax into the vault of the token.",
+    "Arc uses USDC as the gas token.",
+    "The founder pastes a token address to choose the collateral.",
+    "FTHM has one market, its pool on Arc."
+  ]
+}

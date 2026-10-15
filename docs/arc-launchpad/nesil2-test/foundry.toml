@@ -1,0 +1,36 @@
+# Second-generation cross-chain collateral, tested against Circle's own
+# CCTP V2 contracts (circlefin/evm-cctp-contracts, solc 0.7.6) rather than a
+# double. src/arc is synced from ../contracts by esitle.js; never edit it here.
+[rpc_endpoints]
+hyperevm = "https://rpc.hyperliquid.xyz/evm"
+monad = "https://rpc.monad.xyz"
+avalanche = "https://avalanche-c-chain-rpc.publicnode.com"
+robinhood = "https://rpc.mainnet.chain.robinhood.com"
+arc = "https://rpc.mainnet.arc.io"
+base = "https://base-rpc.publicnode.com"
+arbitrum = "https://arbitrum-one-rpc.publicnode.com"
+bsc = "https://bsc-rpc.publicnode.com"
+
+[profile.default]
+src = "src"
+test = "test"
+out = "out"
+libs = ["lib"]
+evm_version = "cancun"
+optimizer = true
+optimizer_runs = 200
+compute_units_per_second = 25
+fork_retries = 12
+fork_retry_backoff = 4000
+fs_permissions = [{ access = "read", path = "./" }, { access = "read", path = "../dagitim-nesil2.json" }, { access = "read", path = "../dagitim-nesil3.json" }]
+remappings = [
+  "@openzeppelin/=C:/Users/omen/araclar/evm-cctp-contracts/lib/openzeppelin-contracts/",
+  "@memview-sol/=C:/Users/omen/araclar/evm-cctp-contracts/lib/memview-sol/",
+  "@uniswap/v4-core/=C:/arc-launchpad/node_modules/@uniswap/v4-core/",
+  "forge-std/=C:/Users/omen/araclar/evm-cctp-contracts/lib/forge-std/src/",
+]
+additional_compiler_profiles = [{ name = "ir", via_ir = true }]
+compilation_restrictions = [
+  { paths = "src/arc/**", via_ir = true },
+  { paths = "test/**", via_ir = true },
+]

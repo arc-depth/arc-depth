@@ -1,0 +1,19 @@
+{
+ "olculdu": "2026-10-14T01:01:53.054Z",
+ "zincir": 4663,
+ "kaynak": "zincirden dogrulandi",
+ "robinhood": {
+  "launchpad": "0xE9c52F5E82a8D7d4a47742A53D234510d1634893",
+  "hook": "0xFEe2c3ba1D7799F89d0A8Ea1f40b82a07d1b4aCc",
+  "devPool": "0x683D39831EF60b57E29BE4C55f1903f10Df857Bf",
+  "likiditeKasasi": "0xc5B1839f48eF424413472aD0ff2E2A20bd936BcE",
+  "fabrika": "0x3aaA5e8A1f48273acec9d02AEA69d6014be4DBDb",
+  "kasaFabrika": "0x7703Df14C3df324fF2E2E6cf1Ec333C967bC715C",
+  "yoneticiFabrika": "0xaF5e3FCe2e239F04d0aA8acdDb4b7B87B6A599aa",
+  "kayit": "0x270507F6017a52F869cb1Ad9f23821f9B507022d",
+  "uzakYurutucu": "0xB0CFe1a2f5728b92B319e9092C83385BD4642203",
+  "poolManager": "0x8366a39CC670B4001A1121B8F6A443A643e40951",
+  "quote": "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168"
+ },
+ "acik": "UzakYurutucu sahibi gecici olarak dagitici: Arc'ta DaoElcisi kurulup peer ayarlaninca sahiplik yakilacak."
+}

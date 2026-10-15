@@ -23,6 +23,14 @@ function cozumle(yol) {
   /* solc asks for every import by the path written in the source. Node
    * modules are resolved from node_modules, everything else relative to
    * contracts/. */
+  /* LayerZero's OApp/OFT are written against OpenZeppelin 5 (Ownable takes
+   * the owner in its constructor), while the package installed as
+   * @openzeppelin/contracts is 4.7.3, pulled in by other dependencies. No
+   * contract of ours imports OpenZeppelin directly, so pointing the bare
+   * name at the 5.3.0 copy changes nothing that was built before. */
+  if (yol.startsWith("@openzeppelin/contracts/")) {
+    yol = yol.replace("@openzeppelin/contracts/", "@openzeppelin/contracts-5.3.0/");
+  }
   const adaylar = yol.startsWith("@")
     ? [path.join(KOK, "node_modules", yol)]
     : [path.join(SRC, yol), path.join(KOK, yol)];

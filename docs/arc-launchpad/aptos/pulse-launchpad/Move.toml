@@ -1,0 +1,15 @@
+[package]
+name = "pulse_launchpad"
+version = "1.0.0"
+authors = []
+
+[addresses]
+pulse = "_"
+
+[dev-addresses]
+pulse = "0xa11ce"
+
+[dependencies.AptosFramework]
+git = "https://github.com/aptos-labs/aptos-framework.git"
+rev = "99f5e915b6d231d0ffbc1aff282d36148d2a8b24"
+subdir = "aptos-framework"

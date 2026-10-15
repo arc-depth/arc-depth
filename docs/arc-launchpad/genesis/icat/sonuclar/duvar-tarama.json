@@ -1,0 +1,96 @@
+{
+ "deney": "duvar-tarama",
+ "tohumlar": 20,
+ "sonuc": [
+  {
+   "duvarPayi": 0.1,
+   "bant": 0.02,
+   "geriDonus": 0.9513045431156673,
+   "geriDonusMerdiven": 0.9513911304352541,
+   "panikCikis": 2.0090571071260337,
+   "panikCikisMerdiven": 2.0191823007576057,
+   "sonTaban": 0.0000070439922042662495,
+   "sonTabanMerdiven": 0.0000070824724249146985
+  },
+  {
+   "duvarPayi": 0.1,
+   "bant": 0.05,
+   "geriDonus": 0.9512304418185751,
+   "geriDonusMerdiven": 0.9513911304352541,
+   "panikCikis": 1.9980252517161379,
+   "panikCikisMerdiven": 2.0191823007576057,
+   "sonTaban": 0.000006999392091205799,
+   "sonTabanMerdiven": 0.0000070824724249146985
+  },
+  {
+   "duvarPayi": 0.1,
+   "bant": 0.1,
+   "geriDonus": 0.9510261478644427,
+   "geriDonusMerdiven": 0.9513911304352541,
+   "panikCikis": 1.979585582246117,
+   "panikCikisMerdiven": 2.0191823007576057,
+   "sonTaban": 0.000006930135513997432,
+   "sonTabanMerdiven": 0.0000070824724249146985
+  },
+  {
+   "duvarPayi": 0.3,
+   "bant": 0.02,
+   "geriDonus": 0.9513897709020351,
+   "geriDonusMerdiven": 0.9513911304352541,
+   "panikCikis": 2.0049866887976546,
+   "panikCikisMerdiven": 2.0191823007576057,
+   "sonTaban": 0.000007027469850723176,
+   "sonTabanMerdiven": 0.0000070824724249146985
+  },
+  {
+   "duvarPayi": 0.3,
+   "bant": 0.05,
+   "geriDonus": 0.9513944883605884,
+   "geriDonusMerdiven": 0.9513911304352541,
+   "panikCikis": 1.9885361884270663,
+   "panikCikisMerdiven": 2.0191823007576057,
+   "sonTaban": 0.0000069634548835834924,
+   "sonTabanMerdiven": 0.0000070824724249146985
+  },
+  {
+   "duvarPayi": 0.3,
+   "bant": 0.1,
+   "geriDonus": 0.9514384095513801,
+   "geriDonusMerdiven": 0.9513911304352541,
+   "panikCikis": 1.97859966979623,
+   "panikCikisMerdiven": 2.0191823007576057,
+   "sonTaban": 0.000006918233907333895,
+   "sonTabanMerdiven": 0.0000070824724249146985
+  },
+  {
+   "duvarPayi": 0.5,
+   "bant": 0.02,
+   "geriDonus": 0.9514962178891693,
+   "geriDonusMerdiven": 0.9513911304352541,
+   "panikCikis": 1.9992145512771589,
+   "panikCikisMerdiven": 2.0191823007576057,
+   "sonTaban": 0.000006999739238654253,
+   "sonTabanMerdiven": 0.0000070824724249146985
+  },
+  {
+   "duvarPayi": 0.5,
+   "bant": 0.05,
+   "geriDonus": 0.9517027880758342,
+   "geriDonusMerdiven": 0.9513911304352541,
+   "panikCikis": 1.9843746514242728,
+   "panikCikisMerdiven": 2.0191823007576057,
+   "sonTaban": 0.000006938373356400672,
+   "sonTabanMerdiven": 0.0000070824724249146985
+  },
+  {
+   "duvarPayi": 0.5,
+   "bant": 0.1,
+   "geriDonus": 0.9519280639132572,
+   "geriDonusMerdiven": 0.9513911304352541,
+   "panikCikis": 1.9639544437826584,
+   "panikCikisMerdiven": 2.0191823007576057,
+   "sonTaban": 0.000006822689270816698,
+   "sonTabanMerdiven": 0.0000070824724249146985
+  }
+ ]
+}

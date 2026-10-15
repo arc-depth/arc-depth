@@ -44,12 +44,18 @@ const ev = () => AGLAR.find((a) => a.anahtar === "arc");
 const zincirler = () => GENESIS.zincirler.map((k) => AGLAR.find((a) => a.anahtar === k)).filter(Boolean);
 const kisa = (a) => a.slice(0, 6) + "…" + a.slice(-4);
 
+/* public RPCs (Arc's above all) answer 429 when the page reads many chains at
+   once; a rate-limit error is "not read yet", never "no code" */
 async function kodVar(ag, adres) {
-  try {
-    const r = await fetch(ag.rpc, { method: "POST", headers: { "content-type": "application/json" },
-      body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "eth_getCode", params: [adres, "latest"] }) }).then((x) => x.json());
-    return !!r.result && r.result.length > 2;
-  } catch (e) { return null; }
+  for (let deneme = 0; deneme < 5; deneme++) {
+    try {
+      const r = await fetch(ag.rpc, { method: "POST", headers: { "content-type": "application/json" },
+        body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "eth_getCode", params: [adres, "latest"] }) }).then((x) => x.json());
+      if (typeof r.result === "string") return r.result.length > 2;
+    } catch (e) { /* network error: try again */ }
+    await new Promise((s) => setTimeout(s, 800 * (deneme + 1)));
+  }
+  return null;
 }
 
 /* every verified-knowledge record stored on chain, read from Arc */
@@ -118,7 +124,8 @@ export async function ciz() {
   let dilDurum = null;
   if (arcCanli) dilDurum = (await cokluOku(arc, [[GENESIS.dil, DIL, "durum"]]))[0];
   kap.append(el("div", { sinif: "izgara izgara--olcum" }, [
-    olcum("Chains with GENESIS", canliZ.length + " of " + zs.length, canliZ.map((z) => z.ad).join(", ") || "none yet"),
+    olcum("Chains with GENESIS", canliZ.length + " of " + zs.length, (canliZ.map((z) => z.ad).join(", ") || "none yet") +
+      (kodlar.includes(null) ? " · could not read: " + zs.filter((z, i) => kodlar[i] === null).map((z) => z.ad).join(", ") : "")),
     olcum("Memory in sync", canliZ.length < 2 ? "—" : ayniKok ? "yes" : "not yet", "same memory root on every chain"),
     olcum("GENESIS-0 has learned", dilDurum ? Number(dilDurum[0]) + " records" : "—", dilDurum ? Number(dilDurum[1]) + " bytes, on chain" : "")
   ]));

@@ -1,0 +1,15 @@
+[package]
+name = "OFT"
+version = "0.0.1"
+edition = "2024.beta"
+
+# LayerZero's Sui OFT (packages/layerzero-v2/sui/contracts/oapps/oft/oft,
+# unmodified) plus the FTHM coin it carries. One publish = one OFT: the
+# package init hands the publisher an OFTInitTicket and FTHM's TreasuryCap.
+[dependencies]
+OApp = { local = "C:/Users/omen/araclar/lz/LayerZero-v2/packages/layerzero-v2/sui/contracts/oapps/oapp" }
+OFTCommon = { local = "C:/Users/omen/araclar/lz/LayerZero-v2/packages/layerzero-v2/sui/contracts/oapps/oft/oft-common" }
+PtbMoveCall = { local = "C:/Users/omen/araclar/lz/LayerZero-v2/packages/layerzero-v2/sui/contracts/ptb-builders/ptb-move-call" }
+
+[addresses]
+oft = "0x0"

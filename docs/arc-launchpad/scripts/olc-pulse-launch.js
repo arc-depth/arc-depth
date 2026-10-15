@@ -34,7 +34,33 @@ const path = require("path");
 const { Interface, AbiCoder, keccak256, getCreate2Address } = require("ethers");
 
 const KOK = path.join(__dirname, "..");
-const RPC = process.env.ARC_RPC || "https://rpc.mainnet.arc.io";
+/* --robinhood runs the same launch against Robinhood Chain mainnet state:
+ * the same PulseLaunchpad/PulseHook bytecode with USDG as the quote. Three
+ * things differ and nothing else:
+ *   - the quote is USDG, an ordinary ERC-20, so the harness is funded by
+ *     writing its balance slot (slot 1, located by matching a real holder's
+ *     balanceOf against storage) instead of by native balance
+ *   - there is no CCTP on Robinhood, so the registry is KapaliKayit, which
+ *     answers "no chain" to everything, and the two CCTP addresses are
+ *     non-zero placeholders the vault's send path never reaches
+ *   - the vault factories are not deployed there yet, so their Arc runtime
+ *     code is copied to the same addresses for the call */
+/* --zincir <ad> generalises --robinhood to every chain in zincirler.js:
+ * the chain's own PoolManager and dollar, KapaliKayit, the factories' Arc
+ * code at their Arc addresses, and the harness funded by writing the
+ * dollar's balance slot (found by probing, not assumed). On BNB the dollar
+ * is 18-decimal USDC, so the launchpad's quote is Dolar6 over it — the
+ * 6-decimal 1:1 wrapper — and the wrapper is given exactly the underlying
+ * that backs the units the harness holds. */
+const { EVM } = require("./zincirler");
+const zi = process.argv.indexOf("--zincir");
+const ZAD = zi > 0 ? process.argv[zi + 1] : (process.argv.includes("--robinhood") ? "robinhood" : "arc");
+const Z = EVM[ZAD];
+if (!Z) { console.log("bilinmeyen zincir: " + ZAD); process.exit(1); }
+const RH = ZAD !== "arc";
+const ARC_RPC = process.env.ARC_RPC || "https://rpc.mainnet.arc.io";
+const RPC = RH ? Z.rpc : ARC_RPC;
+const SARMAL = "0x00000000000000000000000000000000D0146A06";
 const coder = AbiCoder.defaultAbiCoder();
 
 const HARNESS = "0x00000000000000000000000000000000000B1A5E";
@@ -45,7 +71,13 @@ const CAGIRAN = "0x3333333333333333333333333333333333333333";
    the previous hook used, because the same four are needed. */
 const HOOK = "0x0000000000000000000000000000000000000ACC";
 
-const USDC = "0x3600000000000000000000000000000000000000";
+const USDG = "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168";
+const USDG_BAKIYE_YUVASI = 1;
+const KAPALI_KAYIT = "0x000000000000000000000000000000000000CA7A";
+const YER_TUTUCU = "0x000000000000000000000000000000000000dEaD";
+/* Named USDC for the Arc run it was written for; on --robinhood it is USDG. */
+const ALTTAKI = require("ethers").getAddress(Z.dolar.adres.toLowerCase());
+let USDC = RH ? ALTTAKI : "0x3600000000000000000000000000000000000000";
 /* The harness's own sink constants. Must match TestPulseLaunch exactly or
    the launchpad's CREATE2 address comes out different and the hook ends up
    pointing at nothing. */
@@ -118,11 +150,69 @@ const ok = (iyi, ad, not) => {
 
 (async () => {
   const D = JSON.parse(fs.readFileSync(path.join(KOK, "dagitim-pulse.json"), "utf8"));
-  const PM = D.arc.poolManager;
+  /* Uniswap lists the same PoolManager address on Robinhood as on Arc. */
+  const PM = RH ? require("ethers").getAddress(Z.poolManager.toLowerCase()) : D.arc.poolManager;
   const KASA_FABRIKA = D.arc.kasaFabrika;
-  const KAYIT = D.arc.kayit;
-  const TOKEN_MESSENGER = "0x28b5a0e9C621a5BadaA536219b3a228C8168cf5d";
-  const MESAJ_TASIYICI = "0x81D40F21F12A8F0E3252Bccb954D722d4c464B64";
+  const KAYIT = RH ? KAPALI_KAYIT : D.arc.kayit;
+  const TOKEN_MESSENGER = RH ? YER_TUTUCU : "0x28b5a0e9C621a5BadaA536219b3a228C8168cf5d";
+  const MESAJ_TASIYICI = RH ? YER_TUTUCU : "0x81D40F21F12A8F0E3252Bccb954D722d4c464B64";
+
+  /* On Robinhood: the factories' Arc runtime code at the same addresses,
+     KapaliKayit at its address, and the harness's USDG balance. */
+  const ekOverride = {};
+  if (RH) {
+    /* Arc's RPC rate-limits; an error answer is not "no code", so retry */
+    const arcKod = async (a) => {
+      for (let d = 0; d < 8; d++) {
+        const r = await fetch(ARC_RPC, { method: "POST", headers: { "content-type": "application/json" },
+          body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "eth_getCode", params: [a, "latest"] }) }).then((x) => x.json()).catch(() => ({}));
+        if (r.result && r.result !== "0x") return r.result;
+        if (r.result === "0x") break;
+        await bekle(3000 * (d + 1));
+      }
+      throw new Error("Arc'ta kod yok: " + a);
+    };
+    const kfKod = await arcKod(KASA_FABRIKA);
+    /* KasaFabrika's only immutable is yoneticiFabrika, the first word of
+       its first immutable slot; read it from the deployed contract. */
+    const yfAdres = "0x" + (await fetch(ARC_RPC, { method: "POST", headers: { "content-type": "application/json" },
+      body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "eth_call",
+        params: [{ to: KASA_FABRIKA, data: new Interface(["function yoneticiFabrika() view returns (address)"]).encodeFunctionData("yoneticiFabrika") }, "latest"] }) })
+      .then((x) => x.json())).result.slice(26);
+    ekOverride[KASA_FABRIKA] = { code: kfKod };
+    ekOverride[yfAdres] = { code: await arcKod(yfAdres) };
+    ekOverride[KAPALI_KAYIT] = { code: B("KapaliKayit").deployedBytecode };
+    /* the dollar's balance slot, found by writing a marker and reading it back */
+    const bakIf = new Interface(["function balanceOf(address) view returns (uint256)", "function decimals() view returns (uint8)"]);
+    const ondalik = Number(BigInt(await rpc("eth_call", [{ to: ALTTAKI, data: bakIf.encodeFunctionData("decimals") }, "latest"])));
+    let yuvaNo = -1;
+    for (let i = 0; i < 60 && yuvaNo < 0; i++) {
+      const y = keccak256(coder.encode(["address", "uint256"], [HARNESS, i]));
+      const v = await rpc("eth_call", [{ to: ALTTAKI, data: bakIf.encodeFunctionData("balanceOf", [HARNESS]) }, "latest",
+        { [ALTTAKI]: { stateDiff: { [y]: "0x" + (12345n).toString(16).padStart(64, "0") } } }]);
+      if (BigInt(v) === 12345n) yuvaNo = i;
+    }
+    if (yuvaNo < 0) { console.log("bakiye yuvasi bulunamadi: " + ALTTAKI); process.exit(1); }
+    const yaz = (adres, miktar) => ({ [keccak256(coder.encode(["address", "uint256"], [adres, yuvaNo]))]: "0x" + miktar.toString(16).padStart(64, "0") });
+    if (ondalik === 6) {
+      ekOverride[ALTTAKI] = { stateDiff: yaz(HARNESS, 1_000_000n * 10n ** 6n) };
+    } else {
+      /* Dolar6 over the 18-decimal dollar: its runtime with immutables
+         filled, the harness's units and totalSupply in its storage, and the
+         underlying that backs them in the wrapper's balance. */
+      const D6 = B("Dolar6");
+      const d6Kod = await rpc("eth_call", [{ data: D6.bytecode + coder.encode(["address", "string", "string"], [ALTTAKI, "pUSDC", "pUSDC"]).slice(2) }, "latest"]);
+      const birim = 1_000_000n * 10n ** 6n;
+      const olcek = 10n ** BigInt(ondalik - 6);
+      ekOverride[SARMAL] = { code: d6Kod, stateDiff: {
+        ["0x" + (2).toString(16).padStart(64, "0")]: "0x" + birim.toString(16).padStart(64, "0"),
+        [keccak256(coder.encode(["address", "uint256"], [HARNESS, 3]))]: "0x" + birim.toString(16).padStart(64, "0") } };
+      ekOverride[ALTTAKI] = { stateDiff: yaz(SARMAL, birim * olcek) };
+      USDC = SARMAL;
+      console.log("  dolar " + ondalik + " ondalik: launchpad'in teklif varligi Dolar6 (" + SARMAL + ")");
+    }
+    console.log(Z.ad.toUpperCase() + " — " + Z.dolar.sembol + " (yuva " + yuvaNo + "), KapaliKayit, fabrikalar Arc kodundan (yoneticiFabrika " + yfAdres + ")");
+  }
 
   const FB = B("PulseFabrika");
   const LPB = B("PulseLaunchpad");
@@ -171,13 +261,18 @@ const ok = (iyi, ad, not) => {
 
   let s;
   try {
-    const ham = await rpc("eth_call", [
-      { from: CAGIRAN, to: HARNESS, gas: "0x30000000", data: veri }, "latest",
+    /* Some RPCs (Monad) cap eth_call gas below what others accept; step down. */
+    let ham;
+    for (const gaz of ["0x30000000", "0x10000000", "0x8000000", "0x5F5E100"]) {
+      try { ham = await rpc("eth_call", [
+      { from: CAGIRAN, to: HARNESS, gas: gaz, data: veri }, "latest",
       { [HARNESS]: {
           code: Y.deployedBytecode,
           balance: "0x" + (1_000_000n * 10n ** 18n).toString(16)
         },
-        [HOOK]: { code: hookKod } }]);
+        [HOOK]: { code: hookKod }, ...ekOverride }]); break; }
+      catch (e) { if (!/gas limit too high|gas.*cap|exceeds/i.test(e.message)) throw e; }
+    }
     [s] = iface.decodeFunctionResult("kos", ham);
   } catch (e) {
     console.log("");

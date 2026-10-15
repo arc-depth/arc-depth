@@ -1,5 +1,5 @@
 {
- "olculdu": "2026-10-12T04:26:40.367Z",
+ "olculdu": "2026-10-13T23:42:11.113Z",
  "zincir": 5042,
  "not": "proxy adresleri; aggregator DEGIL. olc-besleyiciler.js uretir.",
  "varliklar": [
@@ -9,7 +9,7 @@
    "proxy": "0x84EA90AC252Dc437031461836DB5164219147905",
    "feedOndalik": 8,
    "heartbeat": 86400,
-   "fiyat": 0.99988629
+   "fiyat": 0.99986
   },
   {
    "besleyiciAdi": "BTC / USD",
@@ -17,7 +17,7 @@
    "proxy": "0xa109B535C70C8Be9995be64Bb6751AcDB27e03De",
    "feedOndalik": 8,
    "heartbeat": 86400,
-   "fiyat": 83514.9089923
+   "fiyat": 83337.66684052
   },
   {
    "besleyiciAdi": "ETH / USD",
@@ -25,7 +25,7 @@
    "proxy": "0x50FCDD99D6762D1C170DC6A9111db944AEE6D364",
    "feedOndalik": 8,
    "heartbeat": 86400,
-   "fiyat": 2546.18849693
+   "fiyat": 2507.29633199
   },
   {
    "besleyiciAdi": "EURC / USD",
@@ -33,7 +33,7 @@
    "proxy": "0x361b95c10b76Ca3f35C686d423e43A951755Bf23",
    "feedOndalik": 8,
    "heartbeat": 86400,
-   "fiyat": 1.11950165
+   "fiyat": 1.11833152
   },
   {
    "besleyiciAdi": "XAUM Reference Rate",
@@ -41,7 +41,7 @@
    "proxy": "0xB27522566BE765c94D21BFA0A9a1e19934999AB2",
    "feedOndalik": 18,
    "heartbeat": 86400,
-   "fiyat": 4219.643
+   "fiyat": 4175.064
   }
  ]
 }

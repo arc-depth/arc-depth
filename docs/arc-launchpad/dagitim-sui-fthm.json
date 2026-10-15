@@ -1,0 +1,21 @@
+{
+ "paket": "0x6181e2aabffb4fe6f495a53167591e526a18efa458b6b94c7922a899366877ea",
+ "coinTipi": "0x6181e2aabffb4fe6f495a53167591e526a18efa458b6b94c7922a899366877ea::fthm::FTHM",
+ "oft": "0x9d4ca8b81d0053303c0beea93496ca661b8b8d5c2a73af32e63d37da4aeefd2a",
+ "oapp": "0x5665caedf596fe8cb55c13e337911fa195fc5e178f9d08a221b365c1c1406096",
+ "oftCap": "0x6181e2aabffb4fe6f495a53167591e526a18efa458b6b94c7922a899366877ea",
+ "adminCap": "0xe83c3f0e81955e4e23434878423be7f730fe91da515fbafe425a0f82fdcb23a6",
+ "migrationCap": "0x489fdf647d5c59dc17bbddaaa9ddc42cf809a69f4c9dce9351bcc295b95a221c",
+ "upgradeCap": "0x55e60f3bde5a28075c59b180c109483132c4fbc72c96d1739812aeedf6ce4aef",
+ "coinMetadata": "0xfd6b8b09d3ad32d20051f9e8a10bd1329773d50fa2d6cbc3b0b3440a79383a4c",
+ "yayinTx": "64bRKJVETFGw8SmXahHEohSATitRWSJaK9DhX2F46oDL",
+ "initTx": "8EVg7KUYwPpNiq7wDC5k1SajuVcCQmPwt8iRuuEnpo2t",
+ "kayitTx": "4CUSioExm6Qrm2CzTvjSptb2hFsdWCiDuBw4zSa6Dug6",
+ "baseIkiz": "0x933F764D62ff7C0D86626972003f6c5138B9eBdd",
+ "ondalik": 9,
+ "paylasilanOndalik": 6,
+ "baseGecit": "0xFb99d4Ab471e82A19F721Be43F80e6d555C8aF2a",
+ "oftCallCap": "0x1671d891e53e515bc4f80ea764564bd1734045f3295c26c9af6b2b31a428bada",
+ "not": "LayerZero identity of the Sui OApp is its CallCap id; a Package CallCap id is the package address (call_cap::id).",
+ "suiYapilandirma": "AhSAggZ52ejmkKpf4S1h5QUACYoPCcgjeFKJ4Zo24DQw"
+}

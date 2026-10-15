@@ -13,6 +13,13 @@ export const GENESIS = {
     "monad",
     "bsc"
   ],
-  "hesap": {},
-  "atlasAbonelik": null
+  "hesap": {
+    "arc": "0x3F69889F1f5DEb3982d9A9bB5970cbeb653A222B",
+    "robinhood": "0xF67Eea3A140305dBC243e611CFa421c76F3C608B",
+    "base": "0xB55B27BD78E99C1e6c2ad14c858CaC5282E9f8f3",
+    "arbitrum": "0x70f0B87FEe72221982F3D34Cab7E0c5ffc746F6C",
+    "monad": "0x15c599fbE1861eaAf92AEc9533cf7710A059F2e0",
+    "bsc": "0xb45Da3bF630df87007947e62FaA7288613aE3cAC"
+  },
+  "atlasAbonelik": "0x08E0A9880E70eFE24F568787F0Fcd786D8F6cf69"
 };

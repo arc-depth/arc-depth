@@ -20,3 +20,16 @@ ADRESLER.md
 # tracked; the data is not.
 indeksleyici/veri/
 dogrulama/
+
+# the one paid helper: xAI key, and the reports it writes (derived, churns)
+.grok-anahtar
+rapor/
+
+# signed-in X session for @Arcdepthoock; holds login cookies, never commit
+tarayici-profil/
+.gizli-x-giris.json
+
+# Aptos CLI profile: holds the deployer key
+.aptos/
+aptos/**/.aptos/
+aptos/**/build/

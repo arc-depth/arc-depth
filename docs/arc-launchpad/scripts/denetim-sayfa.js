@@ -1235,6 +1235,61 @@ ok(gonderenKorumasiz === 0,
   "ISLEM GONDEREN HER GORUNUM ONCE BIR SEY DOGRULUYOR",
   gonderen + " gorunum islem gonderiyor");
 
+/* THE LANDING PAGE'S OWN ADDRESS BLOCK
+     Everything above checks the app's adresler.js. The landing page keeps
+     its own `const A = {...}` for its live numbers, and nothing checked
+     it: until 13 Oct 2026 it read the launchpad deployed on 8 Oct, two
+     generations back. Both had zero launches, so the page printed the
+     right number from the wrong contract. Every address there must now
+     match a deployment record, and the Robinhood row must not carry an
+     address that no record backs. */
+{
+  console.log("");
+  console.log("6) ANA SAYFANIN ADRESLERI DAGITIM KAYDIYLA AYNI MI");
+  const sayfa = fs.readFileSync(path.join(KOK, "docs", "index.html"), "utf8");
+  const blok = (bas) => {
+    const i = sayfa.indexOf(bas);
+    return i < 0 ? null : sayfa.slice(i, sayfa.indexOf("};", i) + 2);
+  };
+  const aBlok = blok("const A = {");
+  const rhBlok = blok("const RH = {");
+  ok(aBlok != null, "index.html'de A adres blogu bulundu");
+  const p2 = JSON.parse(fs.readFileSync(path.join(KOK, "dagitim-pulse2.json"), "utf8")).arc;
+  const pz = JSON.parse(fs.readFileSync(path.join(KOK, "dagitim-pazar.json"), "utf8")).arc;
+  const ft = JSON.parse(fs.readFileSync(path.join(KOK, "dagitim-fathom.json"), "utf8"));
+  const beklenen = {
+    launchpad: p2.launchpad, hook: p2.hook, devPool: p2.devPool, likidite: p2.likiditeKasasi,
+    pazar: pz.pazar, fthm: ft.token, poolManager: p2.poolManager, usdc: p2.quote,
+  };
+  const sayfadaki = Object.fromEntries([...(aBlok || "").matchAll(/(\w+):\s*"(0x[0-9a-fA-F]{40})"/g)].map((m) => [m[1], m[2]]));
+  const yanlis = Object.entries(beklenen).filter(([k, v]) => String(sayfadaki[k] || "").toLowerCase() !== String(v).toLowerCase());
+  for (const [k, v] of yanlis) console.log("     YANLIS  " + k + " sayfada " + (sayfadaki[k] || "yok") + ", kayitta " + v);
+  ok(yanlis.length === 0, "ANA SAYFA GUNCEL NESLI OKUYOR", Object.keys(beklenen).length + " adres kayitla karsilastirildi");
+  const fazla = Object.keys(sayfadaki).filter((k) => !(k in beklenen));
+  ok(fazla.length === 0, "ana sayfada kaydi olmayan adres yok", fazla.join(", ") || "yok");
+  const rhLp = rhBlok && rhBlok.match(/launchpad:\s*(null|"0x[0-9a-fA-F]{40}")/);
+  const rhKayit = fs.existsSync(path.join(KOK, "dagitim-robinhood.json"));
+  ok(rhLp != null && (rhLp[1] === "null") === !rhKayit,
+    "Robinhood satiri kayitla tutarli (kayit yoksa launchpad null)",
+    "launchpad " + (rhLp ? rhLp[1] : "?") + ", kayit " + (rhKayit ? "var" : "yok"));
+
+  /* FTHM on two chains: the seven addresses the page lists must be the
+     ones in the deployment record, or the page links to the wrong code. */
+  const f2Yol = path.join(KOK, "dagitim-fthm-iki-zincir.json");
+  const f2Blok = blok("const F2 = {");
+  if (fs.existsSync(f2Yol)) {
+    const f2 = JSON.parse(fs.readFileSync(f2Yol, "utf8"));
+    const f2Beklenen = {
+      adapter: f2.arc.FTHMOFTAdapter, elci: f2.arc.FiyatElcisi, kapiArc: f2.arc.FTHMKapi,
+      oft: f2.rh.FTHMOFT, hook: f2.rh.FTHMFarkHook, acici: f2.rh.TekYonluAcici, kapiRh: f2.rh.FTHMKapi,
+    };
+    const f2Sayfa = Object.fromEntries([...(f2Blok || "").matchAll(/(\w+):"(0x[0-9a-fA-F]{40})"/g)].map((m) => [m[1], m[2]]));
+    const f2Yanlis = Object.entries(f2Beklenen).filter(([kk, v]) => String(f2Sayfa[kk] || "").toLowerCase() !== String(v).toLowerCase());
+    for (const [kk, v] of f2Yanlis) console.log("     YANLIS  F2." + kk + " sayfada " + (f2Sayfa[kk] || "yok") + ", kayitta " + v);
+    ok(f2Blok != null && f2Yanlis.length === 0, "FTHM iki zincir adresleri kayitla ayni", Object.keys(f2Beklenen).length + " adres");
+  }
+}
+
 console.log("");
 console.log(kotu === 0 ? "TUMU GECTI" : kotu + " KOTU");
 process.exit(kotu === 0 ? 0 : 1);
