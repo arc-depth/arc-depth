@@ -27,7 +27,7 @@
 import { YOLLAR, GRUPLAR, yolBul, grubunYollari } from "./yol.js";
 import { ikon } from "./ikon.js";
 import { el, temizle, dagitimBekliyor, yapimda, hata, iskelet } from "./ui.js";
-import { cuzdan, cuzdanUygulamalari, mobilMi } from "./cuzdan.js";
+import { cuzdan, cuzdanUygulamalari, mobilMi, tarayiciCuzdani } from "./cuzdan.js";
 
 const VARSAYILAN = "kesfet";
 
@@ -271,67 +271,74 @@ function cuzdanDugmesiniTazele() {
   }
 }
 
-kCuzdanDugme.addEventListener("click", async () => {
+kCuzdanDugme.addEventListener("click", () => {
   if (cuzdan.hesap()) { location.hash = "#/portfoy"; return; }
-  kCuzdanDugme.disabled = true;
-  try {
-    await cuzdan.bagla();
-  } catch (e) {
-    /* A refused connection is a normal outcome and not an error state —
-       the button simply goes back to offering. */
-    if (e && e.code !== 4001 && e.code !== "CUZDAN_YOK") alert("Could not connect the wallet: " + ((e && e.message) || e));
-  } finally {
-    kCuzdanDugme.disabled = false;
-    cuzdanDugmesiniTazele();
-  }
+  cuzdanSec();
 });
 
 cuzdan.dinle(() => { cuzdanDugmesiniTazele(); ciz(); });
 
-/* No wallet in this browser. On a phone that is the normal case (Safari
-   and Chrome carry none), so instead of an error the page offers to open
-   itself inside a wallet app's browser, where the wallet is. */
-let _cuzdanYokAcik = false;
-window.addEventListener("cuzdan-yok", () => {
-  if (_cuzdanYokAcik) return;
-  _cuzdanYokAcik = true;
-  const kapat = () => { _cuzdanYokAcik = false; document.removeEventListener("keydown", esc); perde.remove(); };
+/* The connect dialog. Every way in, in one place: the wallet already in
+   this browser, WalletConnect (any wallet, QR on a computer, a link on a
+   phone), and when the browser has no wallet, the wallet apps' own links
+   that open this page inside them, or where to install one. Views that
+   need a wallet and find none land here too ("cuzdan-yok"). */
+let _secimAcik = false;
+function cuzdanSec() {
+  if (_secimAcik) return;
+  _secimAcik = true;
+  const kapat = () => { _secimAcik = false; document.removeEventListener("keydown", esc); perde.remove(); };
   const esc = (e) => { if (e.key === "Escape") kapat(); };
-  const RENK = { "MetaMask": "#f6851b", "Coinbase Wallet": "#0052ff", "Trust Wallet": "#3375bb", "Rabby": "#7084ff" };
-  const secenek = (ad, alt, url, etiket, yeniSekme) => el("a", {
-    sinif: "cuzdan-secenek",
-    attr: { href: url, rel: "noopener", target: yeniSekme ? "_blank" : null }
-  }, [
-    el("span", { sinif: "cuzdan-secenek__harf", attr: { style: "background:" + (RENK[ad] || "var(--marka)"), "aria-hidden": "true" }, yazi: ad[0] }),
+  const RENK = { "MetaMask": "#f6851b", "Coinbase Wallet": "#0052ff", "Trust Wallet": "#3375bb", "Rabby": "#7084ff", "WalletConnect": "#3b99fc" };
+  const durum = el("p", { sinif: "cuzdan-kutu__metin", attr: { role: "status", "aria-live": "polite" } });
+  const rozet = (ad, ikonUrl) => ikonUrl
+    ? el("img", { sinif: "cuzdan-secenek__harf", attr: { src: ikonUrl, alt: "", style: "background:#fff;padding:3px" } })
+    : el("span", { sinif: "cuzdan-secenek__harf", attr: { style: "background:" + (RENK[ad] || "var(--marka)"), "aria-hidden": "true" }, yazi: ad[0] });
+  const govde = (ad, alt, etiket, ikonUrl) => [
+    rozet(ad, ikonUrl),
     el("span", {}, [el("span", { sinif: "cuzdan-secenek__ad", yazi: ad }), el("span", { sinif: "cuzdan-secenek__alt", yazi: alt })]),
     etiket ? el("span", { sinif: "cuzdan-secenek__etiket", yazi: etiket }) : null,
-  ]);
+  ];
+  const baglanti = (ad, alt, url, etiket, yeniSekme) => el("a", {
+    sinif: "cuzdan-secenek", attr: { href: url, rel: "noopener", target: yeniSekme ? "_blank" : null } }, govde(ad, alt, etiket));
+  const eylem = (ad, alt, etiket, ikonUrl, f) => el("button", {
+    sinif: "cuzdan-secenek", attr: { type: "button", style: "width:100%;text-align:left;font:inherit;cursor:pointer" },
+    on: { click: async () => {
+      durum.textContent = "Waiting for the wallet…";
+      try { await f(); kapat(); }
+      catch (e) { durum.textContent = e && (e.code === 4001 || /reject|closed|cancel/i.test(e.message || "")) ? "Connection cancelled." : "Could not connect: " + ((e && e.message) || e); }
+    } } }, govde(ad, alt, etiket, ikonUrl));
+
   const mobil = mobilMi();
-  const liste = mobil
-    ? cuzdanUygulamalari().map((u, i) => secenek(u.ad, "Open this page in the " + u.ad + " app", u.url, i === 0 ? "Recommended" : null, false))
-    : [
-        secenek("MetaMask", "Browser extension, adds Arc in one click", "https://metamask.io/download/", "Recommended", true),
-        secenek("Rabby", "Browser extension, multi-chain", "https://rabby.io/", null, true),
-        secenek("Coinbase Wallet", "Browser extension", "https://www.coinbase.com/wallet/downloads", null, true),
-      ];
+  const tarayici = tarayiciCuzdani();
+  const liste = [];
+  if (tarayici) liste.push(eylem(tarayici.ad, "Connect the wallet in this browser", "Detected", tarayici.ikon, () => cuzdan.bagla()));
+  liste.push(eylem("WalletConnect", mobil ? "Any wallet app on this phone" : "Scan a QR code with any wallet app", tarayici ? null : "Any wallet", null,
+    async () => { kapat(); await cuzdan.walletConnect(); }));
+  if (!tarayici && mobil) for (const u of cuzdanUygulamalari()) liste.push(baglanti(u.ad, "Open this page in the " + u.ad + " app", u.url, null, false));
+  if (!tarayici && !mobil) {
+    liste.push(baglanti("MetaMask", "Install the browser extension", "https://metamask.io/download/", null, true));
+    liste.push(baglanti("Rabby", "Install the browser extension", "https://rabby.io/", null, true));
+  }
+
   const kutu = el("div", { sinif: "cuzdan-kutu", attr: { role: "dialog", "aria-modal": "true", "aria-labelledby": "cuzdan-baslik" } }, [
     el("div", { sinif: "cuzdan-kutu__ust" }, [
       el("h2", { sinif: "cuzdan-kutu__baslik", attr: { id: "cuzdan-baslik" }, yazi: "Connect a wallet" }),
       el("button", { sinif: "dugme dugme--sade", attr: { type: "button", "aria-label": "Close" }, yazi: "✕", on: { click: kapat } }),
     ]),
-    el("p", { sinif: "cuzdan-kutu__metin", yazi: mobil
-      ? "Phone browsers carry no wallet. Pick your wallet app: it opens this same page inside its own browser, where it can connect."
-      : "No wallet extension was found in this browser. Install one, then reload this page and press Connect wallet again." }),
     el("div", { sinif: "cuzdan-liste" }, liste),
+    durum,
     el("p", { sinif: "cuzdan-kutu__guven", yazi:
       "ARC PULSE never asks for a seed phrase or a private key. Your wallet only connects and signs transactions you can read in the wallet before you approve them." }),
+    el("p", { sinif: "cuzdan-kutu__guven", attr: { style: "opacity:.7" }, yazi: "WalletConnect: Portions © 2025 Reown, Inc. All Rights Reserved." }),
   ]);
   const perde = el("div", { sinif: "cuzdan-perde", on: { click: (e) => { if (e.target === perde) kapat(); } } }, [kutu]);
   document.addEventListener("keydown", esc);
   document.body.append(perde);
   const ilk = kutu.querySelector(".cuzdan-secenek");
   if (ilk) ilk.focus();
-});
+}
+window.addEventListener("cuzdan-yok", cuzdanSec);
 
 /* ---- boot ----------------------------------------------------------- */
 

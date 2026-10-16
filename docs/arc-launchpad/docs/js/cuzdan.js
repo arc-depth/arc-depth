@@ -38,8 +38,47 @@ if (typeof window !== "undefined") {
   window.dispatchEvent(new Event("eip6963:requestProvider"));
 }
 
+/* WalletConnect: any wallet, by QR on a computer or by link on a phone.
+   The project id is public by design (it names the site to the relay, it
+   grants nothing); the relay only serves the domains allowed for it on
+   dashboard.reown.com (arc-depth.github.io). The 2 MB bundle is loaded on
+   the click, and on load only when a session was left open here. */
+const WC_PROJE = "3732e09480d6f286889688c0f4a70918";
+const WC_ZINCIRLER = [5042, 4663, 8453, 42161, 1, 56, 43114, 143];
+const WC_ISARET = "arcpulse-wc";
+let _wc = null;
+
+async function wcKur() {
+  if (_wc) return _wc;
+  const { EthereumProvider } = await import("../vendor/walletconnect.mjs");
+  const rpcMap = {};
+  for (const id of WC_ZINCIRLER) if (KAYITLI[id]) rpcMap[id] = KAYITLI[id].rpcUrls[0];
+  _wc = await EthereumProvider.init({
+    projectId: WC_PROJE,
+    /* nothing required: a wallet that has never heard of Arc still pairs,
+       and the page asks it to add Arc when a send needs it */
+    optionalChains: WC_ZINCIRLER,
+    rpcMap,
+    showQrModal: true,
+    metadata: {
+      name: "ARC PULSE",
+      description: "Token launchpad with a collateral vault behind every token",
+      url: location.origin,
+      icons: ["https://arc-depth.github.io/arc-depth/arc-launchpad/docs/veri/ikon.png"],
+    },
+  });
+  _wc.on("accountsChanged", (h) => { _hesap = h && h.length ? h[0] : null; duyur(); });
+  _wc.on("chainChanged", (c) => { _zincir = typeof c === "number" ? "0x" + c.toString(16) : c; duyur(); });
+  _wc.on("disconnect", () => {
+    try { localStorage.removeItem(WC_ISARET); } catch (e) { /* storage may be blocked */ }
+    _wc = null; _hesap = null; _zincir = null; duyur();
+  });
+  return _wc;
+}
+
 function saglayici() {
   if (typeof window === "undefined") return null;
+  if (_wc && _wc.session) return _wc;
   const mm = _duyurulan.find((x) => /metamask/i.test(x.info.rdns || x.info.name || ""));
   if (mm) return mm.provider;
   if (window.ethereum) return window.ethereum;
@@ -60,6 +99,15 @@ export function cuzdanUygulamalari() {
     { ad: "Coinbase Wallet", url: "https://go.cb-w.com/dapp?cb_url=" + encodeURIComponent(tam) },
     { ad: "Trust Wallet", url: "https://link.trustwallet.com/open_url?coin_id=60&url=" + encodeURIComponent(tam) },
   ];
+}
+
+/** The browser wallet's own name (EIP-6963), or null when there is none. */
+export function tarayiciCuzdani() {
+  const p = typeof window !== "undefined" ? (window.ethereum || null) : null;
+  const d = _duyurulan.find((x) => /metamask/i.test(x.info.rdns || "")) || _duyurulan[0];
+  if (d) return { ad: d.info.name, ikon: d.info.icon };
+  if (p) return { ad: p.isMetaMask ? "MetaMask" : p.isCoinbaseWallet ? "Coinbase Wallet" : p.isTrust ? "Trust Wallet" : "Browser wallet", ikon: null };
+  return null;
 }
 
 export const mobilMi = () => typeof navigator !== "undefined" && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -132,6 +180,23 @@ export const cuzdan = {
     duyur();
     return _hesap;
   },
+
+  /** WalletConnect: opens its own QR / wallet-list modal. Only from a click. */
+  async walletConnect() {
+    const p = await wcKur();
+    if (!p.session) await p.connect();
+    try { localStorage.setItem(WC_ISARET, "1"); } catch (e) { /* storage may be blocked */ }
+    _hesap = p.accounts && p.accounts.length ? p.accounts[0] : null;
+    await zinciriOku();
+    duyur();
+    return _hesap;
+  },
+
+  /** End a WalletConnect session (an extension wallet is disconnected in the wallet). */
+  async kes() {
+    if (_wc) await _wc.disconnect().catch(() => {});
+  },
+  wcMi() { return !!(_wc && _wc.session); },
 
   /** Prompt. Only ever from a click. */
   async bagla() {
@@ -271,5 +336,9 @@ setTimeout(() => {
     p.on("accountsChanged", (h) => { _hesap = h && h.length ? h[0] : null; duyur(); });
     p.on("chainChanged", (c) => { _zincir = c; duyur(); });
   }
-  cuzdan.sessizBagla();
+  /* a WalletConnect session left open on this device: restore it quietly */
+  let wcVar = false;
+  try { wcVar = localStorage.getItem(WC_ISARET) === "1"; } catch (e) { /* storage may be blocked */ }
+  if (wcVar) wcKur().then(() => cuzdan.sessizBagla()).catch(() => cuzdan.sessizBagla());
+  else cuzdan.sessizBagla();
 }, 150);

@@ -1,5 +1,5 @@
 {
- "uretildi": "2026-10-08T09:13:35.193Z",
+ "uretildi": "2026-10-16T17:30:29.771Z",
  "uyari": "Benim cektigim bir arsiv, durust cektigimin kaniti DEGILDIR. Yaptigi sey iddiayi kontrol edilebilir kilmak: manifest ozetleri dosyalarla tutmak zorunda, makbuzlar blockHash tasiyor ve bloklar kendi hash/parentHash'ini tasiyor, kapsam pencere pencere kayitli. Her kalem, uc throttle etmedigi bir anda tek cagriyla yeniden dogrulanabilir.",
  "amac": "Canli kuyrugun teminat listesinin gercekten degistirilebilir olup olmadiginin zincirden olculmesi. wNVDA karsiliksiz oldugu zincirden dogrulandi; soru listeden cikarmanin MUMKUN olup olmadigi.",
  "arcRpc": "https://rpc.mainnet.arc.io",
@@ -7,7 +7,7 @@
  "governor": "0x20d2E53172D2BD4b010E90fa6ce8f09972343CeB",
  "staking": "0xE0fE4664417Fc7DE9f35a5c55bb490105Ed589f2",
  "govToken": "0xFeA8F85B9020dAD8d1bbad0E0CC991564c1e2D41",
- "bot": "0x89189C84DC95d0520AEeC9c8cF3BA5B9d42611D0",
+ "kurucu": "0x89189C84DC95d0520AEeC9c8cF3BA5B9d42611D0",
  "teminatlar": {
   "wNVDA": "0xA3cd6fD4316DB70C06931A233FDddC48c2879DC4",
   "wAAPL": "0xCfDbc078E513930bF6A4B4DDB7eD6123E8A7d342"
@@ -18,7 +18,7 @@
    "uc": "https://rpc.mainnet.arc.io",
    "yontem": "eth_chainId",
    "parametreler": [],
-   "alindi": "2026-10-08T09:13:34.103Z",
+   "alindi": "2026-10-16T17:30:28.640Z",
    "sha256": "4fb42ee9dd42952297e1b444899a02aba62ba817f7440b00eb76c7eb896516e5",
    "basarili": true
   },
@@ -33,7 +33,7 @@
     },
     "latest"
    ],
-   "alindi": "2026-10-08T09:13:34.170Z",
+   "alindi": "2026-10-16T17:30:28.708Z",
    "sha256": "6ebe2319e07ce03f2afd7b147f52e1c317858d12496049302af54389ecd8ad9e",
    "basarili": true
   },
@@ -48,7 +48,7 @@
     },
     "latest"
    ],
-   "alindi": "2026-10-08T09:13:34.234Z",
+   "alindi": "2026-10-16T17:30:28.775Z",
    "sha256": "46e1bec104b29080ce1e8c6d9a624883777d1f81c373bed4aa4a9537d1c24bb1",
    "basarili": true
   },
@@ -63,7 +63,7 @@
     },
     "latest"
    ],
-   "alindi": "2026-10-08T09:13:34.294Z",
+   "alindi": "2026-10-16T17:30:28.843Z",
    "sha256": "cc97711c32416607ce1da9891050d1ab6ee13a89b28ab03d69053cc488e153ac",
    "basarili": true
   },
@@ -78,7 +78,7 @@
     },
     "latest"
    ],
-   "alindi": "2026-10-08T09:13:34.357Z",
+   "alindi": "2026-10-16T17:30:28.903Z",
    "sha256": "2e727c877eb91ea23545f44d7fb196132f940ee011e169fae3611d63f248368c",
    "basarili": true
   },
@@ -93,7 +93,7 @@
     },
     "latest"
    ],
-   "alindi": "2026-10-08T09:13:34.421Z",
+   "alindi": "2026-10-16T17:30:28.968Z",
    "sha256": "bf2cfd865890b7f52bb4361234010c04003c1dccd75848db55bbc4a8070e00d7",
    "basarili": true,
    "indeks": 0
@@ -109,7 +109,7 @@
     },
     "latest"
    ],
-   "alindi": "2026-10-08T09:13:34.486Z",
+   "alindi": "2026-10-16T17:30:29.032Z",
    "sha256": "9b85ead166d6e4157ad30ac0b381048a67f43f6aa48897bc51dc8337ab7cb9f6",
    "basarili": true,
    "indeks": 0
@@ -125,7 +125,7 @@
     },
     "latest"
    ],
-   "alindi": "2026-10-08T09:13:34.547Z",
+   "alindi": "2026-10-16T17:30:29.094Z",
    "sha256": "c7eabe0ea6e53870e6fed2032664d5f5243a244fc4294dc702c6ea1174078fc9",
    "basarili": true,
    "indeks": 1
@@ -141,7 +141,7 @@
     },
     "latest"
    ],
-   "alindi": "2026-10-08T09:13:34.609Z",
+   "alindi": "2026-10-16T17:30:29.156Z",
    "sha256": "ca2d2a1524275a17122170ba7a87417bd762b9836739dd8988b27141536727e0",
    "basarili": true,
    "indeks": 1
@@ -157,7 +157,7 @@
     },
     "latest"
    ],
-   "alindi": "2026-10-08T09:13:34.679Z",
+   "alindi": "2026-10-16T17:30:29.223Z",
    "sha256": "3b3a1f073ad54cae08ee017ba40ddeedc03a4b65f2e9fe5053b905d5a2a7451b",
    "basarili": true
   },
@@ -172,7 +172,7 @@
     },
     "latest"
    ],
-   "alindi": "2026-10-08T09:13:34.742Z",
+   "alindi": "2026-10-16T17:30:29.298Z",
    "sha256": "1f8087141a8391bd2e163766a738d99faddd53ac7774059d5a26a32619975271",
    "basarili": true
   },
@@ -187,7 +187,7 @@
     },
     "latest"
    ],
-   "alindi": "2026-10-08T09:13:34.804Z",
+   "alindi": "2026-10-16T17:30:29.364Z",
    "sha256": "7a8b5c2d7a2c7f10862ab2cdb5ec9bb97ec44e37c4efde64e2da7e1c4b0caf75",
    "basarili": true
   },
@@ -202,7 +202,7 @@
     },
     "latest"
    ],
-   "alindi": "2026-10-08T09:13:34.874Z",
+   "alindi": "2026-10-16T17:30:29.424Z",
    "sha256": "b3dada450b4f00d331f84e650cc57b10433b8f9218c8b9a0a757709886f84abf",
    "basarili": true
   },
@@ -217,7 +217,7 @@
     },
     "latest"
    ],
-   "alindi": "2026-10-08T09:13:34.937Z",
+   "alindi": "2026-10-16T17:30:29.491Z",
    "sha256": "5b6eb4b6628e761d86e30cd8832106e74ac44b4a139656c3b2600b59c5ffa895",
    "basarili": true
   },
@@ -232,7 +232,7 @@
     },
     "latest"
    ],
-   "alindi": "2026-10-08T09:13:35.001Z",
+   "alindi": "2026-10-16T17:30:29.557Z",
    "sha256": "516a803d36161a13598129f439cc94487ebbdc727a9dd45c23fe5354090df85c",
    "basarili": true
   },
@@ -247,12 +247,12 @@
     },
     "latest"
    ],
-   "alindi": "2026-10-08T09:13:35.064Z",
+   "alindi": "2026-10-16T17:30:29.621Z",
    "sha256": "46e1bec104b29080ce1e8c6d9a624883777d1f81c373bed4aa4a9537d1c24bb1",
    "basarili": true
   },
   {
-   "dosya": "nokta/stake-bot-oy.json",
+   "dosya": "nokta/stake-kurucu-oy.json",
    "uc": "https://rpc.mainnet.arc.io",
    "yontem": "eth_call",
    "parametreler": [
@@ -262,13 +262,13 @@
     },
     "latest"
    ],
-   "alindi": "2026-10-08T09:13:35.129Z",
+   "alindi": "2026-10-16T17:30:29.697Z",
    "sha256": "46e1bec104b29080ce1e8c6d9a624883777d1f81c373bed4aa4a9537d1c24bb1",
    "basarili": true,
    "adres": "0x89189C84DC95d0520AEeC9c8cF3BA5B9d42611D0"
   },
   {
-   "dosya": "nokta/jeton-bot-bakiye.json",
+   "dosya": "nokta/jeton-kurucu-bakiye.json",
    "uc": "https://rpc.mainnet.arc.io",
    "yontem": "eth_call",
    "parametreler": [
@@ -278,7 +278,7 @@
     },
     "latest"
    ],
-   "alindi": "2026-10-08T09:13:35.193Z",
+   "alindi": "2026-10-16T17:30:29.770Z",
    "sha256": "51e31e36e153818a1656322ef93bcd3fd121d3b2f0cde39e0b020b6f8d762ee2",
    "basarili": true,
    "adres": "0x89189C84DC95d0520AEeC9c8cF3BA5B9d42611D0"
