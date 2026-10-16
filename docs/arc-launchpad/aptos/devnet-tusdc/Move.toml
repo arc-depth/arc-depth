@@ -1,0 +1,14 @@
+[package]
+name = "devnet_tusdc"
+version = "1.0.0"
+authors = []
+
+# DEVNET ONLY: a worthless 6-decimal test dollar anyone can mint, used to run
+# the launchpad end to end on Aptos devnet. Never published on mainnet.
+[addresses]
+tusdc = "_"
+
+[dependencies.AptosFramework]
+git = "https://github.com/aptos-labs/aptos-framework.git"
+rev = "99f5e915b6d231d0ffbc1aff282d36148d2a8b24"
+subdir = "aptos-framework"

@@ -64,9 +64,11 @@ const EVM = {
     endpoint: LZ_V2_A, sendLib: "0x9F8C645f2D0b2159767Bd6E0839DE4BE49e823DE", recvLib: "0xB217266c3A98C8B2709Ee26836C98cf12f6cCEC1",
     executor: "0x3ebD570ed38B1b3b4BC886999fcF507e9D584859",
     poolManager: "0x28e2Ea090877bF75740558f6BFB36A5ffeE9e9dF",
-    /* Circle lists BNB as a CCTP V2 domain but not in its USDC address
-       table; the inventory reads what is actually at this address. */
-    dolar: { adres: "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d", sembol: "USDC" }, cctp: 17,
+    /* Binance-Peg USDC (18 decimals), not Circle's. Circle's CCTP has a
+       domain 17 for BNB, but it carries USYC only: USDC has no CCTP here
+       (developers.circle.com, read 16 Oct 2026). So cctp is null, and
+       nothing offers a CCTP route to or from BNB. */
+    dolar: { adres: "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d", sembol: "USDC" }, cctp: null,
   },
   avalanche: {
     ad: "Avalanche", chainId: 43114, eid: 30106, rpc: "https://avalanche-c-chain-rpc.publicnode.com", gaz: "AVAX", cgId: "avalanche-2",

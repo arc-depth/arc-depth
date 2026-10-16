@@ -1,0 +1,9 @@
+[package]
+name = "DevnetCoins"
+version = "0.0.1"
+edition = "2024.beta"
+
+# DEVNET ONLY: a worthless test dollar anyone can mint, and a token to launch.
+# Used to run sui/pulse-launchpad end to end on Sui devnet; never on mainnet.
+[addresses]
+devnet_coins = "0x0"

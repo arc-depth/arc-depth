@@ -128,6 +128,56 @@ contract GenesisTest is Test {
         c.lzReceive(Origin(ARB, bytes32(uint256(uint160(kotu))), 1), bytes32(0), abi.encode(ARB, uint64(0), t), address(0), "");
     }
 
+    /* ---- relay gas: what one delivered batch really costs ------------
+       15 Oct 2026 every first batch of the mainnet relay ran out of gas at
+       the destination (the agent gave 150k + 120k per record = 1.11M for 8
+       records; Robinhood needed 1,930,171) and the core then dropped every
+       later batch as a gap. This measures a full batch through the real
+       endpoint path and holds the agent's budget (scripts/genesis-ajan.js
+       yayGazi: 250k + 150k per record + 750 per byte) to it. */
+
+    function _parti(uint256 adet, uint256 bayt, uint64 zaman0) internal view returns (GenesisCekirdek.Tasima[] memory t) {
+        t = new GenesisCekirdek.Tasima[](adet);
+        for (uint256 i; i < adet; i++) {
+            bytes memory v = new bytes(bayt);
+            for (uint256 j; j < bayt; j++) v[j] = bytes1(uint8(65 + ((i + j) % 26)));
+            t[i] = GenesisCekirdek.Tasima(2, 0, ajan, zaman0 + uint64(i), keccak256(v), v);
+        }
+    }
+
+    function _teslimGazi(uint64 ilk, GenesisCekirdek.Tasima[] memory t) internal returns (uint256 g) {
+        bytes memory m = abi.encode(ARB, ilk, t);
+        vm.prank(address(c.endpoint()));
+        g = gasleft();
+        c.lzReceive(Origin(ARB, bytes32(uint256(uint160(address(c)))), 1), bytes32(uint256(7)), m, address(0), "");
+        g -= gasleft();
+    }
+
+    function _butce(uint256 adet, uint256 toplamBayt) internal pure returns (uint256) { return 250_000 + 150_000 * adet + 750 * toplamBayt; }
+
+    function test_yay_gazi_8_kayit_400_bayt() public {
+        uint256 g = _teslimGazi(0, _parti(8, 400, 1000));
+        emit log_named_uint("8 x 400 B teslim gazi", g);
+        assertEq(c.kayitSayisi(ARB), 8, "parti girdi");
+        assertGt(g, 1_110_000, "eski butce (150k + 120k x 8) yetmiyordu");
+        assertLt(g, _butce(8, 3200), "ajanin butcesi yetiyor");
+    }
+
+    function test_yay_gazi_8_kayit_1000_bayt() public {
+        uint256 g = _teslimGazi(0, _parti(8, 1000, 1000));
+        emit log_named_uint("8 x 1000 B teslim gazi", g);
+        assertEq(c.kayitSayisi(ARB), 8);
+        assertLt(g, _butce(8, 8000), "ajanin butcesi buyuk kayitta da yetiyor");
+    }
+
+    function test_yay_gazi_8_kayit_azami_veri() public {
+        uint256 azami = c.AZAMI_VERI();
+        uint256 g = _teslimGazi(0, _parti(8, azami, 1000));
+        emit log_named_uint("8 x AZAMI_VERI teslim gazi", g);
+        assertEq(c.kayitSayisi(ARB), 8);
+        assertLt(g, _butce(8, 8 * azami), "en buyuk kayitlarda da yetiyor");
+    }
+
     function test_yay_ucreti_ve_gonderim() public {
         bytes memory v = _metin("hello");
         vm.prank(ajan);

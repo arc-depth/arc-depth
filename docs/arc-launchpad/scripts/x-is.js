@@ -4,6 +4,7 @@
  *
  *   node scripts/x-is.js takip <handle> [<handle> ...]
  *   node scripts/x-is.js cevap <post-url> <text-file>
+ *   node scripts/x-is.js flood <thread.json>     [{metin, gorsel?}, ...]
  *   node scripts/x-is.js durum
  *
  * Uses the profile signed in by x-oturum.js. Elements are found by X's own
@@ -102,12 +103,80 @@ async function cevap(s, url, dosya) {
   yaz({ is: "cevap", url, sonuc: var_ ? "tamam" : "dogrulanamadi", uzunluk: metin.length });
 }
 
+/* Types text the way the composer expects: insertText per line (emoji and
+   long URLs go in whole, no per-key autocomplete), Enter between lines. */
+async function yazMetin(s, metin) {
+  const satirlar = metin.split("\n");
+  for (let i = 0; i < satirlar.length; i++) {
+    if (satirlar[i]) await s.keyboard.sendCharacter(satirlar[i]);
+    if (i < satirlar.length - 1) await s.keyboard.press("Enter");
+    await ara(150, 400);
+  }
+  await s.keyboard.press("Escape").catch(() => {});   // close a mention/link popup if one opened
+}
+
+/* The status URL of our newest post that starts with `bas`, from our own
+   replies tab — the proof that a post exists, and the parent for the next. */
+async function bul(s, bas) {
+  const ara_ = bas.replace(/\s+/g, " ").slice(0, 50);
+  for (let i = 0; i < 4; i++) {
+    await s.goto("https://x.com/" + BIZ + "/with_replies", { waitUntil: "domcontentloaded", timeout: 60000 });
+    await bekle(6000);
+    const url = await s.evaluate((biz, ara_) => {
+      for (const t of document.querySelectorAll('[data-testid="tweet"]')) {
+        const metin = (t.querySelector('[data-testid="tweetText"]') || {}).innerText || "";
+        if (!metin.replace(/\s+/g, " ").includes(ara_)) continue;
+        const a = [...t.querySelectorAll('a[href*="/status/"]')].find((x) => x.querySelector("time"));
+        if (a && a.href.toLowerCase().includes("/" + biz.toLowerCase() + "/")) return a.href;
+      }
+      return null;
+    }, BIZ, ara_);
+    if (url) return url;
+    await bekle(8000);
+  }
+  return null;
+}
+
+/* A thread from a JSON file [{metin, gorsel?}]: the first post from the
+   composer, each next one as a reply to the one before it, every one found
+   on our profile before the next is sent. Stops at the first post it cannot
+   prove; the ledger says how far it got. */
+async function flood(s, dosya) {
+  const parcalar = JSON.parse(fs.readFileSync(dosya, "utf8"));
+  let ust = null;
+  for (let i = 0; i < parcalar.length; i++) {
+    const { metin, gorsel } = parcalar[i];
+    await s.goto(ust || "https://x.com/compose/post", { waitUntil: "domcontentloaded", timeout: 60000 });
+    const kutu = await s.waitForSelector('[data-testid="tweetTextarea_0"]', { timeout: 25000 });
+    await kutu.click();
+    await ara(600, 1200);
+    await yazMetin(s, metin);
+    if (gorsel) {
+      const girdi = await s.waitForSelector('input[data-testid="fileInput"]', { timeout: 10000 });
+      await girdi.uploadFile(gorsel);
+      await s.waitForSelector('[data-testid="attachments"] img', { timeout: 30000 });
+      await ara(1500, 2500);
+    }
+    const gonder = await s.waitForSelector(
+      '[data-testid="tweetButton"]:not([aria-disabled="true"]), [data-testid="tweetButtonInline"]:not([aria-disabled="true"])', { timeout: 15000 });
+    await gonder.click();
+    await bekle(7000);
+    const url = await bul(s, metin);
+    console.log((i + 1) + "/" + parcalar.length + " " + (url ? "YAYINDA " + url : "DOGRULANAMADI — durdu"));
+    yaz({ is: "flood", parca: i + 1, url, sonuc: url ? "tamam" : "dogrulanamadi", uzunluk: metin.length });
+    if (!url) throw new Error("parca " + (i + 1) + " dogrulanamadi");
+    ust = url;
+    await ara(8000, 14000);
+  }
+}
+
 (async () => {
   const [komut, ...arg] = process.argv.slice(2);
   const { t, s } = await ac();
   try {
     if (komut === "takip") await takip(s, arg);
     else if (komut === "cevap") await cevap(s, arg[0], arg[1]);
+    else if (komut === "flood") await flood(s, arg[0]);
     else if (komut === "durum") {
       await s.goto("https://x.com/" + BIZ, { waitUntil: "domcontentloaded" });
       await bekle(4000);

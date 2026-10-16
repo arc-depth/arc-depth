@@ -39,5 +39,11 @@
   "GenesisDil": "0x66dc9B822Ba87b4fCF774BF50C072fe72ae2Ca06",
   "GenesisHesap": "0xb45Da3bF630df87007947e62FaA7288613aE3cAC",
   "dolar": "0xb233F129F7255F86d67BDAEA4e8c4f8274Fa70d9"
+ },
+ "avalanche": {
+  "GenesisCekirdek": "0x2D5fE4f6a1b91bbB2CAA8897587e1cE1B66793bD",
+  "GenesisDil": "0x66dc9B822Ba87b4fCF774BF50C072fe72ae2Ca06",
+  "GenesisHesap": "0x15c599fbE1861eaAf92AEc9533cf7710A059F2e0",
+  "dolar": "0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E"
  }
 }

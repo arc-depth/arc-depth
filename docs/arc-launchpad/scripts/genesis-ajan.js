@@ -60,8 +60,28 @@ const bekle = (ms) => new Promise((r) => setTimeout(r, ms));
 const EV = "arc";                       // where the agent writes; cheapest gas, USDC
 const ZINCIRLER = ["arc", "robinhood", "base", "arbitrum", "avalanche", "monad", "bsc"];
 const BILGI = 2, OGRENME = 3, GUVENLIK = 7, KESIF = 8, PERFORMANS = 9, ZINCIRDE = 0;
-/* lzReceive gas for a relayed batch: 150k + 120k per record */
-const secenek = (n) => solidityPacked(["uint16", "uint8", "uint16", "uint8", "uint128"], [3, 1, 17, 1, 150000 + 120000 * n]);
+/* lzReceive gas for a relayed batch, from the stored bytes. 15 Oct 2026 the
+   first batch of the mainnet relay ran out on every chain (150k + 120k per
+   record = 1.11M; Robinhood needed 1,930,171) and the core dropped every
+   later batch as a gap. genesis-test measured delivery through the real
+   endpoint path: 8 x 400 B = 3,224,665 gas, 8 x 1000 B = 6,677,798,
+   8 x 4096 B = 24,139,502 — about 115k per record + 720 per byte. Budget:
+   250k + 150k per record + 750 per byte (the test holds it to that). A
+   batch is filled until its budget would pass PARTI_GAZ, so no destination
+   is asked for more than one block comfortably holds. */
+const yayGazi = (adet, bayt) => 250000 + 150000 * adet + 750 * bayt;
+const PARTI_GAZ = 6000000;
+const secenek = (adet, bayt) => solidityPacked(["uint16", "uint8", "uint16", "uint8", "uint128"], [3, 1, 17, 1, yayGazi(adet, bayt)]);
+/* how many records from `ilk` fit one batch (at least one, at most 8) */
+function partiAdedi(boyutlar, ilk, son) {
+  let adet = 0, bayt = 0;
+  while (ilk + adet < son && adet < 8) {
+    const b = boyutlar[ilk + adet] || 0;
+    if (adet > 0 && yayGazi(adet + 1, bayt + b) > PARTI_GAZ) break;
+    adet++; bayt += b;
+  }
+  return { adet, bayt };
+}
 
 function adresler() {
   const s = fs.readFileSync(path.join(KOK, "docs", "js", "genesis-adres.js"), "utf8");
@@ -261,26 +281,50 @@ async function olc(kaydet = true) {
   return olcum;
 }
 
+/* The receiving core accepts a batch only when it starts at its current
+ * count; LayerZero executes unordered, so a later batch that lands first is
+ * dropped (15 Oct: 22 batches sent at once, most past the first per chain
+ * were lost though DELIVERED). So one batch per (target, origin) is in
+ * flight at a time: send it, wait until the target's count moves, repeat. */
 async function yay() {
   const kaynak = baglam(EV);
-  const evSayilari = {};
-  for (const a of ZINCIRLER) evSayilari[a] = Number(await israr(() => kaynak.c.kayitSayisi(EVM[a].eid)));
+  const evSayilari = {}, boyutlar = {};
+  for (const a of ZINCIRLER) {
+    evSayilari[a] = Number(await israr(() => kaynak.c.kayitSayisi(EVM[a].eid)));
+    boyutlar[a] = evSayilari[a] ? (await kayitlar(kaynak, EVM[a].eid)).map((k) => (k.veri && k.veri.length > 2 ? (k.veri.length - 2) / 2 : 0)) : [];
+  }
+  const hedefler = [];
   for (const hedef of ZINCIRLER.filter((a) => a !== EV)) {
     const h = baglam(hedef);
     if (!(await canli(h))) { console.log("yay " + hedef + ": zincirde degil"); continue; }
-    for (const ori of ZINCIRLER) {
-      const eid = EVM[ori].eid;
-      if (ori === hedef) continue;
-      const var_ = Number(await israr(() => h.c.kayitSayisi(eid)));
-      const eksik = evSayilari[ori] - var_;
-      if (eksik <= 0) continue;
-      for (let ilk = var_; ilk < evSayilari[ori]; ilk += 8) {
-        const adet = Math.min(8, evSayilari[ori] - ilk);
-        const opt = secenek(adet);
+    hedefler.push([hedef, h]);
+  }
+  for (let tur = 0; tur < 50; tur++) {
+    const yolda = [];
+    for (const [hedef, h] of hedefler) {
+      for (const ori of ZINCIRLER) {
+        const eid = EVM[ori].eid;
+        if (ori === hedef) continue;
+        const ilk = Number(await israr(() => h.c.kayitSayisi(eid)));
+        if (ilk >= evSayilari[ori]) continue;
+        const { adet, bayt } = partiAdedi(boyutlar[ori], ilk, evSayilari[ori]);
+        const opt = secenek(adet, bayt);
         const f = await israr(() => kaynak.c.yayUcreti(EVM[hedef].eid, eid, ilk, adet, opt));
         await tx(kaynak, "yay " + ori + "->" + hedef + " " + ilk + "+" + adet, () => kaynak.c.yay(EVM[hedef].eid, eid, ilk, adet, opt, { value: f.nativeFee }));
+        yolda.push({ h, hedef, eid, ilk });
       }
     }
+    if (!yolda.length) { console.log("yay: her zincir esit"); return; }
+    if (!UYGULA) { console.log("(kuru) ilk tur yukarida; sonraki turlar teslimden sonra gider"); return; }
+    /* wait up to 10 minutes for every batch of this round to land */
+    for (let i = 0; i < 60 && yolda.length; i++) {
+      await new Promise((r) => setTimeout(r, 10000));
+      for (let j = yolda.length - 1; j >= 0; j--) {
+        const y = yolda[j];
+        if (Number(await israr(() => y.h.c.kayitSayisi(y.eid))) > y.ilk) yolda.splice(j, 1);
+      }
+    }
+    if (yolda.length) throw new Error("teslim gelmedi: " + yolda.map((y) => y.hedef + " " + y.ilk).join(", "));
   }
 }
 

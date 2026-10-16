@@ -87,7 +87,7 @@ export async function ciz({ kayit, param }) {
      blocks are only for addresses that switched to them on HyperCore.
      Tokens launched elsewhere still reach HyperEVM: the spread is delivered
      by LayerZero's executor, which uses big blocks. */
-  const LAUNCH_YOK = { hyperevm: "HyperEVM blocks hold 3M gas and a launch needs about 7M, so launches cannot run there. Launch on any other chain and spread the token to HyperEVM in the next step." };
+  const LAUNCH_YOK = { hyperevm: "HyperEVM blocks hold 3M gas and a launch needs about 7M, so launches cannot run there. Launch on any other chain and spread the token to HyperEVM in the next step.", ethereum: "Launches are not open on Ethereum yet: its launchpad has not been tested end to end. Launch on any other chain and spread the token to Ethereum in the next step." };
 
   const ozetKap = el("div");
   const ozetiCiz = () => { temizle(ozetKap).append(odemeOzeti(durum)); };

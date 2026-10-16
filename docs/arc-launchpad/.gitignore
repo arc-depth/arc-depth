@@ -36,3 +36,7 @@ aptos/**/build/
 
 # GENESIS private knowledge: never committed, never mirrored to the site
 ozel/
+# Aptos devnet end-to-end run: local keys and scratch output
+aptos/devnet-e2e/
+# Sui devnet end-to-end run: isolated client config, keys, scratch output
+sui/devnet-e2e/
