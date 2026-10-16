@@ -34,7 +34,7 @@ use pinocchio::{
     sysvars::{clock::Clock, rent::Rent, Sysvar},
     AccountView, Address, ProgramResult,
 };
-use pinocchio_system::instructions::CreateAccount;
+use pinocchio_system::instructions::{Allocate, Assign, CreateAccount, Transfer as SystemTransfer};
 use pinocchio_token::{
     instructions::{InitializeAccount3, Transfer},
 
@@ -90,9 +90,20 @@ fn transfer(from: &AccountView, to: &AccountView, auth: &AccountView, amount: u6
     match signer { None => t.invoke(), Some(s) => t.invoke_signed(&[Signer::from(s)]) }
 }
 
+/// Creates a PDA account even if someone has already sent lamports to its
+/// address: a plain CreateAccount fails on any balance, so a deterministic
+/// address could otherwise be blocked forever for the price of its rent.
 fn create_pda(payer: &AccountView, new: &AccountView, space: usize, owner: &Address, seeds: &[Seed]) -> ProgramResult {
-    let lamports = Rent::get()?.try_minimum_balance(space)?;
-    CreateAccount { from: payer, to: new, lamports, space: space as u64, owner }.invoke_signed(&[Signer::from(seeds)])
+    let need = Rent::get()?.try_minimum_balance(space)?;
+    let have = new.lamports();
+    if have == 0 {
+        return CreateAccount { from: payer, to: new, lamports: need, space: space as u64, owner }.invoke_signed(&[Signer::from(seeds)]);
+    }
+    if have < need {
+        SystemTransfer { from: payer, to: new, lamports: need - have }.invoke()?;
+    }
+    Allocate { account: new, space: space as u64 }.invoke_signed(&[Signer::from(seeds)])?;
+    Assign { account: new, owner }.invoke_signed(&[Signer::from(seeds)])
 }
 
 fn create_token_pda(payer: &AccountView, new: &AccountView, mint: &AccountView, authority: &Address, seeds: &[Seed]) -> ProgramResult {

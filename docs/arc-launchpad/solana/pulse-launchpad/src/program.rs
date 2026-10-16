@@ -61,7 +61,7 @@ use pinocchio::{
     sysvars::{clock::Clock, rent::Rent, Sysvar},
     AccountView, Address, ProgramResult,
 };
-use pinocchio_system::instructions::CreateAccount;
+use pinocchio_system::instructions::{Allocate, Assign, CreateAccount, Transfer as SystemTransfer};
 use pinocchio_token::instructions::{AuthorityType, Burn, InitializeAccount3, MintTo, SetAuthority, Transfer};
 
 /// the deployer key allowed to send Initialize, once
@@ -72,6 +72,14 @@ pub const INITIALIZER: Address = Address::from_str_const("5H9J7nHFwZBaBVF2HA4Syv
 pub const INITIALIZER: Address = Address::from_str_const("21cwJQt3XrXk861zDhUzUvAq6PTzradj9ujhf9A3euZA");
 pub const TOKEN_PROGRAM: Address = Address::from_str_const("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
 pub const TOKEN_METADATA_PROGRAM: Address = Address::from_str_const("metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s");
+pub const ATA_PROGRAM: Address = Address::from_str_const("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL");
+
+/// The associated token account of `owner` for `mint`. Fee accounts must be
+/// this one: if it is ever closed, anyone can recreate it at the same
+/// address, so trading never depends on an account someone can remove.
+fn ata(owner: &Address, mint: &Address) -> Address {
+    Address::find_program_address(&[owner.as_ref(), TOKEN_PROGRAM.as_ref(), mint.as_ref()], &ATA_PROGRAM).0
+}
 
 const TOKEN_ACCOUNT_LEN: usize = 165;
 const MINT_LEN: usize = 82;
@@ -128,9 +136,20 @@ fn transfer(from: &AccountView, to: &AccountView, auth: &AccountView, amount: u6
     match signer { None => t.invoke(), Some(s) => t.invoke_signed(&[Signer::from(s)]) }
 }
 
+/// Creates a PDA account even if someone has already sent lamports to its
+/// address: a plain CreateAccount fails on any balance, so a deterministic
+/// address could otherwise be blocked forever for the price of its rent.
 fn create_pda(payer: &AccountView, new: &AccountView, space: usize, owner: &Address, seeds: &[Seed]) -> ProgramResult {
-    let lamports = Rent::get()?.try_minimum_balance(space)?;
-    CreateAccount { from: payer, to: new, lamports, space: space as u64, owner }.invoke_signed(&[Signer::from(seeds)])
+    let need = Rent::get()?.try_minimum_balance(space)?;
+    let have = new.lamports();
+    if have == 0 {
+        return CreateAccount { from: payer, to: new, lamports: need, space: space as u64, owner }.invoke_signed(&[Signer::from(seeds)]);
+    }
+    if have < need {
+        SystemTransfer { from: payer, to: new, lamports: need - have }.invoke()?;
+    }
+    Allocate { account: new, space: space as u64 }.invoke_signed(&[Signer::from(seeds)])?;
+    Assign { account: new, owner }.invoke_signed(&[Signer::from(seeds)])
 }
 
 fn create_token_pda(payer: &AccountView, new: &AccountView, mint: &AccountView, authority: &Address, seeds: &[Seed]) -> ProgramResult {
@@ -205,6 +224,8 @@ fn initialize(program_id: &Address, accounts: &mut [AccountView], data: &[u8]) -
     ensure(config.data_len() == 0, E_ALREADY_INITIALIZED)?;
     let dm = mint_info(&dollar_mint)?;
     ensure(token_account(&platform)?.0 == *dollar_mint.address(), E_BAD_ACCOUNT)?;
+    let platform_owner = addr_at(&platform.try_borrow()?, 32)?;
+    ensure(*platform.address() == ata(&platform_owner, dollar_mint.address()), E_BAD_ACCOUNT)?;
     let (cp, cb) = pda(&[b"config"], program_id);
     ensure(*config.address() == cp, E_BAD_ACCOUNT)?;
     let cbs = [cb];
@@ -242,6 +263,8 @@ fn launch(program_id: &Address, accounts: &mut [AccountView], data: &[u8], backe
     let mi = mint_info(&mint)?;
     ensure(mi.supply == 0 && mi.authority == Some(lp) && !mi.freeze && *mint.address() != cfg.dollar_mint, E_BAD_MINT)?;
     ensure(token_account(&f_d)?.0 == cfg.dollar_mint && token_account(&f_t)?.0 == *mint.address(), E_BAD_ACCOUNT)?;
+    // the founder's fees go to the founder's own associated account, which can always be recreated
+    ensure(*f_d.address() == ata(founder.address(), &cfg.dollar_mint), E_BAD_ACCOUNT)?;
     ensure(*platform.address() == cfg.platform && *dollar_mint.address() == cfg.dollar_mint, E_BAD_ACCOUNT)?;
 
     let (lbs, ptbs, pdbs, vbs) = ([lb], [ptb], [pdb], [vb]);

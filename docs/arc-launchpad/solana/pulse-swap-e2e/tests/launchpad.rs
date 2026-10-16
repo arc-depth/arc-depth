@@ -8,7 +8,7 @@
 //!   cd solana/pulse-swap-e2e && cargo test
 
 use litesvm::LiteSVM;
-use litesvm_token::{get_spl_account, spl_token::state::Account as TokenAccount, CreateAccount, CreateMint, MintTo};
+use litesvm_token::{get_spl_account, spl_token::state::Account as TokenAccount, CreateAccount, CreateAssociatedTokenAccount, CreateMint, MintTo};
 use solana_address::Address;
 use solana_clock::Clock;
 use solana_instruction::{AccountMeta, Instruction};
@@ -56,6 +56,17 @@ impl Env {
         if amount > 0 { MintTo::new(&mut self.svm, &self.admin, mint, &a, amount).send().unwrap(); }
         a
     }
+    /// the owner's associated token account (fee accounts must be these)
+    fn ata(&mut self, mint: &Address, owner: &Address, amount: u64) -> Address {
+        let ata_program = Address::from_str_const("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL");
+        let a = Address::find_program_address(&[owner.as_ref(), TOKEN.as_ref(), mint.as_ref()], &ata_program).0;
+        // created once per owner and mint; later calls only top it up
+        if self.svm.get_account(&a).map_or(true, |x| x.data.is_empty()) {
+            CreateAssociatedTokenAccount::new(&mut self.svm, &self.admin, mint).owner(owner).send().unwrap();
+        }
+        if amount > 0 { MintTo::new(&mut self.svm, &self.admin, mint, &a, amount).send().unwrap(); }
+        a
+    }
     fn user(&mut self) -> Keypair { let k = Keypair::new(); self.svm.airdrop(&k.pubkey(), 10_000_000_000).unwrap(); k }
     fn later(&mut self, secs: i64) {
         let mut c: Clock = self.svm.get_sysvar();
@@ -86,7 +97,7 @@ fn setup() -> Env {
     let mut e = Env { svm, pid, swap, admin, usdc, config: Address::default(), platform: Address::default() };
     e.config = e.pda(&[b"config"]);
     let po = Keypair::new().pubkey();
-    e.platform = e.account(&usdc, &po, 0);
+    e.platform = e.ata(&usdc, &po, 0);
     e
 }
 
@@ -135,7 +146,7 @@ fn launch_keys(e: &Env, f: &Keypair, l: &Launch) -> Vec<AccountMeta> {
 fn accounts_for(e: &mut Env, f: &Keypair, mint: Address, dollars: u64) -> Launch {
     let launch = e.pda(&[b"launch", mint.as_ref()]);
     let usdc = e.usdc;
-    let f_d = e.account(&usdc, &f.pubkey(), dollars);
+    let f_d = e.ata(&usdc, &f.pubkey(), dollars);
     let f_t = e.account(&mint, &f.pubkey(), 0);
     Launch { mint, launch, pt: e.pda(&[b"pt", launch.as_ref()]), pd: e.pda(&[b"pd", launch.as_ref()]), vault: e.pda(&[b"vault", launch.as_ref()]), f_d, f_t }
 }
@@ -535,4 +546,20 @@ fn every_launch_gets_a_name_and_symbol_that_no_one_can_change() {
     d.extend(u64s(&[SUPPLY, 20 * USD, 100 * USD, 10_000, 0]));
     d.extend(names("Pulse Test", "PTST", ""));
     assert!(e.send(k, d, &[&founder]).is_err(), "another mint's metadata account accepted");
+}
+
+#[test]
+fn fees_only_go_to_associated_token_accounts() {
+    // a fee account that is not the owner's ATA could be closed and not recreated at the same address
+    let mut e = setup();
+    init(&mut e);
+    let f = e.user();
+    let pid = e.pid;
+    let m = mint_with(&mut e, |x| Address::find_program_address(&[b"launch", x.as_ref()], &pid).0, false);
+    let mut l = accounts_for(&mut e, &f, m, 1000 * USD);
+    let usdc = e.usdc;
+    l.f_d = e.account(&usdc, &f.pubkey(), 1000 * USD);
+    assert!(try_launch(&mut e, &f, &l, SUPPLY, 20 * USD, 100 * USD, 10_000).is_err(), "a non-ATA founder fee account was accepted");
+    let l2 = accounts_for(&mut e, &f, m, 0);
+    assert!(try_launch(&mut e, &f, &l2, SUPPLY, 20 * USD, 100 * USD, 10_000).is_ok(), "the founder's ATA works");
 }

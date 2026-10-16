@@ -189,3 +189,17 @@ fn liquidity_in_and_out_and_never_more_than_held() {
     assert_eq!(e.bal(&p.tv), 1000, "only the locked dust stays");
     assert_eq!(e.bal(&p.dv), 1000);
 }
+
+#[test]
+fn a_pool_address_that_already_holds_lamports_still_opens() {
+    // anyone can send SOL to a deterministic PDA before it exists; creation must still work
+    let mut e = setup();
+    let c = init(&mut e);
+    let lp = e.user();
+    let tok = e.mint();
+    let p = e.pda(&[b"pool", tok.as_ref()]);
+    e.svm.airdrop(&p, 890_880).unwrap();
+    let (pool, _, _) = open(&mut e, &c, &lp, tok, 1000 * USD, 1000 * USD);
+    assert_eq!(e.bal(&pool.tv), 1000 * USD);
+    assert!(e.svm.get_account(&pool.p).unwrap().owner == e.pid, "the pool account belongs to the program");
+}

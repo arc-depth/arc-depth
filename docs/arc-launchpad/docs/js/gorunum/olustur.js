@@ -23,7 +23,15 @@ import { tokenOku, rotalar, asgariCikti } from "../teminat-bul.js";
 import { AGLAR, AG, IKIZ_SECENEK, agBul } from "../aglar.js";
 import { rpcPost } from "../ag-okur.js";
 import { Interface } from "../../vendor/ethers.min.js";
-const APTOS_ACIK = true;
+/* Aptos is OFF until the launchpad account's key is made unsignable: that
+   account owns every vault and pool object, so its key could withdraw them
+   (arastirma/7saat/guvenlik-move-solana.md, C-1). */
+const APTOS_ACIK = false;
+/* Pasting a token as collateral is OFF on every chain: depth can be added
+   and removed around the conversion inside one transaction, so the pool's
+   age and 10x depth check can be satisfied with borrowed depth (same file,
+   H-1). Collateral stays in dollars until the fixed generation is live. */
+const YAPISTIR_ACIK = false;
 import { SUI, suiCuzdan, launchEt as suiLaunchEt, teminatHavuzu as suiTeminatHavuzu, acilisTokeni as suiAcilis } from "../sui.js";
 import { APTOS, aptosCuzdan, teminatHavuzu, acilisTokeni, islemBekle, launchTokeni, launchDolar, launchTokenle, usdcBakiye } from "../aptos.js";
 
@@ -75,7 +83,7 @@ export async function ciz({ kayit, param }) {
     rota: null,           // its best route, from teminat-bul.js
     /* Which chain the launch happens on. Any of the nine; the token can
        then be spread to all the others. */
-    ag: (param && param.get && param.get("zincir") === "sui" ? SUI : APTOS_ACIK && param && param.get && param.get("zincir") === "aptos" ? APTOS : agBul(param && param.get && param.get("zincir"))) || agBul("base")
+    ag: (param && param.get && param.get("zincir") === "sui" ? SUI : APTOS_ACIK && param && param.get && param.get("zincir") === "aptos" ? APTOS : agBul(param && param.get && param.get("zincir"))) || SUI
   };
 
   /* LOCAL COLLATERAL (nesil 3, dagitim-nesil3.json). On Arc, Robinhood,
@@ -93,6 +101,18 @@ export async function ciz({ kayit, param }) {
      Tokens launched elsewhere still reach HyperEVM: the spread is delivered
      by LayerZero's executor, which uses big blocks. */
   const LAUNCH_YOK = { hyperevm: "HyperEVM blocks hold 3M gas and a launch needs about 7M, so launches cannot run there. Launch on any other chain and spread the token to HyperEVM in the next step.", ethereum: "Launches are not open on Ethereum yet: its launchpad has not been tested end to end. Launch on any other chain and spread the token to Ethereum in the next step." };
+  /* SECURITY HOLD, 16 Oct 2026 (arastirma/7saat/guvenlik-evm.md, C-1): the
+     EVM collateral vaults' buyback check can be passed by moving tokens in
+     and out of the v4 PoolManager inside one transaction. No EVM launch
+     exists yet, so nothing is exposed; new EVM launches stay closed until
+     the fixed vault generation is deployed. Aptos and Sui use other code
+     and stay open. */
+  const EVM_DURAKLATILDI = true;
+  const DURAKLATILAN = new Set();
+  if (EVM_DURAKLATILDI) for (const a of AGLAR) if (!LAUNCH_YOK[a.anahtar]) {
+    DURAKLATILAN.add(a.anahtar);
+    LAUNCH_YOK[a.anahtar] = "Launches on " + a.ad + " are paused while the collateral vault gets a security upgrade. Launch on Sui or Aptos now.";
+  }
 
   const ozetKap = el("div");
   const ozetiCiz = () => { temizle(ozetKap).append(odemeOzeti(durum)); };
@@ -105,7 +125,7 @@ export async function ciz({ kayit, param }) {
     for (const a of AGLAR) {
       agDugmeleri.append(el("button", {
         sinif: "dugme " + (a.id === durum.ag.id ? "dugme--marka" : "dugme--sessiz"),
-        attr: { type: "button" }, yazi: LAUNCH_YOK[a.anahtar] ? a.ad + " (spread only)" : a.ad,
+        attr: { type: "button" }, yazi: DURAKLATILAN.has(a.anahtar) ? a.ad + " (paused)" : LAUNCH_YOK[a.anahtar] ? a.ad + " (spread only)" : a.ad,
         on: { click: () => { durum.ag = a; durum.teminatToken = null; durum.rota = null; agiCiz(); teminatiCiz(); } }
       }));
     }
@@ -206,6 +226,7 @@ export async function ciz({ kayit, param }) {
     return sonuc.filter((x) => x.status === "fulfilled" && x.value).map((x) => x.value);
   };
   const baskaZincirOner = async (ca, neden) => {
+    if (!CA_ZINCIRLERI().length) { bulDurum.textContent = neden + " Launches on the EVM chains are paused for a security upgrade, so an EVM token cannot back a launch right now; a Sui or Aptos token can."; return; }
     bulDurum.textContent = neden + " Looking on the other chains…";
     const bulunan = await evmAra(ca, durum.ag);
     if (!bulunan.length) { bulDurum.textContent = neden + " It has no pool the launch can buy through on any chain that takes a pasted token (" + CA_ZINCIRLERI().map((a) => a.ad).join(", ") + ")."; return; }
@@ -263,6 +284,10 @@ export async function ciz({ kayit, param }) {
 
   const teminatiCiz = () => {
     temizle(teminatKap);
+    if (!YAPISTIR_ACIK) {
+      teminatKap.append(not("Collateral: " + durum.ag.dolarSembol + " on " + durum.ag.ad + ". Backing a launch with another token is paused for a security fix; it returns with the next launchpad generation.", "bilgi"));
+      return;
+    }
     if (durum.ag.nesil !== 3 && durum.ag.nesil !== "move") {
       teminatKap.append(not("Collateral: " + durum.ag.dolarSembol + " on " + durum.ag.ad + ". To back the token with another token, paste its address: the launch moves to a chain where it trades.", "bilgi"));
       teminatKap.append(el("div", { sinif: "satir", attr: { style: "gap:8px" } }, [caGirdi,

@@ -20,3 +20,7 @@ pinocchio-system = "0.6.1"
 
 [lints.rust]
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(target_os, values("solana"))', 'cfg(feature, values("custom-heap", "custom-panic"))'] }
+
+[profile.release]
+# arithmetic that would wrap aborts instead (cheap insurance for future edits)
+overflow-checks = true
