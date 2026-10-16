@@ -44,6 +44,10 @@ module pulse::launchpad {
     use aptos_framework::event;
     use aptos_framework::object::{Self, Object, ExtendRef};
     use aptos_framework::fungible_asset::{Self, Metadata, BurnRef, FungibleStore, FungibleAsset};
+    // stores move value only through the dispatch-aware calls: Circle's USDC on
+    // Aptos runs deposit/withdraw hooks (blocklist, pause), and the plain
+    // fungible_asset calls abort on any asset that has them
+    use aptos_framework::dispatchable_fungible_asset;
     use aptos_framework::primary_fungible_store;
     use aptos_framework::timestamp;
 
@@ -229,16 +233,16 @@ module pulse::launchpad {
         let pool_dollars = fungible_asset::create_store(&pool_dctor, collateral);
         let pool_dref = object::generate_extend_ref(&pool_dctor);
 
-        fungible_asset::deposit(pool_tokens, fungible_asset::mint(&mint_ref, supply));
+        dispatchable_fungible_asset::deposit(pool_tokens, fungible_asset::mint(&mint_ref, supply));
         // mint_ref is dropped here: supply is final, and all of it is in the pool
 
-        fungible_asset::deposit(vault, dollars);
+        dispatchable_fungible_asset::deposit(vault, dollars);
         if (option::is_some(&target)) {
             let fa = option::extract(&mut target);
             let k = fungible_asset::metadata_from_asset(&fa);
             let kctor = object::create_sticky_object(@pulse);
             let kstore = fungible_asset::create_store(&kctor, k);
-            fungible_asset::deposit(kstore, fa);
+            dispatchable_fungible_asset::deposit(kstore, fa);
             move_to(&token_signer, Backed { target: k, store: kstore, store_ref: object::generate_extend_ref(&kctor) });
         };
         option::destroy_none(target);
@@ -271,8 +275,8 @@ module pulse::launchpad {
         let tax = mul_ppm(amount, l.tax_ppm + extra_tax_ppm);
         primary_fungible_store::deposit(l.founder, fungible_asset::extract(&mut dollars, to_founder));
         primary_fungible_store::deposit(borrow_global<Config>(@pulse).platform, fungible_asset::extract(&mut dollars, to_platform));
-        fungible_asset::deposit(l.pool_dollars, fungible_asset::extract(&mut dollars, to_depth));
-        fungible_asset::deposit(l.vault, fungible_asset::extract(&mut dollars, tax));
+        dispatchable_fungible_asset::deposit(l.pool_dollars, fungible_asset::extract(&mut dollars, to_depth));
+        dispatchable_fungible_asset::deposit(l.vault, fungible_asset::extract(&mut dollars, tax));
         (dollars, to_founder + to_platform + to_depth, tax)
     }
 
@@ -298,7 +302,7 @@ module pulse::launchpad {
         // no trade fee, no tax, no snipe; every remaining dollar is pool bid
         let (rest, fee, tax, snipe) = if (opening) (paid, 0, 0, 0) else {
             let snipe = mul_ppm(dollars_in, snipe_ppm_at(timestamp::now_seconds() - l.opened_at));
-            fungible_asset::deposit(l.pool_dollars, fungible_asset::extract(&mut paid, snipe));
+            dispatchable_fungible_asset::deposit(l.pool_dollars, fungible_asset::extract(&mut paid, snipe));
             let (r, f, t) = route(l, 0, paid);
             (r, f, t, snipe)
         };
@@ -306,9 +310,9 @@ module pulse::launchpad {
         let t = (fungible_asset::balance(l.pool_tokens) as u128);
         let out = ((t * (x as u128) / (y + (x as u128))) as u64);
         assert!(out >= min_tokens && out > 0, E_SLIPPAGE);
-        fungible_asset::deposit(l.pool_dollars, rest);
+        dispatchable_fungible_asset::deposit(l.pool_dollars, rest);
         let pool_signer = object::generate_signer_for_extending(&l.pool_ref);
-        primary_fungible_store::deposit(signer::address_of(buyer), fungible_asset::withdraw(&pool_signer, l.pool_tokens, out));
+        primary_fungible_store::deposit(signer::address_of(buyer), dispatchable_fungible_asset::withdraw(&pool_signer, l.pool_tokens, out));
         event::emit(Traded { token: addr, trader: signer::address_of(buyer), buy: true, dollars: dollars_in, tokens: out, fee: fee + snipe, tax });
     }
 
@@ -333,9 +337,9 @@ module pulse::launchpad {
         let gross = ((y * (tokens_in as u128) / (t + (tokens_in as u128))) as u64);
         // the virtual reserve is never paid out
         if (gross > real) gross = real;
-        fungible_asset::deposit(l.pool_tokens, primary_fungible_store::withdraw(seller, token, tokens_in));
+        dispatchable_fungible_asset::deposit(l.pool_tokens, primary_fungible_store::withdraw(seller, token, tokens_in));
         let pool_signer = object::generate_signer_for_extending(&l.pool_dref);
-        let dollars = fungible_asset::withdraw(&pool_signer, l.pool_dollars, gross);
+        let dollars = dispatchable_fungible_asset::withdraw(&pool_signer, l.pool_dollars, gross);
         let (rest, fee, tax) = route(l, extra, dollars);
         let net = fungible_asset::amount(&rest);
         assert!(net >= min_dollars, E_SLIPPAGE);
@@ -360,7 +364,7 @@ module pulse::launchpad {
         fungible_asset::burn(&l.burn_ref, primary_fungible_store::withdraw(holder, token, amount));
         if (payout > 0) {
             let vault_signer = object::generate_signer_for_extending(&l.vault_ref);
-            primary_fungible_store::deposit(holder_addr, fungible_asset::withdraw(&vault_signer, l.vault, payout));
+            primary_fungible_store::deposit(holder_addr, dispatchable_fungible_asset::withdraw(&vault_signer, l.vault, payout));
         };
         event::emit(Redeemed { token: addr, holder: holder_addr, burned: amount, payout });
     }
@@ -381,11 +385,11 @@ module pulse::launchpad {
         fungible_asset::burn(&l.burn_ref, primary_fungible_store::withdraw(holder, token, amount));
         if (pay_d > 0) {
             let vs = object::generate_signer_for_extending(&l.vault_ref);
-            primary_fungible_store::deposit(holder_addr, fungible_asset::withdraw(&vs, l.vault, pay_d));
+            primary_fungible_store::deposit(holder_addr, dispatchable_fungible_asset::withdraw(&vs, l.vault, pay_d));
         };
         if (pay_k > 0) {
             let ks = object::generate_signer_for_extending(&b.store_ref);
-            primary_fungible_store::deposit(holder_addr, fungible_asset::withdraw(&ks, b.store, pay_k));
+            primary_fungible_store::deposit(holder_addr, dispatchable_fungible_asset::withdraw(&ks, b.store, pay_k));
         };
         event::emit(Redeemed { token: addr, holder: holder_addr, burned: amount, payout: pay_d });
     }
@@ -407,7 +411,7 @@ module pulse::launchpad {
         assert!(exists<Launch>(addr), E_NOT_A_LAUNCH);
         assert!(amount > 0, E_ZERO_AMOUNT);
         let l = borrow_global<Launch>(addr);
-        fungible_asset::deposit(l.vault, primary_fungible_store::withdraw(from, l.collateral, amount));
+        dispatchable_fungible_asset::deposit(l.vault, primary_fungible_store::withdraw(from, l.collateral, amount));
         event::emit(Funded { token: addr, from: signer::address_of(from), amount });
     }
 

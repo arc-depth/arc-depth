@@ -23,6 +23,7 @@ import { tokenOku, rotalar, asgariCikti } from "../teminat-bul.js";
 import { AGLAR, AG, IKIZ_SECENEK, agBul } from "../aglar.js";
 import { rpcPost } from "../ag-okur.js";
 import { Interface } from "../../vendor/ethers.min.js";
+const APTOS_ACIK = false;
 import { APTOS, aptosCuzdan, teminatHavuzu, acilisTokeni, islemBekle, launchTokeni, launchDolar, launchTokenle, usdcBakiye } from "../aptos.js";
 
 /* ---- reads on whichever chain the launch is on ----------------------- */
@@ -73,7 +74,7 @@ export async function ciz({ kayit, param }) {
     rota: null,           // its best route, from teminat-bul.js
     /* Which chain the launch happens on. Any of the nine; the token can
        then be spread to all the others. */
-    ag: (param && param.get && param.get("zincir") === "aptos" ? APTOS : agBul(param && param.get && param.get("zincir"))) || agBul("base")
+    ag: (APTOS_ACIK && param && param.get && param.get("zincir") === "aptos" ? APTOS : agBul(param && param.get && param.get("zincir"))) || agBul("base")
   };
 
   /* LOCAL COLLATERAL (nesil 3, dagitim-nesil3.json). On Arc, Robinhood,
@@ -107,8 +108,11 @@ export async function ciz({ kayit, param }) {
         on: { click: () => { durum.ag = a; durum.teminatToken = null; durum.rota = null; agiCiz(); teminatiCiz(); } }
       }));
     }
-    /* Aptos: the Move launchpad + PulseSwap, live and immutable since 16 Oct */
-    agDugmeleri.append(el("button", {
+    /* Aptos: OFF until the dispatch-aware launchpad is published. The 16 Oct
+       packages move USDC with fungible_asset::deposit, which Aptos refuses for
+       Circle's USDC (it has deposit/withdraw hooks); every launch would abort.
+       Turned off rather than left as a button that cannot work. */
+    if (APTOS_ACIK) agDugmeleri.append(el("button", {
       sinif: "dugme " + (durum.ag.anahtar === "aptos" ? "dugme--marka" : "dugme--sessiz"),
       attr: { type: "button" }, yazi: "Aptos",
       on: { click: () => { durum.ag = APTOS; durum.teminatToken = null; durum.rota = null; agiCiz(); teminatiCiz(); } }

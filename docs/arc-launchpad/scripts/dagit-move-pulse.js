@@ -4,7 +4,7 @@
  * mainnet, published immutable and initialized once.
  *
  *   NODE_PATH="C:/Users/omen/araclar/aptossdk/node_modules;C:/Users/omen/araclar/suisdk/node_modules" \
- *     node scripts/dagit-move-pulse.js <aptos|sui> [--uygula]
+ *     node scripts/dagit-move-pulse.js <aptos|aptos2|sui> [--uygula]
  *
  * Without --uygula every step is built and simulated against mainnet and
  * nothing is sent. Each step is skipped when the chain already shows it
@@ -16,6 +16,12 @@
  *   3 launchpad::initialize     collateral = native USDC, platform = deployer
  *   4 launchpad::register_adapter<swap::Witness>   PulseSwap is the only adapter
  *   5 swap::initialize          platform = deployer, FTHM, sink = SINK
+ * APTOS2 (16 Oct, the fix): the 'aptos' packages move USDC with plain
+ *   fungible_asset::deposit/withdraw, which Aptos refuses for Circle's USDC
+ *   (it has dispatch hooks); they are immutable, so the dispatch-aware
+ *   version goes to a fresh account (APTOS_PULSE2_PRIVATE_KEY, created in
+ *   .env if absent, funded with FONLAMA_APT from the deployer). Same steps;
+ *   the platform address stays the deployer's.
  * SUI
  *   1 publish one package holding pulse::launchpad and pulse_swap::swap
  *     (--with-unpublished-dependencies); init creates InitCap, AdapterCap,
@@ -56,13 +62,32 @@ const kayit = fs.existsSync(KAYIT) ? JSON.parse(fs.readFileSync(KAYIT, "utf8")) 
 const yaz = () => { if (UYGULA) fs.writeFileSync(KAYIT, JSON.stringify(kayit, null, 1)); };
 
 /* ---- Aptos ------------------------------------------------------------ */
-async function aptos() {
+const FONLAMA_APT = 0.5;
+async function aptos(ikinci = false) {
   const { Aptos, AptosConfig, Network, Account, Ed25519PrivateKey, MoveVector } = require("@aptos-labs/ts-sdk");
   const ag = new Aptos(new AptosConfig({ network: Network.MAINNET }));
-  const hesap = Account.fromPrivateKey({ privateKey: new Ed25519PrivateKey(anahtar("APTOS_PRIVATE_KEY")) });
+  const dagitici = Account.fromPrivateKey({ privateKey: new Ed25519PrivateKey(anahtar("APTOS_PRIVATE_KEY")) });
+  if (ikinci && !/^APTOS_PULSE2_PRIVATE_KEY\s*=/m.test(fs.readFileSync(path.join(KOK, ".env"), "utf8"))) {
+    // a fresh key, written only if absent: replacing one would orphan its account
+    fs.appendFileSync(path.join(KOK, ".env"), "\n# ARC PULSE launchpad v2 on Aptos (dispatch-aware), 16 Oct 2026\nAPTOS_PULSE2_PRIVATE_KEY=" + require("crypto").randomBytes(32).toString("hex") + "\n");
+  }
+  const hesap = ikinci ? Account.fromPrivateKey({ privateKey: new Ed25519PrivateKey(anahtar("APTOS_PULSE2_PRIVATE_KEY")) }) : dagitici;
   const P = hesap.accountAddress.toString();
-  const k = (kayit.aptos = kayit.aptos || { adres: P, tx: {} });
-  console.log("APTOS  " + (UYGULA ? "UYGULA" : "KURU") + "   hesap " + P + "   bakiye " + (await ag.getAccountAPTAmount({ accountAddress: P })) / 1e8 + " APT");
+  const PLATFORM = dagitici.accountAddress.toString();
+  const ad = ikinci ? "aptos2" : "aptos";
+  const k = (kayit[ad] = kayit[ad] || { adres: P, tx: {} });
+  const bakiye = async (a) => (await ag.getAccountAPTAmount({ accountAddress: a }).catch(() => 0)) / 1e8;
+  console.log(ad.toUpperCase() + "  " + (UYGULA ? "UYGULA" : "KURU") + "   hesap " + P + "   bakiye " + (await bakiye(P)) + " APT");
+  if (ikinci && (await bakiye(P)) < FONLAMA_APT / 2) {
+    const tx = await ag.transaction.build.simple({ sender: dagitici.accountAddress, data: { function: "0x1::aptos_account::transfer", functionArguments: [P, Math.round(FONLAMA_APT * 1e8)] } });
+    const [sim] = await ag.transaction.simulate.simple({ signerPublicKey: dagitici.publicKey, transaction: tx });
+    if (!sim.success) throw new Error("fonlama simulasyon: " + sim.vm_status);
+    if (!UYGULA) { console.log("  (kuru) fonlama " + FONLAMA_APT + " APT dagiticidan".padEnd(34) + "simulasyon tamam; sonraki adimlar fonlamadan sonra simule edilir"); return; }
+    const g = await ag.signAndSubmitTransaction({ signer: dagitici, transaction: tx });
+    const r = await ag.waitForTransaction({ transactionHash: g.hash });
+    console.log("  fonlama " + FONLAMA_APT + " APT".padEnd(30) + g.hash + " " + r.vm_status);
+    k.tx.fonlama = g.hash; yaz();
+  }
 
   const moduller = async () => (await ag.getAccountModules({ accountAddress: P })).map((m) => m.abi.name);
   const kaynakVar = async (t) => ag.getAccountResource({ accountAddress: P, resourceType: t }).then(() => true).catch(() => false);
@@ -98,19 +123,19 @@ async function aptos() {
   else console.log("  publish PulseSwap".padEnd(42) + "tamam");
   if (!(await moduller()).includes("swap")) { console.log("  (kuru) sonraki adimlar PulseSwap yayinlaninca simule edilebilir"); return; }
 
-  if (!(await kaynakVar(P + "::launchpad::Config"))) await gonder("launchpad::initialize", { function: P + "::launchpad::initialize", functionArguments: [APTOS_USDC, P] });
+  if (!(await kaynakVar(P + "::launchpad::Config"))) await gonder("launchpad::initialize", { function: P + "::launchpad::initialize", functionArguments: [APTOS_USDC, PLATFORM] });
   else console.log("  launchpad::initialize".padEnd(42) + "tamam");
   const cfg = await ag.getAccountResource({ accountAddress: P, resourceType: P + "::launchpad::Config" }).catch(() => null);
   if (cfg && !(cfg.adapter && cfg.adapter.vec && cfg.adapter.vec.length)) await gonder("launchpad::register_adapter<swap::Witness>", { function: P + "::launchpad::register_adapter", typeArguments: [P + "::swap::Witness"], functionArguments: [] });
   else if (cfg) console.log("  launchpad::register_adapter".padEnd(42) + "tamam");
-  if (!(await kaynakVar(P + "::swap::Fees"))) await gonder("swap::initialize", { function: P + "::swap::initialize", functionArguments: [P, APTOS_FTHM, SINK] });
+  if (!(await kaynakVar(P + "::swap::Fees"))) await gonder("swap::initialize", { function: P + "::swap::initialize", functionArguments: [PLATFORM, APTOS_FTHM, SINK] });
   else console.log("  swap::initialize".padEnd(42) + "tamam");
 
   if (UYGULA) {
     const c = await ag.getAccountResource({ accountAddress: P, resourceType: P + "::launchpad::Config" });
     const f = await ag.getAccountResource({ accountAddress: P, resourceType: P + "::swap::Fees" });
     const pk = await ag.getAccountResource({ accountAddress: P, resourceType: "0x1::code::PackageRegistry" });
-    Object.assign(k, { launchpad: P + "::launchpad", swap: P + "::swap", usdc: APTOS_USDC, fthm: APTOS_FTHM, sink: SINK, platform: P,
+    Object.assign(k, { launchpad: P + "::launchpad", swap: P + "::swap", usdc: APTOS_USDC, fthm: APTOS_FTHM, sink: SINK, platform: PLATFORM,
       paketler: pk.packages.map((x) => ({ ad: x.name, politika: x.upgrade_policy.policy })) });
     yaz();
     console.log("  dogrulama: teminat " + c.collateral.inner + ", adaptor " + JSON.stringify(c.adapter.vec) + ", FTHM " + f.fthm.inner + ", sink " + f.fthm_sink);
@@ -186,5 +211,5 @@ async function sui() {
   }
 }
 
-({ aptos, sui }[ZINCIR] || (() => Promise.reject(new Error("kullanim: dagit-move-pulse.js <aptos|sui> [--uygula]"))))()
+({ aptos: () => aptos(false), aptos2: () => aptos(true), sui }[ZINCIR] || (() => Promise.reject(new Error("kullanim: dagit-move-pulse.js <aptos|aptos2|sui> [--uygula]"))))()
   .catch((e) => { console.error("HATA " + (e.message || e)); process.exit(1); });

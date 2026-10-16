@@ -20,6 +20,7 @@ module pulse::launchpad_tests {
         let ctor = object::create_named_object(issuer, b"USDC");
         primary_fungible_store::create_primary_store_enabled_fungible_asset(
             &ctor, option::none(), utf8(b"USD Coin"), utf8(b"USDC"), 6, utf8(b""), utf8(b""));
+        pulse::usdc_kancali::kancala(&ctor);   // hooks, like Circle's USDC on mainnet
         move_to(issuer, Usdc { mint: fungible_asset::generate_mint_ref(&ctor) });
         object::object_from_constructor_ref<Metadata>(&ctor)
     }

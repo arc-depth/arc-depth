@@ -20,6 +20,8 @@ module pulse_swap::swap_tests {
     fun fa(issuer: &signer, seed: vector<u8>, sym: vector<u8>): (Object<Metadata>, MintRef) {
         let ctor = object::create_named_object(issuer, seed);
         primary_fungible_store::create_primary_store_enabled_fungible_asset(&ctor, option::none(), utf8(sym), utf8(sym), 6, utf8(b""), utf8(b""));
+        // every asset with dispatch hooks, like Circle's USDC on mainnet
+        pulse_swap::usdc_kancali::kancala(&ctor);
         (object::object_from_constructor_ref<Metadata>(&ctor), fungible_asset::generate_mint_ref(&ctor))
     }
 

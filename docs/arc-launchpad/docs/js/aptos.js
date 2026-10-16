@@ -1,9 +1,12 @@
 /* ===========================================================================
  * aptos.js — the ARC PULSE launchpad on Aptos mainnet, from the browser
  *
- * Published immutable on 16 Oct 2026 (dagitim-move-pulse.json): the
- * launchpad and PulseSwap live at the deployer account, the collateral is
- * Aptos's native USDC, PulseSwap is the only "paste a token" adapter.
+ * The dispatch-aware build (dagitim-move-pulse.json, "aptos2"): the first
+ * packages (16 Oct, at the deployer account) moved USDC with plain
+ * fungible_asset calls, which Aptos refuses for Circle's USDC, so they can
+ * never launch anything; this one uses dispatchable_fungible_asset. The
+ * collateral is Aptos's native USDC, PulseSwap is the only "paste a token"
+ * adapter, fees go to the deployer account.
  *
  * WALLETS
  *   Any Aptos wallet that speaks the Wallet Standard (AIP-62: Petra,
@@ -17,7 +20,7 @@
 
 export const APTOS = {
   anahtar: "aptos", ad: "Aptos", dolarSembol: "USDC", nesil: "move",
-  paket: "0xc3318acec3eaf067b1865e86c39fb56529ae1cf181663c68750d79f28259da84",
+  paket: "0xe1ddef8fcbf442f87657e4f1f6ee6cfa4954aa537ef362dd2a3991602defe1c4",
   usdc: "0xbae207659db88bea0cbead6da0ed00aac12edcdda169e591cd41c94180b46f3b",
   api: "https://api.mainnet.aptoslabs.com/v1",
   gezgin: "https://explorer.aptoslabs.com",

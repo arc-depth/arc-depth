@@ -1,0 +1,11 @@
+[package]
+name = "CoinSablon"
+version = "0.0.1"
+edition = "2024.beta"
+
+# The coin every Sui launch starts from. The browser renames SABLON/sablon to
+# the founder's symbol and rewrites NAME/SYMBOL with move-bytecode-template,
+# publishes it, and hands the TreasuryCap to pulse::launchpad::launch in the
+# next transaction. init mints nothing: the launchpad refuses a cap that has.
+[addresses]
+sablon = "0x0"

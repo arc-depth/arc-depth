@@ -32,6 +32,10 @@ module pulse_swap::swap {
     use aptos_framework::event;
     use aptos_framework::object::{Self, Object, ExtendRef};
     use aptos_framework::fungible_asset::{Self, Metadata, FungibleStore, FungibleAsset};
+    // stores move value only through the dispatch-aware calls: Circle's USDC on
+    // Aptos runs deposit/withdraw hooks (blocklist, pause), and the plain
+    // fungible_asset calls abort on any asset that has them
+    use aptos_framework::dispatchable_fungible_asset;
     use aptos_framework::primary_fungible_store;
     use aptos_framework::timestamp;
     use pulse::launchpad::{Self, Converted};
@@ -109,7 +113,7 @@ module pulse_swap::swap {
         let fee = (((fungible_asset::amount(d) as u128) * PROTOCOL_FEE_PPM / PPM) as u64);
         if (fee == 0) return;
         let to_fthm = (((fee as u128) * FTHM_SHARE_PPM / PPM) as u64);
-        fungible_asset::deposit(f.bucket, fungible_asset::extract(d, to_fthm));
+        dispatchable_fungible_asset::deposit(f.bucket, fungible_asset::extract(d, to_fthm));
         primary_fungible_store::deposit(f.platform, fungible_asset::extract(d, fee - to_fthm));
     }
 
@@ -119,7 +123,7 @@ module pulse_swap::swap {
         let f = borrow_global<Fees>(@pulse_swap);
         let amount = fungible_asset::balance(f.bucket);
         assert!(amount > 0, E_ZERO);
-        let d = fungible_asset::withdraw(&object::generate_signer_for_extending(&f.bucket_ref), f.bucket, amount);
+        let d = dispatchable_fungible_asset::withdraw(&object::generate_signer_for_extending(&f.bucket_ref), f.bucket, amount);
         let sink = f.fthm_sink;
         let out = swap_fa(d, f.fthm, true, 1);
         let got = fungible_asset::amount(&out);
@@ -186,8 +190,8 @@ module pulse_swap::swap {
             ((if (a < b) a else b) as u64)
         };
         assert!(minted > 0, E_ZERO);
-        fungible_asset::deposit(p.token_store, primary_fungible_store::withdraw(who, p.token, token_amount));
-        fungible_asset::deposit(p.dollar_store, primary_fungible_store::withdraw(who, p.dollar, dollar_amount));
+        dispatchable_fungible_asset::deposit(p.token_store, primary_fungible_store::withdraw(who, p.token, token_amount));
+        dispatchable_fungible_asset::deposit(p.dollar_store, primary_fungible_store::withdraw(who, p.dollar, dollar_amount));
         let w = signer::address_of(who);
         let cur = if (smart_table::contains(&p.shares, w)) smart_table::remove(&mut p.shares, w) else 0;
         smart_table::add(&mut p.shares, w, cur + minted);
@@ -209,8 +213,8 @@ module pulse_swap::swap {
         p.total_shares = p.total_shares - shares;
         let ts = object::generate_signer_for_extending(&p.token_ref);
         let ds = object::generate_signer_for_extending(&p.dollar_ref);
-        primary_fungible_store::deposit(w, fungible_asset::withdraw(&ts, p.token_store, t_out));
-        primary_fungible_store::deposit(w, fungible_asset::withdraw(&ds, p.dollar_store, d_out));
+        primary_fungible_store::deposit(w, dispatchable_fungible_asset::withdraw(&ts, p.token_store, t_out));
+        primary_fungible_store::deposit(w, dispatchable_fungible_asset::withdraw(&ds, p.dollar_store, d_out));
     }
 
     /// amount out of x*y=k after the 0.30% fee stays in the pool
@@ -237,11 +241,11 @@ module pulse_swap::swap {
         let out = quote(rin, rout, amount_in);
         assert!(out > 0, E_SLIPPAGE);
         if (dollars_to_token) {
-            fungible_asset::deposit(p.dollar_store, fa_in);
-            fungible_asset::withdraw(&object::generate_signer_for_extending(&p.token_ref), p.token_store, out)
+            dispatchable_fungible_asset::deposit(p.dollar_store, fa_in);
+            dispatchable_fungible_asset::withdraw(&object::generate_signer_for_extending(&p.token_ref), p.token_store, out)
         } else {
-            fungible_asset::deposit(p.token_store, fa_in);
-            fungible_asset::withdraw(&object::generate_signer_for_extending(&p.dollar_ref), p.dollar_store, out)
+            dispatchable_fungible_asset::deposit(p.token_store, fa_in);
+            dispatchable_fungible_asset::withdraw(&object::generate_signer_for_extending(&p.dollar_ref), p.dollar_store, out)
         }
     }
 
