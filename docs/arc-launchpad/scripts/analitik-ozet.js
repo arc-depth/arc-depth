@@ -102,9 +102,14 @@ const ZINCIRLER = [
   }
 }
 
+/* Retries rotate through the chain's backup RPCs (zincirler.js YEDEK_RPC);
+   the log-capable RPC chosen above stays first, so a backup is only asked
+   after it has refused. */
+const rpcSirasi = (z) => [z.rpc, ...((require("./zincirler").EVM[z.ad] || {}).yedekler || [])].filter((u, i, a) => a.indexOf(u) === i);
 async function rpc(z, m, p) {
+  const sira = rpcSirasi(z);
   for (let d = 0; d < 8; d++) {
-    const r = await fetch(z.rpc, { method: "POST", headers: { "content-type": "application/json" },
+    const r = await fetch(sira[d % sira.length], { method: "POST", headers: { "content-type": "application/json" },
       body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: m, params: p }) }).then((x) => x.json()).catch((e) => ({ error: { message: e.message } }));
     if (r.result !== undefined) return r.result;
     const msg = JSON.stringify(r.error || {});

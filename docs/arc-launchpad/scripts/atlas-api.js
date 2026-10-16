@@ -50,7 +50,7 @@ function adresler() {
 
 /* ---- access, read from the chain ---------------------------------- */
 function zincirErisimi() {
-  const p = new JsonRpcProvider("https://rpc.mainnet.arc.io", 5042, { staticNetwork: true });
+  const p = require("./zincirler").saglayici("arc");
   const onbellek = new Map();
   return async (adres) => {
     const g = adresler();

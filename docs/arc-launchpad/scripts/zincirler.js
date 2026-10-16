@@ -130,3 +130,62 @@ module.exports = { EVM, DIGER, dvnDoldur };
 module.exports.IKIZ_KURULUM_GAZI = 6_000_000;
 /* Options bytes for it: LayerZero type 3, executor lzReceive, 6M gas. */
 module.exports.IKIZ_SECENEK = "0x000301001101000000000000000000000000005b8d80";
+
+/* ---- one provider per chain, with backup RPCs ------------------------
+   145 of 217 scripts carried their own RPC string, 125 of them Arc's one
+   endpoint, which answers 429 as soon as several reads arrive at once.
+   Backups below answered eth_chainId with the chain's own id on 16 Oct
+   2026. A request fails over to the next endpoint on an HTTP or network
+   error or a rate-limit answer only; a real chain answer (a revert, "nonce
+   too low") is returned as is and never re-asked elsewhere. */
+const YEDEK_RPC = {
+  arc: ["https://arc-mainnet.drpc.org", "https://arc-rpc.publicnode.com"],
+  robinhood: ["https://robinhood.drpc.org", "https://robinhood-rpc.publicnode.com", "https://robinhood-mainnet.drpc.org"],
+  base: ["https://base-rpc.publicnode.com", "https://base.drpc.org", "https://mainnet.base.org"],
+  arbitrum: ["https://arbitrum-one-rpc.publicnode.com", "https://arbitrum.drpc.org", "https://arb1.arbitrum.io/rpc"],
+  ethereum: ["https://eth.drpc.org"],
+  bsc: ["https://bsc-rpc.publicnode.com", "https://bsc-dataseed.bnbchain.org"],
+  avalanche: ["https://avalanche.drpc.org", "https://api.avax.network/ext/bc/C/rpc"],
+  monad: ["https://monad.drpc.org", "https://monad-mainnet.drpc.org"],
+  hyperevm: ["https://hyperliquid.drpc.org"],
+};
+for (const [k, z] of Object.entries(EVM)) z.yedekler = (YEDEK_RPC[k] || []).filter((u) => u !== z.rpc);
+
+const sinirliCevap = (r) => (Array.isArray(r) ? r : [r]).some((x) => x && x.error &&
+  (x.error.code === -32005 || x.error.code === 429 || /rate.?limit|too many requests|exceeded/i.test(x.error.message || "")));
+
+let _saglayicilar = null;
+function saglayici(anahtar) {
+  const { JsonRpcProvider } = require("ethers");
+  const z = typeof anahtar === "number" ? Object.values(EVM).find((x) => x.chainId === anahtar) : EVM[anahtar];
+  if (!z) throw new Error("bilinmeyen zincir: " + anahtar);
+  _saglayicilar = _saglayicilar || new Map();
+  if (_saglayicilar.has(z.chainId)) return _saglayicilar.get(z.chainId);
+
+  class YedekliSaglayici extends JsonRpcProvider {
+    constructor() {
+      super(z.rpc, z.chainId, { staticNetwork: true });
+      this._ic = [z.rpc, ...z.yedekler].map((u) => new JsonRpcProvider(u, z.chainId, { staticNetwork: true }));
+      this.rpcler = [z.rpc, ...z.yedekler];
+    }
+    async _send(payload) {
+      let son = null;
+      for (let tur = 0; tur < 3; tur++) {
+        for (const ic of this._ic) {
+          try {
+            const r = await ic._send(payload);
+            if (!sinirliCevap(r)) return r;
+            son = new Error(z.ad + " RPC rate limited");
+          } catch (e) { son = e; }
+        }
+        await new Promise((s) => setTimeout(s, 700 * (tur + 1)));
+      }
+      throw son;
+    }
+  }
+  const p = new YedekliSaglayici();
+  _saglayicilar.set(z.chainId, p);
+  return p;
+}
+module.exports.YEDEK_RPC = YEDEK_RPC;
+module.exports.saglayici = saglayici;

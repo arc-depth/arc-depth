@@ -40,7 +40,7 @@
 const fs = require("fs");
 const path = require("path");
 const { JsonRpcProvider, Interface, id, keccak256, toUtf8Bytes, Contract, Wallet } = require("ethers");
-const { EVM, DIGER } = require("./zincirler");
+const { EVM, DIGER, saglayici } = require("./zincirler");
 
 const KOK = path.join(__dirname, "..");
 const CIKTI = path.join(KOK, "docs", "veri", "atlas.json");
@@ -91,7 +91,8 @@ const ATLAS_RPC = { base: "https://base-rpc.publicnode.com", bsc: "https://bsc-r
 const PARCA = { monad: 100, bsc: 1000, avalanche: 1000 };
 
 async function evmZincir(anahtar, z) {
-  const p = new JsonRpcProvider(ATLAS_RPC[anahtar] || z.rpc, z.chainId, { staticNetwork: true });
+  /* the log-capable override when there is one, otherwise the backup-aware provider */
+  const p = ATLAS_RPC[anahtar] ? new JsonRpcProvider(ATLAS_RPC[anahtar], z.chainId, { staticNetwork: true }) : saglayici(anahtar);
   const son = await israr(() => p.getBlockNumber());
   const [b1, b0] = await Promise.all([israr(() => p.getBlock(son)), israr(() => p.getBlock(Math.max(0, son - 1000)))]);
   const blokSuresi = (b1.timestamp - b0.timestamp) / Math.max(1, son - Math.max(0, son - 1000));
@@ -274,7 +275,7 @@ function yontemler(seri) {
   if (HAFIZA && kesifler.length) {
     const s = fs.readFileSync(path.join(KOK, "docs", "js", "genesis-adres.js"), "utf8");
     const g = JSON.parse(s.slice(s.indexOf("{"), s.lastIndexOf("}") + 1));
-    const p = new JsonRpcProvider(EVM.arc.rpc, EVM.arc.chainId, { staticNetwork: true });
+    const p = saglayici("arc");
     if ((await p.getCode(g.cekirdek)).length <= 2) { console.log("hafiza: GENESIS cekirdegi Arc'ta yok, keşifler yalnız atlas.json'da"); return; }
     const k = fs.readFileSync(path.join(KOK, ".env"), "utf8").match(/^GENESIS_AJAN_KEY\s*=\s*(.+)$/m)[1].trim();
     const c = new Contract(g.cekirdek, ["function yaz(uint8,uint8,bytes32,bytes) returns (uint64)"], new Wallet(k, p));

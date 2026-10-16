@@ -21,12 +21,14 @@ import { cuzdan } from "../cuzdan.js";
 import { para, ppmYuzde } from "../bicim.js";
 import { tokenOku, rotalar, asgariCikti } from "../teminat-bul.js";
 import { AGLAR, AG, IKIZ_SECENEK, agBul } from "../aglar.js";
+import { rpcPost } from "../ag-okur.js";
 import { Interface } from "../../vendor/ethers.min.js";
 
 /* ---- reads on whichever chain the launch is on ----------------------- */
+/* through rpcPost: a rate-limited RPC falls over to the chain's backups, so
+   waiting for a launch's receipt never reads a 429 as "no receipt" */
 async function agCagri(ag, method, params) {
-  const r = await fetch(ag.rpc, { method: "POST", headers: { "content-type": "application/json" },
-    body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }) }).then((x) => x.json());
+  const r = await rpcPost(ag, { jsonrpc: "2.0", id: 1, method, params });
   if (r.error) throw new Error(r.error.message || "RPC error");
   return r.result;
 }

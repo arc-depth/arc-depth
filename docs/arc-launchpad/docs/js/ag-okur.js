@@ -53,7 +53,17 @@ export const agBul = (anahtar) => AGLAR.find((a) => a.anahtar === anahtar) || nu
    2026: the GENESIS page showed Arc as "could not read" after five
    retries); both backups returned chain id 5042 with open CORS. */
 const YEDEK = {
+  /* the same list as scripts/zincirler.js YEDEK_RPC; every entry answered
+     eth_chainId with its chain's id and allowed browser CORS on 16 Oct 2026 */
   arc: ["https://arc-mainnet.drpc.org", "https://arc-rpc.publicnode.com"],
+  robinhood: ["https://robinhood.drpc.org", "https://robinhood-rpc.publicnode.com", "https://robinhood-mainnet.drpc.org"],
+  base: ["https://base-rpc.publicnode.com", "https://base.drpc.org", "https://mainnet.base.org"],
+  arbitrum: ["https://arbitrum-one-rpc.publicnode.com", "https://arbitrum.drpc.org", "https://arb1.arbitrum.io/rpc"],
+  ethereum: ["https://eth.drpc.org"],
+  bsc: ["https://bsc-rpc.publicnode.com", "https://bsc-dataseed.bnbchain.org"],
+  avalanche: ["https://avalanche.drpc.org", "https://api.avax.network/ext/bc/C/rpc"],
+  monad: ["https://monad.drpc.org", "https://monad-mainnet.drpc.org"],
+  hyperevm: ["https://hyperliquid.drpc.org"],
 };
 const sinirli = (j) => (Array.isArray(j) ? j : [j]).some((x) => x && x.error && (x.error.code === -32005 || /rate limit/i.test(x.error.message || "")));
 

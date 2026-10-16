@@ -49,7 +49,7 @@
 const fs = require("fs");
 const path = require("path");
 const { JsonRpcProvider, Wallet, Contract, keccak256, toUtf8Bytes, toUtf8String, AbiCoder, solidityPacked } = require("ethers");
-const { EVM } = require("./zincirler");
+const { EVM, saglayici } = require("./zincirler");
 
 const KOK = path.join(__dirname, "..");
 const UYGULA = process.argv.includes("--uygula");
@@ -102,7 +102,7 @@ async function israr(f) {
 function baglam(ad) {
   const g = adresler();
   const z = EVM[ad];
-  const p = new JsonRpcProvider(z.rpc, z.chainId, { staticNetwork: true });
+  const p = saglayici(ad);
   const w = new Wallet(anahtar(path.join(KOK, ".env"), "GENESIS_AJAN_KEY"), p);
   return { ad, z, p, w, c: new Contract(g.cekirdek, B("GenesisCekirdek"), w), d: new Contract(g.dil, B("GenesisDil"), w) };
 }
