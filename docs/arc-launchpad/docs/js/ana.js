@@ -182,6 +182,7 @@ const GORUNUMLER = {
   fthm: () => import("./gorunum/fthm-al-sat.js"),
   genesis: () => import("./gorunum/genesis.js"),
   terminal: () => import("./gorunum/terminal.js"),
+  "move-token": () => import("./gorunum/move-token.js"),
   kasalar: () => import("./gorunum/kasalar.js"),
   teminat: () => import("./gorunum/teminat-sec.js"),
   portfoy: () => import("./gorunum/portfoy.js"),

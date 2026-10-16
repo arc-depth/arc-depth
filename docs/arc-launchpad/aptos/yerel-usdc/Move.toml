@@ -1,0 +1,14 @@
+[package]
+name = "YerelUsdc"
+version = "1.0.0"
+
+# LOCAL NETWORK ONLY: a dollar shaped like Circle's USDC on Aptos mainnet
+# (deposit/withdraw dispatch hooks) that anyone can mint, for running the
+# site's Aptos code end to end on `aptos node run-localnet`. Never on mainnet.
+[addresses]
+yerel_usdc = "_"
+
+[dependencies.AptosFramework]
+git = "https://github.com/aptos-labs/aptos-framework.git"
+rev = "99f5e915b6d231d0ffbc1aff282d36148d2a8b24"
+subdir = "aptos-framework"

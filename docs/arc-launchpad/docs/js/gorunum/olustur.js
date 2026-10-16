@@ -466,6 +466,7 @@ async function suiLaunch({ ad, sembol, durum, durumSatiri, yayKap }) {
     const r = await suiLaunchEt({ ad, sembol, teminat, ilkAlim, vergiPpm: durum.vergiPpm, yapistir, durum: (m) => { durumSatiri.textContent = m; } });
     durumSatiri.className = "yazi yazi--kucuk";
     durumSatiri.textContent = "Live on Sui: " + r.tip + " — you hold about " + (Number(suiAcilis(ilkAlim)) / 1e6).toLocaleString("en-US") + " " + sembol + ".";
+    if (r.kasa) yayKap.append(el("a", { sinif: "dugme dugme--marka", attr: { href: "#/move-token?zincir=sui&kasa=" + r.kasa }, yazi: "Open the token page" }));
     yayKap.append(el("a", { sinif: "dugme dugme--sessiz", attr: { href: SUI.gezgin + "/coin/" + r.tip, target: "_blank", rel: "noopener" }, yazi: "Open on Suiscan" }));
   } catch (e) {
     durumSatiri.className = "yazi yazi--kucuk yazi--hata";
@@ -511,6 +512,7 @@ async function aptosLaunch({ ad, sembol, durum, durumSatiri, yayKap }) {
     const token = launchTokeni(tx);
     if (!token) throw new Error("Launched, but the token address could not be read from " + hash);
     durumSatiri.textContent = "Live on Aptos: " + token + " — you hold about " + (Number(acilisTokeni(ilkAlim)) / 1e6).toLocaleString("en-US") + " " + sembol + ".";
+    yayKap.append(el("a", { sinif: "dugme dugme--marka", attr: { href: "#/move-token?zincir=aptos&token=" + token }, yazi: "Open the token page" }));
     yayKap.append(el("a", { sinif: "dugme dugme--sessiz", attr: { href: APTOS.gezgin + "/fungible_asset/" + token + "?network=mainnet", target: "_blank", rel: "noopener" }, yazi: "Open on the Aptos explorer" }));
   } catch (e) {
     durumSatiri.className = "yazi yazi--kucuk yazi--hata";

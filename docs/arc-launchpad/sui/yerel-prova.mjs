@@ -110,6 +110,40 @@ kontrol("kasa paylasilan nesne: teminat 20 tUSDC, havuz 98 tUSDC", BigInt(v.back
 kontrol("arz kesin: 1e9 token, cap kasanin icinde (kimsenin elinde degil)", v.cap.fields.total_supply.fields.value === String(sui.SUI.arz) && (await c.getObject({ id: y.cap }).then((o) => !o.data, () => true)), "arz (kasadaki cap) " + v.cap.fields.total_supply.fields.value);
 kontrol("kurucuda tUSDC kaldi: 1000 - 120 = 880", (await sui.usdcBakiye(founder.toSuiAddress())) === 880n * USD);
 
+/* ---- the token page: read, buy, sell, redeem (docs/js/sui.js + move-hesap.js) ---- */
+const H = await import("../docs/js/move-hesap.js");
+let d = await sui.kasaDurumu(kasa);
+kontrol("kasaDurumu: tipler, dolasim = kurucunun tokeni, kasa 20", d.token === y.tip && d.dolar === TUSDC && d.dolasim === al && d.kasaBakiye === 20n * USD);
+const liste = await sui.launchListesi();
+kontrol("launch listesi bu kasayi Launched olayindan buldu", liste.some((x) => x.kasa === kasa && x.token === y.tip));
+await bekle(6000);   // past the 5 s anti-snipe window, so the quote is exact
+const buyer = new Ed25519Keypair();
+await musluk(buyer.toSuiAddress());
+{
+  const tx = new Transaction();
+  const m = tx.moveCall({ target: cp + "::tusdc::mint", arguments: [tx.object(faucetId), tx.pure.u64(100n * USD)] });
+  tx.transferObjects([m], tx.pure.address(buyer.toSuiAddress()));
+  await calistir(buyer, tx);
+}
+const q = H.alimTeklifi(d.havuz, 50n * USD);
+await calistir(buyer, sui.alIslemi({ sahip: buyer.toSuiAddress(), d, dolarCoinler: await sui.usdcCoinleri(buyer.toSuiAddress()), dolar: 50n * USD, asgariToken: H.asgari(q.token) }));
+const aldi = await sui.coinBakiye(buyer.toSuiAddress(), y.tip);
+kontrol("alim: zincirin verdigi = sayfanin teklifi (50 tUSDC)", aldi === q.token, aldi + " = " + q.token);
+d = await sui.kasaDurumu(kasa);
+const sq = H.satimTeklifi(d.havuz, aldi);
+const u0 = await sui.usdcBakiye(buyer.toSuiAddress());
+const tc = (await c.getCoins({ owner: buyer.toSuiAddress(), coinType: y.tip })).data.map((x) => x.coinObjectId);
+await calistir(buyer, sui.satIslemi({ sahip: buyer.toSuiAddress(), d, tokenCoinler: tc, miktar: aldi, asgariDolar: H.asgari(sq.dolar, 600) }));
+const geri = (await sui.usdcBakiye(buyer.toSuiAddress())) - u0;
+kontrol("satis: kalkan dahil teklifin %6 icinde ve teklifi asmiyor", geri <= sq.dolar && geri >= H.asgari(sq.dolar, 600), geri + " / teklif " + sq.dolar);
+d = await sui.kasaDurumu(kasa);
+const onda = al / 10n;
+const beklenen = H.itfaPayi(d.kasaBakiye, onda, d.dolasim);
+const f0 = await sui.usdcBakiye(founder.toSuiAddress());
+const fc = (await c.getCoins({ owner: founder.toSuiAddress(), coinType: y.tip })).data.map((x) => x.coinObjectId);
+await calistir(founder, sui.itfaIslemi({ sahip: founder.toSuiAddress(), d, tokenCoinler: fc, miktar: onda }));
+kontrol("itfa %10: odenen = sayfanin hesabi (kasa x pay / dolasim)", (await sui.usdcBakiye(founder.toSuiAddress())) - f0 === beklenen, String(beklenen));
+
 /* ---- paste a token: refused on a pool younger than a day -------------- */
 {
   const tx = new Transaction();

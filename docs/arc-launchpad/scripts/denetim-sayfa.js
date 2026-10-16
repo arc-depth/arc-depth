@@ -140,7 +140,8 @@ ok(kotuDurum.length === 0, "her durum uc gecerli degerden biri",
 
 /* Every route the router maps must have a file, and every non-"yapim"
    route must be mapped — a live module with no view is a blank screen. */
-const eslenen = [...anaKaynak.matchAll(/^\s*(\w[\w-]*):\s*\(\)\s*=>\s*import\(["']\.\/gorunum\/([\w-]+)\.js["']\)/gm)]
+// a route name with a dash is a quoted key ("move-token": …), so quotes are allowed
+const eslenen = [...anaKaynak.matchAll(/^\s*["']?(\w[\w-]*)["']?:\s*\(\)\s*=>\s*import\(["']\.\/gorunum\/([\w-]+)\.js["']\)/gm)]
   .map((m) => ({ yol: m[1], dosya: m[2] }));
 
 let dosyaYok = 0;

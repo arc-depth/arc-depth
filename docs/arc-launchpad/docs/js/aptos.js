@@ -148,3 +148,53 @@ export function launchTokenle({ ad, sembol, teminat, ilkAlim, vergiPpm, token, b
   return aptosCuzdan.gonder(APTOS.paket + "::swap::launch_with_token", [],
     [token, teminat.toString(), asgari(beklenen).toString(), ad, sembol, APTOS.ondalik, APTOS.arz.toString(), ilkAlim.toString(), String(vergiPpm), asgari(acilisTokeni(ilkAlim)).toString()]);
 }
+
+/* ---- a launched token: read, trade, redeem -------------------------- */
+async function kaynak(adres, tip) {
+  const r = await fetch(APTOS.api + "/accounts/" + adres + "/resource/" + tip);
+  return r.ok ? (await r.json()).data : null;
+}
+
+/* everything the token page shows, from the chain */
+export async function tokenDurumu(token) {
+  const [meta, launch, backed] = await Promise.all([
+    kaynak(token, "0x1::fungible_asset::Metadata"),
+    kaynak(token, APTOS.paket + "::launchpad::Launch"),
+    kaynak(token, APTOS.paket + "::launchpad::Backed"),
+  ]);
+  if (!meta || !launch) return null;
+  const [rez, kasa, dolasim] = await Promise.all([
+    gorus(APTOS.paket + "::launchpad::pool_reserves", [], [token]),
+    gorus(APTOS.paket + "::launchpad::backing", [], [token]),
+    gorus(APTOS.paket + "::launchpad::circulating", [], [token]),
+  ]);
+  let hedef = null;
+  if (backed) {
+    const [adres, miktar] = await gorus(APTOS.paket + "::launchpad::target_backing", [], [token]);
+    const hm = await kaynak(adres, "0x1::fungible_asset::Metadata");
+    hedef = { adres, miktar: BigInt(miktar), simge: hm ? hm.symbol : "?", ondalik: hm ? hm.decimals : 0 };
+  }
+  return {
+    zincir: "aptos", token, ad: meta.name, simge: meta.symbol, ondalik: meta.decimals,
+    kurucu: launch.founder, havuz: { tokenRez: BigInt(rez[0]), gercekDolar: BigInt(rez[1]), sanalDolar: BigInt(rez[2]), vergiPpm: Number(launch.tax_ppm), acilisSn: Number(launch.opened_at) },
+    kasa: BigInt(kasa[0]), dolasim: BigInt(dolasim[0]), hedef
+  };
+}
+
+export async function faBakiye(adres, meta) {
+  const [b] = await gorus("0x1::primary_fungible_store::balance", ["0x1::fungible_asset::Metadata"], [adres, meta]);
+  return BigInt(b);
+}
+
+export const al = (token, dolar, asgariToken) => aptosCuzdan.gonder(APTOS.paket + "::launchpad::buy", [], [token, dolar.toString(), asgariToken.toString()]);
+export const sat = (token, miktar, asgariDolar) => aptosCuzdan.gonder(APTOS.paket + "::launchpad::sell", [], [token, miktar.toString(), asgariDolar.toString()]);
+export const itfa = (token, miktar, yapistirilmis) => aptosCuzdan.gonder(APTOS.paket + "::launchpad::" + (yapistirilmis ? "redeem_backed" : "redeem"), [], [token, miktar.toString()]);
+
+/* every launch on this launchpad: the tokens its account created (the
+   indexer's fungible asset table; Aptos retired the events table) */
+export async function launchListesi() {
+  const q = { query: "query($c:String){ fungible_asset_metadata(where:{creator_address:{_eq:$c}}, order_by:{last_transaction_timestamp:desc}, limit:100){ asset_type name symbol decimals } }", variables: { c: APTOS.paket } };
+  const r = await fetch(APTOS.api + "/graphql", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(q) }).then((x) => x.json());
+  if (r.errors) throw new Error(r.errors[0].message);
+  return r.data.fungible_asset_metadata.map((m) => ({ zincir: "aptos", token: m.asset_type, ad: m.name, simge: m.symbol }));
+}

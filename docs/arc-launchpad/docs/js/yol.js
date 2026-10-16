@@ -97,6 +97,17 @@ export const YOLLAR = [
     sekme: true
   },
   {
+    yol: "move-token",
+    ad: "Aptos & Sui launches",
+    kisa: "Aptos & Sui",
+    grup: "piyasa",
+    ikon: "pusula",
+    durum: "canli",
+    ozet: "Every token launched on the Aptos and Sui launchpads; buy, sell and redeem against its vault.",
+    kaynak: "Move launchpads (Aptos v2, Sui) + their pools and vaults",
+    sekme: true
+  },
+  {
     yol: "terminal",
     ad: "Trading terminal",
     kisa: "Trade",

@@ -232,3 +232,102 @@ export async function launchEt({ ad, sembol, teminat, ilkAlim, vergiPpm, yapisti
   const kasa = r.objectChanges.find((o) => o.type === "created" && /::launchpad::Vault</.test(o.objectType || ""));
   return { tip: y.tip, kasa: kasa && kasa.objectId, digest: r.digest };
 }
+
+/* ---- a launched token: read, trade, redeem -------------------------- */
+/* Vault<T, C>: the token's type and the dollar's, from the object's own type */
+function kasaTipleri(tip) {
+  const ic = tip.slice(tip.indexOf("<") + 1, tip.lastIndexOf(">"));
+  const [T, C] = ic.split(/,\s*/);
+  return { T, C };
+}
+
+export async function kasaDurumu(kasaId) {
+  const o = await istemci().getObject({ id: kasaId, options: { showContent: true, showType: true } });
+  if (!o.data || !/::launchpad::Vault</.test(o.data.type)) return null;
+  const f = o.data.content.fields;
+  const { T, C } = kasaTipleri(o.data.type);
+  const meta = await istemci().getCoinMetadata({ coinType: T });
+  const arz = BigInt(f.cap.fields.total_supply.fields.value);
+  let hedef = null;
+  if (f.target) {
+    const K = "0x" + String(f.target.fields ? f.target.fields.name : f.target.name || f.target).replace(/^0x/, "");
+    const alanlar = await istemci().getDynamicFields({ parentId: kasaId });
+    const kb = alanlar.data.find((x) => /TargetKey/.test(x.name.type));
+    const kbo = kb ? await istemci().getDynamicFieldObject({ parentId: kasaId, name: kb.name }) : null;
+    const km = await istemci().getCoinMetadata({ coinType: K }).catch(() => null);
+    hedef = { tip: K, miktar: kbo ? BigInt(kbo.data.content.fields.value) : 0n, simge: km ? km.symbol : K.split("::")[2], ondalik: km ? km.decimals : 0 };
+  }
+  return {
+    zincir: "sui", kasa: kasaId, token: T, dolar: C, ad: meta ? meta.name : T.split("::")[2], simge: meta ? meta.symbol : T.split("::")[2], ondalik: meta ? meta.decimals : 6,
+    kurucu: f.founder,
+    havuz: { tokenRez: BigInt(f.pool_tokens), gercekDolar: BigInt(f.pool_dollars), sanalDolar: BigInt(f.virtual_dollars), vergiPpm: Number(f.tax_ppm), acilisSn: Number(f.opened_ms) / 1000 },
+    kasaBakiye: BigInt(f.backing), dolasim: arz - BigInt(f.pool_tokens), hedef
+  };
+}
+
+async function coinler(sahip, tip) {
+  const out = [];
+  let cursor = null;
+  do {
+    const r = await istemci().getCoins({ owner: sahip, coinType: tip, cursor });
+    out.push(...r.data.map((c) => c.coinObjectId));
+    cursor = r.hasNextPage ? r.nextCursor : null;
+  } while (cursor);
+  return out;
+}
+export const coinBakiye = async (sahip, tip) => BigInt((await istemci().getBalance({ owner: sahip, coinType: tip })).totalBalance);
+
+function odeme(tx, ids, miktar) {
+  const [ilk, ...kalan] = ids.map((id) => tx.object(id));
+  if (kalan.length) tx.mergeCoins(ilk, kalan);
+  return tx.splitCoins(ilk, [tx.pure.u64(miktar)])[0];
+}
+
+export function alIslemi({ sahip, d, dolarCoinler, dolar, asgariToken }) {
+  const tx = new Transaction();
+  const t = tx.moveCall({ target: SUI.paket + "::launchpad::buy", typeArguments: [d.token, d.dolar],
+    arguments: [tx.object(d.kasa), tx.object(SUI.config), odeme(tx, dolarCoinler, dolar), tx.pure.u64(asgariToken), tx.object("0x6")] });
+  tx.transferObjects([t], tx.pure.address(sahip));
+  return tx;
+}
+export function satIslemi({ sahip, d, tokenCoinler, miktar, asgariDolar }) {
+  const tx = new Transaction();
+  const c = tx.moveCall({ target: SUI.paket + "::launchpad::sell", typeArguments: [d.token, d.dolar],
+    arguments: [tx.object(d.kasa), tx.object(SUI.config), odeme(tx, tokenCoinler, miktar), tx.pure.u64(asgariDolar), tx.object("0x6")] });
+  tx.transferObjects([c], tx.pure.address(sahip));
+  return tx;
+}
+export function itfaIslemi({ sahip, d, tokenCoinler, miktar }) {
+  const tx = new Transaction();
+  const p = odeme(tx, tokenCoinler, miktar);
+  if (d.hedef) {
+    const [c, k] = tx.moveCall({ target: SUI.paket + "::launchpad::redeem_backed", typeArguments: [d.token, d.dolar, d.hedef.tip], arguments: [tx.object(d.kasa), p] });
+    tx.transferObjects([c, k], tx.pure.address(sahip));
+  } else {
+    const c = tx.moveCall({ target: SUI.paket + "::launchpad::redeem", typeArguments: [d.token, d.dolar], arguments: [tx.object(d.kasa), p] });
+    tx.transferObjects([c], tx.pure.address(sahip));
+  }
+  return tx;
+}
+
+/* a trade from the visitor's wallet: buy | sell | redeem */
+export async function islemYap(tur, d, miktar, asgari = 0n) {
+  const sahip = await suiCuzdan.baglan();
+  if (tur === "al") return suiCuzdan.gonder(alIslemi({ sahip, d, dolarCoinler: await coinler(sahip, d.dolar), dolar: miktar, asgariToken: asgari }));
+  const tokenCoinler = await coinler(sahip, d.token);
+  if (!tokenCoinler.length) throw new Error("This wallet holds no " + d.simge + ".");
+  if (tur === "sat") return suiCuzdan.gonder(satIslemi({ sahip, d, tokenCoinler, miktar, asgariDolar: asgari }));
+  return suiCuzdan.gonder(itfaIslemi({ sahip, d, tokenCoinler, miktar }));
+}
+
+/* every launch: the launchpad's own Launched events */
+export async function launchListesi() {
+  const out = [];
+  let cursor = null;
+  do {
+    const r = await istemci().queryEvents({ query: { MoveEventType: SUI.paket + "::launchpad::Launched" }, cursor, limit: 50, order: "descending" });
+    for (const e of r.data) out.push({ zincir: "sui", kasa: e.parsedJson.vault, token: "0x" + String(e.parsedJson.token.name || e.parsedJson.token).replace(/^0x/, ""), kurucu: e.parsedJson.founder });
+    cursor = r.hasNextPage && out.length < 200 ? r.nextCursor : null;
+  } while (cursor);
+  return out;
+}
