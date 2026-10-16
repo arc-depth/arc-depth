@@ -24,6 +24,7 @@ import { AGLAR, AG, IKIZ_SECENEK, agBul } from "../aglar.js";
 import { rpcPost } from "../ag-okur.js";
 import { Interface } from "../../vendor/ethers.min.js";
 const APTOS_ACIK = true;
+import { SUI, suiCuzdan, launchEt as suiLaunchEt, teminatHavuzu as suiTeminatHavuzu, acilisTokeni as suiAcilis } from "../sui.js";
 import { APTOS, aptosCuzdan, teminatHavuzu, acilisTokeni, islemBekle, launchTokeni, launchDolar, launchTokenle, usdcBakiye } from "../aptos.js";
 
 /* ---- reads on whichever chain the launch is on ----------------------- */
@@ -74,7 +75,7 @@ export async function ciz({ kayit, param }) {
     rota: null,           // its best route, from teminat-bul.js
     /* Which chain the launch happens on. Any of the nine; the token can
        then be spread to all the others. */
-    ag: (APTOS_ACIK && param && param.get && param.get("zincir") === "aptos" ? APTOS : agBul(param && param.get && param.get("zincir"))) || agBul("base")
+    ag: (param && param.get && param.get("zincir") === "sui" ? SUI : APTOS_ACIK && param && param.get && param.get("zincir") === "aptos" ? APTOS : agBul(param && param.get && param.get("zincir"))) || agBul("base")
   };
 
   /* LOCAL COLLATERAL (nesil 3, dagitim-nesil3.json). On Arc, Robinhood,
@@ -117,6 +118,17 @@ export async function ciz({ kayit, param }) {
       attr: { type: "button" }, yazi: "Aptos",
       on: { click: () => { durum.ag = APTOS; durum.teminatToken = null; durum.rota = null; agiCiz(); teminatiCiz(); } }
     }));
+    /* Sui: launchpad + PulseSwap, immutable since 16 Oct; a launch is two
+       wallet prompts (the coin's own package, then the launch) */
+    agDugmeleri.append(el("button", {
+      sinif: "dugme " + (durum.ag.anahtar === "sui" ? "dugme--marka" : "dugme--sessiz"),
+      attr: { type: "button" }, yazi: "Sui",
+      on: { click: () => { durum.ag = SUI; durum.teminatToken = null; durum.rota = null; agiCiz(); teminatiCiz(); } }
+    }));
+    if (durum.ag.anahtar === "sui") {
+      temizle(agNotu).append(not("Sui: pay in native USDC with a Sui wallet (Slush, Suiet, Phantom…). Two approvals: first your coin is created (its own package, made immutable at once), then the launch. Back the token with any coin that has a PulseSwap pool on Sui at least 24 hours old, or leave the field empty to keep dollars.", "bilgi"));
+      return;
+    }
     if (durum.ag.anahtar === "aptos") {
       temizle(agNotu).append(not("Aptos: pay in native USDC with an Aptos wallet (Petra, Nightly, OKX…). Back the token with any token that has a PulseSwap pool on Aptos at least 24 hours old, or leave the field empty to keep dollars. The token lives on Aptos.", "bilgi"));
       return;
@@ -170,6 +182,17 @@ export async function ciz({ kayit, param }) {
     const ca = (caGirdi.value || "").trim();
     durum.teminatToken = null; durum.rota = null;
     if (!ca) { teminatiCiz(); return; }
+    if (durum.ag.anahtar === "sui") {
+      if (!/^0x[0-9a-fA-F]{1,64}::[A-Za-z_][A-Za-z0-9_]*::[A-Za-z_][A-Za-z0-9_]*$/.test(ca)) { bulDurum.textContent = "On Sui, paste the coin type: 0x…::module::NAME."; return; }
+      bulDurum.textContent = "Looking for " + ca.split("::").slice(1).join("::") + " on Sui…";
+      const h = await suiTeminatHavuzu(ca, BigInt(Math.round(durum.teminat * 1e6))).catch((e) => ({ hata: e.message }));
+      if (h.hata) { bulDurum.textContent = h.hata; return; }
+      durum.teminatToken = { ...h, adres: h.tip };
+      durum.rota = { cikti: h.cikti, aciklama: "PulseSwap pool on Sui" };
+      bulDurum.textContent = "";
+      teminatiCiz(); ozetiCiz();
+      return;
+    }
     if (durum.ag.anahtar === "aptos") {
       if (!/^0x[0-9a-fA-F]{1,64}$/.test(ca)) { bulDurum.textContent = "That is not an Aptos token address."; return; }
       bulDurum.textContent = "Looking for " + ca.slice(0, 10) + "… on Aptos…";
@@ -329,6 +352,7 @@ export async function ciz({ kayit, param }) {
       }
       const ag = durum.ag;
       if (ag.anahtar === "aptos") return aptosLaunch({ ad, sembol, durum, durumSatiri, yayKap });
+      if (ag.anahtar === "sui") return suiLaunch({ ad, sembol, durum, durumSatiri, yayKap });
       if (LAUNCH_YOK[ag.anahtar]) { durumSatiri.textContent = LAUNCH_YOK[ag.anahtar]; return; }
       if (durum.alim < PULSE_KURAL.asgariAlim || durum.alim > PULSE_KURAL.azamiAlim) {
         durumSatiri.textContent = "The buy has to be between " +
@@ -414,6 +438,39 @@ export async function ciz({ kayit, param }) {
   }
 
   return kap;
+}
+
+/**
+ * A launch on Sui: two prompts from the founder's Sui wallet (sui.js
+ * launchEt): the coin's own package from the template, then the launch.
+ */
+async function suiLaunch({ ad, sembol, durum, durumSatiri, yayKap }) {
+  if (ad.length > 32 || sembol.length > 10) { durumSatiri.textContent = "Name up to 32 characters, symbol up to 10."; return; }
+  if (!/^[A-Za-z][A-Za-z0-9]*$/.test(sembol)) { durumSatiri.textContent = "On Sui the symbol starts with a letter and uses only letters and digits."; return; }
+  if (durum.alim < PULSE_KURAL.asgariAlim || durum.alim > PULSE_KURAL.azamiAlim) {
+    durumSatiri.textContent = "The buy has to be between " + PULSE_KURAL.asgariAlim + " and " + PULSE_KURAL.azamiAlim + " USDC."; return;
+  }
+  if (durum.teminat < PULSE_KURAL.asgariTeminat) { durumSatiri.textContent = "Collateral has to be at least " + PULSE_KURAL.asgariTeminat + " USDC."; return; }
+  const ilkAlim = BigInt(Math.round(durum.alim * 1e6));
+  const teminat = BigInt(Math.round(durum.teminat * 1e6));
+  try {
+    durumSatiri.className = "yazi yazi--kucuk yazi--sessiz";
+    if (!suiCuzdan.varMi()) throw new Error("No Sui wallet found. Install Slush (or any Sui wallet) and reload.");
+    let yapistir = null;
+    if (durum.teminatToken) {
+      /* the pool's age and depth checked again, quoted for the amount sent */
+      const h = await suiTeminatHavuzu(durum.teminatToken.tip, teminat);
+      if (h.hata) throw new Error(h.hata);
+      yapistir = h;
+    }
+    const r = await suiLaunchEt({ ad, sembol, teminat, ilkAlim, vergiPpm: durum.vergiPpm, yapistir, durum: (m) => { durumSatiri.textContent = m; } });
+    durumSatiri.className = "yazi yazi--kucuk";
+    durumSatiri.textContent = "Live on Sui: " + r.tip + " — you hold about " + (Number(suiAcilis(ilkAlim)) / 1e6).toLocaleString("en-US") + " " + sembol + ".";
+    yayKap.append(el("a", { sinif: "dugme dugme--sessiz", attr: { href: SUI.gezgin + "/coin/" + r.tip, target: "_blank", rel: "noopener" }, yazi: "Open on Suiscan" }));
+  } catch (e) {
+    durumSatiri.className = "yazi yazi--kucuk yazi--hata";
+    durumSatiri.textContent = (e && e.message) || "The transaction could not be sent.";
+  }
 }
 
 /**
