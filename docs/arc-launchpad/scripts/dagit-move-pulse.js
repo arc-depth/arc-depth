@@ -92,7 +92,10 @@ async function aptos(ikinci = false) {
   const moduller = async () => (await ag.getAccountModules({ accountAddress: P })).map((m) => m.abi.name);
   const kaynakVar = async (t) => ag.getAccountResource({ accountAddress: P, resourceType: t }).then(() => true).catch(() => false);
   const gonder = async (etiket, data) => {
-    const tx = await ag.transaction.build.simple({ sender: hesap.accountAddress, data, options: { maxGasAmount: 400000 } });
+    // the gas reserve is held up front: 0.4 APT for a publish, small for a call
+    // (a call with the publish reserve failed on 16 Oct with 0.37 APT left)
+    const yayin = data.function === "0x1::code::publish_package_txn";
+    const tx = await ag.transaction.build.simple({ sender: hesap.accountAddress, data, options: { maxGasAmount: yayin ? 400000 : 20000 } });
     const [sim] = await ag.transaction.simulate.simple({ signerPublicKey: hesap.publicKey, transaction: tx });
     if (!sim.success) throw new Error(etiket + " simulasyon: " + sim.vm_status);
     const ucret = Number(sim.gas_used) * Number(sim.gas_unit_price) / 1e8;
