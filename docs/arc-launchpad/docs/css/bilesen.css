@@ -558,3 +558,39 @@ textarea.girdi { height: auto; min-height: 84px; padding: var(--bosluk-3); resiz
 .yon__oge[aria-selected="true"][data-yon="al"]  { background: var(--alis-zemin);  color: var(--alis); }
 .yon__oge[aria-selected="true"][data-yon="sat"] { background: var(--satis-zemin); color: var(--satis); }
 @media (max-width: 860px) { .yon__oge { min-height: 42px; } }
+
+/* ---- connect-a-wallet dialog (ana.js, "cuzdan-yok") ------------------ */
+.cuzdan-perde {
+  position: fixed; inset: 0; z-index: 1000;
+  display: flex; align-items: center; justify-content: center; padding: 16px;
+  background: rgba(0, 0, 0, .62); backdrop-filter: blur(4px);
+}
+.cuzdan-kutu {
+  width: 100%; max-width: 400px; padding: 22px;
+  display: flex; flex-direction: column; gap: 14px;
+  background: var(--yuzey-1); border: 1px solid var(--cizgi-guclu); border-radius: 16px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, .45);
+}
+.cuzdan-kutu__ust { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.cuzdan-kutu__baslik { margin: 0; font-size: 17px; font-weight: 600; color: var(--yazi-1); }
+.cuzdan-kutu__metin { margin: 0; font-size: 14px; line-height: 1.5; color: var(--yazi-2); }
+.cuzdan-liste { display: flex; flex-direction: column; gap: 8px; }
+.cuzdan-secenek {
+  display: flex; align-items: center; gap: 12px; padding: 12px 14px; min-height: 52px;
+  border: 1px solid var(--cizgi-guclu); border-radius: 12px;
+  background: var(--yuzey-2); color: var(--yazi-1); text-decoration: none;
+  transition: background var(--gecis-hizli) var(--egri), border-color var(--gecis-hizli) var(--egri);
+}
+.cuzdan-secenek:hover, .cuzdan-secenek:focus-visible { background: var(--yuzey-3); border-color: var(--marka); }
+.cuzdan-secenek__harf {
+  flex: none; width: 32px; height: 32px; border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 14px; color: #fff;
+}
+.cuzdan-secenek__ad { font-weight: 600; font-size: 15px; }
+.cuzdan-secenek__alt { display: block; font-size: 12px; color: var(--yazi-3); font-weight: 400; }
+.cuzdan-secenek__etiket {
+  margin-left: auto; font-size: 11px; padding: 3px 8px; border-radius: 999px;
+  background: var(--marka); color: #fff; white-space: nowrap;
+}
+.cuzdan-kutu__guven { margin: 0; font-size: 12px; line-height: 1.5; color: var(--yazi-3); }

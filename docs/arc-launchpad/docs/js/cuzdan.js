@@ -26,8 +26,73 @@ let _hesap = null;
 let _zincir = null;
 const _dinleyiciler = new Set();
 
+/* EIP-6963: wallets announce themselves instead of fighting over
+   window.ethereum. With two extensions installed only one of them owns
+   window.ethereum; the announcement list has both. MetaMask first when it
+   is there, since that is the one people mean. */
+const _duyurulan = [];
+if (typeof window !== "undefined") {
+  window.addEventListener("eip6963:announceProvider", (e) => {
+    if (e && e.detail && e.detail.provider && !_duyurulan.some((x) => x.info.uuid === e.detail.info.uuid)) _duyurulan.push(e.detail);
+  });
+  window.dispatchEvent(new Event("eip6963:requestProvider"));
+}
+
 function saglayici() {
-  return typeof window !== "undefined" && window.ethereum ? window.ethereum : null;
+  if (typeof window === "undefined") return null;
+  const mm = _duyurulan.find((x) => /metamask/i.test(x.info.rdns || x.info.name || ""));
+  if (mm) return mm.provider;
+  if (window.ethereum) return window.ethereum;
+  return _duyurulan.length ? _duyurulan[0].provider : null;
+}
+
+/**
+ * Phone browsers (Safari, Chrome on iOS and Android) carry no wallet. The
+ * wallet apps each have a browser of their own and a link that opens this
+ * very page inside it, where the wallet is present. Those links are the
+ * wallets' own documented deep links; nothing is installed or relayed.
+ */
+export function cuzdanUygulamalari() {
+  const tam = location.href;
+  const yalin = location.host + location.pathname + location.search + location.hash;
+  return [
+    { ad: "MetaMask", url: "https://metamask.app.link/dapp/" + yalin },
+    { ad: "Coinbase Wallet", url: "https://go.cb-w.com/dapp?cb_url=" + encodeURIComponent(tam) },
+    { ad: "Trust Wallet", url: "https://link.trustwallet.com/open_url?coin_id=60&url=" + encodeURIComponent(tam) },
+  ];
+}
+
+export const mobilMi = () => typeof navigator !== "undefined" && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+/* What a wallet is told when it adds a chain. MetaMask checks a new
+   network against the public chain registry (chainid.network) and warns
+   "this network may not be safe" when the name, the currency or the RPC do
+   not match it. So these are the registry's own values, copied 16 Oct
+   2026, not our short display names ("Arbitrum", "BNB Chain"). */
+const KAYITLI = {
+  5042: { chainName: "Arc", nativeCurrency: { name: "USDC", symbol: "USDC", decimals: 18 },
+    rpcUrls: ["https://rpc.mainnet.arc.io", "https://rpc.drpc.mainnet.arc.io", "https://rpc.blockdaemon.mainnet.arc.io"],
+    blockExplorerUrls: ["https://explorer.arc.io"] },
+  4663: { chainName: "Robinhood Chain", nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
+    rpcUrls: ["https://rpc.mainnet.chain.robinhood.com", "https://robinhood-rpc.publicnode.com"],
+    blockExplorerUrls: ["https://robinhoodchain.blockscout.com"] },
+  8453: { chainName: "Base", nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
+    rpcUrls: ["https://mainnet.base.org"], blockExplorerUrls: ["https://basescan.org"] },
+  42161: { chainName: "Arbitrum One", nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
+    rpcUrls: ["https://arb1.arbitrum.io/rpc"], blockExplorerUrls: ["https://arbiscan.io"] },
+  1: { chainName: "Ethereum Mainnet", nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
+    rpcUrls: ["https://ethereum-rpc.publicnode.com"], blockExplorerUrls: ["https://etherscan.io"] },
+  56: { chainName: "BNB Smart Chain Mainnet", nativeCurrency: { name: "BNB Chain Native Token", symbol: "BNB", decimals: 18 },
+    rpcUrls: ["https://bsc-dataseed1.bnbchain.org"], blockExplorerUrls: ["https://bscscan.com"] },
+  43114: { chainName: "Avalanche C-Chain", nativeCurrency: { name: "Avalanche", symbol: "AVAX", decimals: 18 },
+    rpcUrls: ["https://api.avax.network/ext/bc/C/rpc"], blockExplorerUrls: ["https://snowtrace.io"] },
+  143: { chainName: "Monad", nativeCurrency: { name: "Monad", symbol: "MON", decimals: 18 },
+    rpcUrls: ["https://rpc.monad.xyz"], blockExplorerUrls: ["https://monadvision.com"] },
+};
+
+function agEkleParam(id, yedek) {
+  const k = KAYITLI[id];
+  return { chainId: "0x" + id.toString(16), ...(k || yedek) };
 }
 
 function duyur() {
@@ -72,10 +137,14 @@ export const cuzdan = {
   async bagla() {
     const p = saglayici();
     if (!p) {
-      throw new Error(
+      const e = new Error(
         "No wallet found in this browser. A wallet that supports the Arc " +
     "network has to be installed."
       );
+      e.code = "CUZDAN_YOK";   // the page offers the wallet apps instead of an error
+      /* every view's connect button lands here; ana.js opens one dialog */
+      window.dispatchEvent(new CustomEvent("cuzdan-yok"));
+      throw e;
     }
     const h = await p.request({ method: "eth_requestAccounts" });
     _hesap = h && h.length ? h[0] : null;
@@ -96,10 +165,11 @@ export const cuzdan = {
       await p.request({ method: "wallet_switchEthereumChain", params: [{ chainId: ONALTILIK_ID }] });
     } catch (e) {
       if (e && e.code === 4902) {
+        /* The registry's values (KAYITLI); the comment below is why the
+           decimals are eighteen. */
         await p.request({
           method: "wallet_addEthereumChain",
-          params: [{
-            chainId: ONALTILIK_ID,
+          params: [agEkleParam(ZINCIR.id, {
             chainName: "Arc",
             rpcUrls: [ZINCIR.rpc],
             /* EIGHTEEN, and this line said six.
@@ -121,8 +191,8 @@ export const cuzdan = {
                rather than reasoned about: the same six-versus-eighteen
                mistake cost a $497 BILLION deployment estimate elsewhere
                in this project on the same day. */
-            nativeCurrency: { name: "USD Coin", symbol: "USDC", decimals: 18 }
-          }]
+            nativeCurrency: { name: "USDC", symbol: "USDC", decimals: 18 }
+          })]
         });
       } else {
         throw e;
@@ -161,11 +231,11 @@ export const cuzdan = {
       await p.request({ method: "wallet_switchEthereumChain", params: [{ chainId: hex }] });
     } catch (e) {
       if (e && e.code === 4902) {
-        await p.request({ method: "wallet_addEthereumChain", params: [{
-          chainId: hex, chainName: ag.ad, rpcUrls: [ag.rpc],
+        await p.request({ method: "wallet_addEthereumChain", params: [agEkleParam(ag.id, {
+          chainName: ag.ad, rpcUrls: [ag.rpc],
           nativeCurrency: { name: ag.gaz, symbol: ag.gaz, decimals: 18 },
           blockExplorerUrls: ag.kasif ? [ag.kasif] : undefined
-        }] });
+        })] });
       } else {
         throw e;
       }
@@ -193,10 +263,13 @@ export const cuzdan = {
 /* The wallet can change account or chain without the page doing anything,
    and a page that keeps showing the old account after the user switched is
    a page that will show somebody the wrong balance. */
-const p = saglayici();
-if (p && p.on) {
-  p.on("accountsChanged", (h) => { _hesap = h && h.length ? h[0] : null; duyur(); });
-  p.on("chainChanged", (c) => { _zincir = c; duyur(); });
-}
-
-cuzdan.sessizBagla();
+/* Wallets announce over EIP-6963 a moment after the page loads, so the
+   listeners and the silent reconnect wait one tick for them. */
+setTimeout(() => {
+  const p = saglayici();
+  if (p && p.on) {
+    p.on("accountsChanged", (h) => { _hesap = h && h.length ? h[0] : null; duyur(); });
+    p.on("chainChanged", (c) => { _zincir = c; duyur(); });
+  }
+  cuzdan.sessizBagla();
+}, 150);

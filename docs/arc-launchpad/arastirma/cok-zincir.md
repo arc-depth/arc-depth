@@ -78,6 +78,10 @@ Monad, HyperEVM'de bakiye 0; Base ve Ethereum'da küçük bakiye var).
 - [x] F9 Aptos: FTHM OFT (Move), launchpad + kasa modülü (ana ağ v2, 16 Ekim)
 - [x] F10 Sui: FTHM OFT (Move), launchpad + kasa modülü (ana ağ 16 Ekim)
 - [~] F11 Site + uygulama: zincir seçici, keşif listesi tüm zincirler, analitik tüm zincirler
+  (F11'in kalan site işleri kullanıcının isteğiyle BEKLEMEDE, 16 Eki: "site beklesin"; turlar F12+ ile devam eder)
+- [ ] F12 GENESIS ölçümleri: araştırma betiğine para harcamayan, zincirden okunan yeni ölçümler (12 zincirde günlük yeni token sayısı, kopya oranı, havuz yaşı ve rug oranı, USDC arzı değişimi); her biri bilgi tabanına konu olarak, gizlilik süzgecinden geçerek; yerel test
+- [ ] F13 Solana işlem boyutu: launch'u iki işleme böl (1: mint + kurucu token hesabı, 2: Launch/LaunchBacked) — 1232 bayt sınırından uzak, uzun ad/URI ile de; istemci kütüphanesi (`solana/istemci.js`, site dışı) + yerel-ag provası
+- [ ] F14 `.pulse` isim sistemi (Arc, kendi teknolojimiz): isim → adres/token kaydı, her launch tokenine otomatik SEMBOL.pulse, kayıt ücreti küçük ve %5 FTHM; kontrat + forge testleri yerel, ana ağ yayını kullanıcı komutuyla
 
 ## Sonuç günlüğü
 - 2026-10-14 — F0 tamam. Dokuz EVM zincirinin hepsinde LZ V2 + iki ortak DVN + Uniswap v4 + CREATE2 fabrikası + USDC zincirden doğrulandı. LZ Labs ve Nethermind on iki zincirin hepsinde var (Aptos'ta Luganodes/Canary yok, bu ikisi var).

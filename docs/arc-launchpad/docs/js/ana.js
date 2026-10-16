@@ -27,7 +27,7 @@
 import { YOLLAR, GRUPLAR, yolBul, grubunYollari } from "./yol.js";
 import { ikon } from "./ikon.js";
 import { el, temizle, dagitimBekliyor, yapimda, hata, iskelet } from "./ui.js";
-import { cuzdan } from "./cuzdan.js";
+import { cuzdan, cuzdanUygulamalari, mobilMi } from "./cuzdan.js";
 
 const VARSAYILAN = "kesfet";
 
@@ -279,7 +279,7 @@ kCuzdanDugme.addEventListener("click", async () => {
   } catch (e) {
     /* A refused connection is a normal outcome and not an error state —
        the button simply goes back to offering. */
-    if (e && e.code !== 4001) alert("Could not connect the wallet: " + ((e && e.message) || e));
+    if (e && e.code !== 4001 && e.code !== "CUZDAN_YOK") alert("Could not connect the wallet: " + ((e && e.message) || e));
   } finally {
     kCuzdanDugme.disabled = false;
     cuzdanDugmesiniTazele();
@@ -287,6 +287,51 @@ kCuzdanDugme.addEventListener("click", async () => {
 });
 
 cuzdan.dinle(() => { cuzdanDugmesiniTazele(); ciz(); });
+
+/* No wallet in this browser. On a phone that is the normal case (Safari
+   and Chrome carry none), so instead of an error the page offers to open
+   itself inside a wallet app's browser, where the wallet is. */
+let _cuzdanYokAcik = false;
+window.addEventListener("cuzdan-yok", () => {
+  if (_cuzdanYokAcik) return;
+  _cuzdanYokAcik = true;
+  const kapat = () => { _cuzdanYokAcik = false; document.removeEventListener("keydown", esc); perde.remove(); };
+  const esc = (e) => { if (e.key === "Escape") kapat(); };
+  const RENK = { "MetaMask": "#f6851b", "Coinbase Wallet": "#0052ff", "Trust Wallet": "#3375bb", "Rabby": "#7084ff" };
+  const secenek = (ad, alt, url, etiket, yeniSekme) => el("a", {
+    sinif: "cuzdan-secenek",
+    attr: { href: url, rel: "noopener", target: yeniSekme ? "_blank" : null }
+  }, [
+    el("span", { sinif: "cuzdan-secenek__harf", attr: { style: "background:" + (RENK[ad] || "var(--marka)"), "aria-hidden": "true" }, yazi: ad[0] }),
+    el("span", {}, [el("span", { sinif: "cuzdan-secenek__ad", yazi: ad }), el("span", { sinif: "cuzdan-secenek__alt", yazi: alt })]),
+    etiket ? el("span", { sinif: "cuzdan-secenek__etiket", yazi: etiket }) : null,
+  ]);
+  const mobil = mobilMi();
+  const liste = mobil
+    ? cuzdanUygulamalari().map((u, i) => secenek(u.ad, "Open this page in the " + u.ad + " app", u.url, i === 0 ? "Recommended" : null, false))
+    : [
+        secenek("MetaMask", "Browser extension, adds Arc in one click", "https://metamask.io/download/", "Recommended", true),
+        secenek("Rabby", "Browser extension, multi-chain", "https://rabby.io/", null, true),
+        secenek("Coinbase Wallet", "Browser extension", "https://www.coinbase.com/wallet/downloads", null, true),
+      ];
+  const kutu = el("div", { sinif: "cuzdan-kutu", attr: { role: "dialog", "aria-modal": "true", "aria-labelledby": "cuzdan-baslik" } }, [
+    el("div", { sinif: "cuzdan-kutu__ust" }, [
+      el("h2", { sinif: "cuzdan-kutu__baslik", attr: { id: "cuzdan-baslik" }, yazi: "Connect a wallet" }),
+      el("button", { sinif: "dugme dugme--sade", attr: { type: "button", "aria-label": "Close" }, yazi: "✕", on: { click: kapat } }),
+    ]),
+    el("p", { sinif: "cuzdan-kutu__metin", yazi: mobil
+      ? "Phone browsers carry no wallet. Pick your wallet app: it opens this same page inside its own browser, where it can connect."
+      : "No wallet extension was found in this browser. Install one, then reload this page and press Connect wallet again." }),
+    el("div", { sinif: "cuzdan-liste" }, liste),
+    el("p", { sinif: "cuzdan-kutu__guven", yazi:
+      "ARC PULSE never asks for a seed phrase or a private key. Your wallet only connects and signs transactions you can read in the wallet before you approve them." }),
+  ]);
+  const perde = el("div", { sinif: "cuzdan-perde", on: { click: (e) => { if (e.target === perde) kapat(); } } }, [kutu]);
+  document.addEventListener("keydown", esc);
+  document.body.append(perde);
+  const ilk = kutu.querySelector(".cuzdan-secenek");
+  if (ilk) ilk.focus();
+});
 
 /* ---- boot ----------------------------------------------------------- */
 
