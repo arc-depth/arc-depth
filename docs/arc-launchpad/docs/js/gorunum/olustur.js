@@ -175,15 +175,61 @@ export async function ciz({ kayit, param }) {
 
   /* ---- 2. collateral: paste a contract address ---------------------- */
   const teminatKap = el("div", { sinif: "yigin yigin--sik" });
-  const caGirdi = el("input", { sinif: "girdi mono", attr: { type: "text", placeholder: "0x… token contract on this chain", spellcheck: "false" } });
+  const caGirdi = el("input", { sinif: "girdi mono", attr: { type: "text", placeholder: "Token address on any chain: 0x… (EVM, Aptos) or 0x…::module::NAME (Sui)", spellcheck: "false" } });
   const bulDurum = el("div", { sinif: "yazi yazi--kucuk yazi--sessiz" });
+
+  /* PASTE ANY CA, FROM ANY CHAIN
+     The vault holds the pasted token on the launch's own chain, so the
+     launch has to happen where the token trades. The visitor should not
+     have to know which chain that is: the address's shape says the family
+     (EVM 0x+40, Aptos 0x+64, Sui 0x…::module::NAME, Solana base58), and an
+     EVM address that is not on the selected chain, or has no pool there, is
+     looked up on every chain that takes a pasted token. Each place it can
+     back a launch becomes a button that switches the launch there. */
+  const CA_ZINCIRLERI = () => AGLAR.filter((a) => a.nesil === 3 && !LAUNCH_YOK[a.anahtar]);
+  const oner = (ca, mesaj, secenekler) => {
+    temizle(bulDurum).append(el("div", { sinif: "yigin yigin--sik" }, [
+      el("div", { yazi: mesaj }),
+      el("div", { sinif: "satir", attr: { style: "flex-wrap:wrap;gap:8px" } }, secenekler.map((o) =>
+        el("button", { sinif: "dugme dugme--marka", attr: { type: "button" }, yazi: o.etiket,
+          on: { click: () => { durum.ag = o.ag; agiCiz(); teminatiCiz(); caGirdi.value = ca; teminatBul(); } } })))
+    ]));
+  };
+  const evmAra = async (ca, haric) => {
+    const dolar = BigInt(Math.round(durum.teminat * 1e6));
+    const sonuc = await Promise.allSettled(CA_ZINCIRLERI().filter((a) => a.id !== (haric && haric.id)).map(async (a) => {
+      const t = await tokenOku(a, ca);
+      if (!t || t.adres.toLowerCase() === a.quote.toLowerCase()) return null;
+      const r = await rotalar(a, t.adres, dolar).catch(() => []);
+      return r.length ? { ag: a, t } : null;
+    }));
+    return sonuc.filter((x) => x.status === "fulfilled" && x.value).map((x) => x.value);
+  };
+  const baskaZincirOner = async (ca, neden) => {
+    bulDurum.textContent = neden + " Looking on the other chains…";
+    const bulunan = await evmAra(ca, durum.ag);
+    if (!bulunan.length) { bulDurum.textContent = neden + " It has no pool the launch can buy through on any chain that takes a pasted token (" + CA_ZINCIRLERI().map((a) => a.ad).join(", ") + ")."; return; }
+    oner(ca, neden + " " + bulunan[0].t.simge + " can back a launch on " + bulunan.map((b) => b.ag.ad).join(", ") + ": the launch happens where the token trades.",
+      bulunan.map((b) => ({ ag: b.ag, etiket: "Launch on " + b.ag.ad + " with " + b.t.simge })));
+  };
 
   const teminatBul = async () => {
     const ca = (caGirdi.value || "").trim();
     durum.teminatToken = null; durum.rota = null;
     if (!ca) { teminatiCiz(); return; }
+    const tur = /^0x[0-9a-fA-F]{40}$/.test(ca) ? "evm"
+      : /^0x[0-9a-fA-F]{1,64}::[A-Za-z_][A-Za-z0-9_]*::[A-Za-z_][A-Za-z0-9_]*$/.test(ca) ? "sui"
+      : /^0x[0-9a-fA-F]{41,64}$/.test(ca) ? "aptos"
+      : /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(ca) ? "solana" : null;
+    if (!tur) { bulDurum.textContent = "Paste a token address: 0x… (an EVM chain or Aptos) or 0x…::module::NAME (Sui)."; return; }
+    if (tur === "solana") { bulDurum.textContent = "That is a Solana token. Launches on Solana open soon; until then pick a token on the chains above."; return; }
+    if (tur === "sui" && durum.ag.anahtar !== "sui") { oner(ca, "That is a Sui coin: the launch happens on Sui.", [{ ag: SUI, etiket: "Launch on Sui with it" }]); return; }
+    if (tur === "aptos" && durum.ag.anahtar !== "aptos") {
+      if (!APTOS_ACIK) { bulDurum.textContent = "That is an Aptos token; Aptos launches are not open right now."; return; }
+      oner(ca, "That is an Aptos token: the launch happens on Aptos.", [{ ag: APTOS, etiket: "Launch on Aptos with it" }]); return;
+    }
+    if (tur === "evm" && (durum.ag.nesil === "move" || durum.ag.nesil !== 3)) { await baskaZincirOner(ca, "That is an EVM token."); return; }
     if (durum.ag.anahtar === "sui") {
-      if (!/^0x[0-9a-fA-F]{1,64}::[A-Za-z_][A-Za-z0-9_]*::[A-Za-z_][A-Za-z0-9_]*$/.test(ca)) { bulDurum.textContent = "On Sui, paste the coin type: 0x…::module::NAME."; return; }
       bulDurum.textContent = "Looking for " + ca.split("::").slice(1).join("::") + " on Sui…";
       const h = await suiTeminatHavuzu(ca, BigInt(Math.round(durum.teminat * 1e6))).catch((e) => ({ hata: e.message }));
       if (h.hata) { bulDurum.textContent = h.hata; return; }
@@ -194,7 +240,6 @@ export async function ciz({ kayit, param }) {
       return;
     }
     if (durum.ag.anahtar === "aptos") {
-      if (!/^0x[0-9a-fA-F]{1,64}$/.test(ca)) { bulDurum.textContent = "That is not an Aptos token address."; return; }
       bulDurum.textContent = "Looking for " + ca.slice(0, 10) + "… on Aptos…";
       const h = await teminatHavuzu(ca, BigInt(Math.round(durum.teminat * 1e6))).catch((e) => ({ hata: e.message }));
       if (h.hata) { bulDurum.textContent = h.hata; return; }
@@ -204,13 +249,12 @@ export async function ciz({ kayit, param }) {
       teminatiCiz(); ozetiCiz();
       return;
     }
-    if (!/^0x[0-9a-fA-F]{40}$/.test(ca)) { bulDurum.textContent = "That is not a contract address."; return; }
     bulDurum.textContent = "Looking for " + ca.slice(0, 10) + "… on " + durum.ag.ad + "…";
     const t = await tokenOku(durum.ag, ca);
-    if (!t) { bulDurum.textContent = "No token at that address on " + durum.ag.ad + "."; return; }
+    if (!t) { await baskaZincirOner(ca, "No token at that address on " + durum.ag.ad + "."); return; }
     if (t.adres.toLowerCase() === durum.ag.quote.toLowerCase()) { bulDurum.textContent = ""; teminatiCiz(); return; }
     const r = await rotalar(durum.ag, t.adres, BigInt(Math.round(durum.teminat * 1e6)));
-    if (!r.length) { bulDurum.textContent = t.simge + " has no pool against " + durum.ag.dolarSembol + " on " + durum.ag.ad + " that the launch can buy through."; return; }
+    if (!r.length) { await baskaZincirOner(ca, t.simge + " has no pool against " + durum.ag.dolarSembol + " on " + durum.ag.ad + " that the launch can buy through."); return; }
     durum.teminatToken = t; durum.rota = r[0];
     bulDurum.textContent = "";
     teminatiCiz(); ozetiCiz();
@@ -220,7 +264,10 @@ export async function ciz({ kayit, param }) {
   const teminatiCiz = () => {
     temizle(teminatKap);
     if (durum.ag.nesil !== 3 && durum.ag.nesil !== "move") {
-      teminatKap.append(not("Collateral: " + durum.ag.dolarSembol + " on " + durum.ag.ad + ".", "bilgi"));
+      teminatKap.append(not("Collateral: " + durum.ag.dolarSembol + " on " + durum.ag.ad + ". To back the token with another token, paste its address: the launch moves to a chain where it trades.", "bilgi"));
+      teminatKap.append(el("div", { sinif: "satir", attr: { style: "gap:8px" } }, [caGirdi,
+        el("button", { sinif: "dugme dugme--sessiz", attr: { type: "button" }, yazi: "Find", on: { click: teminatBul } })]));
+      teminatKap.append(bulDurum);
       return;
     }
     teminatKap.append(el("div", { sinif: "satir", attr: { style: "gap:8px" } }, [

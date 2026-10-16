@@ -205,3 +205,24 @@ de yakalandı.
 - Baseline SSS: https://www.baseline.markets/faq
 - USDT0 açıklaması: https://crypto.news/what-is-usdt0/
 - Kendi kodumuz: `contracts/nesil2/CctpMesaj.sol`, `KopruKasasi2.sol`, commit 98f46d1, 7e6a672
+
+## 9. Ana ağ denemesi (16 Ekim 2026) — Base ↔ Arbitrum, GEÇTİ
+
+`scripts/taban-ana-ag.js`, kayıt `dagitim-taban.json`. Gerçek Circle CCTP V2,
+gerçek Iris imzası, kasalar kilitli (sahipsiz).
+
+| adım | sonuç | işlem |
+|---|---|---|
+| Arc → Base 5 USDC (CCTP) | geldi | explorer.arc.io/tx/0x231cccccccec… |
+| Base + Arbitrum kasa, ikiz, kilit | sahipsiz | basescan 0xa455…, arbiscan 0xe4fa… |
+| Tohum $1 / 1M PFT + $5 açılış | $2,5 FTHM, $2,5 hazine | basescan 0x6fd4… |
+| Base → Arbitrum 500k PFT | $0,4995 + 499.500 PFT tek mesajda; taban eşit | basescan 0x0333…, arbiscan 0xe563… |
+| Arbitrum'da yerel redeem 99.900 PFT | $0,0999 anında | arbiscan 0x07d2… |
+| Arbitrum → Base 399.600 PFT | 399.201 PFT basıldı (ücret düşülmüş) | arbiscan 0xcf8a…, basescan 0x3491… |
+| Base'de redeem hepsi | kasa ve arz 0 | basescan 0x1de9… |
+| FTHM payı Base → Arc stake | Stake USDC 0,005593 → 2,505793 | basescan 0x4eb6…, explorer.arc.io 0x8459… |
+
+Öğrenilenler: yedekli RPC aynı işlemi iki sağlayıcıya yayınlıyor, ikincisi
+"Nonce already used" dönüyor — işlem gitmiş olur, durum zincirden okunmalı;
+okuma gecikmeli sağlayıcıdan gelirse "basılan 0" görünebilir. Base ve
+Arbitrum'un standart CCTP onayı ~15–20 dk, Arc'ınki 10 sn.

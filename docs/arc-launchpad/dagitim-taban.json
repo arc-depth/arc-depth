@@ -1,0 +1,157 @@
+{
+ "zincirler": {
+  "base": {
+   "fthmPayi": "0x92E8Cd02cAd903E2a71F304b36Ac3E009F7d62A6",
+   "kasa": "0xD66f87e2dAcD4eD1C66eeD04eC9CE6cE3a4bdA28",
+   "domain": 6
+  },
+  "arbitrum": {
+   "fthmPayi": "0x9a011CA119b24eB8F98b09580d017f7066D2d61C",
+   "kasa": "0x7694404Ad7Db54d3c0334f61870DbF9e9D043050",
+   "domain": 3
+  }
+ },
+ "islemler": [
+  {
+   "z": "arc",
+   "ne": "approve TokenMessengerV2",
+   "tx": "0x46efd4221c6b0660bb0040cf1f5e5f8e63b6b6caf14fce40183465df7391e680",
+   "zaman": "2026-10-16T15:28:17.287Z"
+  },
+  {
+   "z": "arc",
+   "ne": "CCTP 5 USDC -> Base",
+   "tx": "0x231ccccccceca34d03bccce5fa5b619a656769df8230bd8cbd2b9b2728ec9b96",
+   "zaman": "2026-10-16T15:28:22.122Z"
+  },
+  {
+   "z": "base",
+   "ne": "receiveMessage (5 USDC)",
+   "tx": null,
+   "not": "teslim edildi (Base USDC 1.578971 -> 6.578971); makbuz okunurken RPC istek siniri, hash kaydedilemedi",
+   "zaman": "2026-10-16T15:29:12.905Z"
+  },
+  {
+   "z": "base",
+   "ne": "FthmPayi deploy",
+   "tx": null,
+   "not": "nonce 68, kod 1503 bayt, stake/dolar/domain okundu; makbuz RPC sinirinda kayboldu",
+   "zaman": "2026-10-16T15:31:10.369Z"
+  },
+  {
+   "z": "base",
+   "ne": "TabanKasasi deploy",
+   "tx": "0xa455385be2406ab7eab5f0a575cdb438b0ff9465a99f8c8f349dd82734db27e8",
+   "zaman": "2026-10-16T15:31:14.338Z"
+  },
+  {
+   "z": "arbitrum",
+   "ne": "FthmPayi deploy",
+   "tx": "0x4c7924448450f8bbfdf16f83559ddbbad30355c472838c36c76136241718718f",
+   "zaman": "2026-10-16T15:31:20.805Z"
+  },
+  {
+   "z": "arbitrum",
+   "ne": "TabanKasasi deploy",
+   "tx": "0xe4fadf266d5973a9a302d518806ab6504012d32f2f60c98ba6c227f9f3b6a266",
+   "zaman": "2026-10-16T15:31:26.534Z"
+  },
+  {
+   "z": "base",
+   "ne": "ikizEkle(arbitrum)",
+   "tx": "0xe7cecc0a3dacb66f86820fd19347a652b5c3c186468e51a3a82852f9e56a2c81",
+   "zaman": "2026-10-16T15:31:27.614Z"
+  },
+  {
+   "z": "arbitrum",
+   "ne": "ikizEkle(base)",
+   "tx": "0xb88c0a2060a80c42c72fc1e73c67ac303210a124d02507312f85e059d6107c88",
+   "zaman": "2026-10-16T15:31:33.631Z"
+  },
+  {
+   "z": "base",
+   "ne": "approve 6 USDC",
+   "tx": "0x72c221a7351e023e658309c9b7c225509b5f60845e8118a58dd3adec53637b7a",
+   "zaman": "2026-10-16T15:31:34.694Z"
+  },
+  {
+   "z": "base",
+   "ne": "approve 6 USDC",
+   "tx": "0x5d1d93adad95d4e0597519c1ff4202c96cfaa37ea5d6a8d8704f29ccf7c85546",
+   "zaman": "2026-10-16T15:31:46.623Z"
+  },
+  {
+   "z": "base",
+   "ne": "tohumla $1 / 1,000,000 PFT",
+   "tx": "0x6fd4183b847cca3d9f6daf654c6a8b75c45f1f7ff51cca97b6b9b7f31bfa0304",
+   "zaman": "2026-10-16T15:31:47.481Z"
+  },
+  {
+   "z": "base",
+   "ne": "kilitle",
+   "tx": "0xd6d79c6ceb2ff1c3781d536817c39fa50c160f655ea78e56565eb71f42e307c3",
+   "zaman": "2026-10-16T15:31:52.948Z"
+  },
+  {
+   "z": "arbitrum",
+   "ne": "kilitle",
+   "tx": "0x84338c646469dba74dee4286207b6262305628d2ac9ef49553675def265860e2",
+   "zaman": "2026-10-16T15:31:59.079Z"
+  },
+  {
+   "z": "base",
+   "ne": "kopru 500000.0 PFT -> arbitrum",
+   "tx": "0x03338d78b5d6a82907d9a5051eb6a2c36577a8cc13034f940330807dd3a49c56",
+   "zaman": "2026-10-16T15:32:15.614Z"
+  },
+  {
+   "z": "arbitrum",
+   "ne": "teslimAl",
+   "tx": "0xe563cf8ae8187ff0ee5d0fb7052e146efbbf876379c135a7665ad75119bf9c31",
+   "zaman": "2026-10-16T15:52:32.969Z"
+  },
+  {
+   "z": "arbitrum",
+   "ne": "teslimAl",
+   "tx": "0xe563cf8ae8187ff0ee5d0fb7052e146efbbf876379c135a7665ad75119bf9c31",
+   "not": "Giris: 0.4995 USDC, 499500 PFT; ikinci saglayici Nonce already used dondu",
+   "zaman": "2026-10-16T15:53:03.095Z"
+  },
+  {
+   "z": "arbitrum",
+   "ne": "itfa 99900.0 PFT",
+   "tx": "0x07d290b582141fec2370d3ad084f7ea9dcb5505acb50477d3f58aac730134255",
+   "zaman": "2026-10-16T15:53:09.935Z"
+  },
+  {
+   "z": "arbitrum",
+   "ne": "kopru 399600.0 PFT -> base",
+   "tx": "0xcf8afa1e5fb2a249f94db2b0c87af1c82e2798373b12b2d9d83d9036c57e683a",
+   "zaman": "2026-10-16T15:53:33.380Z"
+  },
+  {
+   "z": "base",
+   "ne": "teslimAl",
+   "tx": "0x349183adae8b0e58c36a3ec9c5783ee83007aeb339120ac1d9f41b19abf0aacf",
+   "zaman": "2026-10-16T16:10:20.073Z"
+  },
+  {
+   "z": "base",
+   "ne": "itfa 899201.0 PFT",
+   "tx": "0x1de957a327972da8687474f7263a87ba0ca1180fdf1e8e58adb749c673c9ab74",
+   "zaman": "2026-10-16T16:10:52.091Z"
+  },
+  {
+   "z": "base",
+   "ne": "FthmPayi.supur -> Arc stake",
+   "tx": "0x4eb6f17f18447156bf3f904bc828c35d725ece03bbf27bb0223f138e1ece4148",
+   "zaman": "2026-10-16T16:11:14.034Z"
+  },
+  {
+   "z": "arc",
+   "ne": "receiveMessage (FTHM share)",
+   "tx": "0x8459d6026c169c222d7897d9937284224053806d81f18dceb9541e42c88b59e3",
+   "zaman": "2026-10-16T16:31:06.075Z"
+  }
+ ]
+}
