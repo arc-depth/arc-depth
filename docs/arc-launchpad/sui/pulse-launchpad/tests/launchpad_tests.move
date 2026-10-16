@@ -3,11 +3,13 @@ module pulse::launchpad_tests {
     use sui::test_scenario::{Self as ts, Scenario};
     use sui::coin::{Self, Coin};
     use sui::clock::{Self, Clock};
-    use pulse::launchpad::{Self, Config, InitCap, Vault};
+    use pulse::launchpad::{Self, Config, InitCap, AdapterCap, Vault};
 
     public struct PTST has drop {}
     public struct USDC has drop {}
     public struct OTHER has drop {}
+    public struct GoodWitness has drop {}
+    public struct BadWitness has drop {}
 
     const PUB: address = @0xA11CE;
     const FOUNDER: address = @0xF0;
@@ -302,6 +304,187 @@ module pulse::launchpad_tests {
         launchpad::init_for_testing(s.ctx());
         let c = clock::create_for_testing(s.ctx());
         open_with(&mut s, &c, 20 * USD, 100 * USD, 10_000, 0);
+        c.destroy_for_testing();
+        s.end();
+    }
+
+    /* ---- paste a token as collateral (launch_backed) ------------------ */
+
+    /// founder launches backed by 1000 units of OTHER, bought with 20 dollars
+    fun open_backed(s: &mut Scenario, c: &Clock, dollars_in: u64, k_units: u64) {
+        s.next_tx(FOUNDER);
+        let cfg = s.take_shared<Config>();
+        let cap = coin::create_treasury_cap_for_testing<PTST>(s.ctx());
+        let k = coin::mint_for_testing<OTHER>(k_units, s.ctx());
+        let conv = launchpad::converted_for_testing<USDC, OTHER>(k, dollars_in);
+        let b = usdc(s, 100 * USD);
+        let tokens = launchpad::launch_backed<PTST, USDC, OTHER>(&cfg, cap, SUPPLY, conv, b, 10_000, 0, c, s.ctx());
+        transfer::public_transfer(tokens, FOUNDER);
+        ts::return_shared(cfg);
+        s.next_tx(FOUNDER);
+    }
+
+    #[test]
+    fun a_backed_vault_holds_the_pasted_token_and_gathers_tax_dollars() {
+        let (mut s, mut c) = setup();
+        open_backed(&mut s, &c, 20 * USD, 1000);
+        c.increment_for_testing(10_000);
+        {
+            let v = s.take_shared<Vault<PTST, USDC>>();
+            assert!(launchpad::target_backing<PTST, USDC, OTHER>(&v) == 1000, 1);
+            assert!(launchpad::backing(&v) == 0, 2);             // no tax on the opening buy
+            ts::return_shared(v);
+        };
+        let t = buy_as(&mut s, &c, BUYER, 200 * USD);
+        s.next_tx(BUYER);
+        let v = s.take_shared<Vault<PTST, USDC>>();
+        assert!(launchpad::backing(&v) == 2 * USD, 3);           // 1% of 200 in dollars, beside the token
+        assert!(launchpad::target_backing<PTST, USDC, OTHER>(&v) == 1000, 4);
+        ts::return_shared(v);
+        transfer::public_transfer(t, BUYER);
+        c.destroy_for_testing();
+        s.end();
+    }
+
+    #[test]
+    fun redeem_backed_pays_a_share_of_both_holdings_and_empties_both() {
+        let (mut s, mut c) = setup();
+        open_backed(&mut s, &c, 20 * USD, 1000);
+        c.increment_for_testing(10_000);
+        let t = buy_as(&mut s, &c, BUYER, 200 * USD);
+        transfer::public_transfer(t, BUYER);
+        s.next_tx(FOUNDER);
+        let mut ft = s.take_from_address<Coin<PTST>>(FOUNDER);
+        let mut v = s.take_shared<Vault<PTST, USDC>>();
+        let circ = launchpad::circulating(&v);
+        let held = ft.value();
+        let part = ft.split(held / 2, s.ctx());
+        let (d1, k1) = launchpad::redeem_backed<PTST, USDC, OTHER>(&mut v, part, s.ctx());
+        assert!(d1.value() == ((2 * USD as u128) * ((held / 2) as u128) / (circ as u128) as u64), 1);
+        assert!(k1.value() == ((1000u128) * ((held / 2) as u128) / (circ as u128) as u64), 2);
+        let (d2, k2) = launchpad::redeem_backed<PTST, USDC, OTHER>(&mut v, ft, s.ctx());
+        transfer::public_transfer(d1, FOUNDER); transfer::public_transfer(k1, FOUNDER);
+        transfer::public_transfer(d2, FOUNDER); transfer::public_transfer(k2, FOUNDER);
+        ts::return_shared(v);
+        // the buyer redeems the rest: both holdings end exactly at zero
+        s.next_tx(BUYER);
+        let bt = s.take_from_address<Coin<PTST>>(BUYER);
+        let mut v = s.take_shared<Vault<PTST, USDC>>();
+        let (d3, k3) = launchpad::redeem_backed<PTST, USDC, OTHER>(&mut v, bt, s.ctx());
+        assert!(launchpad::backing(&v) == 0, 3);
+        assert!(launchpad::target_backing<PTST, USDC, OTHER>(&v) == 0, 4);
+        transfer::public_transfer(d3, BUYER); transfer::public_transfer(k3, BUYER);
+        ts::return_shared(v);
+        c.destroy_for_testing();
+        s.end();
+    }
+
+    #[test, expected_failure(abort_code = launchpad::ETargetBacked)]
+    fun a_backed_vault_refuses_the_dollar_only_redeem() {
+        let (mut s, c) = setup();
+        open_backed(&mut s, &c, 20 * USD, 1000);
+        let ft = s.take_from_address<Coin<PTST>>(FOUNDER);
+        let mut v = s.take_shared<Vault<PTST, USDC>>();
+        let out = launchpad::redeem(&mut v, ft, s.ctx());
+        transfer::public_transfer(out, FOUNDER);
+        ts::return_shared(v);
+        c.destroy_for_testing();
+        s.end();
+    }
+
+    #[test, expected_failure(abort_code = launchpad::ENotTargetBacked)]
+    fun redeem_backed_with_the_wrong_token_type_is_refused() {
+        let (mut s, c) = setup();
+        open_backed(&mut s, &c, 20 * USD, 1000);
+        let ft = s.take_from_address<Coin<PTST>>(FOUNDER);
+        let mut v = s.take_shared<Vault<PTST, USDC>>();
+        let (d, k) = launchpad::redeem_backed<PTST, USDC, PTST>(&mut v, ft, s.ctx());
+        transfer::public_transfer(d, FOUNDER); transfer::public_transfer(k, FOUNDER);
+        ts::return_shared(v);
+        c.destroy_for_testing();
+        s.end();
+    }
+
+    #[test, expected_failure(abort_code = launchpad::ECollateralTooLow)]
+    fun a_conversion_under_twenty_dollars_is_refused() {
+        let (mut s, c) = setup();
+        open_backed(&mut s, &c, 20 * USD - 1, 1000);
+        c.destroy_for_testing();
+        s.end();
+    }
+
+    #[test, expected_failure(abort_code = launchpad::ESameAsset)]
+    fun the_dollar_itself_is_not_a_pasted_token() {
+        let (mut s, c) = setup();
+        s.next_tx(FOUNDER);
+        let cfg = s.take_shared<Config>();
+        let cap = coin::create_treasury_cap_for_testing<PTST>(s.ctx());
+        let k = usdc(&mut s, 20 * USD);
+        let conv = launchpad::converted_for_testing<USDC, USDC>(k, 20 * USD);
+        let b = usdc(&mut s, 100 * USD);
+        let t = launchpad::launch_backed<PTST, USDC, USDC>(&cfg, cap, SUPPLY, conv, b, 10_000, 0, &c, s.ctx());
+        transfer::public_transfer(t, FOUNDER);
+        ts::return_shared(cfg);
+        c.destroy_for_testing();
+        s.end();
+    }
+
+    /* ---- only the registered adapter can vouch for a swap -------------- */
+
+    fun register_good(s: &mut Scenario) {
+        s.next_tx(PUB);
+        let cap = s.take_from_sender<AdapterCap>();
+        let mut cfg = s.take_shared<Config>();
+        launchpad::register_adapter<GoodWitness>(cap, &mut cfg);
+        ts::return_shared(cfg);
+    }
+
+    #[test]
+    fun the_registered_adapter_can_back_a_launch() {
+        let (mut s, c) = setup();
+        register_good(&mut s);
+        s.next_tx(FOUNDER);
+        let cfg = s.take_shared<Config>();
+        let cap = coin::create_treasury_cap_for_testing<PTST>(s.ctx());
+        let k = coin::mint_for_testing<OTHER>(1000, s.ctx());
+        let conv = launchpad::converted<USDC, OTHER, GoodWitness>(&cfg, GoodWitness {}, k, 20 * USD);
+        let b = usdc(&mut s, 100 * USD);
+        let t = launchpad::launch_backed<PTST, USDC, OTHER>(&cfg, cap, SUPPLY, conv, b, 10_000, 0, &c, s.ctx());
+        transfer::public_transfer(t, FOUNDER);
+        ts::return_shared(cfg);
+        c.destroy_for_testing();
+        s.end();
+    }
+
+    #[test, expected_failure(abort_code = launchpad::ENotAdapter)]
+    fun another_witness_cannot_issue_a_receipt() {
+        let (mut s, c) = setup();
+        register_good(&mut s);
+        s.next_tx(FOUNDER);
+        let cfg = s.take_shared<Config>();
+        let k = coin::mint_for_testing<OTHER>(1000, s.ctx());
+        let conv = launchpad::converted<USDC, OTHER, BadWitness>(&cfg, BadWitness {}, k, 20 * USD);
+        let cap = coin::create_treasury_cap_for_testing<PTST>(s.ctx());
+        let b = usdc(&mut s, 100 * USD);
+        let t = launchpad::launch_backed<PTST, USDC, OTHER>(&cfg, cap, SUPPLY, conv, b, 10_000, 0, &c, s.ctx());
+        transfer::public_transfer(t, FOUNDER);
+        ts::return_shared(cfg);
+        c.destroy_for_testing();
+        s.end();
+    }
+
+    #[test, expected_failure(abort_code = launchpad::ENotAdapter)]
+    fun no_receipt_before_an_adapter_is_registered() {
+        let (mut s, c) = setup();
+        s.next_tx(FOUNDER);
+        let cfg = s.take_shared<Config>();
+        let k = coin::mint_for_testing<OTHER>(1000, s.ctx());
+        let conv = launchpad::converted<USDC, OTHER, GoodWitness>(&cfg, GoodWitness {}, k, 20 * USD);
+        let cap = coin::create_treasury_cap_for_testing<PTST>(s.ctx());
+        let b = usdc(&mut s, 100 * USD);
+        let t = launchpad::launch_backed<PTST, USDC, OTHER>(&cfg, cap, SUPPLY, conv, b, 10_000, 0, &c, s.ctx());
+        transfer::public_transfer(t, FOUNDER);
+        ts::return_shared(cfg);
         c.destroy_for_testing();
         s.end();
     }

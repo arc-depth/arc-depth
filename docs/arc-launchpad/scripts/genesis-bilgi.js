@@ -9,6 +9,7 @@
  * WHERE THINGS LIVE
  *   ozel/genesis-bilgi/bilgi.json       curated lessons (git-ignored)
  *   ozel/genesis-bilgi/arastirma.json   findings written by genesis-arastirma.js
+ *   ozel/genesis-bilgi/kavramlar.json   technical library: how the technology works
  *   On chain: only { title, id, keccak256(text) } per topic, so anyone can
  *   see WHAT GENESIS knows and later prove the text was not changed, but
  *   the text itself is only served to paying wallets (atlas-api.js).
@@ -25,7 +26,7 @@ const { keccak256, toUtf8Bytes } = require("ethers");
 
 const KOK = path.join(__dirname, "..");
 const OZEL = path.join(KOK, "ozel", "genesis-bilgi");
-const DOSYALAR = ["bilgi.json", "arastirma.json"];
+const DOSYALAR = ["bilgi.json", "arastirma.json", "kavramlar.json"];
 
 const YASAK = [
   [/0x[0-9a-fA-F]{40}(?![0-9a-fA-F])/, "contains an address"],
@@ -95,7 +96,7 @@ function ara(soru, k = 4) {
   }).filter((x) => x.puan >= ESIK).sort((a, b) => b.puan - a.puan).slice(0, k);
 }
 
-const basliklar = () => hepsi().filter((m) => !gizlilik(m)).map((m) => ({ id: m.id, baslik: m.baslik, icerikHash: icerikHash(m), kaynak: m.dosya === "arastirma.json" ? "research" : "lesson" }));
+const basliklar = () => hepsi().filter((m) => !gizlilik(m)).map((m) => ({ id: m.id, baslik: m.baslik, icerikHash: icerikHash(m), kaynak: m.dosya === "arastirma.json" ? "research" : m.dosya === "kavramlar.json" ? "concept" : "lesson" }));
 
 module.exports = { hepsi, gizlilik, kontrol, ara, basliklar, zincirKaydi, icerikHash, OZEL };
 

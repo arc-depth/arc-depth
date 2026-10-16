@@ -23,6 +23,7 @@ import { tokenOku, rotalar, asgariCikti } from "../teminat-bul.js";
 import { AGLAR, AG, IKIZ_SECENEK, agBul } from "../aglar.js";
 import { rpcPost } from "../ag-okur.js";
 import { Interface } from "../../vendor/ethers.min.js";
+import { APTOS, aptosCuzdan, teminatHavuzu, acilisTokeni, islemBekle, launchTokeni, launchDolar, launchTokenle, usdcBakiye } from "../aptos.js";
 
 /* ---- reads on whichever chain the launch is on ----------------------- */
 /* through rpcPost: a rate-limited RPC falls over to the chain's backups, so
@@ -72,7 +73,7 @@ export async function ciz({ kayit, param }) {
     rota: null,           // its best route, from teminat-bul.js
     /* Which chain the launch happens on. Any of the nine; the token can
        then be spread to all the others. */
-    ag: agBul(param && param.get && param.get("zincir")) || agBul("base")
+    ag: (param && param.get && param.get("zincir") === "aptos" ? APTOS : agBul(param && param.get && param.get("zincir"))) || agBul("base")
   };
 
   /* LOCAL COLLATERAL (nesil 3, dagitim-nesil3.json). On Arc, Robinhood,
@@ -106,6 +107,16 @@ export async function ciz({ kayit, param }) {
         on: { click: () => { durum.ag = a; durum.teminatToken = null; durum.rota = null; agiCiz(); teminatiCiz(); } }
       }));
     }
+    /* Aptos: the Move launchpad + PulseSwap, live and immutable since 16 Oct */
+    agDugmeleri.append(el("button", {
+      sinif: "dugme " + (durum.ag.anahtar === "aptos" ? "dugme--marka" : "dugme--sessiz"),
+      attr: { type: "button" }, yazi: "Aptos",
+      on: { click: () => { durum.ag = APTOS; durum.teminatToken = null; durum.rota = null; agiCiz(); teminatiCiz(); } }
+    }));
+    if (durum.ag.anahtar === "aptos") {
+      temizle(agNotu).append(not("Aptos: pay in native USDC with an Aptos wallet (Petra, Nightly, OKX…). Back the token with any token that has a PulseSwap pool on Aptos at least 24 hours old, or leave the field empty to keep dollars. The token lives on Aptos.", "bilgi"));
+      return;
+    }
     temizle(agNotu).append(LAUNCH_YOK[durum.ag.anahtar] ? not(LAUNCH_YOK[durum.ag.anahtar], "uyari")
       : not(durum.ag.ad + ": pay in " + durum.ag.dolarSembol +
           (durum.ag.sarmal ? " (wrapped 1:1 into 6-decimal pUSDC first, automatically)" : "") +
@@ -115,7 +126,7 @@ export async function ciz({ kayit, param }) {
   agiCiz();
   kap.append(panel("Chain", el("div", { sinif: "yigin" }, [
     agDugmeleri, agNotu,
-    el("div", { sinif: "alan__ipucu", yazi: "After the launch, one more transaction makes the token appear on the other chains at the same address." })
+    el("div", { sinif: "alan__ipucu", yazi: "On the EVM chains, one more transaction after the launch makes the token appear on the other chains at the same address." })
   ])));
 
   /* ---- 1. identity -------------------------------------------------- */
@@ -155,6 +166,17 @@ export async function ciz({ kayit, param }) {
     const ca = (caGirdi.value || "").trim();
     durum.teminatToken = null; durum.rota = null;
     if (!ca) { teminatiCiz(); return; }
+    if (durum.ag.anahtar === "aptos") {
+      if (!/^0x[0-9a-fA-F]{1,64}$/.test(ca)) { bulDurum.textContent = "That is not an Aptos token address."; return; }
+      bulDurum.textContent = "Looking for " + ca.slice(0, 10) + "… on Aptos…";
+      const h = await teminatHavuzu(ca, BigInt(Math.round(durum.teminat * 1e6))).catch((e) => ({ hata: e.message }));
+      if (h.hata) { bulDurum.textContent = h.hata; return; }
+      durum.teminatToken = h;
+      durum.rota = { cikti: h.cikti, aciklama: "PulseSwap pool on Aptos" };
+      bulDurum.textContent = "";
+      teminatiCiz(); ozetiCiz();
+      return;
+    }
     if (!/^0x[0-9a-fA-F]{40}$/.test(ca)) { bulDurum.textContent = "That is not a contract address."; return; }
     bulDurum.textContent = "Looking for " + ca.slice(0, 10) + "… on " + durum.ag.ad + "…";
     const t = await tokenOku(durum.ag, ca);
@@ -170,7 +192,7 @@ export async function ciz({ kayit, param }) {
 
   const teminatiCiz = () => {
     temizle(teminatKap);
-    if (durum.ag.nesil !== 3) {
+    if (durum.ag.nesil !== 3 && durum.ag.nesil !== "move") {
       teminatKap.append(not("Collateral: " + durum.ag.dolarSembol + " on " + durum.ag.ad + ".", "bilgi"));
       return;
     }
@@ -302,6 +324,7 @@ export async function ciz({ kayit, param }) {
         return;
       }
       const ag = durum.ag;
+      if (ag.anahtar === "aptos") return aptosLaunch({ ad, sembol, durum, durumSatiri, yayKap });
       if (LAUNCH_YOK[ag.anahtar]) { durumSatiri.textContent = LAUNCH_YOK[ag.anahtar]; return; }
       if (durum.alim < PULSE_KURAL.asgariAlim || durum.alim > PULSE_KURAL.azamiAlim) {
         durumSatiri.textContent = "The buy has to be between " +
@@ -387,6 +410,51 @@ export async function ciz({ kayit, param }) {
   }
 
   return kap;
+}
+
+/**
+ * A launch on Aptos: the founder's Aptos wallet calls the Move launchpad
+ * (dollars) or PulseSwap's launch_with_token (a pasted token) directly; the
+ * token's address is read from the launchpad's Launched event.
+ */
+async function aptosLaunch({ ad, sembol, durum, durumSatiri, yayKap }) {
+  if (ad.length > 32 || sembol.length > 10) { durumSatiri.textContent = "Name up to 32 characters, symbol up to 10."; return; }
+  if (durum.alim < PULSE_KURAL.asgariAlim || durum.alim > PULSE_KURAL.azamiAlim) {
+    durumSatiri.textContent = "The buy has to be between " + PULSE_KURAL.asgariAlim + " and " + PULSE_KURAL.azamiAlim + " USDC."; return;
+  }
+  if (durum.teminat < PULSE_KURAL.asgariTeminat) { durumSatiri.textContent = "Collateral has to be at least " + PULSE_KURAL.asgariTeminat + " USDC."; return; }
+  const ilkAlim = BigInt(Math.round(durum.alim * 1e6));
+  const teminat = BigInt(Math.round(durum.teminat * 1e6));
+  try {
+    durumSatiri.className = "yazi yazi--kucuk yazi--sessiz";
+    if (!aptosCuzdan.varMi()) throw new Error("No Aptos wallet found. Install Petra (or any Aptos wallet) and reload.");
+    durumSatiri.textContent = "Connecting " + aptosCuzdan.ad() + "…";
+    const hesap = await aptosCuzdan.baglan();
+    const bakiye = await usdcBakiye(hesap);
+    if (bakiye < ilkAlim + teminat) throw new Error("This wallet holds " + (Number(bakiye) / 1e6).toFixed(2) + " USDC on Aptos; the launch needs " + (Number(ilkAlim + teminat) / 1e6).toFixed(2) + ".");
+    let hash;
+    if (durum.teminatToken) {
+      /* quoted again for the amount actually sent, and the pool's age and depth checked again */
+      const h = await teminatHavuzu(durum.teminatToken.adres, teminat);
+      if (h.hata) throw new Error(h.hata);
+      durumSatiri.textContent = "Approve the launch in your wallet (" + h.simge + " collateral)…";
+      hash = await launchTokenle({ ad, sembol, teminat, ilkAlim, vergiPpm: durum.vergiPpm, token: h.adres, beklenen: h.cikti });
+    } else {
+      durumSatiri.textContent = "Approve the launch in your wallet…";
+      hash = await launchDolar({ ad, sembol, teminat, ilkAlim, vergiPpm: durum.vergiPpm });
+    }
+    durumSatiri.className = "yazi yazi--kucuk";
+    durumSatiri.textContent = "Sent: " + hash + " — waiting for Aptos…";
+    const tx = await islemBekle(hash);
+    if (!tx.success) throw new Error("The launch failed on chain: " + tx.vm_status);
+    const token = launchTokeni(tx);
+    if (!token) throw new Error("Launched, but the token address could not be read from " + hash);
+    durumSatiri.textContent = "Live on Aptos: " + token + " — you hold about " + (Number(acilisTokeni(ilkAlim)) / 1e6).toLocaleString("en-US") + " " + sembol + ".";
+    yayKap.append(el("a", { sinif: "dugme dugme--sessiz", attr: { href: APTOS.gezgin + "/fungible_asset/" + token + "?network=mainnet", target: "_blank", rel: "noopener" }, yazi: "Open on the Aptos explorer" }));
+  } catch (e) {
+    durumSatiri.className = "yazi yazi--kucuk yazi--hata";
+    durumSatiri.textContent = (e && e.message) || "The transaction could not be sent.";
+  }
 }
 
 /**

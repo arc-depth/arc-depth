@@ -32,15 +32,18 @@
 ///                 pays the excess (up to 3%) as extra tax to the vault
 ///
 /// NOT HERE (kept out, not faked)
-///   "Paste any token as collateral" (needs a price source); bridging to the
-///   other chains.
+///   bridging to the other chains. "Paste any token as collateral" is
+///   launch_backed: the registered DEX adapter swaps the founder's dollars
+///   into the token in the same transaction and vouches for the dollars in.
 module pulse::launchpad {
     use std::signer;
     use std::string::String;
-    use std::option;
+    use std::option::{Self, Option};
+    use std::string;
+    use aptos_std::type_info;
     use aptos_framework::event;
     use aptos_framework::object::{Self, Object, ExtendRef};
-    use aptos_framework::fungible_asset::{Self, Metadata, BurnRef, FungibleStore};
+    use aptos_framework::fungible_asset::{Self, Metadata, BurnRef, FungibleStore, FungibleAsset};
     use aptos_framework::primary_fungible_store;
     use aptos_framework::timestamp;
 
@@ -55,6 +58,11 @@ module pulse::launchpad {
     const E_TAX_RANGE: u64 = 9;
     const E_SLIPPAGE: u64 = 10;
     const E_NOT_CIRCULATING: u64 = 11;
+    const E_TARGET_BACKED: u64 = 12;
+    const E_NOT_TARGET_BACKED: u64 = 13;
+    const E_SAME_ASSET: u64 = 14;
+    const E_NOT_ADAPTER: u64 = 15;
+    const E_ADAPTER_SET: u64 = 16;
 
     const MIN_COLLATERAL_DOLLARS: u64 = 20;
     const OPENING_MCAP_DOLLARS: u64 = 3500;
@@ -81,7 +89,23 @@ module pulse::launchpad {
         collateral: Object<Metadata>,
         unit: u64,
         platform: address,
+        /// the one DEX adapter allowed to issue Converted receipts: the type
+        /// name of its witness, which only the adapter's module can construct
+        adapter: Option<string::String>,
     }
+
+    /// Set when a launch is backed by a pasted token: the vault holds that
+    /// token in this second store, beside the tax dollars in Launch.vault.
+    struct Backed has key {
+        target: Object<Metadata>,
+        store: Object<FungibleStore>,
+        store_ref: ExtendRef,
+    }
+
+    /// Proof that `dollars_in` of the chain's dollar were swapped into `fa`
+    /// in this transaction. No abilities: it can only be consumed by
+    /// launch_backed, and only the registered adapter can make one.
+    struct Converted { fa: FungibleAsset, dollars_in: u64 }
 
     /// Lives at the token's metadata object address.
     struct Launch has key {
@@ -115,7 +139,23 @@ module pulse::launchpad {
         let unit = 1u64;
         let i = 0u8;
         while (i < dec) { unit = unit * 10; i = i + 1; };
-        move_to(publisher, Config { collateral, unit, platform });
+        move_to(publisher, Config { collateral, unit, platform, adapter: option::none() });
+    }
+
+    /// Fix the adapter's witness type, once, by the publishing account.
+    public entry fun register_adapter<W: drop>(publisher: &signer) acquires Config {
+        assert!(signer::address_of(publisher) == @pulse, E_NOT_PUBLISHER);
+        let cfg = borrow_global_mut<Config>(@pulse);
+        assert!(option::is_none(&cfg.adapter), E_ADAPTER_SET);
+        cfg.adapter = option::some(type_info::type_name<W>());
+    }
+
+    /// Called by the registered adapter after swapping `dollars_in` of the
+    /// chain's dollar into `fa` in this transaction.
+    public fun converted<W: drop>(_w: W, fa: FungibleAsset, dollars_in: u64): Converted acquires Config {
+        let cfg = borrow_global<Config>(@pulse);
+        assert!(option::is_some(&cfg.adapter) && *option::borrow(&cfg.adapter) == type_info::type_name<W>(), E_NOT_ADAPTER);
+        Converted { fa, dollars_in }
     }
 
     public entry fun launch(
@@ -133,11 +173,36 @@ module pulse::launchpad {
     ): Object<Metadata> acquires Config, Launch {
         assert!(exists<Config>(@pulse), E_NOT_INITIALIZED);
         let cfg = borrow_global<Config>(@pulse);
+        assert!(collateral_amount >= MIN_COLLATERAL_DOLLARS * cfg.unit, E_COLLATERAL_TOO_LOW);
+        let dollars = primary_fungible_store::withdraw(founder, cfg.collateral, collateral_amount);
+        open(founder, name, symbol, decimals, supply, dollars, option::none(), first_buy, tax_ppm, min_tokens)
+    }
+
+    /// The same launch backed by a pasted token: the founder's collateral
+    /// dollars were swapped into it by the registered adapter in this
+    /// transaction; the Converted receipt says how many dollars went in.
+    public fun launch_backed(
+        founder: &signer, name: String, symbol: String, decimals: u8, supply: u64,
+        conv: Converted, first_buy: u64, tax_ppm: u64, min_tokens: u64,
+    ): Object<Metadata> acquires Config, Launch {
+        assert!(exists<Config>(@pulse), E_NOT_INITIALIZED);
+        let Converted { fa, dollars_in } = conv;
+        let cfg = borrow_global<Config>(@pulse);
+        assert!(fungible_asset::metadata_from_asset(&fa) != cfg.collateral, E_SAME_ASSET);
+        assert!(dollars_in >= MIN_COLLATERAL_DOLLARS * cfg.unit && fungible_asset::amount(&fa) > 0, E_COLLATERAL_TOO_LOW);
+        let none = fungible_asset::zero(cfg.collateral);
+        open(founder, name, symbol, decimals, supply, none, option::some(fa), first_buy, tax_ppm, min_tokens)
+    }
+
+    fun open(
+        founder: &signer, name: String, symbol: String, decimals: u8, supply: u64,
+        dollars: FungibleAsset, target: Option<FungibleAsset>, first_buy: u64, tax_ppm: u64, min_tokens: u64,
+    ): Object<Metadata> acquires Config, Launch {
+        let cfg = borrow_global<Config>(@pulse);
         let unit = cfg.unit;
         let collateral = cfg.collateral;
         let platform = cfg.platform;
         assert!(supply > 0, E_ZERO_SUPPLY);
-        assert!(collateral_amount >= MIN_COLLATERAL_DOLLARS * unit, E_COLLATERAL_TOO_LOW);
         assert!(first_buy >= MIN_FIRST_BUY_DOLLARS * unit && first_buy <= MAX_FIRST_BUY_DOLLARS * unit, E_FIRST_BUY_RANGE);
         assert!(tax_ppm >= TAX_MIN_PPM && tax_ppm <= TAX_MAX_PPM, E_TAX_RANGE);
         let founder_addr = signer::address_of(founder);
@@ -167,7 +232,16 @@ module pulse::launchpad {
         fungible_asset::deposit(pool_tokens, fungible_asset::mint(&mint_ref, supply));
         // mint_ref is dropped here: supply is final, and all of it is in the pool
 
-        fungible_asset::deposit(vault, primary_fungible_store::withdraw(founder, collateral, collateral_amount));
+        fungible_asset::deposit(vault, dollars);
+        if (option::is_some(&target)) {
+            let fa = option::extract(&mut target);
+            let k = fungible_asset::metadata_from_asset(&fa);
+            let kctor = object::create_sticky_object(@pulse);
+            let kstore = fungible_asset::create_store(&kctor, k);
+            fungible_asset::deposit(kstore, fa);
+            move_to(&token_signer, Backed { target: k, store: kstore, store_ref: object::generate_extend_ref(&kctor) });
+        };
+        option::destroy_none(target);
         let launch_fee = mul_ppm(first_buy, LAUNCH_FEE_PPM);
         primary_fungible_store::transfer(founder, collateral, platform, launch_fee);
 
@@ -176,7 +250,7 @@ module pulse::launchpad {
             pool_tokens, pool_dollars, pool_ref, pool_dref, virtual_dollars: OPENING_MCAP_DOLLARS * unit,
             opened_at: timestamp::now_seconds(), shield_at: 0, shield_ppm: 0,
         });
-        event::emit(Launched { token: object::object_address(&token), founder: founder_addr, supply, collateral: collateral_amount, first_buy, tax_ppm });
+        event::emit(Launched { token: object::object_address(&token), founder: founder_addr, supply, collateral: fungible_asset::balance(vault), first_buy, tax_ppm });
         // the founder's first buy opens the pool and is not sniping it
         buy_inner(founder, token, first_buy - launch_fee, min_tokens, true);
         token
@@ -274,6 +348,8 @@ module pulse::launchpad {
     public entry fun redeem(holder: &signer, token: Object<Metadata>, amount: u64) acquires Launch {
         let addr = object::object_address(&token);
         assert!(exists<Launch>(addr), E_NOT_A_LAUNCH);
+        // a target-backed vault pays both holdings: redeem_backed
+        assert!(!exists<Backed>(addr), E_TARGET_BACKED);
         assert!(amount > 0, E_ZERO_AMOUNT);
         let l = borrow_global<Launch>(addr);
         let circ = circulating_of(l, token);
@@ -288,6 +364,42 @@ module pulse::launchpad {
         };
         event::emit(Redeemed { token: addr, holder: holder_addr, burned: amount, payout });
     }
+
+    /// Burn tokens from a target-backed vault: a share of the pasted token
+    /// and of the tax dollars, both in proportion to circulating supply.
+    public entry fun redeem_backed(holder: &signer, token: Object<Metadata>, amount: u64) acquires Launch, Backed {
+        let addr = object::object_address(&token);
+        assert!(exists<Launch>(addr) && exists<Backed>(addr), E_NOT_TARGET_BACKED);
+        assert!(amount > 0, E_ZERO_AMOUNT);
+        let l = borrow_global<Launch>(addr);
+        let b = borrow_global<Backed>(addr);
+        let circ = circulating_of(l, token);
+        assert!(amount <= circ, E_NOT_CIRCULATING);
+        let pay_d = (((fungible_asset::balance(l.vault) as u128) * (amount as u128) / (circ as u128)) as u64);
+        let pay_k = (((fungible_asset::balance(b.store) as u128) * (amount as u128) / (circ as u128)) as u64);
+        let holder_addr = signer::address_of(holder);
+        fungible_asset::burn(&l.burn_ref, primary_fungible_store::withdraw(holder, token, amount));
+        if (pay_d > 0) {
+            let vs = object::generate_signer_for_extending(&l.vault_ref);
+            primary_fungible_store::deposit(holder_addr, fungible_asset::withdraw(&vs, l.vault, pay_d));
+        };
+        if (pay_k > 0) {
+            let ks = object::generate_signer_for_extending(&b.store_ref);
+            primary_fungible_store::deposit(holder_addr, fungible_asset::withdraw(&ks, b.store, pay_k));
+        };
+        event::emit(Redeemed { token: addr, holder: holder_addr, burned: amount, payout: pay_d });
+    }
+
+    /// the chain's dollar fixed at initialize (for adapters)
+    public fun dollar(): Object<Metadata> acquires Config { borrow_global<Config>(@pulse).collateral }
+
+    #[view] public fun target_backing(token: Object<Metadata>): (address, u64) acquires Backed {
+        let b = borrow_global<Backed>(object::object_address(&token));
+        (object::object_address(&b.target), fungible_asset::balance(b.store))
+    }
+
+    #[test_only]
+    public fun converted_for_testing(fa: FungibleAsset, dollars_in: u64): Converted { Converted { fa, dollars_in } }
 
     /// Anyone may add collateral; it only raises the floor for every holder.
     public entry fun fund(from: &signer, token: Object<Metadata>, amount: u64) acquires Launch {

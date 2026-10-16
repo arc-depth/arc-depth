@@ -1,0 +1,22 @@
+[package]
+name = "pulse-swap"
+version = "0.1.0"
+edition = "2021"
+description = "ARC PULSE PulseSwap on Solana: own constant-product pools, 0.10% protocol fee, 5% of it bound to buy FTHM"
+license = "BUSL-1.1"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+
+[features]
+default = []
+no-entrypoint = []
+local-test = []
+
+[dependencies]
+pinocchio = "0.11.2"
+pinocchio-token = "0.7.0"
+pinocchio-system = "0.6.1"
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(target_os, values("solana"))', 'cfg(feature, values("custom-heap", "custom-panic"))'] }

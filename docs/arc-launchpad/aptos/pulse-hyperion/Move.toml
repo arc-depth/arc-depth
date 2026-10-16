@@ -1,0 +1,21 @@
+[package]
+name = "PulseHyperion"
+version = "1.0.0"
+
+# The DEX adapter for pulse::launchpad::launch_backed on Aptos: swaps the
+# founder's collateral dollars into the pasted token through a Hyperion CLMM
+# pool and hands the launchpad a Converted receipt.
+[addresses]
+pulse_hyperion = "_"
+
+[dev-addresses]
+pulse_hyperion = "0xb0b"
+
+[dependencies]
+pulse_launchpad = { local = "../pulse-launchpad" }
+HyperionInterface = { local = "../hyperion-iface" }
+
+[dependencies.AptosFramework]
+git = "https://github.com/aptos-labs/aptos-framework.git"
+rev = "99f5e915b6d231d0ffbc1aff282d36148d2a8b24"
+subdir = "aptos-framework"

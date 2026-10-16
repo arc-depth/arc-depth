@@ -1,0 +1,22 @@
+[package]
+name = "PulseSwap"
+version = "1.0.0"
+# no one can change the code once published, the publisher included
+upgrade_policy = "immutable"
+
+# ARC PULSE's own swap for "paste a token as collateral" on Aptos: no
+# dependency on any outside DEX. Registered once as the launchpad's adapter.
+[addresses]
+pulse_swap = "_"
+
+[dev-addresses]
+pulse_swap = "0x5a5"
+pulse = "0xa11ce"
+
+[dependencies]
+pulse_launchpad = { local = "../pulse-launchpad" }
+
+[dependencies.AptosFramework]
+git = "https://github.com/aptos-labs/aptos-framework.git"
+rev = "99f5e915b6d231d0ffbc1aff282d36148d2a8b24"
+subdir = "aptos-framework"

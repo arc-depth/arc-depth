@@ -283,4 +283,131 @@ module pulse::launchpad_tests {
         let usdc = make_usdc(issuer);
         launchpad::initialize(founder, usdc, PLATFORM);
     }
+
+    /* ---- paste a token as collateral (launch_backed) ------------------ */
+
+    struct Other has key { mint: MintRef }
+    struct GoodWitness has drop {}
+    struct BadWitness has drop {}
+
+    fun make_other(issuer: &signer): Object<Metadata> {
+        let ctor = object::create_named_object(issuer, b"OTHER");
+        primary_fungible_store::create_primary_store_enabled_fungible_asset(
+            &ctor, option::none(), utf8(b"Other"), utf8(b"OTH"), 6, utf8(b""), utf8(b""));
+        move_to(issuer, Other { mint: fungible_asset::generate_mint_ref(&ctor) });
+        object::object_from_constructor_ref<Metadata>(&ctor)
+    }
+
+    fun other_fa(issuer: &signer, amount: u64): fungible_asset::FungibleAsset acquires Other {
+        fungible_asset::mint(&borrow_global<Other>(signer::address_of(issuer)).mint, amount)
+    }
+
+    fun open_backed(founder: &signer, issuer: &signer, dollars_in: u64): Object<Metadata> acquires Other {
+        let conv = launchpad::converted_for_testing(other_fa(issuer, 1000), dollars_in);
+        let t = launchpad::launch_backed(founder, utf8(b"Pulse Test"), utf8(b"PTST"), 6, SUPPLY, conv, 100 * USD, 10000, 0);
+        timestamp::fast_forward_seconds(10);
+        t
+    }
+
+    #[test(pulse = @pulse, issuer = @0xC1, founder = @0xF0, buyer = @0xB0)]
+    fun a_backed_vault_holds_the_token_and_gathers_tax_dollars(pulse: &signer, issuer: &signer, founder: &signer, buyer: &signer) acquires Usdc, Other {
+        let usdc = setup(pulse, issuer, founder);
+        let oth = make_other(issuer);
+        let t = open_backed(founder, issuer, 20 * USD);
+        let (k, kb) = launchpad::target_backing(t);
+        assert!(k == object::object_address(&oth) && kb == 1000, 1);
+        assert!(launchpad::backing(t) == 0, 2);
+        // founder paid only the first buy (the collateral came as the token)
+        assert!(bal(signer::address_of(founder), usdc) == 1000 * USD - 100 * USD, 3);
+        buyer_with(issuer, buyer, 200 * USD);
+        launchpad::buy(buyer, t, 200 * USD, 0);
+        assert!(launchpad::backing(t) == 2 * USD, 4);
+    }
+
+    #[test(pulse = @pulse, issuer = @0xC1, founder = @0xF0, buyer = @0xB0)]
+    fun redeem_backed_pays_both_holdings_and_empties_both(pulse: &signer, issuer: &signer, founder: &signer, buyer: &signer) acquires Usdc, Other {
+        let usdc = setup(pulse, issuer, founder);
+        let oth = make_other(issuer);
+        let t = open_backed(founder, issuer, 20 * USD);
+        let b = buyer_with(issuer, buyer, 200 * USD);
+        launchpad::buy(buyer, t, 200 * USD, 0);
+        let f = signer::address_of(founder);
+        let circ = launchpad::circulating(t);
+        let held = bal(f, t);
+        let d0 = bal(f, usdc);
+        launchpad::redeem_backed(founder, t, held);
+        assert!(bal(f, usdc) - d0 == (((2 * USD) as u128) * (held as u128) / (circ as u128) as u64), 1);
+        assert!(bal(f, oth) == ((1000u128) * (held as u128) / (circ as u128) as u64), 2);
+        launchpad::redeem_backed(buyer, t, bal(b, t));
+        let (_, kb) = launchpad::target_backing(t);
+        assert!(kb == 0 && launchpad::backing(t) == 0, 3);
+    }
+
+    #[test(pulse = @pulse, issuer = @0xC1, founder = @0xF0)]
+    #[expected_failure(abort_code = 12, location = pulse::launchpad)]
+    fun a_backed_vault_refuses_the_dollar_only_redeem(pulse: &signer, issuer: &signer, founder: &signer) acquires Usdc, Other {
+        setup(pulse, issuer, founder);
+        make_other(issuer);
+        let t = open_backed(founder, issuer, 20 * USD);
+        launchpad::redeem(founder, t, 1);
+    }
+
+    #[test(pulse = @pulse, issuer = @0xC1, founder = @0xF0)]
+    #[expected_failure(abort_code = 13, location = pulse::launchpad)]
+    fun redeem_backed_on_a_dollar_vault_is_refused(pulse: &signer, issuer: &signer, founder: &signer) acquires Usdc {
+        setup(pulse, issuer, founder);
+        let t = open(founder);
+        launchpad::redeem_backed(founder, t, 1);
+    }
+
+    #[test(pulse = @pulse, issuer = @0xC1, founder = @0xF0)]
+    #[expected_failure(abort_code = 4, location = pulse::launchpad)]
+    fun a_conversion_under_twenty_dollars_is_refused(pulse: &signer, issuer: &signer, founder: &signer) acquires Usdc, Other {
+        setup(pulse, issuer, founder);
+        make_other(issuer);
+        open_backed(founder, issuer, 20 * USD - 1);
+    }
+
+    #[test(pulse = @pulse, issuer = @0xC1, founder = @0xF0)]
+    #[expected_failure(abort_code = 14, location = pulse::launchpad)]
+    fun the_dollar_itself_is_not_a_pasted_token(pulse: &signer, issuer: &signer, founder: &signer) acquires Usdc {
+        setup(pulse, issuer, founder);
+        let fa = fungible_asset::mint(&borrow_global<Usdc>(signer::address_of(issuer)).mint, 20 * USD);
+        let conv = launchpad::converted_for_testing(fa, 20 * USD);
+        launchpad::launch_backed(founder, utf8(b"Pulse Test"), utf8(b"PTST"), 6, SUPPLY, conv, 100 * USD, 10000, 0);
+    }
+
+    #[test(pulse = @pulse, issuer = @0xC1, founder = @0xF0)]
+    fun the_registered_adapter_can_issue_a_receipt(pulse: &signer, issuer: &signer, founder: &signer) acquires Usdc, Other {
+        setup(pulse, issuer, founder);
+        make_other(issuer);
+        launchpad::register_adapter<GoodWitness>(pulse);
+        let conv = launchpad::converted(GoodWitness {}, other_fa(issuer, 1000), 20 * USD);
+        launchpad::launch_backed(founder, utf8(b"Pulse Test"), utf8(b"PTST"), 6, SUPPLY, conv, 100 * USD, 10000, 0);
+    }
+
+    #[test(pulse = @pulse, issuer = @0xC1, founder = @0xF0)]
+    #[expected_failure(abort_code = 15, location = pulse::launchpad)]
+    fun another_witness_cannot_issue_a_receipt(pulse: &signer, issuer: &signer, founder: &signer) acquires Usdc, Other {
+        setup(pulse, issuer, founder);
+        make_other(issuer);
+        launchpad::register_adapter<GoodWitness>(pulse);
+        let conv = launchpad::converted(BadWitness {}, other_fa(issuer, 1000), 20 * USD);
+        launchpad::launch_backed(founder, utf8(b"Pulse Test"), utf8(b"PTST"), 6, SUPPLY, conv, 100 * USD, 10000, 0);
+    }
+
+    #[test(pulse = @pulse, issuer = @0xC1, founder = @0xF0)]
+    #[expected_failure(abort_code = 16, location = pulse::launchpad)]
+    fun the_adapter_is_registered_only_once(pulse: &signer, issuer: &signer, founder: &signer) acquires Usdc {
+        setup(pulse, issuer, founder);
+        launchpad::register_adapter<GoodWitness>(pulse);
+        launchpad::register_adapter<BadWitness>(pulse);
+    }
+
+    #[test(pulse = @pulse, issuer = @0xC1, founder = @0xF0)]
+    #[expected_failure(abort_code = 1, location = pulse::launchpad)]
+    fun only_the_publisher_registers_the_adapter(pulse: &signer, issuer: &signer, founder: &signer) acquires Usdc {
+        setup(pulse, issuer, founder);
+        launchpad::register_adapter<GoodWitness>(founder);
+    }
 }

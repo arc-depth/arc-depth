@@ -1,0 +1,22 @@
+[package]
+name = "pulse-launchpad"
+version = "0.1.0"
+edition = "2021"
+description = "ARC PULSE launchpad on Solana: fixed-supply token, collateral vault, locked x*y=k pool with a virtual dollar reserve"
+license = "BUSL-1.1"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+
+[features]
+default = []
+no-entrypoint = []
+local-test = []
+
+[dependencies]
+pinocchio = "0.11.2"
+pinocchio-token = "0.7.0"
+pinocchio-system = "0.6.1"
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(target_os, values("solana"))', 'cfg(feature, values("custom-heap", "custom-panic"))'] }

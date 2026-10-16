@@ -1,0 +1,16 @@
+[package]
+name = "PulseCetus"
+version = "0.0.1"
+edition = "2024.beta"
+
+# The DEX adapter for pulse::launchpad::launch_backed on Sui: swaps the
+# founder's collateral dollars into the pasted token through a Cetus CLMM
+# pool and hands the launchpad a Converted receipt. Cetus is linked from its
+# published interface (CetusProtocol/cetus-clmm-interface), kept outside the
+# repo under C:/Users/omen/araclar/cetus.
+[dependencies]
+PulseLaunchpad = { local = "../pulse-launchpad" }
+CetusClmm = { local = "C:/Users/omen/araclar/cetus/iface/sui/cetus_clmm" }
+
+[addresses]
+pulse_cetus = "0x0"

@@ -1,0 +1,16 @@
+[package]
+name = "HyperionInterface"
+version = "0.0.1"
+upgrade_policy = "compatible"
+
+# Signatures of the Hyperion CLMM functions the ARC PULSE adapter calls,
+# copied from the on-chain ABI at 0x8b4a…e05c (Aptos mainnet, read 16 Oct
+# 2026; Hyperion publishes no source). Bodies abort: this package is only a
+# dependency to compile against and is never published.
+[addresses]
+dex = "0x8b4a2c4bb53857c718a04c020b98f8c2e1f99a68b0f57389a8bf5434cd22e05c"
+
+[dependencies.AptosFramework]
+git = "https://github.com/aptos-labs/aptos-framework.git"
+rev = "99f5e915b6d231d0ffbc1aff282d36148d2a8b24"
+subdir = "aptos-framework"

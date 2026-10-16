@@ -1,0 +1,12 @@
+[package]
+name = "PulseSwap"
+version = "0.0.1"
+edition = "2024.beta"
+
+# ARC PULSE's own constant-product pools on Sui and the paste-a-token adapter
+# for pulse::launchpad::launch_backed. No outside DEX.
+[dependencies]
+PulseLaunchpad = { local = "../pulse-launchpad" }
+
+[addresses]
+pulse_swap = "0x0"

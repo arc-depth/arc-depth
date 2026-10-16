@@ -34,14 +34,21 @@
 ///                 clock tick (one checkpoint) pays the excess, up to 3%, as
 ///                 extra tax to the vault
 ///
+/// PASTE ANY TOKEN AS COLLATERAL (launch_backed)
+///   The founder's collateral dollars are swapped into the pasted token K by
+///   a DEX adapter in this package, inside the same transaction; the adapter
+///   hands launch_backed a Converted receipt that proves the dollars in. The
+///   vault keeps K and the tax dollars; redeem_backed pays a share of both.
+///
 /// NOT HERE (kept out, not faked)
-///   "Paste any token as collateral" (needs a price source); bridging.
+///   bridging.
 module pulse::launchpad {
     use std::type_name::{Self, TypeName};
     use sui::balance::{Self, Balance};
     use sui::coin::{Self, Coin, TreasuryCap};
     use sui::clock::Clock;
     use sui::event;
+    use sui::dynamic_field as df;
 
     const ENotInitialized: u64 = 3;
     const ECollateralTooLow: u64 = 4;
@@ -53,6 +60,10 @@ module pulse::launchpad {
     const ETaxRange: u64 = 10;
     const ESlippage: u64 = 11;
     const ENotCirculating: u64 = 12;
+    const ETargetBacked: u64 = 13;
+    const ENotTargetBacked: u64 = 14;
+    const ESameAsset: u64 = 15;
+    const ENotAdapter: u64 = 16;
 
     const MIN_COLLATERAL_DOLLARS: u64 = 20;
     const OPENING_MCAP_DOLLARS: u64 = 3500;
@@ -74,12 +85,19 @@ module pulse::launchpad {
     /// Given to the publisher by init; consumed by initialize().
     public struct InitCap has key { id: UID }
 
+    /// Given to the publisher by init; consumed by register_adapter(), once.
+    /// After that no account can change which adapter may vouch for a swap.
+    public struct AdapterCap has key { id: UID }
+
     /// Shared, written once.
     public struct Config has key {
         id: UID,
         collateral: Option<TypeName>,
         unit: u64,
         platform: address,
+        /// the one DEX adapter allowed to issue Converted receipts: the type
+        /// of its witness, which only the adapter's own module can construct
+        adapter: Option<TypeName>,
     }
 
     /// Shared, one per launch.
@@ -95,6 +113,34 @@ module pulse::launchpad {
         opened_ms: u64,
         shield_ms: u64,
         shield_ppm: u64,
+        /// set when the launch is backed by a pasted token (CA): the vault
+        /// then holds that token under TargetKey, plus the tax dollars
+        target: Option<TypeName>,
+    }
+
+    /// Dynamic-field key of a target-backed vault's token balance.
+    public struct TargetKey has copy, drop, store {}
+
+    /// Proof that `dollars_in` of the chain's dollar were swapped into `coin`
+    /// in this transaction. No abilities: it cannot be stored, copied or
+    /// dropped, only consumed by launch_backed; and only this package's DEX
+    /// adapters can make one, so the founder cannot bring a worthless coin
+    /// and call it 20 dollars of collateral.
+    public struct Converted<phantom C, phantom K> { bal: Balance<K>, dollars_in: u64 }
+
+    /// Called by the registered adapter after it swapped `dollars_in` of C
+    /// into `coin` in this transaction. `_w` is the adapter's witness: only
+    /// the adapter module can make one, and only its type is accepted.
+    public fun converted<C, K, W: drop>(cfg: &Config, _w: W, coin: Coin<K>, dollars_in: u64): Converted<C, K> {
+        assert!(cfg.adapter.is_some() && *cfg.adapter.borrow() == type_name::with_defining_ids<W>(), ENotAdapter);
+        Converted { bal: coin.into_balance(), dollars_in }
+    }
+
+    /// Fix the adapter's witness type, once; the capability is destroyed.
+    public fun register_adapter<W: drop>(cap: AdapterCap, cfg: &mut Config) {
+        let AdapterCap { id } = cap;
+        id.delete();
+        cfg.adapter = option::some(type_name::with_defining_ids<W>());
     }
 
     public struct Launched has copy, drop { vault: ID, token: TypeName, founder: address, supply: u64, collateral: u64, first_buy: u64, tax_ppm: u64 }
@@ -104,7 +150,8 @@ module pulse::launchpad {
 
     fun init(ctx: &mut TxContext) {
         transfer::transfer(InitCap { id: object::new(ctx) }, ctx.sender());
-        transfer::share_object(Config { id: object::new(ctx), collateral: option::none(), unit: 0, platform: @0x0 });
+        transfer::transfer(AdapterCap { id: object::new(ctx) }, ctx.sender());
+        transfer::share_object(Config { id: object::new(ctx), collateral: option::none(), unit: 0, platform: @0x0, adapter: option::none() });
     }
 
     /// Fix the chain's dollar type, its decimals and the platform fee
@@ -145,10 +192,46 @@ module pulse::launchpad {
         let mut vault = Vault<T, C> {
             id: object::new(ctx), founder: ctx.sender(), tax_ppm, backing: collateral.into_balance(), cap,
             pool_tokens, pool_dollars: balance::zero(), virtual_dollars: OPENING_MCAP_DOLLARS * u,
-            opened_ms: clock.timestamp_ms(), shield_ms: 0, shield_ppm: 0,
+            opened_ms: clock.timestamp_ms(), shield_ms: 0, shield_ppm: 0, target: option::none(),
         };
         event::emit(Launched { vault: object::id(&vault), token: type_name::with_defining_ids<T>(), founder: ctx.sender(), supply, collateral: col, first_buy: buy_total, tax_ppm });
         // the founder's first buy opens the pool and is not sniping it
+        let tokens = buy_inner(&mut vault, first_buy, min_tokens, true, cfg, clock, ctx);
+        transfer::share_object(vault);
+        tokens
+    }
+
+    /// The same launch, backed by a pasted token K instead of dollars: the
+    /// founder's collateral dollars were swapped into K by one of this
+    /// package's adapters in the same transaction (the Converted receipt
+    /// proves how many dollars went in). The vault holds the K, and every
+    /// trade's tax still adds dollars beside it; redeem_backed pays a share
+    /// of both, as the EVM vault's two holdings do.
+    public fun launch_backed<T, C, K>(
+        cfg: &Config, mut cap: TreasuryCap<T>, supply: u64, conv: Converted<C, K>, mut first_buy: Coin<C>,
+        tax_ppm: u64, min_tokens: u64, clock: &Clock, ctx: &mut TxContext,
+    ): Coin<T> {
+        let Converted { bal: target, dollars_in } = conv;
+        assert!(cfg.collateral.is_some(), ENotInitialized);
+        assert!(*cfg.collateral.borrow() == type_name::with_defining_ids<C>(), EWrongCollateral);
+        assert!(type_name::with_defining_ids<K>() != type_name::with_defining_ids<C>(), ESameAsset);
+        assert!(coin::total_supply(&cap) == 0, EAlreadyMinted);
+        assert!(supply > 0, EZeroSupply);
+        let u = cfg.unit;
+        let buy_total = first_buy.value();
+        assert!(dollars_in >= MIN_COLLATERAL_DOLLARS * u && target.value() > 0, ECollateralTooLow);
+        assert!(buy_total >= MIN_FIRST_BUY_DOLLARS * u && buy_total <= MAX_FIRST_BUY_DOLLARS * u, EFirstBuyRange);
+        assert!(tax_ppm >= TAX_MIN_PPM && tax_ppm <= TAX_MAX_PPM, ETaxRange);
+
+        transfer::public_transfer(first_buy.split(mul_ppm(buy_total, LAUNCH_FEE_PPM), ctx), cfg.platform);
+        let pool_tokens = coin::mint_balance(&mut cap, supply);
+        let mut vault = Vault<T, C> {
+            id: object::new(ctx), founder: ctx.sender(), tax_ppm, backing: balance::zero(), cap,
+            pool_tokens, pool_dollars: balance::zero(), virtual_dollars: OPENING_MCAP_DOLLARS * u,
+            opened_ms: clock.timestamp_ms(), shield_ms: 0, shield_ppm: 0, target: option::some(type_name::with_defining_ids<K>()),
+        };
+        df::add(&mut vault.id, TargetKey {}, target);
+        event::emit(Launched { vault: object::id(&vault), token: type_name::with_defining_ids<T>(), founder: ctx.sender(), supply, collateral: dollars_in, first_buy: buy_total, tax_ppm });
         let tokens = buy_inner(&mut vault, first_buy, min_tokens, true, cfg, clock, ctx);
         transfer::share_object(vault);
         tokens
@@ -227,6 +310,8 @@ module pulse::launchpad {
 
     /// Burn tokens, receive the matching share of collateral. No fee.
     public fun redeem<T, C>(v: &mut Vault<T, C>, tokens: Coin<T>, ctx: &mut TxContext): Coin<C> {
+        // a target-backed vault pays both holdings: redeem_backed
+        assert!(v.target.is_none(), ETargetBacked);
         let amount = tokens.value();
         assert!(amount > 0, EZeroAmount);
         let circ = circulating(v);
@@ -235,6 +320,30 @@ module pulse::launchpad {
         coin::burn(&mut v.cap, tokens);
         event::emit(Redeemed { vault: object::id(v), holder: ctx.sender(), burned: amount, payout });
         coin::from_balance(v.backing.split(payout), ctx)
+    }
+
+    /// Burn tokens from a target-backed vault, receive the matching share of
+    /// BOTH holdings: the pasted token and the tax dollars beside it.
+    public fun redeem_backed<T, C, K>(v: &mut Vault<T, C>, tokens: Coin<T>, ctx: &mut TxContext): (Coin<C>, Coin<K>) {
+        assert!(v.target.is_some() && *v.target.borrow() == type_name::with_defining_ids<K>(), ENotTargetBacked);
+        let amount = tokens.value();
+        assert!(amount > 0, EZeroAmount);
+        let circ = circulating(v);
+        assert!(amount <= circ, ENotCirculating);
+        let pay_d = (((v.backing.value() as u128) * (amount as u128) / (circ as u128)) as u64);
+        let kb: &mut Balance<K> = df::borrow_mut(&mut v.id, TargetKey {});
+        let pay_k = (((kb.value() as u128) * (amount as u128) / (circ as u128)) as u64);
+        let out_k = coin::from_balance(kb.split(pay_k), ctx);
+        coin::burn(&mut v.cap, tokens);
+        event::emit(Redeemed { vault: object::id(v), holder: ctx.sender(), burned: amount, payout: pay_d });
+        (coin::from_balance(v.backing.split(pay_d), ctx), out_k)
+    }
+
+    /// the pasted token held by a target-backed vault
+    public fun target_backing<T, C, K>(v: &Vault<T, C>): u64 {
+        assert!(v.target.is_some() && *v.target.borrow() == type_name::with_defining_ids<K>(), ENotTargetBacked);
+        let kb: &Balance<K> = df::borrow(&v.id, TargetKey {});
+        kb.value()
     }
 
     /// Anyone may add collateral; it only raises the floor for every holder.
@@ -262,4 +371,7 @@ module pulse::launchpad {
 
     #[test_only]
     public fun init_for_testing(ctx: &mut TxContext) { init(ctx) }
+
+    #[test_only]
+    public fun converted_for_testing<C, K>(coin: Coin<K>, dollars_in: u64): Converted<C, K> { Converted { bal: coin.into_balance(), dollars_in } }
 }
