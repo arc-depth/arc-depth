@@ -100,12 +100,9 @@ export async function ciz({ kayit, param }) {
      Tokens launched elsewhere still reach HyperEVM: the spread is delivered
      by LayerZero's executor, which uses big blocks. */
   const LAUNCH_YOK = { hyperevm: "HyperEVM blocks hold 3M gas and a launch needs about 7M, so launches cannot run there. Launch on any other chain and spread the token to HyperEVM in the next step.", ethereum: "Launches are not open on Ethereum yet: its launchpad has not been tested end to end. Launch on any other chain and spread the token to Ethereum in the next step." };
-  /* SECURITY HOLD, 16 Oct 2026 (arastirma/7saat/guvenlik-evm.md, C-1): the
-     EVM collateral vaults' buyback check can be passed by moving tokens in
-     and out of the v4 PoolManager inside one transaction. No EVM launch
-     exists yet, so nothing is exposed; new EVM launches stay closed until
-     the fixed vault generation is deployed. Aptos and Sui use other code
-     and stay open. */
+  /* SECURITY HOLD, 16 Oct 2026: new EVM launches stay closed until the
+     next vault generation is deployed (details in the private audit
+     notes). Aptos and Sui use other code and stay open. */
   const EVM_DURAKLATILDI = true;
   const DURAKLATILAN = new Set();
   if (EVM_DURAKLATILDI) for (const a of AGLAR) if (!LAUNCH_YOK[a.anahtar]) {
