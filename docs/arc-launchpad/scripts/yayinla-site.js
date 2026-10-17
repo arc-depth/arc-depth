@@ -6,7 +6,7 @@
  *
  * 1. commits docs/ changes in C:\arc-launchpad (if any)
  * 2. mirrors the repo into the arc-depth checkout (docs/arc-launchpad/)
- *    with the existing aynala.js (line endings preserved)
+ *    with scripts/aynala.js (text line endings preserved, binaries byte for byte)
  * 3. commits and pushes arc-depth main, which GitHub Pages serves
  * Nothing on chain; no keys are read.
  * =========================================================================== */
@@ -31,11 +31,11 @@ const mesaj = process.argv.slice(2).join(" ") ||
 git(KOK, ["add", "docs"]);
 commit(KOK, mesaj);
 
-console.log("$ node aynala.js   (" + AYNA + ")");
-console.log(cp.execFileSync("node", [SP + "/aynala.js"], { cwd: AYNA, encoding: "utf8" }));
+console.log("$ node scripts/aynala.js   (" + AYNA + ")");
+console.log(cp.execFileSync("node", [KOK + "/scripts/aynala.js"], { cwd: AYNA, encoding: "utf8" }));
 
 git(AYNA, ["add", "-A", "docs"]);
 commit(AYNA, "launchpad: " + mesaj);
 git(AYNA, ["push", "origin", "HEAD:main"]);
 console.log(git(AYNA, ["log", "--oneline", "-1"]));
-console.log("published: https://arc-depth.github.io/arc-depth/launchpad/");
+console.log("published: https://arc-depth.github.io/arc-depth/arc-launchpad/docs/");

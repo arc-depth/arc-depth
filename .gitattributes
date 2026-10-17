@@ -1,0 +1,17 @@
+# Binary files: never convert line endings (autocrlf corrupted the wasm/png)
+*.wasm binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.webp binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.otf binary
+*.pdf binary
+*.mp4 binary
+*.webm binary
+*.zip binary
+*.gz binary

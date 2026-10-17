@@ -27,6 +27,7 @@ remappings = [
   "@openzeppelin/=C:/Users/omen/araclar/evm-cctp-contracts/lib/openzeppelin-contracts/",
   "@memview-sol/=C:/Users/omen/araclar/evm-cctp-contracts/lib/memview-sol/",
   "@uniswap/v4-core/=C:/arc-launchpad/node_modules/@uniswap/v4-core/",
+  "solmate/=C:/arc-launchpad/node_modules/@uniswap/v4-core/lib/solmate/",
   "forge-std/=C:/Users/omen/araclar/evm-cctp-contracts/lib/forge-std/src/",
 ]
 additional_compiler_profiles = [{ name = "ir", via_ir = true }]
