@@ -96,7 +96,7 @@ export async function ciz() {
   const blok = await sonBlok();
 
   kap.append(sayfaUst("Security and verification",
-    blok ? "Arc blok " + blok.toLocaleString("tr-TR") : "Arc"));
+    blok ? "Arc block " + blok.toLocaleString("en-US") : "Arc"));
 
   /* ---- deployment state, first ------------------------------------- */
   const dagitildi = Object.entries(PULSE).filter(([, v]) => canli(v));
@@ -147,7 +147,7 @@ export async function ciz() {
   for (const [ad, v] of Object.entries(PULSE)) ekle(ad, v, "this model");
   ekle("isletme (fee target)", HEDEFLER.isletme, "a plain address");
   ekle("PoolManager", DIS.poolManager, "Uniswap v4, not ours");
-  ekle("USDC", DIS.usdc, "Arc yerel — hem teminat hem gas");
+  ekle("USDC", DIS.usdc, "native on Arc — both collateral and gas");
   for (const [ad, v] of Object.entries(ESKI)) ekle(ad, v, "previous generation");
 
   tablo.append(govde);

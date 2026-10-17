@@ -14,7 +14,9 @@ const HEDEF = path.join(process.cwd(), "docs", "arc-launchpad");
 /* Not mirrored: code and tests that describe, in detail, how the deployed
    immutable contracts can be attacked. They stay in the repository and
    reach the site once the fixed generation they belong to is live. */
-const GIZLI = ["contracts/nesil4/", "nesil2-test/test/Nesil4.t.sol"];
+const GIZLI = ["contracts/nesil4/", "nesil2-test/test/Nesil4.t.sol",
+  /* internal notes and operator state, not for the public site */
+  "arastirma/hukuk-ve-odeme.md", "isletici-durum.json"];
 const izlenen = cp.execSync("git -C " + KAYNAK + " ls-files", { encoding: "utf8" })
   .trim().split("\n").filter((f) => !GIZLI.some((g) => f.startsWith(g)));
 const mevcut = cp.execSync("git ls-files docs/arc-launchpad", { encoding: "utf8" })

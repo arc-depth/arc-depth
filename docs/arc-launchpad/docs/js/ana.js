@@ -276,7 +276,16 @@ kCuzdanDugme.addEventListener("click", () => {
   cuzdanSec();
 });
 
-cuzdan.dinle(() => { cuzdanDugmesiniTazele(); ciz(); });
+/* Only a new account redraws the view. A chain switch is often the page's
+   own doing in the middle of a send (a launch asks the wallet to move to
+   its chain); redrawing then threw away the form and the send's progress. */
+let _sonHesap = cuzdan.hesap();
+cuzdan.dinle(({ hesap }) => {
+  cuzdanDugmesiniTazele();
+  if ((hesap || "").toLowerCase() === (_sonHesap || "").toLowerCase()) return;
+  _sonHesap = hesap;
+  ciz();
+});
 
 /* The connect dialog. Every way in, in one place: the wallet already in
    this browser, WalletConnect (any wallet, QR on a computer, a link on a
@@ -314,7 +323,12 @@ function cuzdanSec() {
   const liste = [];
   if (tarayici) liste.push(eylem(tarayici.ad, "Connect the wallet in this browser", "Detected", tarayici.ikon, () => cuzdan.bagla()));
   liste.push(eylem("WalletConnect", mobil ? "Any wallet app on this phone" : "Scan a QR code with any wallet app", tarayici ? null : "Any wallet", null,
-    async () => { kapat(); await cuzdan.walletConnect(); }));
+    /* hidden, not closed, while the WalletConnect modal is up: if pairing
+       fails the error still has a dialog to land in */
+    async () => {
+      perde.style.display = "none";
+      try { await cuzdan.walletConnect(); } finally { perde.style.display = ""; }
+    }));
   if (!tarayici && mobil) for (const u of cuzdanUygulamalari()) liste.push(baglanti(u.ad, "Open this page in the " + u.ad + " app", u.url, null, false));
   if (!tarayici && !mobil) {
     liste.push(baglanti("MetaMask", "Install the browser extension", "https://metamask.io/download/", null, true));

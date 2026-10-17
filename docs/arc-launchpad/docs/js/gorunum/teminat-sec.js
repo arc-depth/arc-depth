@@ -44,7 +44,7 @@ import { tumZincirleriTara, adresMi, ASGARI_KARDINALITE } from "../teminat.js";
 export function tutarYaz(t) {
   if (!t || t === "0") return "not measurable";
   const n = Number(t) / 1e6;
-  return "$" + n.toLocaleString("tr", { maximumFractionDigits: 0 });
+  return "$" + n.toLocaleString("en-US", { maximumFractionDigits: 0 });
 }
 
 function derinlik(L) {

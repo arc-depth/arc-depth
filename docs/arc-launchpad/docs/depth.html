@@ -301,14 +301,14 @@ const txLink = (h) => '<a href="'+ARC.explorer+"/tx/"+h+'" target="_blank" rel="
 
 /* DEPTH amounts can be tiny and large in the same screen, so neither a
    fixed decimal count nor a fixed significant count reads well alone. */
-const nd = (x,d=0) => Number(x).toLocaleString("tr-TR",{maximumFractionDigits:d});
+const nd = (x,d=0) => Number(x).toLocaleString("en-US",{maximumFractionDigits:d});
 const nalp = (x) => {
   const v = Number(x);
   if (v === 0) return "0";
   if (v >= 0.01) return nd(v,2);
-  return v.toLocaleString("tr-TR",{maximumSignificantDigits:2});
+  return v.toLocaleString("en-US",{maximumSignificantDigits:2});
 };
-const usd = (x,d=2) => "$"+Number(x).toLocaleString("tr-TR",
+const usd = (x,d=2) => "$"+Number(x).toLocaleString("en-US",
   {minimumFractionDigits:d,maximumFractionDigits:d});
 
 function hataMetni(e){
@@ -603,7 +603,7 @@ async function arzOku(arz){
   ]);
   const m = (x) => nd(Number(x)/1e18);
   $("arz").innerHTML =
-    satir("toplam arz", m(arz), "mint fonksiyonu yok — sadece azalabilir") +
+    satir("total supply", m(arz), "no mint function — it can only go down") +
     satir("on the curve, waiting to be sold", m(egriB)) +
     satir("stake emisyon havuzunda", m(stakeB)) +
     satir("reserved for the graduation pool", m(aciciB)) +

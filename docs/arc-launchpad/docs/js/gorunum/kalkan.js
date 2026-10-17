@@ -69,9 +69,9 @@ export async function ciz() {
     govde.append(el("tr", {}, [
       el("td", { attr: { "data-et": "Dilim" }, yazi: String(o.dilim) }),
       el("td", { sinif: "sayi", attr: { "data-et": "Cumulative size" },
-        yazi: "%" + o.birikmis.toFixed(3).replace(".", ",") }),
+        yazi: o.birikmis.toFixed(3) + "%" }),
       el("td", { sinif: "sayi", attr: { "data-et": "Rate paid" },
-        yazi: "%" + o.oran.toFixed(3).replace(".", ",") })
+        yazi: o.oran.toFixed(3) + "%" })
     ]));
   }
   tablo.append(govde);

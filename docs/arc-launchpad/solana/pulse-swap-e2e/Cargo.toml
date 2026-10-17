@@ -17,6 +17,8 @@ solana-keypair = "3.1.2"
 solana-signer = "3.0.1"
 solana-address = { version = "2.7", features = ["curve25519"] }
 solana-clock = "3.2"
+# SlotHashes, kept current so address lookup tables can be created
+solana-slot-hashes = "3.2"
 solana-account = "4.3"
 serde_json = "1"
 base64 = "0.22"

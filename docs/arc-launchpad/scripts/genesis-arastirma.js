@@ -82,17 +82,24 @@ const GT = "https://api.geckoterminal.com/api/v2";
 const GT_AG = { arc: "Arc", robinhood: "Robinhood Chain", base: "Base", arbitrum: "Arbitrum", eth: "Ethereum", bsc: "BNB Chain", avax: "Avalanche",
   monad: "Monad", hyperevm: "HyperEVM", solana: "Solana", "sui-network": "Sui", aptos: "Aptos" };
 const IZLEME = path.join(bilgi.OZEL, "izlenen-havuzlar.json");
-const SAYFA = 5;   // 5 pages x 20 = the newest 100 pools per chain
+const SAYFA = 2;   // 2 pages x 20 = the newest 40 pools per chain
 const uyu = (ms) => new Promise((r) => setTimeout(r, ms));
 let sonGt = 0;
+/* The documented 30 calls a minute is not what the API grants in
+   practice: measured on 2026-10-17, half the calls 7 s apart came back 429.
+   So one call per 12 s, one 30 s retry, and then the read is given up:
+   a chain that could not be read is named as such in the finding, and a
+   run never stalls for hours on back-off (the earlier six retries with
+   growing waits did exactly that). */
 async function gt(yol) {
-  for (let i = 0; i < 6; i++) {
-    await uyu(Math.max(0, sonGt + 2500 - Date.now()));
+  for (let i = 0; i < 2; i++) {
+    await uyu(Math.max(0, sonGt + 12000 - Date.now()));
     sonGt = Date.now();
     const r = await fetch(GT + yol, { headers: { accept: "application/json" }, signal: AbortSignal.timeout(30000) }).catch(() => null);
     if (r && r.ok) return r.json();
     if (r && r.status === 404) return null;
-    await uyu(15000 * (i + 1));
+    console.error("  geckoterminal " + (r ? r.status : "ag hatasi") + "  " + yol.slice(0, 60) + (i ? "  (birakildi)" : "  (30 sn sonra tekrar)"));
+    if (!i) await uyu(30000);
   }
   return null;
 }
@@ -111,6 +118,7 @@ async function yeniHavuzlar(izleme) {
       havuzlar.push(...j.data.map((d) => ({ adres: d.attributes.address, sembol: (d.attributes.name || "").split(" / ")[0].trim().toUpperCase(),
         olusma: Date.parse(d.attributes.pool_created_at), rez: Number(d.attributes.reserve_in_usd || 0) })));
     }
+    console.error("  yeni havuzlar " + ad + ": " + havuzlar.length);
     if (havuzlar.length < 10) { satir.push({ ad, hata: true }); continue; }
     const t = havuzlar.map((h) => h.olusma).filter(Boolean);
     const saat = Math.max(0.05, (Math.max(...t) - Math.min(...t)) / 3600e3);
@@ -129,7 +137,7 @@ async function yeniHavuzlar(izleme) {
     iyi.map((x) => x.ad + ": " + x.hiz.toFixed(x.hiz < 1 ? 2 : 1) + " pools/hour (" + x.n + " over " + x.saat.toFixed(1) + " h), median starting liquidity " + usd0(x.medyan) +
       ", " + x.az.toFixed(0) + "% under $1,000, " + x.kopya.toFixed(0) + "% share a symbol with another new pool").join("; ") + ". " +
     "Busiest: " + iyi[0].ad + "; quietest: " + iyi[iyi.length - 1].ad + ". A high share under $1,000 with many repeated symbols is a field of throwaway launches; " +
-    "what happens to these pools a day later is measured separately." + (satir.some((x) => x.hata) ? " Not read this time: " + satir.filter((x) => x.hata).map((x) => x.ad).join(", ") + "." : "");
+    "what happens to these pools a day later is measured separately." + (satir.some((x) => x.hata) ? " Too few pools returned to measure this time (under 10, or the read failed): " + satir.filter((x) => x.hata).map((x) => x.ad).join(", ") + "." : "");
   return { id: "new-pools-" + gun(), baslik: "New pools on 12 chains, " + gun() + ": how fast they open, how thin, how many copies",
     etiketler: ["new pools", "launches", "memecoin", "copycat", "liquidity", "launch rate", ...iyi.map((x) => x.ad.toLowerCase())], metin, kaynak: "GeckoTerminal new pools, read " + new Date().toISOString() };
 }

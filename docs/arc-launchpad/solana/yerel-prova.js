@@ -8,15 +8,17 @@
  *   NODE_PATH=C:/Users/omen/araclar/sol/node_modules node solana/yerel-prova.js
  *
  * Steps: initialize PulseSwap and the launchpad (test admin key, local-test
- * builds) -> open TOK/USDC and FTHM/USDC pools -> a launch in ONE
- * transaction as the site builds it (mint account + mint init + founder's
- * token account + Launch) -> buy, sell, redeem -> warp 24 h -> paste TOK as
+ * builds) -> open TOK/USDC and FTHM/USDC pools -> a launch in TWO
+ * transactions as istemci.js builds them (1: mint account + mint init +
+ * founder's token account, 2: Launch), also at the longest name, symbol
+ * and URI Metaplex allows -> buy, sell, redeem -> warp 24 h -> paste TOK as
  * collateral (LaunchBacked) -> the FTHM bucket buys FTHM for the sink.
  * =========================================================================== */
 const fs = require("fs");
 const path = require("path");
-const { Connection, Keypair, PublicKey, SystemProgram, Transaction, TransactionInstruction, ComputeBudgetProgram } = require("@solana/web3.js");
+const { Connection, Keypair, PublicKey, SystemProgram, Transaction, TransactionInstruction, ComputeBudgetProgram, AddressLookupTableProgram } = require("@solana/web3.js");
 const spl = require("@solana/spl-token");
+const ist = require("./istemci");
 
 const URL_ = process.env.YEREL_AG || "http://127.0.0.1:8899";
 const conn = new Connection(URL_, { commitment: "confirmed", disableRetryOnRateLimit: true });
@@ -104,31 +106,47 @@ const quote = (rin, rout, a) => { const after = (a * 997000n) / 1000000n; return
 
   /* ---- a launch in one transaction, as the site will build it ---- */
   const fD = await ata(usdc, founder.publicKey, 1000n * USD);
-  async function launchTx(backed) {
+  /* the shared lookup table, as the deployment creates it: filled, then frozen */
+  const tSlot = await conn.getSlot();
+  const [tabloOlustur, tabloAdr] = AddressLookupTableProgram.createLookupTable({ authority: admin.publicKey, payer: admin.publicKey, recentSlot: tSlot > 0 ? tSlot - 1 : 0 });
+  const tabloIc = ist.tabloHesaplari({ LP, usdc, platform: platformL, SWAP, swapConfig: sConfig, bucket, swapPlatform: platformS });
+  await gonder([tabloOlustur, AddressLookupTableProgram.extendLookupTable({ lookupTable: tabloAdr, authority: admin.publicKey, payer: admin.publicKey, addresses: tabloIc })], [admin]);
+  await gonder([AddressLookupTableProgram.freezeLookupTable({ lookupTable: tabloAdr, authority: admin.publicKey })], [admin]);
+  await rpc("pulse_warp", [1]);
+  const tablo = (await conn.getAddressLookupTable(tabloAdr)).value;
+  kontrol("arama tablosu " + tablo.state.addresses.length + " hesapla kuruldu ve donduruldu (yetkisi yok)", tablo.state.addresses.length === tabloIc.length && !tablo.state.authority);
+  async function gonderV0(ixs, signers) {
+    const tx = ist.v0Islem(signers[0].publicKey, ixs, (await conn.getLatestBlockhash()).blockhash, [tablo]);
+    tx.sign(signers);
+    const ham = tx.serialize();
+    const sig = await conn.sendRawTransaction(ham, { skipPreflight: true });
+    const st = (await conn.getSignatureStatuses([sig])).value[0];
+    if (!st || st.err) throw new Error("tx failed " + JSON.stringify(st && st.err));
+    return { sig, boyut: ham.length };
+  }
+
+  /* two transactions, built by istemci.js; launchTx returns both and gonderL sends them */
+  async function launchTx(backed, uzun) {
     const m = Keypair.generate();
-    const launch = lpp("launch", m.publicKey);
-    const L = { mint: m.publicKey, launch, pt: lpp("pt", launch), pd: lpp("pd", launch), vault: lpp("vault", launch), kv: lpp("kv", launch),
-      fT: spl.getAssociatedTokenAddressSync(m.publicKey, founder.publicKey), md: PublicKey.findProgramAddressSync([Buffer.from("metadata"), MPL.toBuffer(), m.publicKey.toBuffer()], MPL)[0] };
-    const rent = await conn.getMinimumBalanceForRentExemption(spl.MINT_SIZE);
-    const keys = [S(founder.publicKey), R(lConfig), W(L.mint), W(launch), W(L.pt), W(L.pd), W(L.vault), W(fD), W(L.fT), W(platformL), R(SystemProgram.programId), R(spl.TOKEN_PROGRAM_ID), R(usdc), W(L.md), R(MPL)];
-    let data = Buffer.concat([Buffer.from([1]), u64(SUPPLY, 20n * USD, 100n * USD, 10000n, 0n), adlar("Yerel Test", "YRL", "https://arc-depth.github.io/arc-depth/")]);
-    if (backed) {
-      keys.push(R(tok), W(L.kv), R(SWAP), R(sConfig), R(T.p), W(T.tv), W(T.dv), W(bucket), W(platformS));
-      data = Buffer.concat([Buffer.from([6]), u64(SUPPLY, 25n * USD, 100n * USD, 10000n, 0n, 0n), adlar("Backed Test", "BKD", "")]);
-    }
-    L.ixs = [
-      ComputeBudgetProgram.setComputeUnitLimit({ units: 600000 }),
-      SystemProgram.createAccount({ fromPubkey: founder.publicKey, newAccountPubkey: m.publicKey, lamports: rent, space: spl.MINT_SIZE, programId: spl.TOKEN_PROGRAM_ID }),
-      spl.createInitializeMint2Instruction(m.publicKey, 6, launch, null),
-      spl.createAssociatedTokenAccountInstruction(founder.publicKey, L.fT, founder.publicKey, m.publicKey),
-      new TransactionInstruction({ programId: LP, keys, data }),
-    ];
-    L.signers = [founder, m];
-    return L;
+    const isim = uzun ? { ad: "N".repeat(32), sembol: "S".repeat(10), uri: "https://arc-depth.github.io/" + "u".repeat(200 - 28) }
+                      : backed ? { ad: "Backed Test", sembol: "BKD", uri: "" } : { ad: "Yerel Test", sembol: "YRL", uri: "https://arc-depth.github.io/arc-depth/" };
+    const { hazirlik, launch, adres } = await ist.launchIslemleri(conn, {
+      LP, usdc, platform: platformL, founder: founder.publicKey, founderDollar: fD, mint: m.publicKey,
+      arz: SUPPLY, teminat: (backed ? 25n : 20n) * USD, ilkAlim: 100n * USD, vergiPpm: 10000n, asgari: 0n, ...isim,
+      yapistir: backed ? { SWAP, k: tok, swapConfig: sConfig, pool: T.p, tv: T.tv, dv: T.dv, bucket, swapPlatform: platformS } : null,
+    });
+    return { ...adres, hazirlik, launchIx: launch, m };
+  }
+  /* each transaction on its own, so a failed Launch leaves the prepared mint behind (and is retried) */
+  async function gonderL(L) {
+    const h = L.hazirlandi ? { boyut: 0 } : await gonder(L.hazirlik.ixs, [founder, L.m]);
+    L.hazirlandi = true;
+    const l = await gonderV0(L.launchIx.ixs, [founder]);
+    return { boyut1: h.boyut, boyut2: l.boyut };
   }
   const L1 = await launchTx(false);
-  const r1 = await gonder(L1.ixs, L1.signers);
-  kontrol("launch tek islemde (" + r1.boyut + " bayt / 1232 sinir)", r1.boyut <= 1232);
+  const r1 = await gonderL(L1);
+  kontrol("launch iki islemde (" + r1.boyut1 + " + " + r1.boyut2 + " bayt, sinir 1232)", r1.boyut1 <= 1232 && r1.boyut2 <= 1232);
   kontrol("kurucu 27.237.354,085603 token aldi (Aptos/Sui devnet ile ayni)", (await bal(L1.fT)) === 27237354085603n, String(await bal(L1.fT)));
   kontrol("kasa 20 USDC, havuz 98 USDC", (await bal(L1.vault)) === 20n * USD && (await bal(L1.pd)) === 98n * USD);
   const mi = await spl.getMint(conn, L1.mint);
@@ -153,13 +171,25 @@ const quote = (rin, rout, a) => { const after = (a * 997000n) / 1000000n; return
 
   /* ---- paste TOK as collateral: refused on a young pool, accepted a day later ---- */
   const L2a = await launchTx(true);
-  await reddedilir("1 gunluk olmayan havuzla teminat reddedilir", () => gonder(L2a.ixs, L2a.signers));
+  await reddedilir("1 gunluk olmayan havuzla teminat reddedilir", () => gonderL(L2a));
   const saat = await rpc("pulse_warp", [86400]);
-  const L2 = await launchTx(true);
-  const r2 = await gonder(L2.ixs, L2.signers);
+  /* the refused launch left its mint prepared: the same mint launches now */
+  const L2 = L2a;
+  const r2 = await gonderL(L2);
   const net = 25n * USD - 25000n;
-  kontrol("24 saat sonra CA yapistir tek islemde (" + r2.boyut + " bayt)", r2.boyut <= 1232, "zincir saati " + new Date(saat.unixTimestamp * 1000).toISOString());
+  kontrol("24 saat sonra CA yapistir; reddedilen denemenin hazir mint'i ayni mint ile acildi (launch islemi " + r2.boyut2 + " bayt)", r2.boyut2 <= 1232, "zincir saati " + new Date(saat.unixTimestamp * 1000).toISOString());
   kontrol("kasada takasin teslim ettigi TOK birebir", (await bal(L2.kv)) === quote(1000n * USD, 2000n * USD, net), String(await bal(L2.kv)));
+
+  /* ---- the longest name, symbol and URI Metaplex allows, both launch kinds ---- */
+  for (const backed of [false, true]) {
+    const Lu = await launchTx(backed, true);
+    const ru = await gonderL(Lu);
+    const mdu = (await conn.getAccountInfo(Lu.md)).data;
+    const uriOku = () => { let o = 65; for (let i = 0; i < 2; i++) o += 4 + mdu.readUInt32LE(o); return mdu.slice(o + 4, o + 4 + mdu.readUInt32LE(o)).toString().replace(/ +$/, ""); };
+    kontrol((backed ? "CA yapistir" : "launch") + " en uzun ad/sembol/URI ile (" + ru.boyut1 + " + " + ru.boyut2 + " bayt, sinir 1232)",
+      ru.boyut1 <= 1232 && ru.boyut2 <= 1232 && uriOku().length === 200, "URI " + uriOku().length + " bayt");
+  }
+  await reddedilir("33 baytlik ad istemcide reddedilir", () => ist.launchIslemleri(conn, { LP, mint: Keypair.generate().publicKey, founder: founder.publicKey, ad: "N".repeat(33), sembol: "S", uri: "" }));
 
   /* ---- the bucket becomes FTHM at the sink ---- */
   const kova = await bal(bucket);

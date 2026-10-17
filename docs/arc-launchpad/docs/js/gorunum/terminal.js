@@ -275,7 +275,7 @@ function bilgiListesi(kayit, bilgi, dolasim) {
     ["Toplam arz", bilgi && bilgi.arz != null
       ? jetonMiktar(tamSayidanSayi(bilgi.arz, bilgi.ondalik || 18)) : "—"],
     ["Circulating", dolasim == null ? "—" : jetonMiktar(dolasim)],
-    ["Collateral tax", (kayit.vergiPpm / 10_000).toFixed(2).replace(".", ",") + "%"],
+    ["Collateral tax", (kayit.vergiPpm / 10_000).toFixed(2) + "%"],
     ["Founder's share", "0.30% of every trade"],
     ["Kurucuya bedava token", "0"]
   ];

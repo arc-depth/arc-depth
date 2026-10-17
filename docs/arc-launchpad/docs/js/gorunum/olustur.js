@@ -357,17 +357,17 @@ export async function ciz({ kayit, param }) {
       "nobody can change it — not even you." })
   ])));
 
-  /* ---- 4. payment and optional first buy ----------------------------- */
+  /* ---- 4. the founder's buy and the vault --------------------------- */
   kap.append(panel("Payment", el("div", { sinif: "yigin" }, [
     el("div", { sinif: "izgara izgara--genis" }, [
-      alan("Total payment", el("div", { sinif: "girdi-grup" }, [
+      alan("Your buy", el("div", { sinif: "girdi-grup" }, [
         el("input", {
           sinif: "girdi girdi--sayi",
-          attr: { type: "number", min: String(EKONOMI.asgariOdeme), step: "10", value: String(durum.odeme) },
-          on: { input: (ev) => { durum.odeme = Number(ev.target.value) || 0; ozetiCiz(); } }
+          attr: { type: "number", min: String(PULSE_KURAL.asgariAlim), max: String(PULSE_KURAL.azamiAlim), step: "10", value: String(durum.alim) },
+          on: { input: (ev) => { durum.alim = Number(ev.target.value) || 0; ozetiCiz(); } }
         }),
         el("span", { sinif: "girdi-grup__son", yazi: "USDC" })
-      ]), "At least " + para(EKONOMI.asgariOdeme)),
+      ]), "Between " + para(PULSE_KURAL.asgariAlim) + " and " + para(PULSE_KURAL.azamiAlim) + "; it becomes your tokens at the opening price"),
       alan("Set aside for the vault", el("div", { sinif: "girdi-grup" }, [
         el("input", {
           sinif: "girdi girdi--sayi",
@@ -375,15 +375,7 @@ export async function ciz({ kayit, param }) {
           on: { input: (ev) => { durum.teminat = Number(ev.target.value) || 0; ozetiCiz(); } }
         }),
         el("span", { sinif: "girdi-grup__son", yazi: "USDC" })
-      ]), "At least " + para(EKONOMI.asgariTeminat)),
-      alan("Optional first buy", el("div", { sinif: "girdi-grup" }, [
-        el("input", {
-          sinif: "girdi girdi--sayi",
-          attr: { type: "number", min: "0", step: "10", value: String(durum.ilkAlim) },
-          on: { input: (ev) => { durum.ilkAlim = Number(ev.target.value) || 0; ozetiCiz(); } }
-        }),
-        el("span", { sinif: "girdi-grup__son", yazi: "USDC" })
-      ]), "You can leave this empty")
+      ]), "At least " + para(EKONOMI.asgariTeminat))
     ])
   ])));
 
@@ -672,7 +664,7 @@ function odemeOzeti(d) {
     && d.alim <= PULSE_KURAL.azamiAlim
     && d.teminat >= PULSE_KURAL.asgariTeminat;
 
-  const bin = (x) => Math.round(x).toLocaleString("tr-TR");
+  const bin = (x) => Math.round(x).toLocaleString("en-US");
 
   const satirlar = [
     ["Buy", para(d.alim)],

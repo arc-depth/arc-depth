@@ -286,11 +286,11 @@ const satir = (l,v,not) => '<div class="row"><span>'+l+
   (not?'<span class="note">'+not+"</span>":"")+"</span><b>"+v+"</b></div>";
 const mesaj = (el,tip,html) => { $(el).innerHTML='<div class="msg '+tip+'">'+html+"</div>"; };
 const txLink = (h) => '<a href="'+ARC.explorer+"/tx/"+h+'" target="_blank" rel="noopener">view the transaction</a>';
-const nd = (x,d=0) => Number(x).toLocaleString("tr-TR",{maximumFractionDigits:d});
+const nd = (x,d=0) => Number(x).toLocaleString("en-US",{maximumFractionDigits:d});
 const nalp = (x) => { const v=Number(x); if(v===0) return "0";
   if(v>=0.01) return nd(v,2);
-  return v.toLocaleString("tr-TR",{maximumSignificantDigits:2}); };
-const usd = (x,d=2) => "$"+Number(x).toLocaleString("tr-TR",
+  return v.toLocaleString("en-US",{maximumSignificantDigits:2}); };
+const usd = (x,d=2) => "$"+Number(x).toLocaleString("en-US",
   {minimumFractionDigits:d,maximumFractionDigits:d});
 
 function hataMetni(e){
@@ -548,7 +548,7 @@ async function arzOku(arz){
     t.balanceOf(A.acici), t.balanceOf(A.vesting)]);
   const m=(x)=>nd(Number(x)/1e18);
   $("arz").innerHTML =
-    satir("toplam arz", m(arz), "mint fonksiyonu yok — sadece azalabilir") +
+    satir("total supply", m(arz), "no mint function — it can only go down") +
     satir("in the pool, locked", m(havuzB), "the market share · cannot be removed") +
     satir("in the stake emission pool", m(stakeB), "spread over 30 years") +
     satir("fees waiting in the opener", m(aciciB), "biriktir() turns them into depth") +

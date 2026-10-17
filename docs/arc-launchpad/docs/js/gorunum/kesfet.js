@@ -288,7 +288,7 @@ function jetonTablosu(satirlar, sira) {
       hucre("Reserve", "—", "rezerv-" + s.id),
       hucre("Claim / token", "—", "hak-" + s.id),
       el("td", { sinif: "sayi", attr: { "data-et": "Vergi" },
-        yazi: (s.vergiPpm / 10_000).toFixed(2).replace(".", ",") + "%" }),
+        yazi: (s.vergiPpm / 10_000).toFixed(2) + "%" }),
       el("td", { attr: { "data-et": "" } }, [
         el("a", { sinif: "dugme dugme--kucuk",
           attr: { href: "#/terminal?t=" + s.token }, yazi: "Trade" })

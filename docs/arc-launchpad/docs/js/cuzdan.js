@@ -44,6 +44,8 @@ if (typeof window !== "undefined") {
    dashboard.reown.com (arc-depth.github.io). The 2 MB bundle is loaded on
    the click, and on load only when a session was left open here. */
 const WC_PROJE = "3732e09480d6f286889688c0f4a70918";
+/* HyperEVM (999) is left out on purpose: chainid.network lists 999 as
+   "Wanchain Testnet", so wallets that check the registry flag it. */
 const WC_ZINCIRLER = [5042, 4663, 8453, 42161, 1, 56, 43114, 143];
 const WC_ISARET = "arcpulse-wc";
 let _wc = null;

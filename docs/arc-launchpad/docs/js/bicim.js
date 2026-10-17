@@ -93,29 +93,28 @@ export function yuzde(n, basamak = 2) {
   return (n > 0 ? "+" : "") + n.toFixed(basamak) + "%";
 }
 
-/** ppm as a percentage: 3_000 -> "0,30%". Turkish decimal comma, because
- *  this one is read as prose rather than scanned in a column. */
+/** ppm as a percentage: 3_000 -> "0.30%". */
 export function ppmYuzde(ppm) {
-  return (ppm / 10_000).toFixed(2).replace(".", ",") + "%";
+  return (ppm / 10_000).toFixed(2) + "%";
 }
 
 /** Relative time, short. */
 export function gecenSure(ms) {
   if (!ms) return "—";
   const s = Math.max(0, Math.floor((Date.now() - ms) / 1000));
-  if (s < 60) return s + "sn";
+  if (s < 60) return s + "s";
   const d = Math.floor(s / 60);
-  if (d < 60) return d + "dk";
+  if (d < 60) return d + "m";
   const h = Math.floor(d / 60);
-  if (h < 24) return h + "sa";
+  if (h < 24) return h + "h";
   const g = Math.floor(h / 24);
-  if (g < 30) return g + "g";
-  return Math.floor(g / 30) + "ay";
+  if (g < 30) return g + "d";
+  return Math.floor(g / 30) + "mo";
 }
 
 export function tarih(ms) {
   if (!ms) return "—";
-  return new Date(ms).toLocaleString("tr-TR", {
+  return new Date(ms).toLocaleString("en-GB", {
     day: "2-digit", month: "2-digit", year: "numeric",
     hour: "2-digit", minute: "2-digit"
   });
@@ -124,7 +123,7 @@ export function tarih(ms) {
 /** Blocks -> a readable duration, at Arc's measured 0.507 s/block. */
 export function bloktanSure(blok) {
   const sn = blok * 0.507;
-  if (sn < 90) return Math.round(sn) + " saniye";
-  if (sn < 5400) return (sn / 60).toFixed(0) + " dakika";
-  return (sn / 3600).toFixed(2).replace(".", ",") + " saat";
+  if (sn < 90) return Math.round(sn) + " s";
+  if (sn < 5400) return (sn / 60).toFixed(0) + " min";
+  return (sn / 3600).toFixed(2) + " h";
 }
