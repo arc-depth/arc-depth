@@ -23,15 +23,14 @@ import { tokenOku, rotalar, asgariCikti } from "../teminat-bul.js";
 import { AGLAR, AG, IKIZ_SECENEK, agBul } from "../aglar.js";
 import { rpcPost } from "../ag-okur.js";
 import { Interface } from "../../vendor/ethers.min.js";
-/* Aptos is OFF until the launchpad account's key is made unsignable: that
-   account owns every vault and pool object, so its key could withdraw them
-   (arastirma/7saat/guvenlik-move-solana.md, C-1). */
-const APTOS_ACIK = false;
-/* Pasting a token as collateral is OFF on every chain: depth can be added
-   and removed around the conversion inside one transaction, so the pool's
-   age and 10x depth check can be satisfied with borrowed depth (same file,
-   H-1). Collateral stays in dollars until the fixed generation is live. */
-const YAPISTIR_ACIK = false;
+/* Aptos is ON: the launchpad account owns every vault and pool object, so
+   its key could have withdrawn them; on 17 Oct its authentication key was
+   set to 32 zero bytes (aptos-anahtar-kapat.js, tx 0xcc8a…2ad1), and the
+   account can never sign again. */
+const APTOS_ACIK = true;
+/* Pasting a token as collateral: open on every chain. What a pasted token
+   is worth is the market's call, not the platform's. */
+const YAPISTIR_ACIK = true;
 import { SUI, suiCuzdan, launchEt as suiLaunchEt, teminatHavuzu as suiTeminatHavuzu, acilisTokeni as suiAcilis } from "../sui.js";
 import { APTOS, aptosCuzdan, teminatHavuzu, acilisTokeni, islemBekle, launchTokeni, launchDolar, launchTokenle, usdcBakiye } from "../aptos.js";
 
