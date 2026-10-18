@@ -1,0 +1,6 @@
+[package]
+name = "SuiExtStub"
+edition = "2024.beta"
+published-at = "0x252b1dd4b853d6b4c0721cf3f55c0587c940ee4d386d1b1cb5f46fa16e3de98a"
+[addresses]
+ext_a = "0x252b1dd4b853d6b4c0721cf3f55c0587c940ee4d386d1b1cb5f46fa16e3de98a"

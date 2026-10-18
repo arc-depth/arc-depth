@@ -11,6 +11,10 @@ for (const f of ["TeminatKasasi.sol", "IOracle.sol"]) fs.copyFileSync(path.join(
 for (const f of fs.readdirSync(path.join(K, "nesil3"))) fs.copyFileSync(path.join(K, "nesil3", f), path.join(H, "nesil3", f));
 fs.mkdirSync(path.join(H, "nesil4"), { recursive: true });
 for (const f of fs.readdirSync(path.join(K, "nesil4"))) fs.copyFileSync(path.join(K, "nesil4", f), path.join(H, "nesil4", f));
+fs.mkdirSync(path.join(H, "sepet"), { recursive: true });
+for (const f of fs.readdirSync(path.join(K, "sepet")).filter((x) => x.endsWith(".sol"))) fs.copyFileSync(path.join(K, "sepet", f), path.join(H, "sepet", f));
 fs.mkdirSync(path.join(H, "taban"), { recursive: true });
 for (const f of fs.readdirSync(path.join(K, "taban"))) fs.copyFileSync(path.join(K, "taban", f), path.join(H, "taban", f));
+fs.mkdirSync(path.join(H, "isim"), { recursive: true });
+for (const f of fs.readdirSync(path.join(K, "isim"))) fs.copyFileSync(path.join(K, "isim", f), path.join(H, "isim", f));
 console.log("esitlendi");

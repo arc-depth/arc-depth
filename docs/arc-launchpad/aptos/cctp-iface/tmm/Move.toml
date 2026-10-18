@@ -1,0 +1,16 @@
+[package]
+name = "TokenMessengerMinterV2"
+version = "1.0.0"
+upgrade_policy = "compatible"
+
+# Stand-in for Circle's TokenMessengerMinterV2 (see ../README.md). NEVER PUBLISHED.
+[addresses]
+token_messenger_minter_v2 = "0x551e32781793c30bf1580d11e4f5171e8d068c3d45c3a5b20ae240bfdad99af8"
+
+[dependencies.AptosFramework]
+git = "https://github.com/aptos-labs/aptos-framework.git"
+rev = "99f5e915b6d231d0ffbc1aff282d36148d2a8b24"
+subdir = "aptos-framework"
+
+[dependencies.MessageTransmitterV2]
+local = "../mt"

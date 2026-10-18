@@ -1,0 +1,11 @@
+[package]
+name = "CircleDepStubA"
+edition = "2024.beta"
+published-at = "0x194c593691aed72b23b967cacad967a93c0b17ff98180d417e91ac503ce3597d"
+
+# Empty stand-in for one of Circle's own CCTP dependencies on Sui mainnet
+# (read from the linkage table of MessageTransmitterV2 0x16bc…db87). A
+# package that calls into Circle's must name it, or the publish fails with
+# PublishUpgradeMissingDependency (seen on testnet, 17 Oct 2026). NEVER PUBLISHED.
+[addresses]
+circle_dep_a = "0x194c593691aed72b23b967cacad967a93c0b17ff98180d417e91ac503ce3597d"

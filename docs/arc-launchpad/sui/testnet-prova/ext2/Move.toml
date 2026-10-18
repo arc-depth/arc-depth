@@ -1,0 +1,6 @@
+[package]
+name = "CctpExtStub"
+edition = "2024.beta"
+published-at = "0x3cdb05f9a035c147410f5a9cfe2ccb741f4ab3cd59411e86714ce4b45e2c4d95"
+[addresses]
+ext_b = "0x3cdb05f9a035c147410f5a9cfe2ccb741f4ab3cd59411e86714ce4b45e2c4d95"

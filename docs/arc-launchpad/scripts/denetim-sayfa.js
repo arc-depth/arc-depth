@@ -1258,8 +1258,10 @@ ok(gonderenKorumasiz === 0,
   const p2 = JSON.parse(fs.readFileSync(path.join(KOK, "dagitim-pulse2.json"), "utf8")).arc;
   const pz = JSON.parse(fs.readFileSync(path.join(KOK, "dagitim-pazar.json"), "utf8")).arc;
   const ft = JSON.parse(fs.readFileSync(path.join(KOK, "dagitim-fathom.json"), "utf8"));
+  /* the create page launches on generation 3 (aglar.js): its launchpad is in its own record */
+  const n3 = JSON.parse(fs.readFileSync(path.join(KOK, "dagitim-nesil3.json"), "utf8"));
   const beklenen = {
-    launchpad: p2.launchpad, hook: p2.hook, devPool: p2.devPool, likidite: p2.likiditeKasasi,
+    launchpad: p2.launchpad, launchpad3: n3.arc.PulseLaunchpad3, hook: p2.hook, devPool: p2.devPool, likidite: p2.likiditeKasasi,
     pazar: pz.pazar, fthm: ft.token, poolManager: p2.poolManager, usdc: p2.quote,
   };
   const sayfadaki = Object.fromEntries([...(aBlok || "").matchAll(/(\w+):\s*"(0x[0-9a-fA-F]{40})"/g)].map((m) => [m[1], m[2]]));
@@ -1273,6 +1275,9 @@ ok(gonderenKorumasiz === 0,
   ok(rhLp != null && (rhLp[1] === "null") === !rhKayit,
     "Robinhood satiri kayitla tutarli (kayit yoksa launchpad null)",
     "launchpad " + (rhLp ? rhLp[1] : "?") + ", kayit " + (rhKayit ? "var" : "yok"));
+  const rhLp3 = rhBlok && rhBlok.match(/launchpad3:s*"(0x[0-9a-fA-F]{40})"/);
+  ok(!rhLp3 || rhLp3[1].toLowerCase() === String(n3.robinhood.PulseLaunchpad3).toLowerCase(),
+    "Robinhood launchpad3 nesil 3 kaydiyla ayni (USDG)", rhLp3 ? rhLp3[1] : "sayfada yok");
 
   /* FTHM on two chains: the seven addresses the page lists must be the
      ones in the deployment record, or the page links to the wrong code. */

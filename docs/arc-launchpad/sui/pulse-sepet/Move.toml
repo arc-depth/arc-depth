@@ -1,0 +1,11 @@
+[package]
+name = "PulseSepet"
+version = "0.0.1"
+edition = "2024.beta"
+
+[addresses]
+sepet = "0x0"
+
+[dependencies]
+CctpMessageTransmitterV2Interface = { local = "../cctp-iface" }
+CctpTokenMessengerMinterV2Interface = { local = "../cctp-tmm-iface" }

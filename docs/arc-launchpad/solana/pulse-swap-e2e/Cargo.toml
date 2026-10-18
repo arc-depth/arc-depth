@@ -26,6 +26,8 @@ bincode = "1.3"
 bs58 = "0.5"
 
 [dev-dependencies]
+# the auction curve, shared with the program (host build, no entrypoint)
+pulse-sepet = { path = "../pulse-sepet", features = ["no-entrypoint"] }
 litesvm = "0.18"
 litesvm-token = "0.18"
 solana-keypair = "3.1.2"

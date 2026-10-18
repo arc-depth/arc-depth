@@ -1,0 +1,38 @@
+{
+ "adres": {
+  "Arc HaberciCctp": "0x55Cc609062cD3685fB3960140CA85A9A9Daaa872",
+  "Arc SepetDefteri": "0x802fa1BdB6949b58C254D52038f754f8CDEac718",
+  "Arc SepetKasasi": "0xB1A07F23e43ea380e113234c28475C5CE0F3Bb40",
+  "Arc SepetUcu": "0x733d54Cd61f7F7108A4278fE3543a917c96fbcB5",
+  "Arc token": "0xB179fFeBd5Bbac5f027f0F3eBFe88D069eB37348",
+  "Arc varlik": "0x5F23CdEdcaBCa5d054Bdd231221d3cDAB893d7Ed",
+  "Base HaberciCctp": "0xBC01886831daaE54b96BAF228AE9873C53E607A4",
+  "Base SepetKasasi": "0xDC695D19469429E474752A635cD105C4a04d4741",
+  "Base SepetUcu": "0x1d743276bFDAAFF5a6ca4aAAB3017A71aaf6e584",
+  "Base varlik": "0x1ea1fEe3B53090d001E10BbE38CbfaDf76458d71"
+ },
+ "adim": {
+  "Arc Haberci ikiz Base": "0xf02d6d7541327cfb5bdfa54c986291de942c05cc4a0f870093a21b46a4142a7a",
+  "Base Haberci ikiz Arc": "0xe6a92ce169adeff6310bcf7efd6ae9833bb061ebdaf58b5ef1fbf5462a1b9389",
+  "Defter bagla Arc": "0xe360874d7033e17068502547bd29ff75086743388b09be1b4b6047000a296620",
+  "Defter bagla Base": "0x1de76e855c4ffdc6df1c86bf68cd716ae4da4ac2c84b777a05a636f2ca79c7ba",
+  "Arc Haberci kilitle": "0x56d47ff912da0fe22729bc5a9503dc7493065c7433005a8d2eb623d8d6a5d33a",
+  "Base Haberci kilitle": "0x98947c67571fa472cc1b07321bc54064281f0077aa94bdf9a22a9eb898126ac8",
+  "Defter kilitle": "0x6fe38bf13a084e58004d80339276a514232f649bcc1d8fc91fcc5968fee4bfe9",
+  "launch onay 8 USDC": "0x12ba36c6f4695f581e547b55fad2546b362ffe2b15a90fa2423dbceaf70f674d",
+  "launch (Arc'tan, 8 $)": "0x39f3f2ee06640dd78ce507701d72eef76221413e2bd7b57e9ba4db1683738320",
+  "Base teslim (launch kalemi)": "0xa7b3dad9d010f84787d57faae7699eefc706e7abf8a0f597eea1b55cd87e6ebf",
+  "Arc varlik onay": "0x3fded263d3bd87a4350cbd8733a8c8d903b8c78e078120513b1a185a489925ad",
+  "Arc alim doldur": "0x68c4246cda067b02f0cf3c66b2b9eb9b00de02c1b4f48e8af4bb203b84d0559e",
+  "Base varlik onay": "0xc8f116c251436514d57e66ca7d0eb871f43aa096261a7556333950f445f15e73",
+  "Base alim doldur": "0x863d992d4ed4182e20c2df27a3c6a285b1c4f3b352394319c99c377ce0047a74",
+  "itfa onay": "0x35319b7fd9d2a187366e502f9200bc62f600fa0261a96352d5b5df92e619b49d",
+  "itfa (yari arz, Base'de odenir)": "0xa14994c18750da56a570cf8f30115bf7ecb3d375bd25cd85ba91d280c562d22a",
+  "Base teslim (itfa emri)": "0x1883f6ebf3d120a179f120c4863da9fb502af0ec981b6a8d46b7abdf4df05b6b",
+  "Arc satis onay": "0xe44898d970c1b62e2c1ad92ccd87de6d716841a114b6d256fb0657d7b9871763",
+  "Arc satis doldur": "0xcfcbfcbd17175cf399e4c116254bb67cebd934e6d9d2400c88911e9183bb7727",
+  "Base teslim (Arc'in odemesi)": "0xca49fe82a2840f30bbd6695830b23c4e6736e13e8b3c9ecac26a3294ae19ef60",
+  "Base satis onay": "0x3436c006e7b36f6e9ebd5a2c4dfab46ac0424113066c4ae895b4d0e7a7efe18c",
+  "Base satis doldur": "0x5b50cb53ebeab7154170ea41a335a1101f9dba241690d91a09f0b3f1b7a3e0df"
+ }
+}

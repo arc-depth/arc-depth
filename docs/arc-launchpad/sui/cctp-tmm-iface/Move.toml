@@ -1,0 +1,16 @@
+[package]
+name = "CctpTokenMessengerMinterV2Interface"
+version = "0.0.1"
+edition = "2024.beta"
+published-at = "0xeb14978abfe93a37c5d5bf86a0623b923553a5f0e794daac7724f1e2fdbfb830"
+
+# Circle CCTP V2 TokenMessengerMinterV2 on Sui: the burn ticket the ARC PULSE
+# receiver creates, signatures from circlefin/sui-cctp (b23b83b). NEVER
+# PUBLISHED; see ../cctp-iface/Move.toml.
+[addresses]
+token_messenger_minter_v2 = "0xeb14978abfe93a37c5d5bf86a0623b923553a5f0e794daac7724f1e2fdbfb830"
+
+[dependencies]
+CircleDepStubA = { local = "../cctp-ext-a" }
+CircleDepStubB = { local = "../cctp-ext-b" }
+CctpMessageTransmitterV2Interface = { local = "../cctp-iface" }

@@ -1,0 +1,31 @@
+[package]
+name = "pulse_sepet"
+version = "1.0.0"
+# Aptos forbids depending on a package with a weaker policy
+# (0x1::code EDEP_WEAKER_POLICY) and Circle publishes "compatible", so this
+# is "compatible" too. No one can upgrade it all the same: it is published
+# from its own account, whose key is then closed (authentication key = 32
+# zero bytes, scripts/aptos-anahtar-kapat.js pattern), and an upgrade needs
+# that account to sign.
+upgrade_policy = "compatible"
+authors = []
+
+[addresses]
+sepet = "_"
+
+[dev-addresses]
+sepet = "0xa11ce"
+
+[dependencies.AptosFramework]
+git = "https://github.com/aptos-labs/aptos-framework.git"
+rev = "99f5e915b6d231d0ffbc1aff282d36148d2a8b24"
+subdir = "aptos-framework"
+
+[dependencies.MessageTransmitterV2]
+local = "../cctp-iface/mt"
+
+[dependencies.TokenMessengerMinterV2]
+local = "../cctp-iface/tmm"
+
+[dependencies.StablecoinHandler]
+local = "../cctp-iface/handler"

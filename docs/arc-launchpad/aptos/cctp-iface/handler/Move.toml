@@ -1,0 +1,16 @@
+[package]
+name = "StablecoinHandler"
+version = "1.0.0"
+upgrade_policy = "compatible"
+
+# Stand-in for Circle's StablecoinHandler (see ../README.md). NEVER PUBLISHED.
+[addresses]
+stablecoin_handler = "0x2b963f8aa28b815d2e875bd85a1a01d5f2d346f08f5b9fcf8953c77680735af2"
+
+[dependencies.AptosFramework]
+git = "https://github.com/aptos-labs/aptos-framework.git"
+rev = "99f5e915b6d231d0ffbc1aff282d36148d2a8b24"
+subdir = "aptos-framework"
+
+[dependencies.TokenMessengerMinterV2]
+local = "../tmm"

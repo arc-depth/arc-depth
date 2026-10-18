@@ -1,0 +1,14 @@
+[package]
+name = "MessageTransmitterV2"
+version = "1.0.0"
+upgrade_policy = "compatible"
+
+# Stand-in for Circle's MessageTransmitterV2 (see ../README.md). NEVER PUBLISHED.
+[addresses]
+message_transmitter_v2 = "0x1b3f6d749cb835451202f9a1932e49014266f7e3d51611a9a763d156cb4bdaf6"
+
+[dependencies.AptosFramework]
+git = "https://github.com/aptos-labs/aptos-framework.git"
+rev = "99f5e915b6d231d0ffbc1aff282d36148d2a8b24"
+subdir = "aptos-framework"
+

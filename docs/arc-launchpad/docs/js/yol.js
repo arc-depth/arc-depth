@@ -86,6 +86,28 @@ export const YOLLAR = [
     sekme: true
   },
   {
+    yol: "olustur-move",
+    ad: "Create token (Sui / Aptos wallet)",
+    kisa: "Create (Move)",
+    grup: "piyasa",
+    ikon: "arti",
+    durum: "canli",
+    ozet: "Launch paid from a Sui or Aptos wallet, the token living on that chain.",
+    kaynak: "pulse_launchpad (Sui) + pulse_launchpad (Aptos)",
+    gizliRay: true
+  },
+  {
+    yol: "merkez",
+    ad: "Launch on any chain",
+    kisa: "Any chain",
+    grup: "piyasa",
+    ikon: "pusula",
+    durum: "canli",
+    ozet: "Launch, buy, sell and redeem from any chain with its own gas token; one pool and one price on Arc.",
+    kaynak: "relay.link + MerkezKapi (Arc) + IkizYayici twins + basket vaults",
+    sekme: true
+  },
+  {
     yol: "fthm",
     ad: "FTHM on any chain",
     kisa: "FTHM",

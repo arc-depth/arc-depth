@@ -1,0 +1,20 @@
+[package]
+name = "CctpMessageTransmitterV2Interface"
+version = "0.0.1"
+edition = "2024.beta"
+published-at = "0x16bcfcfc465f96281663a344641c017de84529370e11aa3879d0dce43ad6db87"
+
+# Circle CCTP V2 on Sui: the functions and types ARC PULSE's basket receiver
+# uses, with the signatures of circlefin/sui-cctp (packages/*_v2, commit
+# b23b83b "CCTP V2 on Sui", read 17 Oct 2026). NEVER PUBLISHED. Mainnet:
+#   MessageTransmitterV2   0x16bcfcfc465f96281663a344641c017de84529370e11aa3879d0dce43ad6db87
+#   TokenMessengerMinterV2 0xeb14978abfe93a37c5d5bf86a0623b923553a5f0e794daac7724f1e2fdbfb830
+# The bodies are a working stand-in for local tests; the attestation is not
+# verified here. Ours uses only the non-version-gated ticket functions and
+# accessors; the version-gated calls are made by the transaction (PTB).
+[addresses]
+message_transmitter_v2 = "0x16bcfcfc465f96281663a344641c017de84529370e11aa3879d0dce43ad6db87"
+
+[dependencies]
+CircleDepStubA = { local = "../cctp-ext-a" }
+CircleDepStubB = { local = "../cctp-ext-b" }

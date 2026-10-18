@@ -1,0 +1,17 @@
+[package]
+name = "sahte-tmm"
+version = "0.1.0"
+edition = "2021"
+description = "Test stand-in for CCTP V2 TokenMessengerMinter deposit_for_burn: checks the signers and the burn account owner, then burns"
+license = "BUSL-1.1"
+publish = false
+
+[lib]
+crate-type = ["cdylib", "lib"]
+
+[dependencies]
+pinocchio = { version = "0.11.2", features = ["cpi"] }
+pinocchio-token = "0.7.0"
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(target_os, values("solana"))', 'cfg(feature, values("custom-heap", "custom-panic"))'] }

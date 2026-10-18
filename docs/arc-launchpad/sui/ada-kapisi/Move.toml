@@ -1,0 +1,12 @@
+[package]
+name = "AdaKapisi"
+version = "0.0.1"
+edition = "2024.beta"
+
+# The island gate's Sui end (see sources/kapi.move), on LayerZero's Sui OApp.
+[dependencies]
+OApp = { local = "C:/Users/omen/araclar/lz/LayerZero-v2/packages/layerzero-v2/sui/contracts/oapps/oapp" }
+PtbMoveCall = { local = "C:/Users/omen/araclar/lz/LayerZero-v2/packages/layerzero-v2/sui/contracts/ptb-builders/ptb-move-call" }
+
+[addresses]
+ada_kapisi = "0x0"

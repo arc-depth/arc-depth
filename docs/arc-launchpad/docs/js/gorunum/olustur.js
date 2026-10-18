@@ -55,6 +55,8 @@ const gazBirim = (wei, ag) => (Number(BigInt(wei)) / 1e18).toPrecision(3) + " " 
 export async function ciz({ kayit, param }) {
   const kap = el("div", { sinif: "yigin" });
   kap.append(sayfaUst("Create a token", "Collateral-backed, fixed supply, no free founder share"));
+  /* the one-pool launch: up to five collateral tokens from any chain, paid with any chain's gas token */
+  kap.append(el("a", { sinif: "dugme dugme--marka", attr: { href: "#merkez" }, yazi: "Launch with a 5-token collateral basket from any chain →" }));
 
   /* State for the live payment summary.
      TWO AMOUNTS, AND THEY ARE NOT THE OLD ONES
