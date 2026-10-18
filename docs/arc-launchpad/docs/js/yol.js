@@ -41,7 +41,7 @@ export const YOLLAR = [
     grup: "piyasa",
     ikon: "pusula",
     durum: "canli",
-    ozet: "Trending, newly launched, highest volume, biggest gainers and freshly graduated tokens.",
+    ozet: "Every launch with its collateral now against what it started with, where it launched and where it trades.",
     /* Reads the launchpad registry for the token list and the PoolManager
        for prices. With no launchpad deployed the list is genuinely empty,
        and that is what it shows. */
@@ -64,7 +64,7 @@ export const YOLLAR = [
 
          kaynak also still named EgriLaunchpad, which is retired. */
     durum: "canli",
-    ozet: "Name, symbol, collateral asset, tax rate and the founder's first buy.",
+    ozet: "Launch from any chain with its gas token: name, symbol, up to five collateral tokens from any chain, tax and first buy.",
     kaynak: "PulseLaunchpad.launch()",
     /* The form is real and the payment breakdown is computed from the
        contract's own constants, so it can be filled in and checked. It
@@ -98,6 +98,7 @@ export const YOLLAR = [
   },
   {
     yol: "merkez",
+    gizliRay: true,   /* off the rail: same page as Create token */
     ad: "Launch on any chain",
     kisa: "Any chain",
     grup: "piyasa",
@@ -143,6 +144,7 @@ export const YOLLAR = [
   },
   {
     yol: "teminat",
+    gizliRay: true,   /* off the rail: the old single-asset picker; the launch form takes any token now */
     ad: "Collateral picker",
     grup: "piyasa",
     ikon: "kasa",
@@ -159,8 +161,8 @@ export const YOLLAR = [
     grup: "piyasa",
     ikon: "kalkan",
     durum: "canli",
-    ozet: "Each token's reserve, its claim per token, the price where the floor engages, and buyback history.",
-    kaynak: "KopruKasasi.hak() / bakiye() / dolasim()"
+    ozet: "The basket vault on each of nine chains: its dollars, its auctions, and the open ones with what they ask now.",
+    kaynak: "SepetKasasi.ihaleler() / istenen() on each chain + Sui and Aptos kasa"
   },
   {
     yol: "analitik",
@@ -274,6 +276,7 @@ export const YOLLAR = [
   },
   {
     yol: "teklifler",
+    gizliRay: true,   /* off the rail: reached from Platform DAO */
     ad: "Proposals and voting",
     grup: "yonetisim",
     ikon: "oy",
@@ -333,6 +336,7 @@ export const YOLLAR = [
   },
   {
     yol: "zincirler",
+    gizliRay: true,   /* off the rail: the old bridge-to-Arc collateral; baskets stay on their own chains now */
     ad: "Cross-chain collateral",
     grup: "guven",
     ikon: "zincir",

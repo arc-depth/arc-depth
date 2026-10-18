@@ -43,17 +43,17 @@ export const SEPET = {
 
 /* CCTP domain → chain; usdcDec is the vault's dollar on that chain */
 export const ZINCIRLER = {
-  26: { ad: "Arc", rpc: "https://arc-rpc.publicnode.com", id: 5042, ds: null, usdcDec: 6 },
-  6: { ad: "Base", rpc: "https://mainnet.base.org", id: 8453, ds: "base", usdcDec: 6 },
-  3: { ad: "Arbitrum", rpc: "https://arb1.arbitrum.io/rpc", id: 42161, ds: "arbitrum", usdcDec: 6 },
-  1: { ad: "Avalanche", rpc: "https://avalanche-c-chain-rpc.publicnode.com", id: 43114, ds: "avalanche", usdcDec: 6 },
-  15: { ad: "Monad", rpc: "https://rpc.monad.xyz", id: 143, ds: "monad", usdcDec: 6 },
-  19: { ad: "HyperEVM", rpc: "https://rpc.hyperliquid.xyz/evm", id: 999, ds: "hyperevm", usdcDec: 6 },
-  17: { ad: "BNB", rpc: "https://bsc-dataseed.bnbchain.org", id: 56, ds: "bsc", usdcDec: 18 },
+  26: { ad: "Arc", kasif: "https://explorer.arc.io", usdc: "0x3600000000000000000000000000000000000000", rpc: "https://arc-rpc.publicnode.com", id: 5042, ds: null, usdcDec: 6 },
+  6: { ad: "Base", kasif: "https://basescan.org", usdc: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", rpc: "https://mainnet.base.org", id: 8453, ds: "base", usdcDec: 6 },
+  3: { ad: "Arbitrum", kasif: "https://arbiscan.io", usdc: "0xaf88d065e77c8cC2239327C5EDb3A432268e5831", rpc: "https://arb1.arbitrum.io/rpc", id: 42161, ds: "arbitrum", usdcDec: 6 },
+  1: { ad: "Avalanche", kasif: "https://snowscan.xyz", usdc: "0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E", rpc: "https://avalanche-c-chain-rpc.publicnode.com", id: 43114, ds: "avalanche", usdcDec: 6 },
+  15: { ad: "Monad", kasif: "https://monadvision.com", usdc: "0x754704Bc059F8C67012fEd69BC8A327a5aafb603", rpc: "https://rpc.monad.xyz", id: 143, ds: "monad", usdcDec: 6 },
+  19: { ad: "HyperEVM", kasif: "https://hyperevmscan.io", usdc: "0xb88339CB7199b77E23DB6E890353E22632Ba630f", rpc: "https://rpc.hyperliquid.xyz/evm", id: 999, ds: "hyperevm", usdcDec: 6 },
+  17: { ad: "BNB", kasif: "https://bscscan.com", usdc: "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d", rpc: "https://bsc-dataseed.bnbchain.org", id: 56, ds: "bsc", usdcDec: 18 },
   0: { ad: "Ethereum" },
   5: { ad: "Solana" },
-  8: { ad: "Sui", rpc: "https://fullnode.mainnet.sui.io", ds: "sui", usdcDec: 6 },
-  9: { ad: "Aptos", rpc: "https://api.mainnet.aptoslabs.com/v1", ds: "aptos", usdcDec: 6 },
+  8: { ad: "Sui", kasif: "https://suiscan.xyz/mainnet", rpc: "https://sui-rpc.publicnode.com", ds: "sui", usdcDec: 6 },
+  9: { ad: "Aptos", kasif: "https://explorer.aptoslabs.com", rpc: "https://api.mainnet.aptoslabs.com/v1", ds: "aptos", usdcDec: 6 },
 };
 
 /* LayerZero eid → chain name: where a twin can live */
@@ -234,4 +234,38 @@ export async function cikisZinciri(token, adapter, zaman, cfg = SEPET) {
   if (!loglar.length) return "Arc";
   const eid = Number(new Interface(["event OFTSent(bytes32 indexed guid, uint32 dstEid, address indexed fromAddress, uint256 amountSentLD, uint256 amountReceivedLD)"]).parseLog(loglar[0]).args.dstEid);
   return EID[eid] || "eid " + eid;
+}
+
+/* ---- a chain's vault as a whole: what the Collateral vaults page shows ---- */
+const IHALE_ABI = [
+  "function ihaleSayisi() view returns (uint256)",
+  "function ihaleler(uint256) view returns (uint8 tur, uint64 launchId, address varlik, uint256 verilen, uint256 baslangic, uint64 baslama, uint32 hedefZincir, bytes32 alici, bool bitti)",
+  "function istenen(uint256) view returns (uint256)",
+];
+
+/**
+ * One chain's basket vault: its dollars, how many auctions it has opened,
+ * and the open ones among the newest `tara` with what each asks right now.
+ * Sui and Aptos give the auction count (and Sui its unassigned dollars).
+ */
+export async function kasaOzeti(d, cfg = SEPET, tara = 40) {
+  const z = ZINCIRLER[d];
+  if (d === 8) {
+    const o = await suiCagri("sui_getObject", [cfg.sui.kasa, { showContent: true }]);
+    const f = o.data.content.fields;
+    return { kasa: cfg.sui.kasa, dolar: ham(BigInt(typeof f.havuz === "object" ? f.havuz.fields?.value ?? f.havuz : f.havuz), 6), dolarNot: "not yet given to an order",
+      ihaleSayisi: Number(f.ihale_sayisi), acik: null };
+  }
+  if (d === 9) {
+    const [n] = await aptosGorunum(cfg.aptos.paket + "::kasa::ihale_sayisi", [cfg.aptos.kasa]);
+    return { kasa: cfg.aptos.kasa, dolar: null, ihaleSayisi: Number(n), acik: null };
+  }
+  const p = saglayici(d), k = new Contract(cfg.kasa[d], IHALE_ABI, p);
+  const [dolar, n] = await Promise.all([new Contract(z.usdc, ["function balanceOf(address) view returns (uint256)"], p).balanceOf(cfg.kasa[d]), k.ihaleSayisi()]);
+  const sayi = Number(n), ids = [];
+  for (let i = sayi - 1; i >= Math.max(0, sayi - tara); i--) ids.push(i);
+  const hepsi = await Promise.all(ids.map((i) => k.ihaleler(i).then((h) => ({ id: i, ...h.toObject() }))));
+  const acik = await Promise.all(hepsi.filter((h) => !h.bitti).map(async (h) => ({ id: h.id, tur: Number(h.tur) === 1 ? "buy" : "sell", launchId: Number(h.launchId),
+    varlik: h.varlik, verilen: h.verilen, istenen: await k.istenen(h.id), baslama: Number(h.baslama) })));
+  return { kasa: cfg.kasa[d], dolar: ham(dolar, z.usdcDec), ihaleSayisi: sayi, acik };
 }
