@@ -594,3 +594,30 @@ textarea.girdi { height: auto; min-height: 84px; padding: var(--bosluk-3); resiz
   background: var(--marka); color: #fff; white-space: nowrap;
 }
 .cuzdan-kutu__guven { margin: 0; font-size: 12px; line-height: 1.5; color: var(--yazi-3); }
+
+/* ---- collateral board (Discover) ------------------------------------- */
+.tk { position: relative; overflow: hidden; color: inherit; text-decoration: none; }
+.tk--artis { border-color: rgba(38, 194, 129, 0.45); box-shadow: 0 0 0 1px rgba(38, 194, 129, 0.15), 0 8px 32px -12px rgba(38, 194, 129, 0.45); }
+.tk--dusus { border-color: rgba(240, 72, 75, 0.45); box-shadow: 0 0 0 1px rgba(240, 72, 75, 0.15), 0 8px 32px -12px rgba(240, 72, 75, 0.45); }
+.tk__ust { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.tk__buyuk { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.tk__deger { font-family: var(--yazi-tipi-mono); font-size: 28px; font-weight: 700; letter-spacing: -0.02em; }
+.tk__yuzde { font-family: var(--yazi-tipi-mono); font-size: 18px; font-weight: 700; padding: 2px 8px; border-radius: 999px; }
+.tk__yuzde.artis { background: var(--alis-zemin); }
+.tk__yuzde.dusus { background: var(--satis-zemin); }
+.tk__yuzde.sabit { background: var(--yuzey-2); }
+.tk__cubuk { height: 6px; border-radius: 999px; background: var(--yuzey-2); overflow: hidden; }
+.tk__cubuk > i { display: block; height: 100%; width: 0; border-radius: 999px; background: var(--marka); transition: width 900ms var(--egri); }
+.tk--artis .tk__cubuk > i { background: linear-gradient(90deg, var(--marka), var(--alis)); }
+.tk--dusus .tk__cubuk > i { background: linear-gradient(90deg, var(--satis), var(--marka)); }
+.tk__zincirler { display: flex; flex-wrap: wrap; gap: 4px; }
+.tk__zincir { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 999px;
+  background: color-mix(in srgb, var(--z) 14%, transparent); color: color-mix(in srgb, var(--z) 70%, white); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--z) 45%, transparent); }
+.tk__zincir::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--z); }
+.tk__yeni { font-size: 10px; font-weight: 800; letter-spacing: 0.08em; padding: 2px 7px; border-radius: 999px; background: var(--marka); color: #fff; animation: tk-nabiz 1.6s ease-in-out infinite; }
+.tk__canli { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--yazi-3); }
+.tk__canli::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--alis); animation: tk-nabiz 1.6s ease-in-out infinite; }
+.tk__parla { animation: tk-parla 1.2s ease-out; }
+@keyframes tk-nabiz { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.55; transform: scale(0.88); } }
+@keyframes tk-parla { from { background: var(--marka-zemin); } to { background: transparent; } }
+@media (prefers-reduced-motion: reduce) { .tk__yeni, .tk__canli::before, .tk__parla { animation: none; } .tk__cubuk > i { transition: none; } }

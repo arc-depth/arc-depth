@@ -193,7 +193,8 @@ export async function teminatDurumu(token, cfg = SEPET) {
   const eksik = kalemler.filter((k) => k.deger == null).length;
   const ilk = satirlar.reduce((a, s) => a + s.ilk, 0);
   const simdi = kalemler.reduce((a, k) => a + (k.deger || 0), 0) + bekleyen;
-  return { id: Number(id), ilk, simdi, bekleyen, degisim: ilk > 0 ? simdi / ilk - 1 : 0, kalemler, eksik, hatalar: sonuc.filter((x) => x.hata).map((x) => x.hata) };
+  /* arz: the supply still carrying a claim on the basket (18 dp) */
+  return { id: Number(id), arz: ham(l.arz, 18), ilk, simdi, bekleyen, degisim: ilk > 0 ? simdi / ilk - 1 : 0, kalemler, eksik, hatalar: sonuc.filter((x) => x.hata).map((x) => x.hata) };
 }
 
 /** Arc plus every chain the token's Arc adapter has a peer on. */

@@ -60,44 +60,72 @@ async function arcListesi(sayfa) {
 }
 
 /* ---- one token's card: filled in as each chain answers ---- */
-const yuzde = (x) => (x >= 0 ? "+" : "") + (x * 100).toFixed(2) + "%";
+const yuzde = (x) => (x > 0.00005 ? "▲ +" : x < -0.00005 ? "▼ " : "") + (x * 100).toFixed(2) + "%";
+const yon = (x) => (x > 0.00005 ? "artis" : x < -0.00005 ? "dusus" : "sabit");
+const kucukPara = (x) => (x >= 0.01 ? para(x) : "$" + x.toPrecision(3));
+/* each chain in its own brand colour */
+const RENK = { Arc: "#7c5cff", Base: "#0052ff", Arbitrum: "#28a0f0", Ethereum: "#627eea", BNB: "#f0b90b", Avalanche: "#e84142",
+  Monad: "#836ef9", HyperEVM: "#50e3c2", Robinhood: "#ccff00", Solana: "#14f195", Sui: "#4da2ff", Aptos: "#2ed8a7" };
+const zincirCipi = (z) => el("span", { sinif: "tk__zincir", attr: { style: "--z:" + (RENK[z] || "#888") }, yazi: z });
+
 function teminatKarti(s, cfg) {
-  const nereden = el("span", { sinif: "etiket", yazi: "launched from …" });
-  const zincirler = el("div", { attr: { style: "display:flex;flex-wrap:wrap;gap:4px" } }, [el("span", { sinif: "etiket", yazi: "…" })]);
-  const simdi = el("div", { sinif: "dg", yazi: "—" });
-  const degisim = el("div", { sinif: "dg", yazi: "—" });
+  const yeni = Date.now() / 1000 - s.zaman < 3600;
+  const nereden = el("div", { sinif: "yazi yazi--kucuk yazi--sessiz", yazi: "launched from …" });
+  const zincirler = el("div", { sinif: "tk__zincirler" }, [el("span", { sinif: "etiket", yazi: "…" })]);
+  const deger = el("span", { sinif: "tk__deger", yazi: "—" });
+  const degisim = el("span", { sinif: "tk__yuzde sabit", yazi: "…" });
+  const cubuk = el("i");
   const ilk = el("div", { sinif: "dg", yazi: "—" });
+  const destek = el("div", { sinif: "dg", yazi: "—" });
+  const fiyat = el("div", { sinif: "dg", yazi: "—" });
   const kalemler = el("div", { sinif: "yazi yazi--kucuk yazi--sessiz", yazi: "reading the vaults…" });
   const olc = (et, dg) => el("div", { sinif: "jeton-kart__olcum" }, [el("div", { sinif: "et", yazi: et }), dg]);
-  const kart = el("a", { sinif: "jeton-kart", attr: { href: "#/merkez?t=" + s.token, style: "color:inherit;text-decoration:none" } }, [
-    el("div", { attr: { style: "display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap" } }, [
+  const kart = el("a", { sinif: "jeton-kart tk", attr: { href: "#/merkez?t=" + s.token } }, [
+    el("div", { sinif: "tk__ust" }, [
       el("div", { sinif: "jeton" }, [
         el("div", { sinif: "jeton__logo jeton__logo--bos", yazi: (s.sembol || "?").slice(0, 3).toUpperCase() }),
-        el("div", { sinif: "jeton__yazi" }, [el("div", { sinif: "jeton__sembol", yazi: (s.sembol || "?") + "  #" + s.no }), el("div", { sinif: "jeton__ad", yazi: s.ad || "" })]),
+        el("div", { sinif: "jeton__yazi" }, [el("div", { sinif: "jeton__sembol", yazi: s.sembol || "?" }), el("div", { sinif: "jeton__ad", yazi: (s.ad || "") + "  · #" + s.no })]),
       ]),
-      nereden,
+      yeni ? el("span", { sinif: "tk__yeni", yazi: "NEW" }) : el("span"),
     ]),
+    nereden,
+    el("div", { sinif: "tk__buyuk" }, [deger, degisim]),
+    el("div", { sinif: "tk__cubuk", attr: { title: "collateral now against what it started with" } }, [cubuk]),
+    el("div", { sinif: "jeton-kart__olcumler" }, [olc("Started with", ilk), olc("Backing / token", destek), olc("Price / token", fiyat)]),
     el("div", { sinif: "yazi yazi--kucuk yazi--sessiz", yazi: "Trades on" }),
     zincirler,
-    el("div", { sinif: "jeton-kart__olcumler" }, [olc("Collateral now", simdi), olc("Change", degisim), olc("Started with", ilk)]),
     kalemler,
   ]);
-  (async () => {
-    const [tz, td] = await Promise.allSettled([islemZincirleri(s.token, cfg), teminatDurumu(s.token, cfg)]);
-    if (tz.status === "fulfilled") {
-      zincirler.replaceChildren(...tz.value.zincirler.map((z) => el("span", { sinif: "etiket etiket--marka", yazi: z })));
-      cikisZinciri(s.token, tz.value.adapter, s.zaman, cfg).then((c) => { nereden.textContent = c ? "launched from " + c : "launched on Arc's launchpad"; })
-        .catch(() => { nereden.textContent = "launch chain unreadable"; });
-    } else { zincirler.replaceChildren(el("span", { sinif: "etiket etiket--uyari", yazi: "could not read" })); nereden.textContent = ""; }
-    if (td.status !== "fulfilled" || !td.value) { kalemler.textContent = td.status === "fulfilled" ? "No basket recorded for this token." : "Vaults could not be read: " + td.reason.message; return; }
+  let onceki = null;
+  const doldur = async () => {
+    const [tz, td, hf] = await Promise.allSettled([onceki ? Promise.resolve(null) : islemZincirleri(s.token, cfg), teminatDurumu(s.token, cfg),
+      import("./merkez.js").then((m) => m.havuzFiyati(s.token))]);
+    if (!onceki) {
+      if (tz.status === "fulfilled") {
+        zincirler.replaceChildren(...tz.value.zincirler.map(zincirCipi));
+        cikisZinciri(s.token, tz.value.adapter, s.zaman, cfg).then((c) => { nereden.replaceChildren(el("span", { yazi: "launched from " }), zincirCipi(c || "Arc")); })
+          .catch(() => { nereden.textContent = ""; });
+      } else { zincirler.replaceChildren(el("span", { sinif: "etiket etiket--uyari", yazi: "could not read" })); nereden.textContent = ""; }
+    }
+    if (td.status !== "fulfilled" || !td.value) { if (!onceki) kalemler.textContent = td.status === "fulfilled" ? "No basket recorded for this token." : "Vaults could not be read: " + td.reason.message; return; }
     const t = td.value;
-    simdi.textContent = para(t.simdi) + (t.eksik ? " +?" : "");
-    ilk.textContent = para(t.ilk);
+    if (onceki && Math.abs(t.simdi - onceki) > 0.000001) { deger.classList.remove("tk__parla"); void deger.offsetWidth; deger.classList.add("tk__parla"); }
+    onceki = t.simdi;
+    deger.textContent = para(t.simdi) + (t.eksik ? "+" : "");
     degisim.textContent = yuzde(t.degisim);
-    degisim.className = "dg " + (t.degisim > 0.00005 ? "artis" : t.degisim < -0.00005 ? "dusus" : "sabit");
+    degisim.className = "tk__yuzde " + yon(t.degisim);
+    kart.classList.toggle("tk--artis", yon(t.degisim) === "artis");
+    kart.classList.toggle("tk--dusus", yon(t.degisim) === "dusus");
+    cubuk.style.width = Math.max(2, Math.min(100, (t.simdi / Math.max(t.ilk, 1e-9)) * 50)) + "%";   // half-way = where it started
+    ilk.textContent = para(t.ilk);
+    if (t.arz > 0) destek.textContent = kucukPara(t.simdi / t.arz);
+    if (hf.status === "fulfilled" && Number.isFinite(hf.value) && hf.value > 0) fiyat.textContent = kucukPara(hf.value);
     kalemler.textContent = t.kalemler.map((k) => k.zincirAd + " " + (k.deger == null ? "price n/a" : para(k.deger)) + (k.kaynak === "last auction" ? " (last auction)" : "")).join(" · ") +
       (t.bekleyen > 0.000001 ? " · waiting to be bought " + para(t.bekleyen) : "") + (t.hatalar.length ? " · unreadable: " + t.hatalar.join("; ") : "");
-  })();
+  };
+  doldur();
+  /* live: the vaults are read again every minute while the card is on screen */
+  const z = setInterval(() => { if (!document.body.contains(kart)) return clearInterval(z); doldur().catch(() => {}); }, 60_000);
   return kart;
 }
 
@@ -149,7 +177,7 @@ export async function ciz({ param }) {
       el("div", { sinif: "yazi yazi--kucuk yazi--sessiz", yazi: "Collateral now = what each vault holds for the token at market price (DexScreener; the vault's last auction price where the market has none) plus dollars waiting to be bought. Change is against what the founder put in. Newest first; the 2,000 newest are kept." }),
       satirlar.length ? izg : bos("No matches", 'Nothing on this page for "' + arama + '".'),
       v.sayfaSayisi > 1 ? sayfalayici(v.sayfa, v.sayfaSayisi) : el("span"),
-    ]), el("span", { sinif: "ucuncul", yazi: v.n + " token · page " + v.sayfa + " of " + v.sayfaSayisi })));
+    ]), el("span", { sinif: "tk__canli", yazi: "live · " + v.n + " token · page " + v.sayfa + " of " + v.sayfaSayisi })));
 
     /* new launches: page 1 redraws itself when the registry grows */
     if (v.sayfa === 1) {
