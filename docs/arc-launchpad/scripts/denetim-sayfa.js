@@ -496,7 +496,8 @@ console.log("2c) HER ABI TABLOSU VAR MI");
     }
     return cikti;
   };
-  const reKullanim = new RegExp("ABI" + T + ".(" + T + "w+)", "g");
+  /* word boundary first: KAPI_ABI.encodeFunctionData is an ethers Interface, not the ABI table */
+  const reKullanim = new RegExp(T + "bABI" + T + ".(" + T + "w+)", "g");
   const eksik = [];
   let kullanim = 0;
   for (const dosya of gez(JS, [])) {

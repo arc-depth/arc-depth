@@ -144,7 +144,7 @@ async function teklifBirimi(zincir, girdi, dolar) {
 }
 
 /* ---- the Arc pool's price ---- */
-async function havuzFiyati(token) {
+export async function havuzFiyati(token) {
   const lp = new Contract(LP, ["function havuzAnahtari(address) view returns ((address,address,uint24,int24,address))"], arc);
   const k = await lp.havuzAnahtari(token);
   const id = keccak256(AbiCoder.defaultAbiCoder().encode(["address", "address", "uint24", "int24", "address"], [k[0], k[1], k[2], k[3], k[4]]));
@@ -157,7 +157,7 @@ async function havuzFiyati(token) {
   return tokenSifir ? ham * 1e12 : (1 / ham) * 1e12;
 }
 
-export async function ciz() {
+export async function ciz({ param } = {}) {
   const kap = el("div", { sinif: "yigin" });
   kap.append(sayfaUst("Launch on any chain", "One pool on Arc, every chain's door to it"));
   kap.append(not("Every token here has one pool and one price, on Arc. You launch, buy and sell from your own chain with its own gas token, in one signature. The token lives on your chain as its twin. Fees are shown before you sign.", "bilgi"));
@@ -242,7 +242,7 @@ export async function ciz() {
     lDugme, lDurum])));
 
   /* ================= trade ================= */
-  const token = el("input", { sinif: "girdi", attr: { id: "merkez-token", placeholder: "token address on Arc" } });
+  const token = el("input", { sinif: "girdi", attr: { id: "merkez-token", placeholder: "token address on Arc", value: (param && param.get("t")) || "" } });
   const fiyatYazi = el("div", { sinif: "yazi yazi--kucuk yazi--sessiz" });
   const fiyatOku = async () => {
     try {
