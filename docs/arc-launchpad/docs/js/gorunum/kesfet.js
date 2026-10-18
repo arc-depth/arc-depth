@@ -20,11 +20,10 @@
 
 import { el, panel, sayfaUst, bos, olcum } from "../ui.js";
 import { ikon } from "../ikon.js";
-import { jetonBilgileri } from "../zincir.js";
 import { EKONOMI } from "../adresler.js";
 import { para } from "../bicim.js";
-import { havuzFiyati } from "./merkez.js";
 import { JsonRpcProvider, Contract } from "../../vendor/ethers.min.js";
+import { teminatDurumu, islemZincirleri, cikisZinciri } from "../teminat-izle.js";
 
 const LP5 = "0x52e600c8259ca44D9837B7b9E6BA1faee4bC040d";   // PulseLaunchpad5, the one pool's registry (dagitim-sepet.json)
 const LP5_ABI = [
@@ -36,13 +35,78 @@ const arc = new JsonRpcProvider("https://arc-rpc.publicnode.com", 5042, { static
 /* the chains with a live basket vault (dagitim-sepet.json); the other three are listed as not open */
 const SEPET_ACIK = ["Arc", "Base", "Arbitrum", "Avalanche", "Monad", "HyperEVM", "BNB", "Sui", "Aptos"];
 
-async function arcListesi() {
+/* Newest first, ten to a page, two hundred pages: the 2,000 newest
+   launches. Older ones drop off the end as new ones arrive. */
+const SAYFA_BOY = 10, AZAMI_SAYFA = 200;
+
+async function arcListesi(sayfa) {
   const lp = new Contract(LP5, LP5_ABI, arc);
   const n = Number(await lp.launchCount());
-  const kayitlar = await Promise.all(Array.from({ length: Math.min(n, 100) }, (_, i) => lp.launchAt(n - 1 - i)));
-  const bilgi = await jetonBilgileri(kayitlar.map((k) => k.token));
-  return { n, liste: kayitlar.map((k, i) => ({ token: k.token, teminat: Number(k.teminat) / 1e6, vergi: Number(k.vergiPpm) / 10_000,
+  const gorunur = Math.min(n, SAYFA_BOY * AZAMI_SAYFA);
+  const sayfaSayisi = Math.max(1, Math.ceil(gorunur / SAYFA_BOY));
+  const p = Math.min(Math.max(1, sayfa), sayfaSayisi);
+  const bas = n - 1 - (p - 1) * SAYFA_BOY, alt = n - gorunur;
+  const sira = [];
+  for (let i = bas; i > bas - SAYFA_BOY && i >= alt; i--) sira.push(i);
+  const kayitlar = await Promise.all(sira.map((i) => lp.launchAt(i)));
+  /* name and symbol read one by one: ten calls a page, and a batch some RPCs refuse cannot blank them */
+  const bilgi = await Promise.all(kayitlar.map(async (k) => {
+    const c = new Contract(k.token, ["function name() view returns (string)", "function symbol() view returns (string)"], arc);
+    const [ad, sembol] = await Promise.all([c.name().catch(() => null), c.symbol().catch(() => null)]);
+    return { ad, sembol };
+  }));
+  return { n, sayfa: p, sayfaSayisi, liste: kayitlar.map((k, i) => ({ no: sira[i] + 1, token: k.token, vergi: Number(k.vergiPpm) / 10_000,
     zaman: Number(k.zaman), ad: bilgi[i] && bilgi[i].ad, sembol: bilgi[i] && bilgi[i].sembol })) };
+}
+
+/* ---- one token's card: filled in as each chain answers ---- */
+const yuzde = (x) => (x >= 0 ? "+" : "") + (x * 100).toFixed(2) + "%";
+function teminatKarti(s, cfg) {
+  const nereden = el("span", { sinif: "etiket", yazi: "launched from …" });
+  const zincirler = el("div", { attr: { style: "display:flex;flex-wrap:wrap;gap:4px" } }, [el("span", { sinif: "etiket", yazi: "…" })]);
+  const simdi = el("div", { sinif: "dg", yazi: "—" });
+  const degisim = el("div", { sinif: "dg", yazi: "—" });
+  const ilk = el("div", { sinif: "dg", yazi: "—" });
+  const kalemler = el("div", { sinif: "yazi yazi--kucuk yazi--sessiz", yazi: "reading the vaults…" });
+  const olc = (et, dg) => el("div", { sinif: "jeton-kart__olcum" }, [el("div", { sinif: "et", yazi: et }), dg]);
+  const kart = el("a", { sinif: "jeton-kart", attr: { href: "#/merkez?t=" + s.token, style: "color:inherit;text-decoration:none" } }, [
+    el("div", { attr: { style: "display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap" } }, [
+      el("div", { sinif: "jeton" }, [
+        el("div", { sinif: "jeton__logo jeton__logo--bos", yazi: (s.sembol || "?").slice(0, 3).toUpperCase() }),
+        el("div", { sinif: "jeton__yazi" }, [el("div", { sinif: "jeton__sembol", yazi: (s.sembol || "?") + "  #" + s.no }), el("div", { sinif: "jeton__ad", yazi: s.ad || "" })]),
+      ]),
+      nereden,
+    ]),
+    el("div", { sinif: "yazi yazi--kucuk yazi--sessiz", yazi: "Trades on" }),
+    zincirler,
+    el("div", { sinif: "jeton-kart__olcumler" }, [olc("Collateral now", simdi), olc("Change", degisim), olc("Started with", ilk)]),
+    kalemler,
+  ]);
+  (async () => {
+    const [tz, td] = await Promise.allSettled([islemZincirleri(s.token, cfg), teminatDurumu(s.token, cfg)]);
+    if (tz.status === "fulfilled") {
+      zincirler.replaceChildren(...tz.value.zincirler.map((z) => el("span", { sinif: "etiket etiket--marka", yazi: z })));
+      cikisZinciri(s.token, tz.value.adapter, s.zaman, cfg).then((c) => { nereden.textContent = c ? "launched from " + c : "launched on Arc's launchpad"; })
+        .catch(() => { nereden.textContent = "launch chain unreadable"; });
+    } else { zincirler.replaceChildren(el("span", { sinif: "etiket etiket--uyari", yazi: "could not read" })); nereden.textContent = ""; }
+    if (td.status !== "fulfilled" || !td.value) { kalemler.textContent = td.status === "fulfilled" ? "No basket recorded for this token." : "Vaults could not be read: " + td.reason.message; return; }
+    const t = td.value;
+    simdi.textContent = para(t.simdi) + (t.eksik ? " +?" : "");
+    ilk.textContent = para(t.ilk);
+    degisim.textContent = yuzde(t.degisim);
+    degisim.className = "dg " + (t.degisim > 0.00005 ? "artis" : t.degisim < -0.00005 ? "dusus" : "sabit");
+    kalemler.textContent = t.kalemler.map((k) => k.zincirAd + " " + (k.deger == null ? "price n/a" : para(k.deger)) + (k.kaynak === "last auction" ? " (last auction)" : "")).join(" · ") +
+      (t.bekleyen > 0.000001 ? " · waiting to be bought " + para(t.bekleyen) : "") + (t.hatalar.length ? " · unreadable: " + t.hatalar.join("; ") : "");
+  })();
+  return kart;
+}
+
+function sayfalayici(gecerli, toplam) {
+  const ser = el("div", { attr: { style: "display:flex;gap:4px;overflow-x:auto;padding-bottom:4px" } });
+  for (let i = 1; i <= toplam; i++) {
+    ser.append(el("a", { sinif: "dugme dugme--kucuk" + (i === gecerli ? " dugme--marka" : ""), attr: { href: "#/kesfet?s=" + i, "aria-current": i === gecerli ? "page" : null }, yazi: String(i) }));
+  }
+  return ser;
 }
 
 export async function ciz({ param }) {
@@ -55,7 +119,8 @@ export async function ciz({ param }) {
       el("span", { html: ikon("arti", "yol-oge__ikon") }), el("span", { yazi: "Create a token" })]),
   ]));
 
-  const [arcS, suiS, aptosS] = await Promise.allSettled([arcListesi(),
+  const sayfa = Number((param && param.get("s")) || 1) || 1;
+  const [arcS, suiS, aptosS] = await Promise.allSettled([arcListesi(sayfa),
     import("../sui.js").then((m) => m.launchListesi()), import("../aptos.js").then((m) => m.launchListesi())]);   // loaded here so a Move library failing never blanks the page
 
   /* ---- facts that are true for every launch, plus the live count ---- */
@@ -69,35 +134,31 @@ export async function ciz({ param }) {
   izgara.append(olcum("Collateral chains", SEPET_ACIK.length + " of 12", "Ethereum, Solana and Robinhood not open yet"));
   kap.append(izgara);
 
-  /* ---- the one pool on Arc ---- */
+  /* ---- the one pool on Arc: collateral cards, newest first ---- */
+  const BASLIK = "Collateral of every launch (one pool on Arc)";
   if (arcS.status !== "fulfilled") {
-    kap.append(panel("Tokens (one pool on Arc)", bos("Could not read the registry", String(arcS.reason && arcS.reason.message || arcS.reason))));
+    kap.append(panel(BASLIK, bos("Could not read the registry", String(arcS.reason && arcS.reason.message || arcS.reason))));
   } else if (!arcS.value.liste.length) {
-    kap.append(panel("Tokens (one pool on Arc)", bos("No launches yet",
-      "The registry on Arc (PulseLaunchpad5) is deployed and empty. The first launch made from any chain appears here.")));
+    kap.append(panel(BASLIK, bos("No launches yet",
+      "The registry on Arc (PulseLaunchpad5) is deployed and empty. The first launch made from any chain appears here, with its collateral read from the vaults.")));
   } else {
-    const satirlar = arcS.value.liste.filter(uyar);
-    const t = el("table", { sinif: "tablo tablo--kart" });
-    t.append(el("thead", {}, [el("tr", {}, ["Token", "Price", "Collateral", "Tax", "Launched", ""].map((b) => el("th", { yazi: b })))]));
-    const g = el("tbody");
-    for (const s of satirlar) {
-      const fiyat = el("td", { sinif: "sayi", attr: { "data-et": "Price" }, yazi: "—" });
-      havuzFiyati(s.token).then((f) => { if (f > 0) fiyat.textContent = "$" + f.toPrecision(3); }).catch(() => {});
-      g.append(el("tr", {}, [
-        el("td", { attr: { "data-et": "Token" } }, [el("a", { sinif: "jeton", attr: { href: "#/merkez?t=" + s.token } }, [
-          el("div", { sinif: "jeton__logo jeton__logo--bos", yazi: (s.sembol || "?").slice(0, 3).toUpperCase() }),
-          el("div", { sinif: "jeton__yazi" }, [el("div", { sinif: "jeton__sembol", yazi: s.sembol || "?" }), el("div", { sinif: "jeton__ad", yazi: s.ad || "" })]),
-        ])]),
-        fiyat,
-        el("td", { sinif: "sayi", attr: { "data-et": "Collateral" }, yazi: para(s.teminat) }),
-        el("td", { sinif: "sayi", attr: { "data-et": "Tax" }, yazi: s.vergi.toFixed(0) + "%" }),
-        el("td", { attr: { "data-et": "Launched" }, yazi: new Date(s.zaman * 1000).toUTCString().slice(5, 22) }),
-        el("td", { attr: { "data-et": "" } }, [el("a", { sinif: "dugme dugme--kucuk", attr: { href: "#/merkez?t=" + s.token }, yazi: "Trade" })]),
-      ]));
+    const v = arcS.value;
+    const satirlar = v.liste.filter(uyar);
+    const izg = el("div", { sinif: "izgara izgara--kart" }, satirlar.map(teminatKarti));
+    kap.append(panel(BASLIK, el("div", { sinif: "yigin" }, [
+      el("div", { sinif: "yazi yazi--kucuk yazi--sessiz", yazi: "Collateral now = what each vault holds for the token at market price (DexScreener; the vault's last auction price where the market has none) plus dollars waiting to be bought. Change is against what the founder put in. Newest first; the 2,000 newest are kept." }),
+      satirlar.length ? izg : bos("No matches", 'Nothing on this page for "' + arama + '".'),
+      v.sayfaSayisi > 1 ? sayfalayici(v.sayfa, v.sayfaSayisi) : el("span"),
+    ]), el("span", { sinif: "ucuncul", yazi: v.n + " token · page " + v.sayfa + " of " + v.sayfaSayisi })));
+
+    /* new launches: page 1 redraws itself when the registry grows */
+    if (v.sayfa === 1) {
+      const zamanlayici = setInterval(async () => {
+        if (!document.body.contains(kap)) return clearInterval(zamanlayici);
+        const n = Number(await new Contract(LP5, LP5_ABI, arc).launchCount().catch(() => v.n));
+        if (n !== v.n) { clearInterval(zamanlayici); window.dispatchEvent(new HashChangeEvent("hashchange")); }
+      }, 30_000);
     }
-    t.append(g);
-    kap.append(panel("Tokens (one pool on Arc)", satirlar.length ? el("div", { sinif: "tablo-sarmal" }, [t]) : bos("No matches", 'Nothing found for "' + arama + '".'),
-      el("span", { sinif: "ucuncul", yazi: arcS.value.n + " token" })));
   }
 
   /* ---- tokens living on Sui and Aptos ---- */
