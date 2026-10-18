@@ -186,7 +186,6 @@ const GORUNUMLER = {
   terminal: () => import("./gorunum/terminal.js"),
   "move-token": () => import("./gorunum/move-token.js"),
   kasalar: () => import("./gorunum/kasalar.js"),
-  teminat: () => import("./gorunum/teminat-sec.js"),
   portfoy: () => import("./gorunum/portfoy.js"),
   kalkan: () => import("./gorunum/kalkan.js"),
   zincirler: () => import("./gorunum/zincirler.js"),

@@ -143,19 +143,6 @@ export const YOLLAR = [
     gizliRay: true          /* reached from a token, not from the rail */
   },
   {
-    yol: "teminat",
-    gizliRay: true,   /* off the rail: the old single-asset picker; the launch form takes any token now */
-    ad: "Collateral picker",
-    grup: "piyasa",
-    ikon: "kasa",
-    /* LIVE. The suggested 50 were generated from measurement; the CA field
-       searches seven chains live for the deepest USDC pool. Neither is
-       waiting on a deployment: what is read is Uniswap, not our own
-       contracts. */
-    durum: "canli",
-    ozet: "Fifty suggested assets, or paste any contract address — both go through the same check."
-  },
-  {
     yol: "kasalar",
     ad: "Collateral vaults",
     grup: "piyasa",
