@@ -31,6 +31,7 @@ const ARC_USDC = "0x3600000000000000000000000000000000000000";
 const FTHM_ARC = "0x8c2016b8DbB9034c2Fe173000639A9a1380b26AE";
 const RELAY = "https://api.relay.link";
 const ARC_EID = 30417, ARC_DOMAIN = 26;
+const UCU = "0x7B695AAd76507CB1080d38E03b743CbDd02F9d4e";   // SepetUcu on Arc (dagitim-sepet.json): burns a holder's own tokens for redemption
 const SIFIR = "0x0000000000000000000000000000000000000000";
 
 /* where a sale's dollars can be paid: the chains the Arc Haberci reaches (CCTP twins + the BNB island) */
@@ -54,7 +55,10 @@ const SEPET_ZINCIR = [
 const IKIZ_EID = [30416, 30184, 30110, 30101, 30102, 30106, 30390, 30367];   // the eight EVM chains other than Arc
 
 const arc = new JsonRpcProvider("https://arc-rpc.publicnode.com", 5042, { staticNetwork: true });
-const odemeAglari = () => AGLAR.filter((a) => a.anahtar !== "arc");
+/* every chain pays: Arc in its own USDC straight to the gate, the others through relay */
+const odemeAglari = () => AGLAR;
+/* where the gate delivers tokens for a wallet on `ag`: 0 means on Arc itself */
+const teslimEid = (ag) => (ag.anahtar === "arc" ? 0 : ag.eid);
 const sec = (lz, compose = 0) => compose
   ? solidityPacked(["uint16", "uint8", "uint16", "uint8", "uint128", "uint8", "uint16", "uint8", "uint16", "uint128"], [3, 1, 17, 1, lz, 1, 19, 3, 0, compose])
   : solidityPacked(["uint16", "uint8", "uint16", "uint8", "uint128"], [3, 1, 17, 1, lz]);
@@ -79,6 +83,16 @@ async function makbuz(ag, hash) {
 
 /// relay: one signature on `ag`, `usdc6` dollars (plus `yerel18` of Arc native) on Arc, then `txs` there.
 async function relayIle(ag, ben, usdc6, yerel18, txs, durum) {
+  if (ag.anahtar === "arc") {
+    /* on Arc the wallet already holds the dollars (native USDC is the same balance as the token): call the gate directly */
+    for (const [i, t] of txs.entries()) {
+      durum((i ? "Confirm the call to the gate" : "Approve the USDC") + " in your wallet (" + (i + 1) + "/" + txs.length + ")…");
+      const h = await cuzdan.agdaGonder(ag, { to: t.to, data: t.data, value: "0x" + BigInt(t.value || 0).toString(16) });
+      const m = await makbuz(ag, h);
+      if (m.status !== 1) throw new Error("Reverted: " + h);
+    }
+    return null;
+  }
   const govde = { user: ben, recipient: ben, originChainId: ag.id, destinationChainId: 5042,
     originCurrency: SIFIR, destinationCurrency: SIFIR, amount: (usdc6 * 10n ** 12n + yerel18).toString(),
     tradeType: "EXACT_OUTPUT", txsGasLimit: 9_000_000, txs };
@@ -221,7 +235,7 @@ export async function ciz({ param } = {}) {
       const ikizUcret = ((await yayici.ucret(FTHM_ARC, IKIZ_EID, ikizSec)) * 13n) / 10n;
       const deger = ikizUcret + 2n * 10n ** 18n;      // + the founder's tokens to your chain; unused value refunded
       const istek = [ad.value.trim(), sembol.value.trim().toUpperCase(), sepet, teklif, BigInt(Number(vergi.value) * 10_000), alim6,
-        zeroPadValue(ben, 32), ODEME_DOMAIN.has(ag.domain) ? ag.domain : ARC_DOMAIN, ag.eid, IKIZ_EID, ikizSec, ikizUcret, sec(100_000n), ben];
+        zeroPadValue(ben, 32), ODEME_DOMAIN.has(ag.domain) ? ag.domain : ARC_DOMAIN, teslimEid(ag), IKIZ_EID, ikizSec, ikizUcret, sec(100_000n), ben];
       const toplam = alim6 + teminat;
       const txs = [
         { to: ARC_USDC, data: E.encodeFunctionData("approve", [KAPI, toplam]), value: "0" },
@@ -269,10 +283,10 @@ export async function ciz({ param } = {}) {
       const f = await havuzFiyati(t);
       /* at least 85% of what the pool price gives before fees and tax: the slippage limit */
       const asgari = BigInt(Math.floor((Number(usdc6) / 1e6 / f) * 0.85 * 1e6)) * 10n ** 12n;
-      const deger = 2n * 10n ** 18n;
+      const deger = teslimEid(ag) ? 2n * 10n ** 18n : 0n;      // LayerZero fee for the delivery; none on Arc
       const txs = [
         { to: ARC_USDC, data: E.encodeFunctionData("approve", [KAPI, usdc6]), value: "0" },
-        { to: KAPI, data: KAPI_ABI.encodeFunctionData("al", [t, usdc6, asgari, ag.eid, zeroPadValue(ben, 32), sec(100_000n), ben]), value: deger.toString() },
+        { to: KAPI, data: KAPI_ABI.encodeFunctionData("al", [t, usdc6, asgari, teslimEid(ag), zeroPadValue(ben, 32), teslimEid(ag) ? sec(100_000n) : "0x", ben]), value: deger.toString() },
       ];
       await relayIle(ag, ben, usdc6, deger, txs, durum);
       durum("Paid. Bought on Arc; the tokens arrive on " + ag.ad + " in a few minutes.");
@@ -286,7 +300,23 @@ export async function ciz({ param } = {}) {
     try {
       const ben = cuzdan.hesap() || (await cuzdan.bagla());
       if (!ben) return durum("Connect a wallet first.");
+      /* the deployed gate sells and redeems only what arrives from another chain; an Arc-side door comes with its next version */
       const t = token.value.trim();
+      if (ag.anahtar === "arc") {
+        /* the deployed gate sells only what arrives from another chain; its Arc-side sale comes with the next version */
+        if (tur === 0) return durum("Selling tokens held on Arc from this page opens with the gate's next version. Redeeming from the basket works now.");
+        const miktar = BigInt(Math.round(Number(satTutar.value))) * 10n ** 18n;
+        const tk = new Contract(t, ["function balanceOf(address) view returns (uint256)", "function approve(address,uint256) returns (bool)"], arc);
+        if ((await tk.balanceOf(ben)) < miktar) return durum("You hold less than that on Arc.");
+        durum("Approve the burn (1/2)…");
+        let h = await cuzdan.agdaGonder(ag, { to: t, data: tk.interface.encodeFunctionData("approve", [UCU, miktar]), value: "0x0" });
+        if ((await makbuz(ag, h)).status !== 1) throw new Error("Reverted: " + h);
+        durum("Redeem (2/2)…");
+        const U = new Interface(["function itfa(address,uint256,uint32,bytes32)"]);
+        h = await cuzdan.agdaGonder(ag, { to: UCU, data: U.encodeFunctionData("itfa", [t, miktar, ARC_DOMAIN, zeroPadValue(ben, 32)]), value: "0x0" });
+        if ((await makbuz(ag, h)).status !== 1) throw new Error("Reverted: " + h);
+        return durum("Burned for redemption; each vault sells your share by auction and pays you on Arc.");
+      }
       const ikiz = await new Contract(YAYICI, ["function ikizAdresi(address) view returns (address)"], arc).ikizAdresi(t);
       const p = new JsonRpcProvider(ag.rpc, ag.id, { staticNetwork: true });
       const oft = new Contract(ikiz, OFT_ABI, p);

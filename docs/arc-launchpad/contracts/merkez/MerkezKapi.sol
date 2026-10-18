@@ -275,6 +275,24 @@ contract MerkezKapi {
         ucu.itfa(token, miktar, odemeZincir, alici);
     }
 
+    /* ------------------------------------------- held on Arc itself ---- */
+
+    /// A holder on Arc sells here in one call: the tokens are pulled from
+    /// the caller, sold in the pool, and the dollars paid to `alici` on
+    /// `odemeZincir` (Arc directly, elsewhere through the Haberci). What a
+    /// price limit leaves unsold goes back to the caller. (Redeeming from
+    /// Arc needs no gate: SepetUcu.itfa burns the caller's own tokens.)
+    function satArc(address token, uint256 miktar, uint256 asgari, uint32 odemeZincir, bytes32 alici) external returns (uint256 cikan) {
+        if (vekilOf[token] == address(0)) revert BilinmeyenToken();
+        _cek(token, miktar);
+        cikan = abi.decode(havuzYoneticisi.unlock(abi.encode(SATIS_MODU, token, miktar, address(this))), (uint256));
+        if (cikan < asgari) revert AzCikti(cikan, asgari);
+        uint256 kalan = IERC20S(token).balanceOf(address(this));
+        if (kalan > 0) _ver(token, msg.sender, kalan, 4);
+        _ode(odemeZincir, alici, cikan);
+        emit Satildi(token, miktar, cikan, odemeZincir, alici);
+    }
+
     function unlockCallback(bytes calldata v) external returns (bytes memory) {
         if (msg.sender != address(havuzYoneticisi)) revert SadeceHavuzYoneticisi();
         (uint8 mod, address token, uint256 girdi, address alici) = abi.decode(v, (uint8, address, uint256, address));

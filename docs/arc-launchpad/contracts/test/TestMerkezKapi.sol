@@ -51,6 +51,7 @@ contract TestMerkezKapi {
         bool sahteUcNokta; bool sahteAdapter; bool satDisaridan;
         uint256 vekilGelir; uint256 kurucuAldi;
         uint256 kapiNativeSon;
+        uint256 arcSatAlice; bool arcSatBaseBos; bool satArcYabanci; uint256 arcItfa;
     }
 
     function _b(address a) internal pure returns (bytes32) { return bytes32(uint256(uint160(a))); }
@@ -124,12 +125,32 @@ contract TestMerkezKapi {
         try this.disaridanCompose(kapi, s.adapter) { } catch { s.sahteUcNokta = true; }
         try kapi.lzCompose(address(0xBAD), bytes32(0), _compose(BASE_EID, BOB, 1, ""), address(0), "") { } catch { s.sahteAdapter = true; }
 
+        /* H) held on Arc: satArc (next gate version) and a redemption straight through SepetUcu */
+        _arcTarafi(kapi, token, s);
+
         /* G) the founder's trading income, passed on */
         s.vekilGelir = USDC.balanceOf(s.vekil);
         uint256 k0 = USDC.balanceOf(KURUCU);
         if (s.vekilGelir > 0) KurucuVekili(s.vekil).ilet();
         s.kurucuAldi = USDC.balanceOf(KURUCU) - k0;
         s.kapiNativeSon = address(kapi).balance;
+    }
+
+    function _arcTarafi(MerkezKapi kapi, address token, Sonuc memory s) internal {
+        kapi.al(token, 40e6, 1, 0, _b(address(this)), "", address(this));
+        uint256 elde = IERC20S(token).balanceOf(address(this));
+        IERC20S(token).approve(address(kapi), elde);
+        uint256 a0 = USDC.balanceOf(ALICE);
+        kapi.satArc(token, elde / 3, 1, ARC, _b(ALICE));
+        s.arcSatAlice = USDC.balanceOf(ALICE) - a0;
+        kapi.satArc(token, elde / 3, 1, BASE, _b(ALICE));
+        s.arcSatBaseBos = USDC.balanceOf(address(kapi)) == 0 && IERC20S(token).balanceOf(address(kapi)) == 0;
+        try kapi.satArc(address(USDC), 1, 0, ARC, _b(ALICE)) { } catch { s.satArcYabanci = true; }
+        uint256 arz0 = IArzT(token).totalSupply();
+        uint256 kalan = IERC20S(token).balanceOf(address(this));
+        IERC20S(token).approve(address(UCU), kalan);
+        UCU.itfa(token, kalan, BASE, _b(ALICE));
+        s.arcItfa = arz0 - IArzT(token).totalSupply();
     }
 
     /// Called through `this` so that msg.sender is not the gate's endpoint.
