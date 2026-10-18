@@ -177,7 +177,7 @@ export async function ciz() {
   vergi.value = "2";
   /* five collateral slots, always on the page; a slot left without an address is not used */
   const satirlar = el("div", { sinif: "yigin" });
-  const VARSAYILAN = [[26, FTHM_ARC, 10], [6, "0x4200000000000000000000000000000000000006", 10], [3, "", 4], [8, "", 4], [9, "", 4]];
+  const VARSAYILAN = [[26, "", 20], [6, "", 4], [3, "", 4], [8, "", 4], [9, "", 4]];   // empty: the founder chooses every token
   VARSAYILAN.forEach(([zd, adres, dolar], i) => {
     const z = el("select", { sinif: "girdi" }, SEPET_ZINCIR.map((s) => el("option", { attr: { value: String(s.domain), disabled: !!s.kapali }, yazi: s.ad + (s.kapali ? " — " + s.kapali : "") })));
     z.value = String(zd);
