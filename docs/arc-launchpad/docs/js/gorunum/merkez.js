@@ -35,7 +35,9 @@ const UCU = "0x7B695AAd76507CB1080d38E03b743CbDd02F9d4e";   // SepetUcu on Arc (
 const SIFIR = "0x0000000000000000000000000000000000000000";
 
 /* where a sale's dollars can be paid: the chains the Arc Haberci reaches (CCTP twins + the BNB island) */
-const ODEME_DOMAIN = new Set([26, 6, 3, 1, 15, 19, 17]);
+/* Ethereum's Haberci since 18 Oct. Robinhood (35) has one too, but Circle has not opened CCTP routes INTO
+   Robinhood yet (remoteTokenMessengers(35) is empty on Arc, Base, Ethereum, Arbitrum): its sellers are paid on Arc until it does */
+const ODEME_DOMAIN = new Set([26, 6, 3, 1, 15, 19, 17, 0]);
 /* the chains a basket line can sit on: those with a basket vault */
 const SEPET_ZINCIR = [
   { ad: "Arc", domain: 26, tur: "evm", rpc: "https://arc-rpc.publicnode.com", ds: "arc", id: 5042, usdc: SIFIR, usdcDec: 18 },
@@ -48,9 +50,9 @@ const SEPET_ZINCIR = [
   { ad: "Sui", domain: 8, tur: "sui", ds: "sui" },
   { ad: "Aptos", domain: 9, tur: "aptos", ds: "aptos" },
   /* listed so the choice is visible, not selectable until their vaults are deployed */
-  { ad: "Ethereum", domain: 0, kapali: "vault not deployed yet" },
+  { ad: "Ethereum", domain: 0, tur: "evm", rpc: "https://ethereum-rpc.publicnode.com", ds: "ethereum", id: 1, usdc: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", usdcDec: 6 },
   { ad: "Solana", domain: 5, kapali: "opens after launch" },
-  { ad: "Robinhood", domain: -1, kapali: "no USDC route yet" },
+  { ad: "Robinhood", domain: 35, kapali: "waiting for Circle to open CCTP into Robinhood", tur: "evm", rpc: "https://rpc.mainnet.chain.robinhood.com", ds: "robinhood", id: 4663, usdc: "0x3884564BA51B349e7661c7e28Ad947DEE327FeDF", usdcDec: 6 },
 ];
 const IKIZ_EID = [30416, 30184, 30110, 30101, 30102, 30106, 30390, 30367];   // the eight EVM chains other than Arc
 

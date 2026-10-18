@@ -67,6 +67,11 @@ const Z = {
     pm: null, devPool: AG.hyperevm && AG.hyperevm.DevPool, fthm: IKIZ_FTHM, port: 8646 },
   bsc: { ad: "BNB", id: 56, domain: 17, ada: true, rpc: "https://bsc-dataseed.bnbchain.org", catal: "https://bsc-mainnet.public.blastapi.io", usdc: "0xb233F129F7255F86d67BDAEA4e8c4f8274Fa70d9",
     pm: null, devPool: AG.bsc && AG.bsc.DevPool, fthm: IKIZ_FTHM, port: 8647 },
+  /* added 18 Oct so a sale is paid on the seller's own chain and a basket line can sit there (F15) */
+  ethereum: { ad: "Ethereum", id: 1, domain: 0, rpc: "https://ethereum-rpc.publicnode.com", usdc: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+    pm: null, devPool: AG.ethereum && AG.ethereum.DevPool, fthm: IKIZ_FTHM, port: 8648 },
+  robinhood: { ad: "Robinhood", id: 4663, domain: 35, rpc: "https://rpc.mainnet.chain.robinhood.com", usdc: "0x3884564BA51B349e7661c7e28Ad947DEE327FeDF",
+    pm: null, devPool: "0x683D39831EF60b57E29BE4C55f1903f10Df857Bf", fthm: IKIZ_FTHM, port: 8649 },
 };
 /* PoolManagers from the chain registry where not written above */
 { const { EVM } = require("./zincirler"); for (const [k, z] of Object.entries(Z)) if (!z.pm) z.pm = EVM[k].poolManager; }
@@ -115,7 +120,8 @@ async function fthmFiyati() {
 }
 
 (async () => {
-  const kayit = GERCEK && fs.existsSync(KAYIT) ? JSON.parse(fs.readFileSync(KAYIT, "utf8")) : { zincir: {} };
+  /* the dry run reads the record too, so it plans only what is missing (it never writes) */
+  const kayit = KIP === "ana" && fs.existsSync(KAYIT) ? JSON.parse(fs.readFileSync(KAYIT, "utf8")) : { zincir: {} };
   const yaz = () => { if (GERCEK) fs.writeFileSync(KAYIT, JSON.stringify(kayit, null, 1)); };
   const pk = evmAnahtar();
   console.log("SEPET URUN SETI  " + KIP.toUpperCase() + (KIP === "ana" ? (UYGULA ? " UYGULA" : " KURU") : "") + "  merkez " + Z[MERKEZ].ad + "  zincirler " + ZINCIRLER.join(", "));

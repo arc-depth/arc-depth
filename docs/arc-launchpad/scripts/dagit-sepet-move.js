@@ -164,7 +164,9 @@ async function evm() {
   if (!s.yetki || !s.kasa || !a.haberci) { console.log("EVM  (kuru) Sui ve Aptos kurulmadan baglanamaz"); return; }
   const pk = fs.readFileSync("C:/bot/.env", "utf8").match(/^TRADER_PRIVATE_KEY\s*=\s*(.+)$/m)[1].trim();
   const R = { arc: ["https://arc-rpc.publicnode.com", 5042], base: ["https://mainnet.base.org", 8453], arbitrum: ["https://arb1.arbitrum.io/rpc", 42161],
-    avalanche: ["https://api.avax.network/ext/bc/C/rpc", 43114], monad: ["https://rpc.monad.xyz", 143], hyperevm: ["https://rpc.hyperliquid.xyz/evm", 999] };
+    avalanche: ["https://api.avax.network/ext/bc/C/rpc", 43114], monad: ["https://rpc.monad.xyz", 143], hyperevm: ["https://rpc.hyperliquid.xyz/evm", 999],
+    /* 18 Oct (F15): their vaults pay redemptions on Sui and Aptos too */
+    ethereum: ["https://ethereum-rpc.publicnode.com", 1], robinhood: ["https://rpc.mainnet.chain.robinhood.com", 4663] };
   const HAB = ["function ikiz(uint32) view returns (bytes32)", "function ayri(uint32) view returns (bool)", "function ikizEkle(uint32,bytes32)", "function ayriYap(uint32)"];
   const is = async (z, w, etiket, c, f, args) => {
     await c[f].staticCall(...args);

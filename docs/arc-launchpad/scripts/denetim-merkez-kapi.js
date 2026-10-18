@@ -67,6 +67,8 @@ const d = (x) => (Number(BigInt(x)) / 1e6).toFixed(4);
   console.log("H) Arc'ta tutulan token (kapinin sonraki surumu: satArc) ve dogrudan itfa");
   ok(b(s.arcSatAlice) > 0n, "Arc'taki sahip satArc ile satti, Arc'ta odendi", d(s.arcSatAlice) + " USDC");
   ok(s.arcSatBaseBos, "Base'te odenecek satis: dolar Haberci ile cikti, kapida token ve dolar kalmadi");
+  ok(s.ethOdendi, "Ethereum'da odenecek satis: dolar Arc Haberci'sinden CCTP ile cikti");
+  ok(s.rhOdendi, "Robinhood'da odenecek satis: Circle yolu kapali, islem butunuyle geri dondu, kapida bir sey kalmadi");
   ok(s.satArcYabanci, "launch tokeni olmayan bir token satArc'ta reddedildi");
   ok(b(s.arcItfa) > 0n, "Arc'taki sahip kapisiz itfa etti (SepetUcu.itfa, bugunku kontratlarla)", t(s.arcItfa) + " token");
   console.log("G) kurucunun islem geliri");

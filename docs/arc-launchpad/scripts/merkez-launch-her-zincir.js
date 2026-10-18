@@ -22,7 +22,7 @@ const sec = (g) => solidityPacked(["uint16", "uint8", "uint16", "uint8", "uint12
 const YAYICI = "0x24C644e7C29F6582B892cb5D89d7b23Bc34d1bD9";
 const FTHM_ARC = "0x8c2016b8DbB9034c2Fe173000639A9a1380b26AE";
 const IKIZ_EID = [30416, 30184, 30110, 30101, 30102, 30106, 30390, 30367];
-const ODEME = new Set([26, 6, 3, 1, 15, 19, 17]);     // where the Arc Haberci can pay a sale
+const ODEME = new Set([26, 6, 3, 1, 15, 19, 17, 0]);   // 35: Circle has no route into Robinhood yet     // where the Arc Haberci can pay a sale
 const ORNEK = "0x000000000000000000000000000000000000dEaD";
 const SIFIR = "0x0000000000000000000000000000000000000000";
 const ZINCIR = [

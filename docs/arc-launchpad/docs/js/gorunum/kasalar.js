@@ -18,8 +18,8 @@ import { para } from "../bicim.js";
 import { kasaOzeti, ZINCIRLER, SEPET, saglayici } from "../teminat-izle.js";
 import { Contract } from "../../vendor/ethers.min.js";
 
-const ACIK = [26, 6, 3, 1, 15, 19, 17, 8, 9];
-const RENK = { Arc: "#7c5cff", Base: "#0052ff", Arbitrum: "#28a0f0", BNB: "#f0b90b", Avalanche: "#e84142", Monad: "#836ef9", HyperEVM: "#50e3c2", Sui: "#4da2ff", Aptos: "#2ed8a7" };
+const ACIK = [26, 6, 3, 1, 15, 19, 17, 0, 35, 8, 9];
+const RENK = { Arc: "#7c5cff", Base: "#0052ff", Arbitrum: "#28a0f0", BNB: "#f0b90b", Avalanche: "#e84142", Monad: "#836ef9", HyperEVM: "#50e3c2", Sui: "#4da2ff", Aptos: "#2ed8a7", Ethereum: "#627eea", Robinhood: "#ccff00" };
 const cip = (z) => el("span", { sinif: "tk__zincir", attr: { style: "--z:" + (RENK[z] || "#888") }, yazi: z });
 const kisa = (a) => a.slice(0, 6) + "…" + a.slice(-4);
 const adresLinki = (d, a) => {
@@ -52,7 +52,7 @@ function ondalik(d, varlik) {
 
 export async function ciz() {
   const kap = el("div", { sinif: "yigin" });
-  kap.append(sayfaUst("Collateral vaults", "The basket vaults on nine chains: what they hold and the auctions anyone can fill"));
+  kap.append(sayfaUst("Collateral vaults", "The basket vaults on eleven chains: what they hold and the auctions anyone can fill"));
   kap.append(not("Every launch's collateral is a basket of up to five tokens, each kept in the vault on its own chain. " +
     "Vaults buy and sell through reverse Dutch auctions that anyone can fill: the ask starts at twice the last price, halves every 30 minutes, " +
     "never goes below a sixteenth, and restarts after a day. Each token's collateral is on Discover.", "bilgi"));
@@ -63,9 +63,9 @@ export async function ciz() {
   const ihale = okunan.reduce((a, o) => a + o.ihaleSayisi, 0);
   const acikSay = okunan.reduce((a, o) => a + (o.acik ? o.acik.length : 0), 0);
   kap.append(el("div", { sinif: "izgara izgara--olcum" }, [
-    olcum("Vaults", ACIK.length + " of 12", "Ethereum, Solana and Robinhood not open yet"),
+    olcum("Vaults", ACIK.length + " of 12", "Robinhood's vault is deployed; Circle has not opened CCTP into Robinhood yet. Solana not open yet"),
     olcum("Dollars in the vaults", para(dolar), "waiting for their auctions to fill"),
-    olcum("Auctions so far", String(ihale), "on all nine chains"),
+    olcum("Auctions so far", String(ihale), "on all eleven chains"),
     olcum("Open now", String(acikSay), "on the EVM chains, newest 40 each"),
   ]));
 

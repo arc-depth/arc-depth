@@ -51,7 +51,7 @@ contract TestMerkezKapi {
         bool sahteUcNokta; bool sahteAdapter; bool satDisaridan;
         uint256 vekilGelir; uint256 kurucuAldi;
         uint256 kapiNativeSon;
-        uint256 arcSatAlice; bool arcSatBaseBos; bool satArcYabanci; uint256 arcItfa;
+        uint256 arcSatAlice; bool arcSatBaseBos; bool satArcYabanci; uint256 arcItfa; bool ethOdendi; bool rhOdendi;
     }
 
     function _b(address a) internal pure returns (bytes32) { return bytes32(uint256(uint160(a))); }
@@ -145,6 +145,11 @@ contract TestMerkezKapi {
         s.arcSatAlice = USDC.balanceOf(ALICE) - a0;
         kapi.satArc(token, elde / 3, 1, BASE, _b(ALICE));
         s.arcSatBaseBos = USDC.balanceOf(address(kapi)) == 0 && IERC20S(token).balanceOf(address(kapi)) == 0;
+        /* Ethereum (0) and Robinhood (35): their Habercis since 18 Oct; the dollars leave through CCTP */
+        kapi.satArc(token, elde / 12, 1, 0, _b(ALICE));
+        s.ethOdendi = USDC.balanceOf(address(kapi)) == 0;
+        /* Robinhood (35): Circle has no route into it yet, so the sale reverts whole and nothing is lost */
+        try kapi.satArc(token, elde / 12, 1, 35, _b(ALICE)) { } catch { s.rhOdendi = USDC.balanceOf(address(kapi)) == 0 && IERC20S(token).balanceOf(address(kapi)) == 0; }
         try kapi.satArc(address(USDC), 1, 0, ARC, _b(ALICE)) { } catch { s.satArcYabanci = true; }
         uint256 arz0 = IArzT(token).totalSupply();
         uint256 kalan = IERC20S(token).balanceOf(address(this));

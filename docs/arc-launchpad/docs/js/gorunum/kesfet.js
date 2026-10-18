@@ -33,7 +33,7 @@ const LP5_ABI = [
 const arc = new JsonRpcProvider("https://arc-rpc.publicnode.com", 5042, { staticNetwork: true });
 
 /* the chains with a live basket vault (dagitim-sepet.json); the other three are listed as not open */
-const SEPET_ACIK = ["Arc", "Base", "Arbitrum", "Avalanche", "Monad", "HyperEVM", "BNB", "Sui", "Aptos"];
+const SEPET_ACIK = ["Arc", "Base", "Arbitrum", "Avalanche", "Monad", "HyperEVM", "BNB", "Ethereum", "Sui", "Aptos"];
 
 /* Newest first, ten to a page, two hundred pages: the 2,000 newest
    launches. Older ones drop off the end as new ones arrive. */
@@ -159,7 +159,7 @@ export async function ciz({ param }) {
     "Arc " + (sayilar[0] ?? "—") + " · Sui " + (sayilar[1] ?? "—") + " · Aptos " + (sayilar[2] ?? "—")));
   izgara.append(olcum("Opening market cap", para(EKONOMI.acilisMcap, { kisalt: true }), "the same price for every launch"));
   izgara.append(olcum("Trading fee", "2.2%", "plus the token's collateral tax (1–5%)"));
-  izgara.append(olcum("Collateral chains", SEPET_ACIK.length + " of 12", "Ethereum, Solana and Robinhood not open yet"));
+  izgara.append(olcum("Collateral chains", SEPET_ACIK.length + " of 12", "Robinhood waits on Circle's CCTP route; Solana not open yet"));
   kap.append(izgara);
 
   /* ---- the one pool on Arc: collateral cards, newest first ---- */
