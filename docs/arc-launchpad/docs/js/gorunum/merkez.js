@@ -133,6 +133,17 @@ async function makbuz(ag, hash) {
 }
 
 /// relay: one signature on `ag`, `usdc6` dollars (plus `yerel18` of Arc native) on Arc, then `txs` there.
+/// relay's quote for exactly this order, without paying: what the founder will be asked on their chain.
+async function relayTeklif(ag, ben, usdc6, yerel18, txs) {
+  if (ag.anahtar === "arc") return null;
+  const govde = { user: ben, recipient: ben, originChainId: ag.id, destinationChainId: 5042,
+    originCurrency: SIFIR, destinationCurrency: SIFIR, amount: (usdc6 * 10n ** 12n + yerel18).toString(),
+    tradeType: "EXACT_OUTPUT", txsGasLimit: 9_000_000, txs };
+  const q = await fetch(RELAY + "/quote", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(govde) }).then((x) => x.json());
+  if (!q.steps) throw new Error("No route: " + (q.message || "try again") + (q.errorCode ? " (" + q.errorCode + ")" : ""));
+  return q;
+}
+
 async function relayIle(ag, ben, usdc6, yerel18, txs, durum) {
   if (ag.anahtar === "arc") {
     /* on Arc the wallet already holds the dollars (native USDC is the same balance as the token): call the gate directly */
@@ -281,14 +292,40 @@ export async function ciz({ param } = {}) {
   /* v2: the twins on Solana, Sui and Aptos cost far more to create than the EVM ones (measured 20 Oct:
      Solana ~9, Sui ~4.8, Aptos ~1.7 USDC against ~4 for all eight EVM twins), so by default they are
      created on demand: the first holder who moves the token there creates it (IkizHub.yarat, open to all) */
-  const uzakSimdi = el("input", { attr: { type: "checkbox", id: "merkez-uzak" } });
-  const uzakEtiket = el("label", { sinif: "alan__ipucu", attr: { for: "merkez-uzak" } }, [uzakSimdi,
-    el("span", { yazi: " Also create the Solana, Sui and Aptos twins now (LayerZero fee, shown before you pay). Otherwise the first holder who moves the token there creates it." })]);
+  /* v2: the founder chooses the twin chains; each costs its real LayerZero fee, shown before paying.
+     A chain left out can get its twin later from anyone (IkizYayici.yay / IkizHub.yarat, open to all). */
+  const IKIZ_ZINCIR = [["Robinhood", 30416], ["Base", 30184], ["Arbitrum", 30110], ["Ethereum", 30101], ["BNB", 30102],
+    ["Avalanche", 30106], ["Monad", 30390], ["HyperEVM", 30367], ["Solana", 30168, "uzak"], ["Sui", 30378, "uzak"], ["Aptos", 30108, "uzak"]];
+  const ikizKutular = IKIZ_ZINCIR.map(([zad, eid, uzak]) => {
+    const k = el("input", { attr: { type: "checkbox", "data-eid": String(eid) } });
+    k.checked = !uzak;     // the EVM twins by default; Solana / Sui / Aptos cost more, chosen by hand
+    k._eid = eid; k._uzak = !!uzak; k._ad = zad;
+    return el("label", { sinif: "etiket", attr: { style: "display:inline-flex;gap:4px;margin:2px" } }, [k, el("span", { yazi: zad })]);
+  });
+  const ikizSecimi = () => ikizKutular.map((l) => l.firstChild).filter((k) => k.checked || (!k._uzak && teslimEid(ag) === k._eid));
+  const uzakEtiket = el("div", { sinif: "yigin" }, [
+    el("div", { sinif: "alan__ipucu", yazi: "Twin chains: where the token exists from the start (Arc always). Your own chain is always included: your tokens are delivered there. Each chain's real LayerZero fee is added to what you pay; a chain left out can get its twin later from anyone." }),
+    el("div", {}, ikizKutular)]);
+  let hazirOdeme = null;   // the order shown to the founder, paid on the second click
+  const odemeDurum = () => { hazirOdeme = null; lDugme.textContent = "Launch"; };
+  ikizKutular.forEach((l) => l.firstChild.addEventListener("change", odemeDurum));
+  for (const g of [ad, sembol, alim, vergi, zincirSec]) g.addEventListener("change", odemeDurum);
+  satirlar.addEventListener("change", odemeDurum);
+  satirlar.addEventListener("input", odemeDurum);
   lDugme.addEventListener("click", async () => {
     const durum = (s) => { lDurum.textContent = s; };
     try {
       const ben = cuzdan.hesap() || (await cuzdan.bagla());
       if (!ben) return durum("Connect a wallet first.");
+      /* second press: pay exactly the order that was shown */
+      if (V2 && hazirOdeme) {
+        const h = hazirOdeme;
+        hazirOdeme = null;
+        lDugme.textContent = "Launch";
+        await relayIle(ag, ben, h.toplam, h.deger, h.txs, durum);
+        durum("Paid. relay launches on Arc within seconds; your tokens arrive on " + ag.ad + " in a few minutes. Any LayerZero fee not used comes back to your address on Arc.");
+        return;
+      }
       if (!ad.value.trim() || !sembol.value.trim()) return durum("Give the token a name and a symbol.");
       const alim6 = BigInt(Math.round(Number(alim.value) * 1e6));
       if (alim6 < 100_000_000n || alim6 > 500_000_000n) return durum("The first buy is between $100 and $500.");
@@ -297,7 +334,7 @@ export async function ciz({ param } = {}) {
       const sepet = [], teklif = [];
       let teminat = 0n;
       for (const s of ss) {
-        const asgari = s.zincir.domain === 0 ? 25 : 4;
+        const asgari = !V2 && s.zincir.domain === 0 ? 25 : 4;
         if (!(s.dolar >= asgari)) return durum("Each basket line needs at least $" + asgari + ".");
         durum("Pricing " + s.zincir.ad + " " + s.adres.slice(0, 10) + "… (DexScreener)…");
         const dolar6 = BigInt(Math.round(s.dolar * 1e6));
@@ -325,8 +362,10 @@ export async function ciz({ param } = {}) {
         const uzak = [];
         let uzakUcret = 0n;
         const atlanan = [];
-        for (const [zad, eid] of Object.entries(UZAK_EID)) {
-          if (!uzakSimdi.checked) break;
+        const secilen = ikizSecimi();
+        const evmIkiz = secilen.filter((k) => !k._uzak).map((k) => k._eid);
+        for (const k of secilen.filter((x) => x._uzak)) {
+          const zad = k._ad, eid = k._eid;
           if ((await hub.kapi(eid)) === zeroPadValue("0x00", 32)) continue;
           /* a chain LayerZero refuses to quote for this message (Solana: the executor's message size limit
              on Arc) is left out; the launch still goes, its twin there can be created later */
@@ -336,14 +375,43 @@ export async function ciz({ param } = {}) {
           uzakUcret += u;
         }
         if (atlanan.length) durum("Twin not created now on: " + atlanan.join(", ") + " (LayerZero refused the quote). The launch goes on without it.");
-        uzakUcret = (uzakUcret * 13n) / 10n;
+        /* real fees, read now: the EVM twins (IkizYayici), the Solana / Sui / Aptos twins (IkizHub), and the
+           founder's tokens to their chain (an existing launch's adapter: the same OFT, the same peers). A 10%
+           margin covers gas moving before the order lands; what is not used comes back on Arc. */
+        const evmGercek = evmIkiz.length ? await yayici.ucret(FTHM_ARC, evmIkiz, ikizSec) : 0n;
+        const uzakGercek = uzakUcret;
+        let teslimGercek = 0n;
+        if (teslimEid(ag)) {
+          const ornekAdaptor = new Contract("0xe204C0762F749183530a945B161b54D8454d80Be", OFT_ABI, arc);
+          [teslimGercek] = await ornekAdaptor.quoteSend([teslimEid(ag), zeroPadValue(ben, 32), 10n ** 24n, 10n ** 24n, sec(100_000n), "0x", "0x"], false);
+        }
+        const pay = (x) => (x * 11n) / 10n;
+        const ikizDeger = pay(evmGercek), uzakDeger = pay(uzakGercek), teslimDeger = pay(teslimGercek);
+        const deger2 = ikizDeger + uzakDeger + teslimDeger;
         const istek = [ad.value.trim(), sembol.value.trim().toUpperCase(), sepet, teklif, BigInt(Number(vergi.value) * 10_000), alim6,
-          ko.alici, ko.zincir, teslimEid(ag), IKIZ_EID, ikizSec, ikizUcret, sec(100_000n), ben, tipler, uzak, uzakUcret];
+          ko.alici, ko.zincir, teslimEid(ag), evmIkiz, ikizSec, ikizDeger, sec(100_000n), ben, tipler, uzak, uzakDeger];
         const txs = [
           { to: ARC_USDC, data: E.encodeFunctionData("approve", [V2.kapi, toplam]), value: "0" },
-          { to: V2.kapi, data: KAPI2_ABI.encodeFunctionData("launch", [istek]), value: (deger + uzakUcret).toString() },
+          { to: V2.kapi, data: KAPI2_ABI.encodeFunctionData("launch", [istek]), value: deger2.toString() },
         ];
-        await relayIle(ag, ben, toplam, deger + uzakUcret, txs, durum);
+        durum("Asking relay.link for the route (it simulates the Arc side first)…");
+        const q = await relayTeklif(ag, ben, toplam, deger2, txs);
+        const usd = (x) => "$" + (Number(x) / 1e18).toFixed(2);
+        const d6 = (x) => "$" + (Number(x) / 1e6).toFixed(2);
+        const net = Number(toplam) / 1e6 + Number(deger2) / 1e18;
+        const satirlarOzet = [
+          "First buy " + d6(alim6) + " · collateral " + d6(teminat) + " (" + ss.length + " line" + (ss.length > 1 ? "s" : "") + ")",
+          "Twins on " + evmIkiz.length + " EVM chain(s): LayerZero " + usd(evmGercek) + (uzak.length ? " · on " + uzak.length + " of Solana/Sui/Aptos: " + usd(uzakGercek) : ""),
+          teslimGercek ? "Your tokens to " + ag.ad + ": LayerZero " + usd(teslimGercek) : "Your tokens stay on Arc",
+          "+10% margin on those fees (" + usd(deger2 - evmGercek - uzakGercek - teslimGercek) + "), returned to you on Arc if unused",
+          q ? "relay bridge: you pay " + Number(q.details.currencyIn.amountFormatted).toPrecision(5) + " " + q.details.currencyIn.currency.symbol +
+            " (≈ $" + Number(q.details.currencyIn.amountUsd).toFixed(2) + "), of which relay's own fee ≈ $" + Math.max(0, Number(q.details.currencyIn.amountUsd) - net).toFixed(2)
+            : "Paid directly on Arc: $" + net.toFixed(2) + " in total",
+        ];
+        hazirOdeme = { toplam, deger: deger2, txs };
+        lDugme.textContent = "Confirm and pay" + (q ? " ≈ $" + Number(q.details.currencyIn.amountUsd).toFixed(2) : " $" + net.toFixed(2));
+        durum(satirlarOzet.join("  ·  ") + ".  Check it, then press the button again to pay.");
+        return;
       } else {
         const istek = [ad.value.trim(), sembol.value.trim().toUpperCase(), sepet, teklif, BigInt(Number(vergi.value) * 10_000), alim6,
           zeroPadValue(ben, 32), ODEME_DOMAIN.has(ag.domain) ? ag.domain : ARC_DOMAIN, teslimEid(ag), IKIZ_EID, ikizSec, ikizUcret, sec(100_000n), ben];
