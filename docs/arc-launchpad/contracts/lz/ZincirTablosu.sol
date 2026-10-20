@@ -113,6 +113,19 @@ library ZincirTablosu {
     /// (or its delegate) before the delegate is burned.
     ///   sending from here:   confirmations = this chain's number
     ///   receiving from X:    confirmations = X's number, as X's DVNs wait for
+    /// The same two required DVNs of this chain on a path to a chain outside
+    /// the table (Solana, Sui, Aptos): sending with this chain's confirmations,
+    /// receiving with `alimOnay` (the remote chain's). The OApp's delegate calls this.
+    function uzakDvnYaz(address oapp, uint32 eid, uint64 alimOnay) internal {
+        Zincir memory b = burasi();
+        SetConfigParam[] memory gid = new SetConfigParam[](1);
+        SetConfigParam[] memory gel = new SetConfigParam[](1);
+        gid[0] = SetConfigParam(eid, ULN_TIPI, _uln(b.onay, b.dvn0, b.dvn1));
+        gel[0] = SetConfigParam(eid, ULN_TIPI, _uln(alimOnay, b.dvn0, b.dvn1));
+        ILayerZeroEndpointV2(b.endpoint).setConfig(oapp, b.gonderim, gid);
+        ILayerZeroEndpointV2(b.endpoint).setConfig(oapp, b.alim, gel);
+    }
+
     function dvnYaz(address oapp) internal {
         Zincir memory b = burasi();
         SetConfigParam[] memory gid = new SetConfigParam[](ADET - 1);

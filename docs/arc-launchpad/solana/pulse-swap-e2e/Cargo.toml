@@ -28,6 +28,11 @@ bs58 = "0.5"
 [dev-dependencies]
 # the auction curve, shared with the program (host build, no entrypoint)
 pulse-sepet = { path = "../pulse-sepet", features = ["no-entrypoint"] }
+# the gate's message encoding (host build, no entrypoint)
+pulse-kapi = { path = "../pulse-kapi", features = ["no-entrypoint"] }
+sha3 = "0.10"
+# v0 transactions with address lookup tables (the gate's v2 path)
+solana-message = "4"
 litesvm = "0.18"
 litesvm-token = "0.18"
 solana-keypair = "3.1.2"

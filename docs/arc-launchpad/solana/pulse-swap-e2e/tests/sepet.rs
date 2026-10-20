@@ -102,14 +102,19 @@ impl Env {
     }
 
     /// Circle's CPI into this program, as the MessageTransmitter makes it.
-    fn cctp(&mut self, gonderen: [u8; 32], uzak: u32, govde: Vec<u8>) -> Result<(), String> {
+    fn cctp(&mut self, gonderen: [u8; 32], uzak: u32, govde: Vec<u8>) -> Result<(), String> { self.cctp_cagiranla(gonderen, uzak, govde, [0u8; 32]) }
+
+    /// The same, with the destination caller the message names (zero = anyone);
+    /// the relayer signing the receive is the test's payer.
+    fn cctp_cagiranla(&mut self, gonderen: [u8; 32], uzak: u32, govde: Vec<u8>, hedef_cagiran: [u8; 32]) -> Result<(), String> {
         let id = self.emir_sayac();
         let yetki = Address::find_program_address(&[b"message_transmitter_authority", self.pid.as_ref()], &MT).0;
-        let mut d = HANDLE.to_vec();
+        let mut d = hedef_cagiran.to_vec();
+        d.extend(HANDLE);
         d.extend(uzak.to_le_bytes()); d.extend(gonderen); d.extend(2000u32.to_le_bytes());
         d.extend((govde.len() as u32).to_le_bytes()); d.extend(govde); d.push(255);
         let a = self.arb.insecure_clone();
-        let keys = vec![w_(yetki), r(self.pid), w_(self.config), w_(self.emir(id)), s(a.pubkey()), r(SYSTEM)];
+        let keys = vec![s(a.pubkey()), w_(yetki), r(self.pid), w_(self.config), w_(self.emir(id)), s(a.pubkey()), r(SYSTEM)];
         self.svm.expire_blockhash();
         let ix = Instruction { program_id: MT, accounts: keys, data: d };
         let tx = Transaction::new_signed_with_payer(&[ix], Some(&a.pubkey()), &[&a], self.svm.latest_blockhash());
@@ -399,4 +404,20 @@ fn cctp_itfa_emri_1e27_arzla_payi_satar() {
     let i1 = e.istenen(1);
     e.doldur_satim(1, wsol, i1, ta).unwrap();
     assert_eq!(e.bal(&ta), 400_000, "tutucuya 0,40 dolar");
+}
+
+/// Why Solana is not reached through the Arc Haberci's CCTP orders (found 18 Oct):
+/// the Haberci names its twin as both the recipient and the destination caller.
+/// On Solana the recipient must be this program, and the caller must sign —
+/// a program address never signs, so such an order can never be received,
+/// by anyone. A message naming no caller is received by any relayer.
+#[test]
+fn arc_haberci_emri_solana_da_teslim_edilemez() {
+    let (mut e, wsol, _meme) = setup();
+    let pid: [u8; 32] = e.pid.as_ref().try_into().unwrap();
+    let y = e.yuk(DEFTER, al_verisi(1, &wsol, 40_000_000), 4_000_000);
+    assert!(e.cctp_cagiranla(IKIZ, ARC, y.clone(), pid).is_err(), "hedef cagiran = program: kimse imzalayamaz");
+    assert_eq!(e.emir_sayac(), 0, "emir kaydedilmedi");
+    assert!(e.cctp_cagiranla(IKIZ, ARC, y, [0u8; 32]).is_ok(), "hedef cagiran bos: herhangi bir aktarici teslim eder");
+    assert_eq!(e.emir_sayac(), 1);
 }

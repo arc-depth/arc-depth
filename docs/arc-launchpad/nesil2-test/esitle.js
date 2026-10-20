@@ -13,6 +13,10 @@ fs.mkdirSync(path.join(H, "nesil4"), { recursive: true });
 for (const f of fs.readdirSync(path.join(K, "nesil4"))) fs.copyFileSync(path.join(K, "nesil4", f), path.join(H, "nesil4", f));
 fs.mkdirSync(path.join(H, "sepet"), { recursive: true });
 for (const f of fs.readdirSync(path.join(K, "sepet")).filter((x) => x.endsWith(".sol"))) fs.copyFileSync(path.join(K, "sepet", f), path.join(H, "sepet", f));
+/* these tests measure the basket set deployed on mainnet, whose Defter is v1 (lines bought at
+   once); the next version (each line in $50 lots) is measured by scripts/denetim-defter-v2.js */
+fs.writeFileSync(path.join(H, "sepet", "SepetDefteri.sol"),
+  fs.readFileSync(path.join(K, "sepet", "v1", "SepetDefteri.sol"), "utf8").replace('from "../IHaberci.sol"', 'from "./IHaberci.sol"'));
 fs.mkdirSync(path.join(H, "taban"), { recursive: true });
 for (const f of fs.readdirSync(path.join(K, "taban"))) fs.copyFileSync(path.join(K, "taban", f), path.join(H, "taban", f));
 fs.mkdirSync(path.join(H, "isim"), { recursive: true });

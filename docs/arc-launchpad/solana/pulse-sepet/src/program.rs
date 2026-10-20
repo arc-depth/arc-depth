@@ -63,6 +63,8 @@
 //!                  filler_dollar w, payee w, giden w, system, token]
 //!                 data: id u64, teklif u64
 //!   5 Yeniden     [config, ihale w]   data: id u64
+//!   9 LzEmir      [emirci s, config w, emir w, payer s w, system]   data: the Arc HaberciLZ body
+//!                 (the emirci is the LayerZero gate's store PDA, signing by CPI)
 //!
 //! `payee` is the holder's dollar ATA when they are paid on Solana, else the
 //! dollar depo (the payout is then booked to the `giden` PDA).
@@ -238,6 +240,7 @@ pub fn process(program_id: &Address, accounts: &mut [AccountView], data: &[u8]) 
         6 => uygula_al(program_id, accounts, rest),
         7 => uygula_sat(program_id, accounts, rest),
         8 => giden_gonder(program_id, accounts, rest),
+        9 => lz_emir(program_id, accounts, rest),
         _ => Err(err(E_BAD_DATA)),
     }
 }
@@ -538,6 +541,30 @@ fn cctp_mesaji(program_id: &Address, accounts: &mut [AccountView], p: &[u8]) -> 
     let dolar = u256_lo64(govde, 96)?;
     let vl = u256_lo64(govde, 128)? as usize;
     let veri = govde.get(160..160 + vl).ok_or(err(E_BAD_DATA))?;
+    emir_kaydet(program_id, &mut config, &mut emir, &payer, &cfg, veri, dolar)
+}
+
+/// From the LayerZero gate (the `emirci`, a PDA of the gate program that
+/// signs this CPI): the Arc HaberciLZ body
+///   abi.encode(bytes32 kaynak, bytes32 hedef, bytes veri, uint256 miktar, uint256 beklenen)
+/// recorded like a CCTP order. Its dollars come by Circle forwarding, which
+/// takes its fee on the way: the order is booked with `beklenen`, the least
+/// that arrives.
+fn lz_emir(program_id: &Address, accounts: &mut [AccountView], govde: &[u8]) -> ProgramResult {
+    let [emirci, mut config, mut emir, payer, _system, ..] = *accounts else { return Err(ProgramError::NotEnoughAccountKeys) };
+    let cfg = read_config(program_id, &config)?;
+    ensure(emirci.is_signer() && *emirci.address() == cfg.emirci, E_NOT_EMIRCI)?;
+    ensure(addr_at(govde, 0)? == cfg.defter && addr_at(govde, 32)? == *config.address(), E_NOT_DEFTER)?;
+    let ofs = u256_lo64(govde, 64)? as usize;
+    let dolar = u256_lo64(govde, 128)?;
+    let vl = u256_lo64(govde, ofs)? as usize;
+    let veri = govde.get(ofs + 32..ofs + 32 + vl).ok_or(err(E_BAD_DATA))?;
+    emir_kaydet(program_id, &mut config, &mut emir, &payer, &cfg, veri, dolar)
+}
+
+/// An order's `veri` (AL or SAT, the Defter's encoding) into a new Emir PDA.
+fn emir_kaydet(program_id: &Address, config: &mut AccountView, emir: &mut AccountView, payer: &AccountView, cfg: &Config,
+    veri: &[u8], dolar: u64) -> ProgramResult {
     let tur = u256_lo64(veri, 0)? as u8;
     let launch = u256_lo64(veri, 32)?;
     let mut d = [0u8; EMIR_LEN];
@@ -575,10 +602,10 @@ fn cctp_mesaji(program_id: &Address, accounts: &mut [AccountView], p: &[u8]) -> 
     let (adr, bump) = pda(&[b"emir", &idb], program_id);
     ensure(*emir.address() == adr && emir.data_len() == 0, E_BAD_ACCOUNT)?;
     let b = [bump];
-    create_pda(&payer, &emir, EMIR_LEN, program_id, &[Seed::from(b"emir"), Seed::from(&idb), Seed::from(&b)])?;
+    create_pda(payer, emir, EMIR_LEN, program_id, &[Seed::from(b"emir"), Seed::from(&idb), Seed::from(&b)])?;
     d[EMIR_LEN - 1] = bump;
-    write(&mut emir, 0, &d)?;
-    write(&mut config, 186, &(id + 1).to_le_bytes())
+    write(emir, 0, &d)?;
+    write(config, 186, &(id + 1).to_le_bytes())
 }
 
 struct Emir { tur: u8, launch: u64, dolar: u64, refv: u64, miktar: u64, arz: u64, hz: u32, alici: Address, n: u8, yapildi: u8 }

@@ -23,9 +23,39 @@ interface IIkizYayiciM {
     function yay(address token, uint32[] calldata hedefler, bytes calldata secenekler) external payable;
 }
 
-interface IHaberciM {
-    function zincir() external view returns (uint32);
-    function gonder(uint32 hedefZincir, bytes32 hedef, bytes calldata veri, uint256 miktar) external;
+/// Circle's TokenMessengerV2. A payout leaves as a plain burn to the payee
+/// with Circle's forwarding hook: Circle delivers it on the destination by
+/// itself (the fee comes out of the amount, at most `maxFee`), so nobody
+/// has to relay it. No destination caller: forwarding does not allow one.
+interface ITokenMesajciM {
+    function depositForBurnWithHook(uint256 amount, uint32 destinationDomain, bytes32 mintRecipient, address burnToken,
+        bytes32 destinationCaller, uint256 maxFee, uint32 minFinalityThreshold, bytes calldata hookData) external;
+}
+
+/// One payout: here directly, elsewhere through Circle with forwarding.
+library Odeme {
+    /// "cctp-forward" then zeros: Circle's forwarding request, version 0
+    bytes constant ILET = hex"636374702d666f72776172640000000000000000000000000000000000000000";
+    uint32 constant KESINLIK = 2000;
+    error Ucret();
+
+    function ode(ITokenMesajciM tm, IERC20S usdc, uint32 buZincir, uint32 zincir, bytes32 alici, uint256 miktar, uint256 maxUcret) internal {
+        if (miktar == 0) return;
+        if (zincir == buZincir) {
+            if (!usdc.transfer(Adres.evm(alici), miktar)) revert KurucuVekili.TransferOlmadi();
+            return;
+        }
+        if (maxUcret >= miktar) revert Ucret();
+        if (!usdc.approve(address(tm), miktar)) revert KurucuVekili.TransferOlmadi();
+        tm.depositForBurnWithHook(miktar, zincir, alici, address(usdc), bytes32(0), maxUcret, KESINLIK, ILET);
+    }
+}
+
+/// The Arc hub for the twins on Solana, Sui and Aptos (contracts/lz/IkizHub.sol).
+interface IIkizHubM {
+    function kapi(uint32 eid) external view returns (bytes32);
+    function yarat(address token, uint32[] calldata eidler, address iade) external payable;
+    function gonder(address token, uint32 eid, bytes32 alici, uint256 miktar, address iade) external payable returns (uint256);
 }
 
 interface ISepetUcuM {
@@ -46,7 +76,8 @@ contract KurucuVekili {
     bytes32 public immutable kurucu;
     uint32 public immutable kurucuZincir;
     IERC20S public immutable usdc;
-    IHaberciM public immutable haberci;
+    ITokenMesajciM public immutable tokenMesajci;
+    uint32 public immutable buZincir;
 
     uint256 public constant ASGARI_ILET = 1e6;   // $1: below it a cross-chain delivery costs more than it carries
 
@@ -55,12 +86,13 @@ contract KurucuVekili {
     error Az();
     error TransferOlmadi();
 
-    constructor(bytes32 kurucu_, uint32 kurucuZincir_, IERC20S usdc_, IHaberciM haberci_) {
+    constructor(bytes32 kurucu_, uint32 kurucuZincir_, IERC20S usdc_, ITokenMesajciM tm_, uint32 buZincir_) {
         kapi = msg.sender;
         kurucu = kurucu_;
         kurucuZincir = kurucuZincir_;
         usdc = usdc_;
-        haberci = haberci_;
+        tokenMesajci = tm_;
+        buZincir = buZincir_;
     }
 
     /// The launch, made by this contract as founder of record. The founder's
@@ -76,16 +108,14 @@ contract KurucuVekili {
     }
 
     /// Anyone: the founder's trading income, to the founder.
-    function ilet() external {
+    /// `maxUcret` is Circle's forwarding fee for the founder's chain (from
+    /// Iris); capped at 5% so nobody can spend the founder's income on fees.
+    function ilet(uint256 maxUcret) external {
         uint256 b = usdc.balanceOf(address(this));
-        bool burada = kurucuZincir == haberci.zincir();
+        bool burada = kurucuZincir == buZincir;
         if (b == 0 || (!burada && b < ASGARI_ILET)) revert Az();
-        if (burada) {
-            if (!usdc.transfer(Adres.evm(kurucu), b)) revert TransferOlmadi();
-        } else {
-            if (!usdc.approve(address(haberci), b)) revert TransferOlmadi();
-            haberci.gonder(kurucuZincir, kurucu, "", b);
-        }
+        if (maxUcret * 20 > b) revert Az();
+        Odeme.ode(tokenMesajci, usdc, buZincir, kurucuZincir, kurucu, b, maxUcret);
         emit Iletildi(kurucuZincir, kurucu, b);
     }
 }
@@ -123,11 +153,14 @@ contract MerkezKapi {
     ILaunchpadM public immutable launchpad;
     IPoolManager public immutable havuzYoneticisi;
     IIkizYayiciM public immutable ikizYayici;
-    IHaberciM public immutable haberci;
+    ITokenMesajciM public immutable tokenMesajci;
+    uint32 public immutable buZincir;
     ISepetUcuM public immutable ucu;
+    IIkizHubM public immutable ikizHub;
     IERC20S public immutable usdc;
     address public immutable lzUcNokta;
 
+    uint32 private constant SUI = 8;
     uint8 public constant SAT = 0;
     uint8 public constant ITFA = 1;
     uint8 private constant ALIM_MODU = 1;
@@ -153,8 +186,24 @@ contract MerkezKapi {
         uint256 ikizUcret;       // native value for the twins, out of msg.value
         bytes gonderSecenek;     // LayerZero options for the founder's tokens
         address iade;            // where unused native value goes
+        /// Each basket line's asset by name, one per line. A Sui line's asset
+        /// is only a hash in the Defter, keccak256 of its coin type written
+        /// "<64 hex address>::module::Name"; whoever carries out its orders
+        /// must name that type, so the name is checked against the hash here
+        /// and published in SepetTipleri. Other lines may leave it empty.
+        string[] tipler;
+        /// chains whose twin goes through the hub (Solana, Sui, Aptos eids) and the LayerZero value for them
+        uint32[] uzakIkizler;
+        uint256 uzakUcret;
     }
 
+    /// What a twin sent to this gate asks for (the compose message, abi-encoded):
+    /// SAT or ITFA, where and to whom the dollars go, the least it accepts, who
+    /// gets the tokens back if it cannot be done, and Circle's forwarding fee
+    /// cap for a payout to another chain (from Iris, chosen by the seller).
+    struct Istek { uint8 tur; uint32 odemeZincir; bytes32 alici; uint256 asgari; address yedek; uint256 maxUcret; }
+
+    event SepetTipleri(address indexed token, string[] tipler);
     event MerkezLaunch(address indexed token, address vekil, bytes32 kurucu, uint32 kurucuZincir, uint256 kurucuToken);
     event Alindi(address indexed token, uint256 girdi, uint256 alinan, uint32 hedefEid, bytes32 alici);
     event Satildi(address indexed token, uint256 miktar, uint256 cikan, uint32 odemeZincir, bytes32 alici);
@@ -168,13 +217,16 @@ contract MerkezKapi {
     error AzCikti(uint256 cikti, uint256 asgari);
     error TransferOlmadi();
     error IadeOlmadi();
+    error TipYanlis(uint256 kalem);
 
-    constructor(ILaunchpadM lp_, IPoolManager pm_, IIkizYayiciM yayici_, IHaberciM haberci_, ISepetUcuM ucu_, IERC20S usdc_, address lz_) {
+    constructor(ILaunchpadM lp_, IPoolManager pm_, IIkizYayiciM yayici_, ITokenMesajciM tm_, uint32 buZincir_, ISepetUcuM ucu_, IERC20S usdc_, address lz_, IIkizHubM hub_) {
         launchpad = lp_;
         havuzYoneticisi = pm_;
         ikizYayici = yayici_;
-        haberci = haberci_;
+        tokenMesajci = tm_;
+        buZincir = buZincir_;
         ucu = ucu_;
+        ikizHub = hub_;
         usdc = usdc_;
         lzUcNokta = lz_;
     }
@@ -185,10 +237,14 @@ contract MerkezKapi {
 
     function launch(LaunchIstegi calldata r) external payable returns (address token) {
         uint256 teminat;
-        for (uint256 i = 0; i < r.sepet.length; i++) teminat += r.sepet[i].dolar;
+        if (r.tipler.length != r.sepet.length) revert TipYanlis(r.sepet.length);
+        for (uint256 i = 0; i < r.sepet.length; i++) {
+            teminat += r.sepet[i].dolar;
+            if (r.sepet[i].zincir == SUI && keccak256(bytes(r.tipler[i])) != r.sepet[i].varlik) revert TipYanlis(i);
+        }
         uint256 toplam = r.alim + teminat;
         _cek(address(usdc), toplam);
-        KurucuVekili v = new KurucuVekili(r.kurucu, r.kurucuZincir, usdc, haberci);
+        KurucuVekili v = new KurucuVekili(r.kurucu, r.kurucuZincir, usdc, tokenMesajci, buZincir);
         if (!usdc.transfer(address(v), toplam)) revert TransferOlmadi();
         uint256 kurucuToken;
         (token, kurucuToken) = v.launchEt(launchpad, r.ad, r.sembol, r.sepet, r.teklif, r.vergiPpm, r.alim, toplam);
@@ -196,12 +252,15 @@ contract MerkezKapi {
 
         /* the twins: IkizYayici creates the Arc adapter and messages each chain */
         ikizYayici.yay{ value: r.ikizUcret }(token, r.ikizler, r.ikizSecenek);
+        /* the twins on Solana, Sui and Aptos: through the hub (created before the founder's tokens may go there) */
+        if (r.uzakIkizler.length > 0) ikizHub.yarat{ value: r.uzakUcret }(token, r.uzakIkizler, address(this));
         address adapter = ikizYayici.adapterAdresi(token);
         tokenOfAdapter[adapter] = token;
         if (!IERC20S(token).approve(adapter, type(uint256).max)) revert TransferOlmadi();
 
         _teslimEt(token, adapter, kurucuToken, r.kurucuEid, r.kurucu, r.gonderSecenek, address(this).balance, r.iade);
         _yerelIade(r.iade);
+        emit SepetTipleri(token, r.tipler);
         emit MerkezLaunch(token, address(v), r.kurucu, r.kurucuZincir, kurucuToken);
     }
 
@@ -240,20 +299,32 @@ contract MerkezKapi {
         /* Anyone can bridge tokens here with any payload. One that is not
            ours would make every retry revert and strand them, so it is not
            decoded: the tokens go to the sender's address on Arc. */
-        if (istek.length != 160) { _ver(token, gonderen, miktar, 0); return; }
-        (uint8 tur, uint32 odemeZincir, bytes32 alici, uint256 asgari, address yedek) =
-            abi.decode(istek, (uint8, uint32, bytes32, uint256, address));
-        if (yedek == address(0)) yedek = gonderen;
-        if (tur == SAT) {
-            try this.sat(token, miktar, asgari, odemeZincir, alici) returns (uint256 cikan) {
-                emit Satildi(token, miktar, cikan, odemeZincir, alici);
-                /* what a price limit left unsold goes to the seller's fallback on Arc */
+        if (istek.length != 192) { _ver(token, gonderen, miktar, 0); return; }
+        Istek memory q = abi.decode(istek, (Istek));
+        /* what a price limit leaves unsold, or a failure, goes to the seller's fallback on Arc */
+        _isle(token, miktar, q, q.yedek == address(0) ? gonderen : q.yedek);
+    }
+
+    /// Twins burned on Solana, Sui or Aptos with an order: the hub has
+    /// handed the tokens here. Carried out like a compose; a failure gives
+    /// the tokens to the seller's fallback on Arc (it must be set: the
+    /// sender's own address there is not an Arc address).
+    function hubIstek(address token, uint256 miktar, bytes32, bytes calldata istek) external {
+        if (msg.sender != address(ikizHub)) revert SadeceUcNokta();
+        Istek memory q = abi.decode(istek, (Istek));
+        _isle(token, miktar, q, q.yedek);
+    }
+
+    function _isle(address token, uint256 miktar, Istek memory q, address yedek) internal {
+        if (q.tur == SAT) {
+            try this.sat(token, miktar, q.asgari, q.odemeZincir, q.alici, q.maxUcret) returns (uint256 cikan) {
+                emit Satildi(token, miktar, cikan, q.odemeZincir, q.alici);
                 uint256 kalan = IERC20S(token).balanceOf(address(this));
                 if (kalan > 0) _ver(token, yedek, kalan, 4);
             } catch { _ver(token, yedek, miktar, 1); }
-        } else if (tur == ITFA) {
-            try this.itfaEt(token, miktar, odemeZincir, alici) {
-                emit ItfaEdildi(token, miktar, odemeZincir, alici);
+        } else if (q.tur == ITFA) {
+            try this.itfaEt(token, miktar, q.odemeZincir, q.alici) {
+                emit ItfaEdildi(token, miktar, q.odemeZincir, q.alici);
             } catch { _ver(token, yedek, miktar, 2); }
         } else {
             _ver(token, yedek, miktar, 3);
@@ -261,11 +332,11 @@ contract MerkezKapi {
     }
 
     /// Only from `lzCompose`, so a failure can be caught and turned into a delivery.
-    function sat(address token, uint256 miktar, uint256 asgari, uint32 odemeZincir, bytes32 alici) external returns (uint256 cikan) {
+    function sat(address token, uint256 miktar, uint256 asgari, uint32 odemeZincir, bytes32 alici, uint256 maxUcret) external returns (uint256 cikan) {
         if (msg.sender != address(this)) revert SadeceKendisi();
         cikan = abi.decode(havuzYoneticisi.unlock(abi.encode(SATIS_MODU, token, miktar, address(this))), (uint256));
         if (cikan < asgari) revert AzCikti(cikan, asgari);
-        _ode(odemeZincir, alici, cikan);
+        Odeme.ode(tokenMesajci, usdc, buZincir, odemeZincir, alici, cikan, maxUcret);
     }
 
     /// Only from `lzCompose`: burn through the chain entry; the basket pays `alici` on `odemeZincir`.
@@ -279,17 +350,17 @@ contract MerkezKapi {
 
     /// A holder on Arc sells here in one call: the tokens are pulled from
     /// the caller, sold in the pool, and the dollars paid to `alici` on
-    /// `odemeZincir` (Arc directly, elsewhere through the Haberci). What a
+    /// `odemeZincir` (Arc directly, elsewhere by Circle with forwarding). What a
     /// price limit leaves unsold goes back to the caller. (Redeeming from
     /// Arc needs no gate: SepetUcu.itfa burns the caller's own tokens.)
-    function satArc(address token, uint256 miktar, uint256 asgari, uint32 odemeZincir, bytes32 alici) external returns (uint256 cikan) {
+    function satArc(address token, uint256 miktar, uint256 asgari, uint32 odemeZincir, bytes32 alici, uint256 maxUcret) external returns (uint256 cikan) {
         if (vekilOf[token] == address(0)) revert BilinmeyenToken();
         _cek(token, miktar);
         cikan = abi.decode(havuzYoneticisi.unlock(abi.encode(SATIS_MODU, token, miktar, address(this))), (uint256));
         if (cikan < asgari) revert AzCikti(cikan, asgari);
         uint256 kalan = IERC20S(token).balanceOf(address(this));
         if (kalan > 0) _ver(token, msg.sender, kalan, 4);
-        _ode(odemeZincir, alici, cikan);
+        Odeme.ode(tokenMesajci, usdc, buZincir, odemeZincir, alici, cikan, maxUcret);
         emit Satildi(token, miktar, cikan, odemeZincir, alici);
     }
 
@@ -326,22 +397,19 @@ contract MerkezKapi {
             if (!IERC20S(token).transfer(Adres.evm(alici), miktar)) revert TransferOlmadi();
             return;
         }
+        if (ikizHub.kapi(eid) != bytes32(0)) {
+            /* Solana, Sui, Aptos: locked in the hub, minted there by its gate */
+            if (!IERC20S(token).approve(address(ikizHub), miktar)) revert TransferOlmadi();
+            ikizHub.gonder{ value: deger }(token, eid, alici, miktar, iade);
+            uint256 kalan = IERC20S(token).balanceOf(address(this));
+            if (kalan > 0 && !IERC20S(token).transfer(iade, kalan)) revert TransferOlmadi();
+            return;
+        }
         SendParam memory p = SendParam(eid, alici, miktar, 0, secenek, "", "");
         IOFT(adapter).send{ value: deger }(p, MessagingFee(deger, 0), iade);
         /* dust below the bridge's shared decimals cannot cross */
         uint256 toz = IERC20S(token).balanceOf(address(this));
         if (toz > 0 && !IERC20S(token).transfer(iade, toz)) revert TransferOlmadi();
-    }
-
-    /// Dollars to `alici` on `zincir`: here directly, elsewhere through the Haberci.
-    function _ode(uint32 zincir, bytes32 alici, uint256 miktar) internal {
-        if (miktar == 0) return;
-        if (zincir == haberci.zincir()) {
-            if (!usdc.transfer(Adres.evm(alici), miktar)) revert TransferOlmadi();
-        } else {
-            if (!usdc.approve(address(haberci), miktar)) revert TransferOlmadi();
-            haberci.gonder(zincir, alici, "", miktar);
-        }
     }
 
     function _ver(address token, address kime, uint256 miktar, uint8 neden) internal {

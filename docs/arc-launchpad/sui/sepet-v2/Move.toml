@@ -1,0 +1,13 @@
+[package]
+name = "PulseSepetV2"
+version = "0.0.1"
+edition = "2024.beta"
+
+[addresses]
+sepet = "0x0"
+
+[dependencies]
+OApp = { local = "C:/Users/omen/araclar/lz/LayerZero-v2/packages/layerzero-v2/sui/contracts/oapps/oapp" }
+PtbMoveCall = { local = "C:/Users/omen/araclar/lz/LayerZero-v2/packages/layerzero-v2/sui/contracts/ptb-builders/ptb-move-call" }
+CctpMessageTransmitterV2Interface = { local = "../cctp-iface" }
+CctpTokenMessengerMinterV2Interface = { local = "../cctp-tmm-iface" }

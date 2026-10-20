@@ -21,7 +21,8 @@
 import { el, sayfaUst, panel, not } from "../ui.js";
 import { AGLAR } from "../aglar.js";
 import { cuzdan } from "../cuzdan.js";
-import { JsonRpcProvider, Contract, Interface, AbiCoder, zeroPadValue, keccak256, toUtf8Bytes, solidityPacked } from "../../vendor/ethers.min.js";
+import * as egri from "../egri.js";
+import { JsonRpcProvider, Contract, Interface, AbiCoder, zeroPadValue, keccak256, toUtf8Bytes, solidityPacked, decodeBase58, toBeHex } from "../../vendor/ethers.min.js";
 
 const KAPI = "0xA3D9B4259fbd6Ca17b79f3b7A7dB55B34dA04080";
 const LP = "0x52e600c8259ca44D9837B7b9E6BA1faee4bC040d";
@@ -55,6 +56,54 @@ const SEPET_ZINCIR = [
   { ad: "Robinhood", domain: 35, kapali: "waiting for Circle to open CCTP into Robinhood", tur: "evm", rpc: "https://rpc.mainnet.chain.robinhood.com", ds: "robinhood", id: 4663, usdc: "0x3884564BA51B349e7661c7e28Ad947DEE327FeDF", usdcDec: 6 },
 ];
 const IKIZ_EID = [30416, 30184, 30110, 30101, 30102, 30106, 30390, 30367];   // the eight EVM chains other than Arc
+
+/* ---- the second generation (arastirma/sepet-v2-tasarim.md) ----
+   scripts/dagit-v2.js writes docs/veri/sepet-v2.json only after every
+   contract is deployed AND wired; until then the file does not exist and
+   this page keeps using the gate above. Nothing below is offered before. */
+let V2 = null;
+async function v2Yukle() {
+  if (V2 === null) V2 = await fetch("veri/sepet-v2.json", { cache: "no-store" }).then((r) => (r.ok ? r.json() : false)).catch(() => false);
+  return V2;
+}
+const S = () => (V2 ? { kapi: V2.kapi, lp: V2.launchpad, ucu: V2.ucu } : { kapi: KAPI, lp: LP, ucu: UCU });
+/* v2: Circle forwarding delivers sale and founder dollars on these chains by itself */
+const ILERI_DOMAIN = new Set([26, 6, 3, 0, 1, 15, 19, 5]);
+/* v2: where relay delivers dollars on the two chains Circle does not reach (an open deposit address on Arc) */
+const RELAY_DOLAR = { 17: [56, "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d"], 35: [4663, "0x5fc5360d0400a0fd4f2af552add042d716f1d168"] };
+const UZAK_EID = { solana: 30168, sui: 30378, aptos: 30108 };
+const KAPI2_ABI = new Interface([
+  "function launch((string,string,(uint32,bytes32,uint256)[],uint256[],uint256,uint256,bytes32,uint32,uint32,uint32[],bytes,uint256,bytes,address,string[],uint32[],uint256)) payable returns (address)",
+  "function al(address,uint256,uint256,uint32,bytes32,bytes,address) payable returns (uint256)",
+  "function satArc(address,uint256,uint256,uint32,bytes32,uint256) returns (uint256)",
+  "function vekilOf(address) view returns (address)"]);
+const HUB_ABI = ["function ucret(uint32,bytes) view returns (uint256)", "function kapi(uint32) view returns (bytes32)"];
+
+/// Circle's forwarding fee from Arc to `domain` (Iris), doubled plus 5 cents: the most the payout may lose on the way.
+async function ileriUcret(domain) {
+  if (domain === ARC_DOMAIN) return 0n;
+  const j = await fetch("https://iris-api.circle.com/v2/burn/USDC/fees/26/" + domain + "?forward=true").then((x) => x.json()).catch(() => []);
+  const s = (Array.isArray(j) ? j : j.data || []).find((x) => x.finalityThreshold === 2000) || {};
+  const u = s.forwardFee ? BigInt(s.forwardFee.high ?? s.forwardFee.med ?? s.forwardFee) : 0n;
+  return u * 2n + 50_000n;
+}
+
+/// v2: where a payout to a wallet on `ag` is sent from Arc. Circle-forwarding chains are paid
+/// there; BNB and Robinhood through a relay open deposit address on Arc made for this wallet
+/// (relay's solvers deliver that chain's dollar to it); the rest on Arc, same address.
+async function odemeYeri(ag, ben) {
+  if (ag.anahtar === "arc") return { zincir: ARC_DOMAIN, alici: zeroPadValue(ben, 32), maxUcret: 0n, yer: "Arc" };
+  if (ILERI_DOMAIN.has(ag.domain)) return { zincir: ag.domain, alici: zeroPadValue(ben, 32), maxUcret: await ileriUcret(ag.domain), yer: ag.ad };
+  const rd = RELAY_DOLAR[ag.domain];
+  if (rd) {
+    const q = await fetch(RELAY + "/quote", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({
+      user: ben, recipient: ben, originChainId: 5042, destinationChainId: rd[0], originCurrency: ARC_USDC, destinationCurrency: rd[1],
+      amount: "20000000", tradeType: "EXACT_INPUT", useDepositAddress: true, refundTo: ben }) }).then((x) => x.json()).catch(() => ({}));
+    const a = q.steps && q.steps[0] && q.steps[0].depositAddress;
+    if (a) return { zincir: ARC_DOMAIN, alici: zeroPadValue(a, 32), maxUcret: 0n, yer: ag.ad + " (through relay)" };
+  }
+  return { zincir: ARC_DOMAIN, alici: zeroPadValue(ben, 32), maxUcret: 0n, yer: "Arc (your same address)" };
+}
 
 const arc = new JsonRpcProvider("https://arc-rpc.publicnode.com", 5042, { staticNetwork: true });
 /* every chain pays: Arc in its own USDC straight to the gate, the others through relay */
@@ -122,7 +171,15 @@ function varlikKimligi(zincir, girdi) {
     const t = adr.replace(/^0x/, "").toLowerCase().padStart(64, "0") + "::" + kalan.join("::");
     return keccak256(toUtf8Bytes(t));
   }
+  /* Solana: the mint's 32 bytes */
+  if (zincir.tur === "solana") return toBeHex(decodeBase58(g), 32);
   return zeroPadValue(g.toLowerCase(), 32);
+}
+
+/// A Sui coin type as the gate checks it: "<64 hex address>::module::Name".
+function suiTipi(girdi) {
+  const [adr, ...kalan] = girdi.trim().split("::");
+  return adr.replace(/^0x/, "").toLowerCase().padStart(64, "0") + "::" + kalan.join("::");
 }
 
 async function ondalik(zincir, girdi) {
@@ -131,6 +188,11 @@ async function ondalik(zincir, girdi) {
     const r = await fetch("https://sui-rpc.publicnode.com", { method: "POST", headers: { "content-type": "application/json" },
       body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "suix_getCoinMetadata", params: [girdi] }) }).then((x) => x.json());
     return r.result.decimals;
+  }
+  if (zincir.tur === "solana") {
+    const r = await fetch("https://solana-rpc.publicnode.com", { method: "POST", headers: { "content-type": "application/json" },
+      body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "getTokenSupply", params: [girdi] }) }).then((x) => x.json());
+    return r.result.value.decimals;
   }
   const r = await fetch("https://api.mainnet.aptoslabs.com/v1/accounts/" + girdi + "/resource/0x1::fungible_asset::Metadata").then((x) => x.json());
   return Number(r.data.decimals);
@@ -160,8 +222,8 @@ async function teklifBirimi(zincir, girdi, dolar) {
 }
 
 /* ---- the Arc pool's price ---- */
-export async function havuzFiyati(token) {
-  const lp = new Contract(LP, ["function havuzAnahtari(address) view returns ((address,address,uint24,int24,address))"], arc);
+export async function havuzFiyati(token, lpAdres) {
+  const lp = new Contract(lpAdres || S().lp, ["function havuzAnahtari(address) view returns ((address,address,uint24,int24,address))"], arc);
   const k = await lp.havuzAnahtari(token);
   const id = keccak256(AbiCoder.defaultAbiCoder().encode(["address", "address", "uint24", "int24", "address"], [k[0], k[1], k[2], k[3], k[4]]));
   const yuva = keccak256(AbiCoder.defaultAbiCoder().encode(["bytes32", "uint256"], [id, 6]));
@@ -174,6 +236,14 @@ export async function havuzFiyati(token) {
 }
 
 export async function ciz({ param } = {}) {
+  await v2Yukle();
+  if (V2) {
+    /* v2 reaches every vault chain: Robinhood's dollar is USDG (what relay delivers there), Solana once its gate is wired */
+    for (const z of SEPET_ZINCIR) {
+      if (z.domain === 35) { delete z.kapali; z.usdc = "0x5fc5360d0400a0fd4f2af552add042d716f1d168"; }
+      if (z.domain === 5 && V2.uzak && V2.uzak.solana && V2.uzak.solana.kasa) { delete z.kapali; z.tur = "solana"; z.ds = "solana"; }
+    }
+  }
   const kap = el("div", { sinif: "yigin" });
   kap.append(sayfaUst("Launch on any chain", "One pool on Arc, every chain's door to it"));
   kap.append(not("Every token here has one pool and one price, on Arc. You launch, buy and sell from your own chain with its own gas token, in one signature. The token lives on your chain as its twin. Fees are shown before you sign.", "bilgi"));
@@ -208,6 +278,12 @@ export async function ciz({ param } = {}) {
   });
   const lDurum = el("div", { sinif: "yazi yazi--kucuk yazi--sessiz" });
   const lDugme = el("button", { sinif: "dugme dugme--marka", attr: { type: "button" }, yazi: "Launch" });
+  /* v2: the twins on Solana, Sui and Aptos cost far more to create than the EVM ones (measured 20 Oct:
+     Solana ~9, Sui ~4.8, Aptos ~1.7 USDC against ~4 for all eight EVM twins), so by default they are
+     created on demand: the first holder who moves the token there creates it (IkizHub.yarat, open to all) */
+  const uzakSimdi = el("input", { attr: { type: "checkbox", id: "merkez-uzak" } });
+  const uzakEtiket = el("label", { sinif: "alan__ipucu", attr: { for: "merkez-uzak" } }, [uzakSimdi,
+    el("span", { yazi: " Also create the Solana, Sui and Aptos twins now (LayerZero fee, shown before you pay). Otherwise the first holder who moves the token there creates it." })]);
   lDugme.addEventListener("click", async () => {
     const durum = (s) => { lDurum.textContent = s; };
     try {
@@ -236,14 +312,47 @@ export async function ciz({ param } = {}) {
       const yayici = new Contract(YAYICI, ["function ucret(address,uint32[],bytes) view returns (uint256)"], arc);
       const ikizUcret = ((await yayici.ucret(FTHM_ARC, IKIZ_EID, ikizSec)) * 13n) / 10n;
       const deger = ikizUcret + 2n * 10n ** 18n;      // + the founder's tokens to your chain; unused value refunded
-      const istek = [ad.value.trim(), sembol.value.trim().toUpperCase(), sepet, teklif, BigInt(Number(vergi.value) * 10_000), alim6,
-        zeroPadValue(ben, 32), ODEME_DOMAIN.has(ag.domain) ? ag.domain : ARC_DOMAIN, teslimEid(ag), IKIZ_EID, ikizSec, ikizUcret, sec(100_000n), ben];
       const toplam = alim6 + teminat;
-      const txs = [
-        { to: ARC_USDC, data: E.encodeFunctionData("approve", [KAPI, toplam]), value: "0" },
-        { to: KAPI, data: KAPI_ABI.encodeFunctionData("launch", [istek]), value: deger.toString() },
-      ];
-      await relayIle(ag, ben, toplam, deger, txs, durum);
+      if (V2) {
+        /* the founder's slice is paid where the founder is (Circle forwarding, or relay to BNB / Robinhood) */
+        const ko = await odemeYeri(ag, ben);
+        /* a Sui line names its coin type; the gate checks it against the line's hash */
+        const tipler = ss.map((x) => (x.zincir.tur === "sui" ? suiTipi(x.adres) : ""));
+        /* the twins on Solana, Sui and Aptos, through the hub: the chains whose gate is wired, and LayerZero's fee for each */
+        durum("Reading the LayerZero fee for the Solana / Sui / Aptos twins…");
+        const hub = new Contract(V2.hub, HUB_ABI, arc);
+        const ornek = AbiCoder.defaultAbiCoder().encode(["uint8", "address", "string", "string"], [1, FTHM_ARC, ad.value.trim(), sembol.value.trim().toUpperCase()]);
+        const uzak = [];
+        let uzakUcret = 0n;
+        const atlanan = [];
+        for (const [zad, eid] of Object.entries(UZAK_EID)) {
+          if (!uzakSimdi.checked) break;
+          if ((await hub.kapi(eid)) === zeroPadValue("0x00", 32)) continue;
+          /* a chain LayerZero refuses to quote for this message (Solana: the executor's message size limit
+             on Arc) is left out; the launch still goes, its twin there can be created later */
+          const u = await hub.ucret(eid, ornek).catch(() => null);
+          if (u == null) { atlanan.push(zad); continue; }
+          uzak.push(eid);
+          uzakUcret += u;
+        }
+        if (atlanan.length) durum("Twin not created now on: " + atlanan.join(", ") + " (LayerZero refused the quote). The launch goes on without it.");
+        uzakUcret = (uzakUcret * 13n) / 10n;
+        const istek = [ad.value.trim(), sembol.value.trim().toUpperCase(), sepet, teklif, BigInt(Number(vergi.value) * 10_000), alim6,
+          ko.alici, ko.zincir, teslimEid(ag), IKIZ_EID, ikizSec, ikizUcret, sec(100_000n), ben, tipler, uzak, uzakUcret];
+        const txs = [
+          { to: ARC_USDC, data: E.encodeFunctionData("approve", [V2.kapi, toplam]), value: "0" },
+          { to: V2.kapi, data: KAPI2_ABI.encodeFunctionData("launch", [istek]), value: (deger + uzakUcret).toString() },
+        ];
+        await relayIle(ag, ben, toplam, deger + uzakUcret, txs, durum);
+      } else {
+        const istek = [ad.value.trim(), sembol.value.trim().toUpperCase(), sepet, teklif, BigInt(Number(vergi.value) * 10_000), alim6,
+          zeroPadValue(ben, 32), ODEME_DOMAIN.has(ag.domain) ? ag.domain : ARC_DOMAIN, teslimEid(ag), IKIZ_EID, ikizSec, ikizUcret, sec(100_000n), ben];
+        const txs = [
+          { to: ARC_USDC, data: E.encodeFunctionData("approve", [KAPI, toplam]), value: "0" },
+          { to: KAPI, data: KAPI_ABI.encodeFunctionData("launch", [istek]), value: deger.toString() },
+        ];
+        await relayIle(ag, ben, toplam, deger, txs, durum);
+      }
       durum("Paid. relay launches on Arc within seconds; your tokens arrive on " + ag.ad + " in a few minutes, the basket is bought by auction over the next hours.");
     } catch (x) { durum((x && x.message) || "Could not launch."); }
   });
@@ -254,6 +363,7 @@ export async function ciz({ param } = {}) {
     el("div", { sinif: "girdi-grup" }, [alim, el("span", { sinif: "girdi-grup__son", yazi: "$ first buy" })]), vergi,
     el("div", { sinif: "alan__ipucu", yazi: "Collateral basket: up to 5 tokens, mixed as you like across the chains below, at least $4 a line ($25 on Ethereum), at least $20 in total. Bought into the vaults by auction; every trade's collateral tax re-buys it every $50." }),
     satirlar,
+    V2 ? uzakEtiket : el("span"),
     el("div", { sinif: "alan__ipucu", yazi: "Every trade: 2.2% (0.3% you, 0.3% developers, 0.5% liquidity, 0.2% operations, 0.2% FTHM bought and burned, 0.7% back into the pool) plus your collateral tax." }),
     lDugme, lDurum])));
 
@@ -263,14 +373,25 @@ export async function ciz({ param } = {}) {
   const fiyatOku = async () => {
     try {
       if (!/^0x[0-9a-fA-F]{40}$/.test(token.value.trim())) return;
-      const v = await new Contract(KAPI, KAPI_ABI.fragments, arc).vekilOf(token.value.trim());
+      const v = await new Contract(S().kapi, KAPI_ABI.fragments, arc).vekilOf(token.value.trim());
       if (v === SIFIR) { fiyatYazi.textContent = "This token was not launched through this door."; return; }
+      if (V2) {
+        const st = await egri.zincirdenDurum({ Contract, AbiCoder, keccak256 }, arc, V2.launchpad, PM, token.value.trim());
+        const o = egri.ozet(st);
+        const usd = (x) => "$" + (x >= 1000 ? Math.round(x).toLocaleString("en-US") : x.toFixed(2));
+        fiyatYazi.textContent = "Price $" + o.fiyat.toPrecision(4) + " per token · market cap " + usd(o.piyasaDegeri) +
+          " · real USDC in the pool " + usd(o.gercekDolar) + " · pool liquidity " + usd(o.likidite) +
+          " (one pool on Arc, the same from every chain) · collateral tax " + (st.vergi * 100).toFixed(0) + "%";
+        return;
+      }
       const f = await havuzFiyati(token.value.trim());
       fiyatYazi.textContent = "Arc pool price: $" + f.toPrecision(4) + " per token";
     } catch (x) { fiyatYazi.textContent = "Could not read the pool: " + ((x && x.message) || ""); }
   };
   token.addEventListener("change", fiyatOku);
 
+  const kayma = el("input", { sinif: "girdi girdi--sayi", attr: { id: "merkez-kayma", type: "number", min: "0.5", max: "50", step: "0.5", value: "3" } });
+  const kaymaOrani = () => Math.min(Math.max(Number(kayma.value) || 3, 0.5), 50) / 100;
   const alTutar = el("input", { sinif: "girdi girdi--sayi", attr: { id: "merkez-al", type: "number", min: "1", step: "1", value: "20" } });
   const alDurum = el("div", { sinif: "yazi yazi--kucuk yazi--sessiz" });
   const alDugme = el("button", { sinif: "dugme dugme--marka", attr: { type: "button" }, yazi: "Buy" });
@@ -282,13 +403,23 @@ export async function ciz({ param } = {}) {
       const t = token.value.trim();
       const usdc6 = BigInt(Math.round(Number(alTutar.value) * 1e6));
       if (usdc6 < 1_000_000n) return durum("At least $1.");
-      const f = await havuzFiyati(t);
-      /* at least 85% of what the pool price gives before fees and tax: the slippage limit */
-      const asgari = BigInt(Math.floor((Number(usdc6) / 1e6 / f) * 0.85 * 1e6)) * 10n ** 12n;
+      let asgari;
+      if (V2) {
+        const st = await egri.zincirdenDurum({ Contract, AbiCoder, keccak256 }, arc, V2.launchpad, PM, t);
+        const e = egri.alim(st, Number(usdc6) / 1e6);
+        asgari = BigInt(Math.floor(e.token * (1 - kaymaOrani()) * 1e6)) * 10n ** 12n;
+        durum("Estimate: ~" + Math.floor(e.token).toLocaleString("en-US") + " tokens, price impact +" + (e.etki * 100).toFixed(2) +
+          "%, fees $" + e.ucret.toFixed(2) + " (2.2% + " + (st.vergi * 100).toFixed(0) + "% collateral tax). Minimum " + (100 - kaymaOrani() * 100) + "% of that, or nothing is bought.");
+        await new Promise((ok) => setTimeout(ok, 1500));
+      } else {
+        const f = await havuzFiyati(t);
+        /* at least 85% of what the pool price gives before fees and tax: the slippage limit */
+        asgari = BigInt(Math.floor((Number(usdc6) / 1e6 / f) * 0.85 * 1e6)) * 10n ** 12n;
+      }
       const deger = teslimEid(ag) ? 2n * 10n ** 18n : 0n;      // LayerZero fee for the delivery; none on Arc
       const txs = [
-        { to: ARC_USDC, data: E.encodeFunctionData("approve", [KAPI, usdc6]), value: "0" },
-        { to: KAPI, data: KAPI_ABI.encodeFunctionData("al", [t, usdc6, asgari, teslimEid(ag), zeroPadValue(ben, 32), teslimEid(ag) ? sec(100_000n) : "0x", ben]), value: deger.toString() },
+        { to: ARC_USDC, data: E.encodeFunctionData("approve", [S().kapi, usdc6]), value: "0" },
+        { to: S().kapi, data: KAPI_ABI.encodeFunctionData("al", [t, usdc6, asgari, teslimEid(ag), zeroPadValue(ben, 32), teslimEid(ag) ? sec(100_000n) : "0x", ben]), value: deger.toString() },
       ];
       await relayIle(ag, ben, usdc6, deger, txs, durum);
       durum("Paid. Bought on Arc; the tokens arrive on " + ag.ad + " in a few minutes.");
@@ -306,16 +437,30 @@ export async function ciz({ param } = {}) {
       const t = token.value.trim();
       if (ag.anahtar === "arc") {
         /* the deployed gate sells only what arrives from another chain; its Arc-side sale comes with the next version */
-        if (tur === 0) return durum("Selling tokens held on Arc from this page opens with the gate's next version. Redeeming from the basket works now.");
         const miktar = BigInt(Math.round(Number(satTutar.value))) * 10n ** 18n;
         const tk = new Contract(t, ["function balanceOf(address) view returns (uint256)", "function approve(address,uint256) returns (bool)"], arc);
         if ((await tk.balanceOf(ben)) < miktar) return durum("You hold less than that on Arc.");
+        if (tur === 0) {
+          if (!V2) return durum("Selling tokens held on Arc from this page opens with the gate's next version. Redeeming from the basket works now.");
+          /* v2: the gate sells in one call and pays here; what a price limit leaves unsold comes back */
+          const st = await egri.zincirdenDurum({ Contract, AbiCoder, keccak256 }, arc, V2.launchpad, PM, t);
+          const e = egri.satim(st, Number(miktar / 10n ** 12n) / 1e6);
+          if (e.bitti) return durum("The pool cannot buy all of that: only ~$" + e.dolar.toFixed(2) + " is there for it. Sell less, or redeem from the basket.");
+          const asgari = BigInt(Math.floor(e.dolar * (1 - kaymaOrani()) * 1e6));
+          durum("Estimate: ~$" + e.dolar.toFixed(2) + " after fees ($" + e.ucret.toFixed(2) + "), price impact " + (e.etki * 100).toFixed(2) + "%. Approve the sale (1/2)…");
+          let h = await cuzdan.agdaGonder(ag, { to: t, data: tk.interface.encodeFunctionData("approve", [V2.kapi, miktar]), value: "0x0" });
+          if ((await makbuz(ag, h)).status !== 1) throw new Error("Reverted: " + h);
+          durum("Sell (2/2)…");
+          h = await cuzdan.agdaGonder(ag, { to: V2.kapi, data: KAPI2_ABI.encodeFunctionData("satArc", [t, miktar, asgari, ARC_DOMAIN, zeroPadValue(ben, 32), 0n]), value: "0x0" });
+          if ((await makbuz(ag, h)).status !== 1) throw new Error("Reverted: " + h);
+          return durum("Sold in the Arc pool; the USDC is in your wallet on Arc.");
+        }
         durum("Approve the burn (1/2)…");
-        let h = await cuzdan.agdaGonder(ag, { to: t, data: tk.interface.encodeFunctionData("approve", [UCU, miktar]), value: "0x0" });
+        let h = await cuzdan.agdaGonder(ag, { to: t, data: tk.interface.encodeFunctionData("approve", [S().ucu, miktar]), value: "0x0" });
         if ((await makbuz(ag, h)).status !== 1) throw new Error("Reverted: " + h);
         durum("Redeem (2/2)…");
         const U = new Interface(["function itfa(address,uint256,uint32,bytes32)"]);
-        h = await cuzdan.agdaGonder(ag, { to: UCU, data: U.encodeFunctionData("itfa", [t, miktar, ARC_DOMAIN, zeroPadValue(ben, 32)]), value: "0x0" });
+        h = await cuzdan.agdaGonder(ag, { to: S().ucu, data: U.encodeFunctionData("itfa", [t, miktar, ARC_DOMAIN, zeroPadValue(ben, 32)]), value: "0x0" });
         if ((await makbuz(ag, h)).status !== 1) throw new Error("Reverted: " + h);
         return durum("Burned for redemption; each vault sells your share by auction and pays you on Arc.");
       }
@@ -324,21 +469,92 @@ export async function ciz({ param } = {}) {
       const oft = new Contract(ikiz, OFT_ABI, p);
       const miktar = BigInt(Math.round(Number(satTutar.value))) * 10n ** 18n;
       if ((await oft.balanceOf(ben)) < miktar) return durum("You hold less than that on " + ag.ad + ".");
-      const odeme = ODEME_DOMAIN.has(ag.domain) ? ag.domain : ARC_DOMAIN;
       let asgari = 0n;
-      if (tur === 0) { const f = await havuzFiyati(t); asgari = BigInt(Math.floor(Number(miktar / 10n ** 12n) / 1e6 * f * 0.85 * 1e6)); }
-      const yuk = AbiCoder.defaultAbiCoder().encode(["uint8", "uint32", "bytes32", "uint256", "address"], [tur, odeme, zeroPadValue(ben, 32), asgari, ben]);
-      const prm = [ARC_EID, zeroPadValue(KAPI, 32), miktar, (miktar * 99n) / 100n, sec(200_000n, 900_000n), yuk, "0x"];
+      if (tur === 0 && V2) {
+        const st = await egri.zincirdenDurum({ Contract, AbiCoder, keccak256 }, arc, V2.launchpad, PM, t);
+        const e = egri.satim(st, Number(miktar / 10n ** 12n) / 1e6);
+        if (e.bitti) return durum("The pool cannot buy all of that: only ~$" + e.dolar.toFixed(2) + " is there for it. Sell less, or redeem from the basket.");
+        asgari = BigInt(Math.floor(e.dolar * (1 - kaymaOrani()) * 1e6));
+        durum("Estimate: ~$" + e.dolar.toFixed(2) + " after fees, price impact " + (e.etki * 100).toFixed(2) + "% (the price when it reaches Arc decides).");
+      } else if (tur === 0) { const f = await havuzFiyati(t); asgari = BigInt(Math.floor(Number(miktar / 10n ** 12n) / 1e6 * f * 0.85 * 1e6)); }
+      let yuk, yer;
+      if (V2) {
+        /* v2: the 192-byte order the gate reads (kind, payout chain, payee, minimum, fallback on Arc, Circle fee cap) */
+        const o = await odemeYeri(ag, ben);
+        yer = o.yer;
+        yuk = AbiCoder.defaultAbiCoder().encode(["uint8", "uint32", "bytes32", "uint256", "address", "uint256"], [tur, o.zincir, o.alici, asgari, ben, o.maxUcret]);
+      } else {
+        const odeme = ODEME_DOMAIN.has(ag.domain) ? ag.domain : ARC_DOMAIN;
+        yer = odeme === ARC_DOMAIN ? "Arc (your same address)" : ag.ad;
+        yuk = AbiCoder.defaultAbiCoder().encode(["uint8", "uint32", "bytes32", "uint256", "address"], [tur, odeme, zeroPadValue(ben, 32), asgari, ben]);
+      }
+      const prm = [ARC_EID, zeroPadValue(S().kapi, 32), miktar, (miktar * 99n) / 100n, sec(200_000n, 900_000n), yuk, "0x"];
       const [ucret] = await oft.quoteSend(prm, false);
       durum("Sending to the gate on Arc (LayerZero fee " + (Number(ucret) / 1e18).toPrecision(3) + " " + ag.gaz + ")…");
       const h = await cuzdan.agdaGonder(ag, { to: ikiz, data: new Interface(OFT_ABI).encodeFunctionData("send", [prm, [ucret, 0], ben]), value: "0x" + ucret.toString(16) });
       const m = await makbuz(ag, h);
       if (m.status !== 1) throw new Error("Reverted: " + h);
-      const yer = odeme === ARC_DOMAIN ? "Arc (your same address)" : ag.ad;
       durum(tur === 0 ? "Sent. Sold in the Arc pool; the USDC is paid on " + yer + " (minutes; Ethereum-anchored chains up to ~20)." :
         "Sent. Burned for redemption; each vault sells your share by auction and pays on " + yer + ".");
     } catch (x) { durum((x && x.message) || "Could not send."); }
   };
+  const tasZincir = el("select", { sinif: "girdi" }, Object.keys(UZAK_EID).map((z) => el("option", { attr: { value: z }, yazi: z[0].toUpperCase() + z.slice(1) })));
+  const tasAlici = el("input", { sinif: "girdi", attr: { placeholder: "your address there (Solana: wallet address; Sui / Aptos: 0x…)" } });
+  const tasTutar = el("input", { sinif: "girdi girdi--sayi", attr: { type: "number", min: "1", step: "1000", value: "100000" } });
+  const tasDurum = el("div", { sinif: "yazi yazi--kucuk yazi--sessiz" });
+  const tasDugme = el("button", { sinif: "dugme dugme--sessiz", attr: { type: "button" }, yazi: "Move from Arc" });
+  tasDugme.addEventListener("click", async () => {
+    const durum = (x) => { tasDurum.textContent = x; };
+    try {
+      if (!V2) return durum("Opens with the second generation.");
+      if (ag.anahtar !== "arc") return durum("Choose Arc as your chain: this moves tokens you hold on Arc.");
+      const ben = cuzdan.hesap() || (await cuzdan.bagla());
+      if (!ben) return durum("Connect a wallet first.");
+      const t = token.value.trim(), eid = UZAK_EID[tasZincir.value];
+      const g = tasAlici.value.trim();
+      const alici = tasZincir.value === "solana" ? toBeHex(decodeBase58(g), 32) : zeroPadValue(g.toLowerCase(), 32);
+      const miktar = BigInt(Math.round(Number(tasTutar.value))) * 10n ** 18n;
+      const HUB = new Interface(["function yarat(address,uint32[],address) payable", "function gonder(address,uint32,bytes32,uint256,address) payable returns (uint256)",
+        "function ucret(uint32,bytes) view returns (uint256)", "function yaratildi(address,uint32) view returns (bool)", "function kapi(uint32) view returns (bytes32)"]);
+      const hub = new Contract(V2.hub, HUB.fragments, arc);
+      if ((await hub.kapi(eid)) === zeroPadValue("0x00", 32)) return durum("That chain's twin gate is not wired.");
+      const tk = new Contract(t, ["function balanceOf(address) view returns (uint256)", "function approve(address,uint256) returns (bool)",
+        "function name() view returns (string)", "function symbol() view returns (string)"], arc);
+      if ((await tk.balanceOf(ben)) < miktar) return durum("You hold less than that on Arc.");
+      const c = AbiCoder.defaultAbiCoder();
+      const tasiUcret = (await hub.ucret(eid, c.encode(["uint8", "address", "bytes32", "uint256"], [2, t, alici, miktar / 10n ** 12n]))) * 13n / 10n;
+      let yaratUcret = 0n;
+      const var_ = await hub.yaratildi(t, eid);
+      if (!var_) yaratUcret = (await hub.ucret(eid, c.encode(["uint8", "address", "string", "string"], [1, t, await tk.name(), await tk.symbol()]))) * 13n / 10n;
+      durum((var_ ? "" : "The twin does not exist there yet: you create it first (" + (Number(yaratUcret) / 1e18).toFixed(2) + " USDC). ") +
+        "Moving costs " + (Number(tasiUcret) / 1e18).toFixed(2) + " USDC of LayerZero fees (unused fee comes back).");
+      let adim = 1; const toplam = var_ ? 2 : 3;
+      if (!var_) {
+        durum("Create the twin (" + adim++ + "/" + toplam + ")…");
+        const h = await cuzdan.agdaGonder(ag, { to: V2.hub, data: HUB.encodeFunctionData("yarat", [t, [eid], ben]), value: "0x" + yaratUcret.toString(16) });
+        if ((await makbuz(ag, h)).status !== 1) throw new Error("Reverted: " + h);
+      }
+      durum("Approve (" + adim++ + "/" + toplam + ")…");
+      let h = await cuzdan.agdaGonder(ag, { to: t, data: tk.interface.encodeFunctionData("approve", [V2.hub, miktar]), value: "0x0" });
+      if ((await makbuz(ag, h)).status !== 1) throw new Error("Reverted: " + h);
+      durum("Move (" + adim++ + "/" + toplam + ")…");
+      h = await cuzdan.agdaGonder(ag, { to: V2.hub, data: HUB.encodeFunctionData("gonder", [t, eid, alici, miktar, ben]), value: "0x" + tasiUcret.toString(16) });
+      if ((await makbuz(ag, h)).status !== 1) throw new Error("Reverted: " + h);
+      durum("Sent. LayerZero delivers it on " + tasZincir.value + " in a few minutes" + (tasZincir.value === "sui" ? " (on Sui the coin type is registered once per token; until then the transfer waits there and anyone can deliver it)." : "."));
+    } catch (x) { durum((x && x.message) || "Could not move."); }
+  });
+  /* Sui: the twin's coin type, published once per token by anyone (docs/js/sui-ikiz.js) */
+  const suiDurum = el("div", { sinif: "yazi yazi--kucuk yazi--sessiz" });
+  const suiDugme = el("button", { sinif: "dugme dugme--sessiz", attr: { type: "button" }, yazi: "Register this token's Sui coin (Sui wallet)" });
+  suiDugme.addEventListener("click", async () => {
+    const durum = (x) => { suiDurum.textContent = x; };
+    try {
+      if (!V2 || !V2.uzak || !V2.uzak.sui) return durum("Opens with the second generation.");
+      const m = await import("../sui-ikiz.js");
+      const r = await m.tipiKaydet({ paket: V2.uzak.sui.ikizPaket, kapi: V2.uzak.sui.kapiNesne, token: token.value.trim(), durum });
+      durum("Registered: " + r.tip + (r.teslim ? "; " + r.teslim + " waiting transfer(s) delivered." : "."));
+    } catch (x) { durum((x && x.message) || "Could not register."); }
+  });
   const satDugme = el("button", { sinif: "dugme dugme--sessiz", attr: { type: "button" }, yazi: "Sell" });
   const itfaDugme = el("button", { sinif: "dugme dugme--sessiz", attr: { type: "button" }, yazi: "Redeem from the basket" });
   satDugme.addEventListener("click", () => gonder(0));
@@ -346,10 +562,15 @@ export async function ciz({ param } = {}) {
 
   kap.append(panel("Buy, sell, redeem", el("div", { sinif: "yigin" }, [
     token, fiyatYazi,
+    el("div", { sinif: "girdi-grup" }, [kayma, el("span", { sinif: "girdi-grup__son", yazi: "% slippage limit" })]),
     el("div", { sinif: "alan__ipucu", yazi: "Buy: pay on your chain in its gas token; the tokens arrive on your chain." }),
     el("div", { sinif: "girdi-grup" }, [alTutar, el("span", { sinif: "girdi-grup__son", yazi: "$" })]), alDugme, alDurum,
     el("div", { sinif: "alan__ipucu", yazi: "Sell or redeem tokens you hold on your chain. A sale that cannot meet its minimum returns the tokens to your address on Arc instead; nothing is left in the gate." }),
     el("div", { sinif: "girdi-grup" }, [satTutar, el("span", { sinif: "girdi-grup__son", yazi: "tokens" })]),
-    el("div", { sinif: "girdi-grup" }, [satDugme, itfaDugme]), satDurum])));
+    el("div", { sinif: "girdi-grup" }, [satDugme, itfaDugme]), satDurum,
+    ...(V2 ? [el("div", { sinif: "alan__ipucu", yazi: "Move tokens you hold on Arc to Solana, Sui or Aptos. The first one to move a token to a chain creates its twin there." }),
+      el("div", { sinif: "girdi-grup" }, [tasZincir, tasTutar, el("span", { sinif: "girdi-grup__son", yazi: "tokens" })]), tasAlici, tasDugme, tasDurum,
+      el("div", { sinif: "alan__ipucu", yazi: "On Sui a coin is its own type: once per token, anyone publishes it (4 approvals in a Sui wallet). Until then transfers to Sui wait there, safe, and are delivered by the same step." }),
+      suiDugme, suiDurum] : [])])));
   return kap;
 }

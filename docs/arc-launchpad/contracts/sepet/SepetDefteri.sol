@@ -9,10 +9,14 @@ import {IHaberci, IHaberAlici, IERC20S, SepetMesaj, Adres} from "./IHaberci.sol"
 /// five assets, each on whichever chain it lives on, each at least
 /// ASGARI_KALEM dollars) and its supply. From then on the Defter does three
 /// things and nothing else:
-///   - sends each basket line's dollars to the vault on that line's chain,
-///     with the order to buy;
-///   - collects trading tax from every chain and, every ESIK dollars, spends
-///     it on the basket at the launch's own weights;
+///   - keeps every basket line's dollars here, as USDC, on that line's own
+///     account: the founder's dollars for the line, and the line's share of
+///     every trading tax (at the launch's weights) from whichever chain;
+///   - the moment a line's account reaches ESIK ($50), sends it all to the
+///     vault on that line's chain with the order to buy (user, 18 Oct: "every
+///     $50 of USDC buys the collateral token"). It happens inside the call
+///     that brought the dollars — no one has to trigger it — and a send that
+///     fails leaves the dollars waiting, never the trade;
 ///   - turns a burn on any chain into a redemption: each vault sells the
 ///     holder's share and pays them on their chain.
 ///
@@ -32,15 +36,10 @@ contract SepetDefteri is IHaberAlici {
     IERC20S public immutable usdc;
 
     uint256 public constant ASGARI_KALEM = 4e6;   // $4 per basket line
-    /// Ethereum mainnet (CCTP domain 0): buying into a vault there costs a
-    /// few dollars of gas, so a line there is at least $25, and its share of
-    /// a tax re-buy waits until it reaches $25 too.
-    uint32 public constant ETHEREUM = 0;
-    uint256 public constant ASGARI_ETHEREUM = 25e6;
     uint256 public constant AZAMI_KALEM = 5;
-    /// a launch's Ethereum line's share of re-buys, waiting to reach $25
+    /// each line's dollars waiting here, as USDC, until they reach ESIK
     mapping(uint64 => mapping(uint256 => uint256)) public biriken;
-    uint256 public constant ESIK = 50e6;          // re-buy every $50 of tax
+    uint256 public constant ESIK = 50e6;          // a line buys in $50 lots (or more)
 
     /// The launchpad (also the burner) and the basket vault on each chain.
     mapping(uint32 => bytes32) public launchpad;
@@ -78,7 +77,7 @@ contract SepetDefteri is IHaberAlici {
     event Kayit(uint64 indexed id, uint32 zincir, bytes32 token, uint256 arz, uint256 kalem, uint256 dolar);
     event Gonderildi(uint64 indexed id, uint32 zincir, bytes32 varlik, uint256 dolar);
     event Vergi(uint64 indexed id, uint256 dolar, uint256 bekleyen);
-    event Dagitildi(uint64 indexed id, uint256 dolar);
+    event Bekletildi(uint64 indexed id, uint32 zincir, uint256 dolar);
     event Itfa(uint64 indexed id, uint256 miktar, uint256 arzOnce, uint32 hedefZincir, bytes32 alici, uint256 vergiPayi);
 
     error SadeceKurucu();
@@ -89,8 +88,10 @@ contract SepetDefteri is IHaberAlici {
     error KotuSepet();
     error KotuMesaj();
     error BilinmeyenLaunch();
-    error EsikAltinda();
     error Yeniden_();
+    /// An island vault pays only an EVM address (on the island): a holder
+    /// redeeming a launch with an island line names one.
+    error AdaEvmIster(uint32 ada);
 
     modifier kilitli() {
         if (_kilit) revert Yeniden_();
@@ -156,9 +157,10 @@ contract SepetDefteri is IHaberAlici {
         for (uint256 i = 0; i < k.length; i++) {
             kalemler[id].push(k[i]);
             teklifler[id].push(ref[i]);
-            _alGonder(id, k[i], k[i].dolar, ref[i]);
+            biriken[id][i] = k[i].dolar;
         }
         emit Kayit(id, kaynakZincir, token, arz, k.length, toplam);
+        _esikleriGonder(id);
     }
 
     function sepetGecerli(uint32 kaynakZincir, bytes32 token, uint256 arz, Kalem[] memory k, uint256[] memory ref, uint256 gelen)
@@ -169,7 +171,6 @@ contract SepetDefteri is IHaberAlici {
         uint256 toplam;
         for (uint256 i = 0; i < k.length; i++) {
             if (k[i].dolar < ASGARI_KALEM || k[i].varlik == bytes32(0) || ref[i] == 0) return false;
-            if (k[i].zincir == ETHEREUM && k[i].dolar < ASGARI_ETHEREUM) return false;
             if (kasa[k[i].zincir] == bytes32(0)) return false;
             for (uint256 j = 0; j < i; j++) {
                 if (k[j].zincir == k[i].zincir && k[j].varlik == k[i].varlik) return false;
@@ -189,45 +190,59 @@ contract SepetDefteri is IHaberAlici {
         }
     }
 
-    function _alGonder(uint64 id, Kalem memory k, uint256 dolar, uint256 ref) internal {
-        usdc.approve(address(haberci), dolar);
-        haberci.gonder(k.zincir, kasa[k.zincir], abi.encode(SepetMesaj.AL, id, k.varlik, ref), dolar);
-        emit Gonderildi(id, k.zincir, k.varlik, dolar);
-    }
 
-    /// Trading tax from any chain. It waits here until ESIK.
+    /// Trading tax from any chain: split over the lines at the launch's own
+    /// weights, and every line that reaches ESIK buys, in this same call.
     function _vergi(uint32 kaynakZincir, bytes calldata veri, uint256 gelen) internal {
         (, bytes32 token) = abi.decode(veri, (uint8, bytes32));
         uint64 id = idOf[kaynakZincir][token];
         Launch storage L = launchlar[id];
         if (!L.var_) revert BilinmeyenLaunch();
-        L.vergi += gelen;
-        emit Vergi(id, gelen, L.vergi);
+        Kalem[] storage k = kalemler[id];
+        uint256 kalan = gelen;
+        for (uint256 i = 0; i < k.length; i++) {
+            /* the last line takes the rounding, so every dollar is booked */
+            uint256 d = i + 1 == k.length ? kalan : (gelen * k[i].dolar) / L.agirlikToplam;
+            kalan -= d;
+            biriken[id][i] += d;
+        }
+        emit Vergi(id, gelen, beklemede(id));
+        _esikleriGonder(id);
     }
 
-    /// Anyone, once a launch's waiting tax reaches ESIK: spend it all on the
-    /// basket, each line getting its founder's weight.
-    function dagit(uint64 id) external kilitli {
-        Launch storage L = launchlar[id];
-        if (!L.var_) revert BilinmeyenLaunch();
-        uint256 v = L.vergi;
-        if (v < ESIK) revert EsikAltinda();
-        L.vergi = 0;
+    /// Every line of `id` whose account holds ESIK or more: all of it goes to
+    /// its vault with the order to buy. A send that cannot go now (a
+    /// messenger fee it cannot cover, a chain not reachable yet) leaves the
+    /// dollars on the account; nothing above it reverts, and any later
+    /// dollars, or anyone calling `gonder`, try again.
+    function _esikleriGonder(uint64 id) internal {
         Kalem[] storage k = kalemler[id];
-        uint256 kalan = v;
         for (uint256 i = 0; i < k.length; i++) {
-            /* the last line takes the rounding, so every dollar is spent */
-            uint256 d = i + 1 == k.length ? kalan : (v * k[i].dolar) / L.agirlikToplam;
-            kalan -= d;
-            if (k[i].zincir == ETHEREUM) {
-                /* below $25 the gas would eat the line's share: it waits */
-                d += biriken[id][i];
-                if (d < ASGARI_ETHEREUM) { biriken[id][i] = d; continue; }
-                biriken[id][i] = 0;
+            uint256 d = biriken[id][i];
+            if (d < ESIK) continue;
+            biriken[id][i] = 0;
+            uint256 ref = (teklifler[id][i] * d) / k[i].dolar;
+            usdc.approve(address(haberci), d);
+            try haberci.gonder(k[i].zincir, kasa[k[i].zincir], abi.encode(SepetMesaj.AL, id, k[i].varlik, ref), d) {
+                emit Gonderildi(id, k[i].zincir, k[i].varlik, d);
+            } catch {
+                biriken[id][i] = d;
+                usdc.approve(address(haberci), 0);
+                emit Bekletildi(id, k[i].zincir, d);
             }
-            if (d > 0) _alGonder(id, k[i], d, (teklifler[id][i] * d) / k[i].dolar);
         }
-        emit Dagitildi(id, v);
+    }
+
+    /// Anyone: try again the lines of `id` that reached ESIK but could not go.
+    function gonder(uint64 id) external kilitli {
+        if (!launchlar[id].var_) revert BilinmeyenLaunch();
+        _esikleriGonder(id);
+    }
+
+    /// Dollars of `id` waiting here, all lines together (USDC, part of the collateral).
+    function beklemede(uint64 id) public view returns (uint256 t) {
+        uint256 n = kalemler[id].length;
+        for (uint256 i = 0; i < n; i++) t += biriken[id][i];
     }
 
     /// Tokens were burned on `kaynakZincir` for redemption. Each vault in
@@ -243,9 +258,12 @@ contract SepetDefteri is IHaberAlici {
         if (miktar == 0 || miktar > arz) revert KotuMesaj();
         L.arz = arz - miktar;
 
-        uint256 vp = (L.vergi * miktar) / arz;
-        L.vergi -= vp;
-        Kalem[] storage kk = kalemler[id];
+        Kalem[] storage k = kalemler[id];
+        /* an island vault pays only an EVM address: refused before anything moves */
+        if (uint256(alici) >> 160 != 0) for (uint256 i = 0; i < k.length; i++) if (_ada(k[i].zincir)) revert AdaEvmIster(k[i].zincir);
+
+        uint256 vp;
+        Kalem[] storage kk = k;
         for (uint256 i = 0; i < kk.length; i++) {
             uint256 b = biriken[id][i];
             if (b == 0) continue;
@@ -256,7 +274,6 @@ contract SepetDefteri is IHaberAlici {
         if (vp > 0) _ode(hz, alici, vp);
 
         /* one order per vault chain, naming every asset of this launch there */
-        Kalem[] storage k = kalemler[id];
         for (uint256 i = 0; i < k.length; i++) {
             bool once;
             for (uint256 j = 0; j < i; j++) if (k[j].zincir == k[i].zincir) once = true;
@@ -266,10 +283,17 @@ contract SepetDefteri is IHaberAlici {
             bytes32[] memory v = new bytes32[](n);
             n = 0;
             for (uint256 j = i; j < k.length; j++) if (k[j].zincir == k[i].zincir) v[n++] = k[j].varlik;
-            /* Solana, Sui and Aptos reach islands (BNB, Robinhood) only through
-               Arc: their share for an island holder is paid on Arc, to the same
-               EVM address */
-            uint32 oz = (_evmDisi(k[i].zincir) && _ada(hz)) ? haberci.zincir() : hz;
+            /* An island vault (BNB, Robinhood) has no road out but relay's
+               fixed deposit addresses: it pays its share on the island itself,
+               to the same EVM address. Solana, Sui and Aptos reach islands
+               only through Arc: their share for an island holder is paid on
+               Arc, to the same EVM address. */
+            uint32 oz;
+            if (_ada(k[i].zincir)) {
+                oz = k[i].zincir;
+            } else {
+                oz = (_evmDisi(k[i].zincir) && _ada(hz)) ? haberci.zincir() : hz;
+            }
             haberci.gonder(k[i].zincir, kasa[k[i].zincir], abi.encode(SepetMesaj.SAT, id, v, miktar, arz, oz, alici), 0);
         }
         emit Itfa(id, miktar, arz, hz, alici, vp);

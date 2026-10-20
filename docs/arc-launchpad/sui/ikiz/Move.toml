@@ -1,0 +1,11 @@
+[package]
+name = "PulseIkiz"
+version = "0.0.1"
+edition = "2024.beta"
+
+[addresses]
+ikiz = "0x0"
+
+[dependencies]
+OApp = { local = "C:/Users/omen/araclar/lz/LayerZero-v2/packages/layerzero-v2/sui/contracts/oapps/oapp" }
+PtbMoveCall = { local = "C:/Users/omen/araclar/lz/LayerZero-v2/packages/layerzero-v2/sui/contracts/ptb-builders/ptb-move-call" }

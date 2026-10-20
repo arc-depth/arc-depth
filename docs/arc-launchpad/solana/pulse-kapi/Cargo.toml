@@ -1,0 +1,25 @@
+[package]
+name = "pulse-kapi"
+version = "0.1.0"
+edition = "2021"
+description = "ARC PULSE gate on Solana: the LayerZero OApp for launch-token twins (from the Arc IkizHub) and basket orders (from the Arc HaberciLZ)"
+license = "BUSL-1.1"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+
+[features]
+default = []
+no-entrypoint = []
+local-test = []
+
+[dependencies]
+pinocchio = { version = "0.11.2", features = ["cpi"] }
+pinocchio-token = "0.7.0"
+pinocchio-system = "0.6.1"
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(target_os, values("solana"))', 'cfg(feature, values("custom-heap", "custom-panic"))'] }
+
+[profile.release]
+overflow-checks = true

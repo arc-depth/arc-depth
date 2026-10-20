@@ -43,6 +43,20 @@ export const SEPET = {
   aptos: { paket: "0x0a848e04efa359646980ab1d3f435302f99da3eb72b0afae75204a3a07b65593", kasa: "0x577689cb7e74c3a38b762bf1d5af27ffcea8638b0c1e10669c3afa6096a2cfda" },
 };
 
+/// The second generation, once deployed AND wired: scripts/dagit-v2.js writes
+/// docs/veri/sepet-v2.json only then. Before that (or outside a browser) null.
+/// Its vaults all hold a 6-decimal dollar (Dolar6 on BNB, USDG on Robinhood).
+export async function sepetV2() {
+  const j = await fetch("veri/sepet-v2.json", { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+  if (!j) return null;
+  const kasa = {}, dolar = {};
+  for (const z of Object.values(j.zincir)) { kasa[z.domain] = z.kasa; dolar[z.domain] = z.dolar; }
+  const u = j.uzak || {};
+  return { kapi: j.kapi, defter: j.defter, lp5: j.launchpad, yayici: SEPET.yayici, kasa, dolar,
+    sui: u.sui && u.sui.kasa ? { paket: u.sui.paket, kasa: u.sui.kasa } : null,
+    aptos: u.aptos && u.aptos.kasa ? { paket: u.aptos.hesap, kasa: u.aptos.kasa } : null, v2: true };
+}
+
 /* CCTP domain → chain; usdcDec is the vault's dollar on that chain */
 export const ZINCIRLER = {
   26: { ad: "Arc", kasif: "https://explorer.arc.io", usdc: "0x3600000000000000000000000000000000000000", rpc: "https://arc-rpc.publicnode.com", id: 5042, ds: null, usdcDec: 6 },
@@ -69,6 +83,8 @@ const DEFTER_ABI = [
   "function idOf(uint32,bytes32) view returns (uint64)",
   "function sepet(uint64) view returns ((uint32 zincir, bytes32 varlik, uint256 dolar)[])",
   "function launchlar(uint64) view returns (uint32 zincir, bytes32 token, uint256 arz, uint256 agirlikToplam, uint256 vergi, bool var_)",
+  /* each line's dollars waiting on Arc as USDC (the $50 rule; v1 used it for Ethereum lines only) */
+  "function biriken(uint64, uint256) view returns (uint256)",
 ];
 const KASA_ABI = [
   "function bakiye(uint64,address) view returns (uint256)",
@@ -102,6 +118,7 @@ async function piyasaFiyati(ds, adres) {
 async function evmSatirlari(cfg, d, id, satirlar) {
   const z = ZINCIRLER[d], kasa = new Contract(cfg.kasa[d], KASA_ABI, saglayici(d));
   const dolar = await kasa.usdcBakiye(id);
+  const dd = cfg.dolar && cfg.dolar[d] ? 6 : z.usdcDec;
   const kalemler = await Promise.all(satirlar.map(async (s) => {
     const varlik = "0x" + s.varlik.slice(26);
     const [miktar, son, dec] = await Promise.all([kasa.bakiye(id, varlik), kasa.sonFiyat(varlik),
@@ -109,11 +126,11 @@ async function evmSatirlari(cfg, d, id, satirlar) {
     const piyasa = await piyasaFiyati(z.ds, varlik);
     let deger = null, kaynak = null;
     if (piyasa != null) { deger = ham(miktar, Number(dec)) * piyasa; kaynak = "market"; }
-    else if (son.varlik > 0n) { deger = ham((miktar * son.usdc) / son.varlik, z.usdcDec); kaynak = "last auction"; }
+    else if (son.varlik > 0n) { deger = ham((miktar * son.usdc) / son.varlik, dd); kaynak = "last auction"; }
     else if (miktar === 0n) { deger = 0; kaynak = "empty"; }
     return { ...s, adres: varlik, miktar, ondalik: Number(dec), deger, kaynak };
   }));
-  return { bekleyen: ham(dolar, z.usdcDec), kalemler };
+  return { bekleyen: ham(dolar, dd), kalemler };
 }
 
 /* ---- Sui: the vault's dynamic fields name the coin type ---- */
@@ -187,12 +204,21 @@ export async function teminatDurumu(token, cfg = SEPET) {
   for (const s of satirlar) (gruplar[s.zincir] ||= []).push(s);
   const sonuc = await Promise.all(Object.entries(gruplar).map(([d, ss]) => {
     d = Number(d);
-    const okur = d === 8 ? suiSatirlari(cfg, id, ss) : d === 9 ? aptosSatirlari(cfg, id, ss) : cfg.kasa[d] ? evmSatirlari(cfg, d, id, ss) : null;
+    const okur = d === 8 ? (cfg.sui ? suiSatirlari(cfg, id, ss) : null) : d === 9 ? (cfg.aptos ? aptosSatirlari(cfg, id, ss) : null)
+      : cfg.kasa[d] ? evmSatirlari(cfg, d, id, ss) : null;
     return okur ? okur.then((x) => ({ d, ...x })).catch((e) => ({ d, hata: e.message, kalemler: ss.map((s) => ({ ...s, deger: null })) }))
       : Promise.resolve({ d, hata: "no vault on " + ZINCIRLER[d].ad, kalemler: ss.map((s) => ({ ...s, deger: null })) });
   }));
+  /* A chain whose vault holds nothing yet for this launch (no units, no dollars) is waiting for its
+     CCTP delivery: the line's dollars left Arc and are on their way, so they count at what was sent. */
+  for (const x of sonuc) {
+    if (x.hata || (x.bekleyen || 0) > 0 || x.kalemler.some((k) => k.miktar && k.miktar > 0n)) continue;
+    for (const k of x.kalemler) { k.deger = k.ilk; k.kaynak = "on its way"; }
+  }
   const kalemler = sonuc.flatMap((x) => x.kalemler.map((k) => ({ ...k, zincirAd: ZINCIRLER[x.d].ad })));
-  const bekleyen = sonuc.reduce((a, x) => a + (x.bekleyen || 0), 0) + ham(l.vergi, 6);
+  const defterde = (await Promise.all(sepet.map((_, i) => defter.biriken(id, i)))).reduce((a, b) => a + b, 0n);
+  /* waiting in the vaults' auctions + waiting on Arc on the line accounts + tax not yet split (v1) */
+  const bekleyen = sonuc.reduce((a, x) => a + (x.bekleyen || 0), 0) + ham(l.vergi, 6) + ham(defterde, 6);
   const eksik = kalemler.filter((k) => k.deger == null).length;
   const ilk = satirlar.reduce((a, s) => a + s.ilk, 0);
   const simdi = kalemler.reduce((a, k) => a + (k.deger || 0), 0) + bekleyen;
@@ -264,11 +290,12 @@ export async function kasaOzeti(d, cfg = SEPET, tara = 40) {
     return { kasa: cfg.aptos.kasa, dolar: null, ihaleSayisi: Number(n), acik: null };
   }
   const p = saglayici(d), k = new Contract(cfg.kasa[d], IHALE_ABI, p);
-  const [dolar, n] = await Promise.all([new Contract(z.usdc, ["function balanceOf(address) view returns (uint256)"], p).balanceOf(cfg.kasa[d]), k.ihaleSayisi()]);
+  const dAdres = cfg.dolar && cfg.dolar[d] ? cfg.dolar[d] : z.usdc, dd = cfg.dolar && cfg.dolar[d] ? 6 : z.usdcDec;
+  const [dolar, n] = await Promise.all([new Contract(dAdres, ["function balanceOf(address) view returns (uint256)"], p).balanceOf(cfg.kasa[d]), k.ihaleSayisi()]);
   const sayi = Number(n), ids = [];
   for (let i = sayi - 1; i >= Math.max(0, sayi - tara); i--) ids.push(i);
   const hepsi = await Promise.all(ids.map((i) => k.ihaleler(i).then((h) => ({ id: i, ...h.toObject() }))));
   const acik = await Promise.all(hepsi.filter((h) => !h.bitti).map(async (h) => ({ id: h.id, tur: Number(h.tur) === 1 ? "buy" : "sell", launchId: Number(h.launchId),
     varlik: h.varlik, verilen: h.verilen, istenen: await k.istenen(h.id), baslama: Number(h.baslama) })));
-  return { kasa: cfg.kasa[d], dolar: ham(dolar, z.usdcDec), ihaleSayisi: sayi, acik };
+  return { kasa: cfg.kasa[d], dolar: ham(dolar, dd), ihaleSayisi: sayi, acik };
 }

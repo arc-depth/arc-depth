@@ -24,7 +24,7 @@ const USDC_ARC = "0x3600000000000000000000000000000000000000";
 const SIFIR = "0x0000000000000000000000000000000000000000";
 const SOL_NATIVE = "11111111111111111111111111111111";
 const ORNEK = "0x000000000000000000000000000000000000dEaD";   // a stand-in user; nothing is signed
-const K = new Interface(JSON.parse(fs.readFileSync(path.join(KOK, "build", "MerkezKapi.json"), "utf8")).abi);
+const K = require("./merkez-abi-v1");   // the deployed gate, not build/ (which is the next version)
 const E = new Interface(["function approve(address,uint256) returns (bool)"]);
 const sec = (gaz) => solidityPacked(["uint16", "uint8", "uint16", "uint8", "uint128"], [3, 1, 17, 1, gaz]);
 

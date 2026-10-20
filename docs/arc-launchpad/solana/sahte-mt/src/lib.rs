@@ -3,9 +3,15 @@
 //! a CPI into the receiver, signed by the authority PDA
 //! ["message_transmitter_authority", receiver], with the data given. The
 //! attestation, nonce and header checks of the real program are not here;
-//! the receiver's own checks are what the tests measure.
+//! the receiver's own checks are what the tests measure. One check of the
+//! real program IS here, because a sender can get it wrong: the caller must
+//! sign, and when the message names a destination caller it must be that
+//! caller (circlefin/solana-cctp-contracts v2 receive_message.rs). An Arc
+//! Haberci order to Solana names the recipient program itself, which can
+//! never sign (found 18 Oct; Solana goes through LayerZero instead).
 //!
-//! accounts: [authority w, receiver program, ...forwarded]; data: the CPI data
+//! accounts: [caller s, authority w, receiver program, ...forwarded];
+//! data: destination_caller (32 bytes, zero = anyone) then the CPI data
 #![cfg_attr(target_os = "solana", no_std)]
 
 #[cfg(target_os = "solana")]
@@ -18,7 +24,12 @@ mod program {
     };
 
     pub fn process(program_id: &Address, accounts: &mut [AccountView], data: &[u8]) -> ProgramResult {
-        if accounts.len() < 2 || accounts.len() > 16 { return Err(ProgramError::NotEnoughAccountKeys); }
+        if accounts.len() < 3 || accounts.len() > 17 || data.len() < 32 { return Err(ProgramError::NotEnoughAccountKeys); }
+        let (hedef_cagiran, data) = data.split_at(32);
+        if hedef_cagiran != [0u8; 32] && !(accounts[0].is_signer() && accounts[0].address().as_ref() == hedef_cagiran) {
+            return Err(ProgramError::MissingRequiredSignature);   // InvalidDestinationCaller in the real program
+        }
+        let accounts = &mut accounts[1..];
         let receiver = *accounts[1].address();
         let (yetki, bump) = Address::find_program_address(&[b"message_transmitter_authority", receiver.as_ref()], program_id);
         if *accounts[0].address() != yetki { return Err(ProgramError::InvalidSeeds); }

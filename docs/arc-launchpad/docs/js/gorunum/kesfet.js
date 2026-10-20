@@ -23,7 +23,7 @@ import { ikon } from "../ikon.js";
 import { EKONOMI } from "../adresler.js";
 import { para } from "../bicim.js";
 import { JsonRpcProvider, Contract } from "../../vendor/ethers.min.js";
-import { teminatDurumu, islemZincirleri, cikisZinciri } from "../teminat-izle.js";
+import { teminatDurumu, islemZincirleri, cikisZinciri, sepetV2, SEPET } from "../teminat-izle.js";
 
 const LP5 = "0x52e600c8259ca44D9837B7b9E6BA1faee4bC040d";   // PulseLaunchpad5, the one pool's registry (dagitim-sepet.json)
 const LP5_ABI = [
@@ -39,8 +39,8 @@ const SEPET_ACIK = ["Arc", "Base", "Arbitrum", "Avalanche", "Monad", "HyperEVM",
    launches. Older ones drop off the end as new ones arrive. */
 const SAYFA_BOY = 10, AZAMI_SAYFA = 200;
 
-async function arcListesi(sayfa) {
-  const lp = new Contract(LP5, LP5_ABI, arc);
+async function arcListesi(sayfa, lpAdres = LP5) {
+  const lp = new Contract(lpAdres, LP5_ABI, arc);
   const n = Number(await lp.launchCount());
   const gorunur = Math.min(n, SAYFA_BOY * AZAMI_SAYFA);
   const sayfaSayisi = Math.max(1, Math.ceil(gorunur / SAYFA_BOY));
@@ -99,7 +99,7 @@ function teminatKarti(s, cfg) {
   let onceki = null;
   const doldur = async () => {
     const [tz, td, hf] = await Promise.allSettled([onceki ? Promise.resolve(null) : islemZincirleri(s.token, cfg), teminatDurumu(s.token, cfg),
-      import("./merkez.js").then((m) => m.havuzFiyati(s.token))]);
+      import("./merkez.js").then((m) => m.havuzFiyati(s.token, cfg.lp5))]);
     if (!onceki) {
       if (tz.status === "fulfilled") {
         zincirler.replaceChildren(...tz.value.zincirler.map(zincirCipi));
@@ -120,7 +120,7 @@ function teminatKarti(s, cfg) {
     ilk.textContent = para(t.ilk);
     if (t.arz > 0) destek.textContent = kucukPara(t.simdi / t.arz);
     if (hf.status === "fulfilled" && Number.isFinite(hf.value) && hf.value > 0) fiyat.textContent = kucukPara(hf.value);
-    kalemler.textContent = t.kalemler.map((k) => k.zincirAd + " " + (k.deger == null ? "price n/a" : para(k.deger)) + (k.kaynak === "last auction" ? " (last auction)" : "")).join(" · ") +
+    kalemler.textContent = t.kalemler.map((k) => k.zincirAd + " " + (k.deger == null ? "price n/a" : para(k.deger)) + (k.kaynak === "last auction" ? " (last auction)" : k.kaynak === "on its way" ? " (on its way)" : "")).join(" · ") +
       (t.bekleyen > 0.000001 ? " · waiting to be bought " + para(t.bekleyen) : "") + (t.hatalar.length ? " · unreadable: " + t.hatalar.join("; ") : "");
   };
   doldur();
@@ -148,18 +148,22 @@ export async function ciz({ param }) {
   ]));
 
   const sayfa = Number((param && param.get("s")) || 1) || 1;
-  const [arcS, suiS, aptosS] = await Promise.allSettled([arcListesi(sayfa),
-    import("../sui.js").then((m) => m.launchListesi()), import("../aptos.js").then((m) => m.launchListesi())]);   // loaded here so a Move library failing never blanks the page
+  /* the second generation, once wired, is the main list; the first stays readable below it */
+  const v2 = await sepetV2();
+  const cfg = v2 || SEPET;
+  const [arcS, suiS, aptosS, eskiS] = await Promise.allSettled([arcListesi(sayfa, cfg.lp5),
+    import("../sui.js").then((m) => m.launchListesi()), import("../aptos.js").then((m) => m.launchListesi()), v2 ? arcListesi(1, SEPET.lp5) : Promise.resolve(null)]);   // loaded here so a Move library failing never blanks the page
 
   /* ---- facts that are true for every launch, plus the live count ---- */
   const izgara = el("div", { sinif: "izgara izgara--olcum" });
   const say = (s, f) => (s.status === "fulfilled" ? f(s.value) : null);
-  const sayilar = [say(arcS, (v) => v.n), say(suiS, (v) => v.length), say(aptosS, (v) => v.length)];
+  const sayilar = [say(arcS, (v) => v.n + (eskiS.status === "fulfilled" && eskiS.value ? eskiS.value.n : 0)), say(suiS, (v) => v.length), say(aptosS, (v) => v.length)];
   izgara.append(olcum("Launches", sayilar.every((x) => x != null) ? String(sayilar.reduce((a, b) => a + b, 0)) : "—",
     "Arc " + (sayilar[0] ?? "—") + " · Sui " + (sayilar[1] ?? "—") + " · Aptos " + (sayilar[2] ?? "—")));
   izgara.append(olcum("Opening market cap", para(EKONOMI.acilisMcap, { kisalt: true }), "the same price for every launch"));
   izgara.append(olcum("Trading fee", "2.2%", "plus the token's collateral tax (1–5%)"));
-  izgara.append(olcum("Collateral chains", SEPET_ACIK.length + " of 12", "Robinhood waits on Circle's CCTP route; Solana not open yet"));
+  if (v2) izgara.append(olcum("Collateral chains", (cfg.kasa[5] ? 12 : 11) + " of 12", cfg.kasa[5] ? "every chain" : "Solana opens when its gate is wired"));
+  else izgara.append(olcum("Collateral chains", SEPET_ACIK.length + " of 12", "Robinhood waits on Circle's CCTP route; Solana not open yet"));
   kap.append(izgara);
 
   /* ---- the one pool on Arc: collateral cards, newest first ---- */
@@ -172,7 +176,7 @@ export async function ciz({ param }) {
   } else {
     const v = arcS.value;
     const satirlar = v.liste.filter(uyar);
-    const izg = el("div", { sinif: "izgara izgara--kart" }, satirlar.map(teminatKarti));
+    const izg = el("div", { sinif: "izgara izgara--kart" }, satirlar.map((x) => teminatKarti(x, cfg)));
     kap.append(panel(BASLIK, el("div", { sinif: "yigin" }, [
       el("div", { sinif: "yazi yazi--kucuk yazi--sessiz", yazi: "Collateral now = what each vault holds for the token at market price (DexScreener; the vault's last auction price where the market has none) plus dollars waiting to be bought. Change is against what the founder put in. Newest first; the 2,000 newest are kept." }),
       satirlar.length ? izg : bos("No matches", 'Nothing on this page for "' + arama + '".'),
@@ -183,10 +187,15 @@ export async function ciz({ param }) {
     if (v.sayfa === 1) {
       const zamanlayici = setInterval(async () => {
         if (!document.body.contains(kap)) return clearInterval(zamanlayici);
-        const n = Number(await new Contract(LP5, LP5_ABI, arc).launchCount().catch(() => v.n));
+        const n = Number(await new Contract(cfg.lp5, LP5_ABI, arc).launchCount().catch(() => v.n));
         if (n !== v.n) { clearInterval(zamanlayici); window.dispatchEvent(new HashChangeEvent("hashchange")); }
       }, 30_000);
     }
+  }
+
+  /* ---- the first generation (before the second was wired): its launches stay readable ---- */
+  if (eskiS.status === "fulfilled" && eskiS.value && eskiS.value.liste.length) {
+    kap.append(panel("First generation", el("div", { sinif: "izgara izgara--kart" }, eskiS.value.liste.filter(uyar).map((x) => teminatKarti(x, SEPET)))));
   }
 
   /* ---- tokens living on Sui and Aptos ---- */

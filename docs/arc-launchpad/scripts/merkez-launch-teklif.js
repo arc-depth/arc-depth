@@ -6,7 +6,7 @@ const fs = require("fs");
 const { Interface, zeroPadValue, solidityPacked } = require("ethers");
 const KOK = "C:/arc-launchpad";
 const KAPI = JSON.parse(fs.readFileSync(KOK + "/dagitim-sepet.json", "utf8")).merkez.MerkezKapi;
-const K = new Interface(JSON.parse(fs.readFileSync(KOK + "/build/MerkezKapi.json", "utf8")).abi);
+const K = require("./merkez-abi-v1");   // the deployed gate, not build/ (which is the next version)
 const E = new Interface(["function approve(address,uint256) returns (bool)"]);
 const sec = (g) => solidityPacked(["uint16", "uint8", "uint16", "uint8", "uint128"], [3, 1, 17, 1, g]);
 const KURUCU = "0x000000000000000000000000000000000000dEaD";

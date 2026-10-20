@@ -1,0 +1,87 @@
+{
+ "zaman": "2026-10-20T00:03:54.109Z",
+ "kapi": "0x6740E27634E1E83E0562AD2fFdBcEB3C0958aeE9",
+ "launchpad": "0xa3248B933020d6699d402609622d3235df8c2E19",
+ "ucu": "0x4232e8Abe3AD018C374dc85FBE34e44e733e2db3",
+ "defter": "0x42AC31Cbe29FdFF6B5C3C04ef15d43685606e129",
+ "hub": "0xF1C0DfC647908808dACC7c64Eed1f75FEA67D2e2",
+ "aktarma": "0x383257941127a5Da0aBfA16EAb32810EC06fc8cE",
+ "hook": "0x488aFbCC5f01137579B3c72e89393F412BAB6Ecc",
+ "zincir": {
+  "arc": {
+   "domain": 26,
+   "haberci": "0x994534bA2023c1B3831765B141BA41EA8c57FAC1",
+   "kasa": "0x72cCb48eDf918b4D5D26E15d62294168D3b88B14",
+   "dolar": "0x3600000000000000000000000000000000000000"
+  },
+  "base": {
+   "domain": 6,
+   "haberci": "0x611F9C36D91B474E8C4Fa95f67e315A76BCFc32c",
+   "kasa": "0x68B4E387D17cb0918afbfE758d4348b1883c4839",
+   "dolar": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
+  },
+  "arbitrum": {
+   "domain": 3,
+   "haberci": "0x4A500118Be1b5Ea77d4883FC94b9e678fE4008Ff",
+   "kasa": "0xaC170EE5FF4c85E569644203E0b8d46be97fD47B",
+   "dolar": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831"
+  },
+  "ethereum": {
+   "domain": 0,
+   "haberci": "0x0929aF000aC0de282dd965D6B853b74Ab0911F9D",
+   "kasa": "0xd2EB455e335919FEcaB662C1C77F17e9203b5733",
+   "dolar": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"
+  },
+  "avalanche": {
+   "domain": 1,
+   "haberci": "0x5ABCF3Dbe86F9ffC5e69E13686Ec2876b29124A6",
+   "kasa": "0xD01A595535C9c5A55F3D0F9784bFAb51D8AFdf59",
+   "dolar": "0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E"
+  },
+  "monad": {
+   "domain": 15,
+   "haberci": "0x5ABCF3Dbe86F9ffC5e69E13686Ec2876b29124A6",
+   "kasa": "0xD01A595535C9c5A55F3D0F9784bFAb51D8AFdf59",
+   "dolar": "0x754704Bc059F8C67012fEd69BC8A327a5aafb603"
+  },
+  "hyperevm": {
+   "domain": 19,
+   "haberci": "0xCe5b0513C3D5fB830227C06a3BE80Cca1C6FE233",
+   "kasa": "0x6d396fc6DC561402Aa64e7A1014485bc6Fd06C95",
+   "dolar": "0xb88339CB7199b77E23DB6E890353E22632Ba630f"
+  },
+  "bsc": {
+   "domain": 17,
+   "haberci": "0x4d486FcA7468fb171351C1573F2e55fA417c73C1",
+   "kasa": "0x6582EaaA0AedDb3020e9898344aF6ef99b8D593F",
+   "dolar": "0xb233F129F7255F86d67BDAEA4e8c4f8274Fa70d9"
+  },
+  "robinhood": {
+   "domain": 35,
+   "haberci": "0x386968f036cbc0d0965C81bf1fCEd0b40EE11E14",
+   "kasa": "0x9dDa76a903da7CA5Bb4485C6acF22E592502074E",
+   "dolar": "0x5fc5360d0400a0fd4f2af552add042d716f1d168"
+  }
+ },
+ "uzak": {
+  "sui": {
+   "kasa": "0xbb07b92b46d160d61280ebdd2f28f09801c5418208577f4156edad5da3f49956",
+   "ikizKapi": "0xe397f5cf0c1382cfff29068d73a60aa186436bcdfe3b0fdd8d46ba02a4446bfb",
+   "karsi": "0xfbfde49212ee06b71eec38c023b2b57e0eb3fb77ad8ebf206ba83a87857078ba",
+   "paket": "0x7c0a195af1e87cd0ef263fa4e5753c5fa35c630537557977d16e6ac94c044ea4",
+   "ikizPaket": "0xe397f5cf0c1382cfff29068d73a60aa186436bcdfe3b0fdd8d46ba02a4446bfb",
+   "kapiNesne": "0x05611ea5fa7f6b91d3cf9e934bd198d29c8898683b23995a6578706af5183dad",
+   "oapp": "0xfddd7363e4a8fc4fee42c47952beece8fdae712b4d3ff231b7cdb6588ba5fe46"
+  },
+  "aptos": {
+   "kasa": "0x7953f9d5bd4ea9f687a555fe67cfb24e403a5c92ab452854c8c2ac5bc8623098",
+   "ikizKapi": "0xcba3e9e320a9cc5874625975fde00a9dcb6aa79b758bd228913c76cb7c17cda3",
+   "karsi": "0xfdf43b35e245902c49680120506e368b48cbbc358659cd75d21fedcd87dbcdb3",
+   "hesap": "0x4ca2b44f0ff97006c5c148101257548dffc3a7a308201ac3020d2ae8de293701",
+   "ikizHesap": "0xcba3e9e320a9cc5874625975fde00a9dcb6aa79b758bd228913c76cb7c17cda3"
+  },
+  "solana": {
+   "kasa": "0x2023a1bf5548a5fb196f0673f6f9b78c0322878a16e6380a20bc302622ee9dbf"
+  }
+ }
+}

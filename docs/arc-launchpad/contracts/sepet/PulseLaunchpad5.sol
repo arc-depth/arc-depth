@@ -169,10 +169,14 @@ contract PulseLaunchpad5 {
          A tick is a 1,0001 step, so a price multiple m sits
          ln(m)/ln(1,0001) ticks away.
 
-         MERDIVEN_TICK  6.900  ->  1,0001^6900 = 1,99, and the ladder is
-           one-sided over that whole span, so the token has room to
-           roughly double before the rungs run out. Wider would spread
-           the same supply thinner where trading actually happens.
+         THE LADDER (19 Oct 2026): from the opening price to the last
+           usable tick (TickMath.maxUsableTick(60) = 887.220), one-sided.
+           The token never runs out: price follows x·y=k with a virtual
+           dollar reserve of (ladder tokens × opening price), the same
+           economy the Aptos and Sui pools already run. The earlier band,
+           MERDIVEN_TICK 6.900 (1,0001^6900 = 1,99), held the whole
+           ladder inside one doubling: measured on Arc mainnet (PTEST1)
+           ~$4.800 of buys took every token and later buys were refused.
 
          TEKLIF_TICK    9.180  ->  1,0001^-9180 = 0,399, a 60,1% fall.
            Not a round number and not arbitrary: the defence fires at a
@@ -185,7 +189,8 @@ contract PulseLaunchpad5 {
          olc-pulse-acici.js, including the direction — which FLIPS with
          the token's address ordering and was silently backwards on the
          first run. */
-    int24 public constant MERDIVEN_TICK = 6_900;
+    /// the ladder's far edge: the last tick a 60-spacing position may use
+    int24 public constant MERDIVEN_UC_TICK = 887_220;
     int24 public constant TEKLIF_TICK = 9_180;
 
     /* THE TWO POSSIBLE OPENING PRICES
@@ -436,11 +441,11 @@ contract PulseLaunchpad5 {
              ladder reached 2,5x instead of 2x and the bid covered 50%
              instead of 60% — and nothing reverted. */
         if (tokenSifirinci) {
-            ust = taban + MERDIVEN_TICK;      // ladder: dearer
+            ust = MERDIVEN_UC_TICK;           // ladder: dearer, without end
             alt = taban - TEKLIF_TICK;        // bid: cheaper
         } else {
             ust = taban + TEKLIF_TICK;        // bid is UP in tick space here
-            alt = taban - MERDIVEN_TICK;      // ladder is DOWN
+            alt = -MERDIVEN_UC_TICK;          // ladder is DOWN, without end
         }
     }
 

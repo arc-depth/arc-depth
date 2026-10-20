@@ -1,0 +1,144 @@
+{
+ "zincir": {
+  "arc": {
+   "n0": 1436,
+   "hookTuz": "0x0000000000000000000000000000000000000000000000000000000000001925",
+   "hookTahmin": "0x488aFbCC5f01137579B3c72e89393F412BAB6Ecc",
+   "hookInitHash": "0x26b8a37c3b17086530651bc3a833cbd5f8fd3178883c1d382c731c3437f5184e",
+   "HaberciLZ": "0x994534bA2023c1B3831765B141BA41EA8c57FAC1",
+   "SepetDefteri": "0x42AC31Cbe29FdFF6B5C3C04ef15d43685606e129",
+   "SepetKasasi": "0x72cCb48eDf918b4D5D26E15d62294168D3b88B14",
+   "SepetUcu": "0x4232e8Abe3AD018C374dc85FBE34e44e733e2db3",
+   "PulseFabrika4": "0x509a19DF89aF887D4cae7aA358596D82EE6Ae8E4",
+   "PulseLikiditeKasasi": "0x2c70a547BD99683f00D5976Cb682B59231B689cC",
+   "FthmYakici": "0x4D78b78A49a9AdDdfA9Be56d5F1bc33591452ff2",
+   "PulseLaunchpad5": "0xa3248B933020d6699d402609622d3235df8c2E19",
+   "IkizHub": "0xF1C0DfC647908808dACC7c64Eed1f75FEA67D2e2",
+   "MerkezKapi": "0x6740E27634E1E83E0562AD2fFdBcEB3C0958aeE9",
+   "PulseHook5": "0x488aFbCC5f01137579B3c72e89393F412BAB6Ecc",
+   "yenileme": {
+    "n1": 1447,
+    "hookTuz": "0x0000000000000000000000000000000000000000000000000000000000001804",
+    "hookTahmin": "0x488aFbCC5f01137579B3c72e89393F412BAB6Ecc",
+    "hookInitHash": "0x38f48f9956a3716b16eb089461edaa40e7bc763c407b1b7a903137861f7b0b5d",
+    "SepetUcu": "0x4232e8Abe3AD018C374dc85FBE34e44e733e2db3",
+    "PulseLikiditeKasasi": "0x2c70a547BD99683f00D5976Cb682B59231B689cC",
+    "PulseLaunchpad5": "0xa3248B933020d6699d402609622d3235df8c2E19",
+    "MerkezKapi": "0x6740E27634E1E83E0562AD2fFdBcEB3C0958aeE9"
+   },
+   "eski": {
+    "SepetUcu": "0x21375a853F9E7E4701F9338a498de1A9995407de",
+    "PulseLikiditeKasasi": "0xf2428FF64cA64495D5151fcaF836b86C8386aC1C",
+    "PulseLaunchpad5": "0xFEA1Bf91f72226Daf051a59F22ab25D4750c1fcA",
+    "MerkezKapi": "0xe9C5082Cc9be6B9bB26D11EA0F690010D7BC3DB1",
+    "PulseHook5": "0x614314285c1658824563b99FA4c76a0694222ecC",
+    "sebep": "2x merdiven: ~4.800 $ alimdan sonra token kalmiyordu (19 Eki)"
+   }
+  },
+  "base": {
+   "n0": 124,
+   "HaberciLZ": "0x611F9C36D91B474E8C4Fa95f67e315A76BCFc32c",
+   "SepetKasasi": "0x68B4E387D17cb0918afbfE758d4348b1883c4839",
+   "AktarmaLZ": "0x383257941127a5Da0aBfA16EAb32810EC06fc8cE"
+  },
+  "arbitrum": {
+   "n0": 78,
+   "HaberciLZ": "0x4A500118Be1b5Ea77d4883FC94b9e678fE4008Ff",
+   "SepetKasasi": "0xaC170EE5FF4c85E569644203E0b8d46be97fD47B"
+  },
+  "ethereum": {
+   "n0": 48,
+   "HaberciLZ": "0x0929aF000aC0de282dd965D6B853b74Ab0911F9D",
+   "SepetKasasi": "0xd2EB455e335919FEcaB662C1C77F17e9203b5733"
+  },
+  "avalanche": {
+   "n0": 63,
+   "HaberciLZ": "0x5ABCF3Dbe86F9ffC5e69E13686Ec2876b29124A6",
+   "SepetKasasi": "0xD01A595535C9c5A55F3D0F9784bFAb51D8AFdf59"
+  },
+  "monad": {
+   "n0": 63,
+   "HaberciLZ": "0x5ABCF3Dbe86F9ffC5e69E13686Ec2876b29124A6",
+   "SepetKasasi": "0xD01A595535C9c5A55F3D0F9784bFAb51D8AFdf59"
+  },
+  "hyperevm": {
+   "n0": 54,
+   "HaberciLZ": "0xCe5b0513C3D5fB830227C06a3BE80Cca1C6FE233",
+   "SepetKasasi": "0x6d396fc6DC561402Aa64e7A1014485bc6Fd06C95"
+  },
+  "bsc": {
+   "n0": 96,
+   "HaberciLZ": "0x4d486FcA7468fb171351C1573F2e55fA417c73C1",
+   "SepetKasasi": "0x6582EaaA0AedDb3020e9898344aF6ef99b8D593F",
+   "relayAdresi": "0x31e2420a4c0ae50c40ea1294366805bc02ccff43"
+  },
+  "robinhood": {
+   "n0": 1219,
+   "HaberciLZ": "0x386968f036cbc0d0965C81bf1fCEd0b40EE11E14",
+   "SepetKasasi": "0x9dDa76a903da7CA5Bb4485C6acF22E592502074E",
+   "relayAdresi": "0x16101bf7520b054a9e19fccb06d57f72ff18ace1"
+  }
+ },
+ "uzak": {
+  "sui": {
+   "paket": "0x7c0a195af1e87cd0ef263fa4e5753c5fa35c630537557977d16e6ac94c044ea4",
+   "upgradeCap": "0x549701e2fe115da017e6d902b5c2b377435bcc6daf5bed7280b813822ef0e113",
+   "haberci": "0xb2b3d29d2a8b30bf47ad4aff8e7f126f936c31a247fc02fc5f037b57067c5bf7",
+   "kasa": "0xbb07b92b46d160d61280ebdd2f28f09801c5418208577f4156edad5da3f49956",
+   "ikizArc": "HJsW1mL1Kb7WQwZqJRSaMXv9UFAN7RHy8wr4zxPJ7DY4",
+   "karsi": "0xfbfde49212ee06b71eec38c023b2b57e0eb3fb77ad8ebf206ba83a87857078ba",
+   "ikizPaket": "0xe397f5cf0c1382cfff29068d73a60aa186436bcdfe3b0fdd8d46ba02a4446bfb",
+   "ikizUpgradeCap": "0x5cfebdfebdddf0b6019c5818b725dd128cea6d7a3b8c483d0637e3c242892753",
+   "kapiNesne": "0x05611ea5fa7f6b91d3cf9e934bd198d29c8898683b23995a6578706af5183dad",
+   "oapp": "0xfddd7363e4a8fc4fee42c47952beece8fdae712b4d3ff231b7cdb6588ba5fe46",
+   "adminCap": "0x32ac455aa4592306c3e453ab2c40f36993fd349cffeb6c08d8d09e5b9679fc0c",
+   "ikizKapi": "0xe397f5cf0c1382cfff29068d73a60aa186436bcdfe3b0fdd8d46ba02a4446bfb",
+   "kuruldu": "DD5sFpU3aJuTvrViaqNYN1T1vD7CUnXsW2EeZEugtirG",
+   "lzAyar": "ANVsrGLHNXWNog9qY68zDHUY1YNB4tVeb8auvV42fofT",
+   "secenek": "0x00030100110100000000000000000000000000002710",
+   "ikinciAdim": "800000000000000"
+  },
+  "aptos": {
+   "tx": {
+    "fonlama 0x4ca2b44f": "0xb49059ab193cfb8b547c594638ded7a3dbdcff6011897c6845d3a3721334e431",
+    "fonlama 0xcba3e9e3": "0x87d4a8c7daab528b421a89b80e54d9e77ca7706b2db8ab9f5d879464009cb40a",
+    "publish pulse_sepet": "0x1cb3382c8a5f88e31ab9a740c3b430a6bf44c9563d61cd96851a5a6e1c4fd543",
+    "haberci::kur": "0x652a5ed1bde0d33a8b5fdb5aac0951abaea2d9ad585048439129c3115bdd27ec",
+    "ikiz_ekle(Arc)": "0x1d552dd1514d85172417b0b72a9333b2c63771bfdc1a11ead4730650a6c56767",
+    "publish pulse_ikiz": "0x75e8fc7c183e1b07d41b19b59313d82b371324618a28d63add15e9e880558273",
+    "kapi::kur": "0xb85d5b031d81017021c1b350e4eb14055638f7543369f614d4bbfa689a2b3c30",
+    "set_delegate": "0x10aa674437eb62605434a84e8b3ef8b5a9fb40e885c7952bcbbe1f575a60fa6d",
+    "set_peer Base": "0xb0461a63e96b303396b131310daf73b55d21f29583c52b059a861e2c47dec469",
+    "enforced Base": "0x29f74dfe4a1832d5a021f551bf8366c860204b49a679b878613a226379e623ff",
+    "ULN gonderim Base": "0x2b038d423892ffe4fd2ccaaae8d5351ace1e6d4daefbade864cef790888beb90",
+    "ULN alim Base": "0x77a7ec4d1fc236abf01cfb0d40f3a284060227f5898a161e44fbac19f18fcc57"
+   },
+   "hesap": "0x4ca2b44f0ff97006c5c148101257548dffc3a7a308201ac3020d2ae8de293701",
+   "ikizHesap": "0xcba3e9e320a9cc5874625975fde00a9dcb6aa79b758bd228913c76cb7c17cda3",
+   "haberci": "0xfdf43b35e245902c49680120506e368b48cbbc358659cd75d21fedcd87dbcdb3",
+   "kasa": "0x7953f9d5bd4ea9f687a555fe67cfb24e403a5c92ab452854c8c2ac5bc8623098",
+   "karsi": "0xfdf43b35e245902c49680120506e368b48cbbc358659cd75d21fedcd87dbcdb3",
+   "ikizKapi": "0xcba3e9e320a9cc5874625975fde00a9dcb6aa79b758bd228913c76cb7c17cda3",
+   "secenek": "0x00030100110100000000000000000000000000002710",
+   "ikinciAdim": "250000000000000"
+  },
+  "solana": {
+   "sepetProgram": "9VyBC6ygFQrEP6V212maFci9du6R32BbKHxKmF9Wecto",
+   "kapiProgram": "G91zXh4LCEzY7UgE3JWic3Kt5ckBsnibkgdAXABatWJQ",
+   "kapi": "0xfdcb3ea861236c21db0ad5ddb8a797ac88032eed654ca0d0dfee9d3811af8015",
+   "kasa": "0x2023a1bf5548a5fb196f0673f6f9b78c0322878a16e6380a20bc302622ee9dbf",
+   "dolarDepo": "0x79d1a9e94e92a5753877e78fd705e33093283cec668b6938e3634d1cd23c18b4",
+   "secenek": "0x00030100210100000000000000000000000000015f90000000000000000000000000001c9a58",
+   "ikizSecenek": "0x000301002101000000000000000000000000000186a00000000000000000000000000016b638",
+   "yaratSecenek": "0x000301002101000000000000000000000000000222e000000000000000000000000000e1d6d8",
+   "gonderSecenek": "0x000301001101000000000000000000000000000c3500",
+   "alt": "4Ny1wjXhrmDRnqP2rRwyZjYqePGpgVYfitGy9cwYqcTD",
+   "arcMaxMesaj": {
+    "HaberciLZ": 640,
+    "IkizHub": 512
+   }
+  }
+ },
+ "defter": "0x42AC31Cbe29FdFF6B5C3C04ef15d43685606e129",
+ "baglandi": "2026-10-20T00:03:54.109Z"
+}

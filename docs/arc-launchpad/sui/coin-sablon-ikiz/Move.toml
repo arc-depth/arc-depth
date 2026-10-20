@@ -1,0 +1,13 @@
+[package]
+name = "CoinSablonIkiz"
+version = "0.0.1"
+edition = "2024.beta"
+
+# The coin a launch token's Sui twin is made from. Anyone renames
+# IKIZ/ikiz and rewrites NAME/SYMBOL (move-bytecode-template) to what the
+# twin gate recorded for the token (ikiz::kapi::beklenen), publishes it, then
+# in one transaction calls coin_registry::finalize_registration and
+# ikiz::kapi::kaydet with the TreasuryCap. init mints nothing and deletes
+# the metadata cap: the gate refuses anything else.
+[addresses]
+ikiz_sablon = "0x0"
