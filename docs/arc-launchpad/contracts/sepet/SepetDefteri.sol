@@ -2,6 +2,7 @@
 pragma solidity ^0.8.26;
 
 import {IHaberci, IHaberAlici, IERC20S, SepetMesaj, Adres} from "./IHaberci.sol";
+import {CikisMesaj} from "./Cikis.sol";
 
 /// @title SepetDefteri — the ledger on Arc for every basket-backed launch
 ///
@@ -131,7 +132,7 @@ contract SepetDefteri is IHaberAlici {
         if (kaynak == bytes32(0) || launchpad[kaynakZincir] != kaynak) revert YetkisizKaynak();
         uint8 tur = uint8(uint256(bytes32(veri[:32])));
         if (tur == SepetMesaj.KAYIT) _kayit(kaynakZincir, veri, gelen);
-        else if (tur == SepetMesaj.ITFA) _itfa(kaynakZincir, veri);
+        else if (tur == SepetMesaj.ITFA || tur == CikisMesaj.ITFA_CIKIS) _itfa(kaynakZincir, veri, tur == CikisMesaj.ITFA_CIKIS);
         else if (tur == SepetMesaj.VERGI) _vergi(kaynakZincir, veri, gelen);
         else revert KotuMesaj();
     }
@@ -246,9 +247,16 @@ contract SepetDefteri is IHaberAlici {
     }
 
     /// Tokens were burned on `kaynakZincir` for redemption. Each vault in
-    /// the basket sells this share; the waiting tax pays its share here.
-    function _itfa(uint32 kaynakZincir, bytes calldata veri) internal {
+    /// the basket hands over this share; the waiting tax pays its share here.
+    /// v3 (`cikisli`): the holder named an exit per basket line, in the
+    /// basket's order. An EVM vault hands those lines' units straight to
+    /// them; a line with no exit, and every line on Solana, Sui or Aptos, is
+    /// sold by auction as before. Exits of the wrong count are ignored, not
+    /// refused: the tokens are already burned.
+    function _itfa(uint32 kaynakZincir, bytes calldata veri, bool cikisli) internal {
         (, bytes32 token, uint256 miktar, uint32 hz, bytes32 alici) = abi.decode(veri, (uint8, bytes32, uint256, uint32, bytes32));
+        bytes32[] memory cikis;
+        if (cikisli) (,,,,, cikis) = abi.decode(veri, (uint8, bytes32, uint256, uint32, bytes32, bytes32[]));
         /* the launchpad on the chain where the tokens were burned vouches
            for the burn; the token is named by its address there */
         uint64 id = idOf[kaynakZincir][token];
@@ -259,6 +267,7 @@ contract SepetDefteri is IHaberAlici {
         L.arz = arz - miktar;
 
         Kalem[] storage k = kalemler[id];
+        if (cikis.length != k.length) cikis = new bytes32[](0);
         /* an island vault pays only an EVM address: refused before anything moves */
         if (uint256(alici) >> 160 != 0) for (uint256 i = 0; i < k.length; i++) if (_ada(k[i].zincir)) revert AdaEvmIster(k[i].zincir);
 
@@ -281,8 +290,14 @@ contract SepetDefteri is IHaberAlici {
             uint256 n;
             for (uint256 j = i; j < k.length; j++) if (k[j].zincir == k[i].zincir) n++;
             bytes32[] memory v = new bytes32[](n);
+            bytes32[] memory c = new bytes32[](n);
+            bool cikisVar;
             n = 0;
-            for (uint256 j = i; j < k.length; j++) if (k[j].zincir == k[i].zincir) v[n++] = k[j].varlik;
+            for (uint256 j = i; j < k.length; j++) {
+                if (k[j].zincir != k[i].zincir) continue;
+                if (cikis.length > 0 && cikis[j] != bytes32(0)) { c[n] = cikis[j]; cikisVar = true; }
+                v[n++] = k[j].varlik;
+            }
             /* An island vault (BNB, Robinhood) has no road out but relay's
                fixed deposit addresses: it pays its share on the island itself,
                to the same EVM address. Solana, Sui and Aptos reach islands
@@ -294,7 +309,10 @@ contract SepetDefteri is IHaberAlici {
             } else {
                 oz = (_evmDisi(k[i].zincir) && _ada(hz)) ? haberci.zincir() : hz;
             }
-            haberci.gonder(k[i].zincir, kasa[k[i].zincir], abi.encode(SepetMesaj.SAT, id, v, miktar, arz, oz, alici), 0);
+            /* the old order where no exit is named, and always to Solana, Sui and Aptos, whose vaults read only it */
+            haberci.gonder(k[i].zincir, kasa[k[i].zincir], cikisVar && !_evmDisi(k[i].zincir)
+                ? abi.encode(CikisMesaj.SAT_CIKIS, id, v, miktar, arz, oz, alici, c)
+                : abi.encode(SepetMesaj.SAT, id, v, miktar, arz, oz, alici), 0);
         }
         emit Itfa(id, miktar, arz, hz, alici, vp);
     }

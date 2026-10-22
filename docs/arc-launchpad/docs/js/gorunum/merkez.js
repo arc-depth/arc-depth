@@ -298,7 +298,9 @@ export async function ciz({ param } = {}) {
     ["Avalanche", 30106], ["Monad", 30390], ["HyperEVM", 30367], ["Solana", 30168, "uzak"], ["Sui", 30378, "uzak"], ["Aptos", 30108, "uzak"]];
   const ikizKutular = IKIZ_ZINCIR.map(([zad, eid, uzak]) => {
     const k = el("input", { attr: { type: "checkbox", "data-eid": String(eid) } });
-    k.checked = !uzak;     // the EVM twins by default; Solana / Sui / Aptos cost more, chosen by hand
+    /* the EVM twins by default; Ethereum (~$22 on 20 Oct: the twin is a contract deployed there) and
+       Solana / Sui / Aptos cost more, chosen by hand — or made later by the first holder who moves there */
+    k.checked = !uzak && eid !== 30101;
     k._eid = eid; k._uzak = !!uzak; k._ad = zad;
     return el("label", { sinif: "etiket", attr: { style: "display:inline-flex;gap:4px;margin:2px" } }, [k, el("span", { yazi: zad })]);
   });
@@ -623,6 +625,34 @@ export async function ciz({ param } = {}) {
       durum("Registered: " + r.tip + (r.teslim ? "; " + r.teslim + " waiting transfer(s) delivered." : "."));
     } catch (x) { durum((x && x.message) || "Could not register."); }
   });
+  /* the founder's slice of every trade waits in the launch's KurucuVekili on Arc; anyone sends it on (ilet) */
+  const kpDurum = el("div", { sinif: "yazi yazi--kucuk yazi--sessiz" });
+  const kpDugme = el("button", { sinif: "dugme dugme--sessiz", attr: { type: "button" }, yazi: "Send the founder's trading income" });
+  const VEKIL = ["function ilet(uint256)", "function kurucuZincir() view returns (uint32)", "function kurucu() view returns (bytes32)"];
+  const kpOku = async () => {
+    const v = await new Contract(S().kapi, KAPI_ABI.fragments, arc).vekilOf(token.value.trim());
+    if (v === SIFIR) throw new Error("This token was not launched through this door.");
+    const b = await new Contract(ARC_USDC, ["function balanceOf(address) view returns (uint256)"], arc).balanceOf(v);
+    const z = Number(await new Contract(v, VEKIL, arc).kurucuZincir());
+    return { v, b, z };
+  };
+  kpDugme.addEventListener("click", async () => {
+    const durum = (x) => { kpDurum.textContent = x; };
+    try {
+      if (!V2) return durum("Opens with the second generation.");
+      const { v, b, z } = await kpOku();
+      if (b === 0n) return durum("Nothing has accrued yet.");
+      if (z !== ARC_DOMAIN && b < 1_000_000n) return durum("$" + (Number(b) / 1e6).toFixed(2) + " has accrued; it is sent on from $1 (below that the delivery costs more than it carries).");
+      /* Circle's forwarding fee for the founder's chain, capped at 5% by the contract */
+      let maxUcret = await ileriUcret(z);
+      if (maxUcret * 20n > b) maxUcret = b / 20n;
+      durum("$" + (Number(b) / 1e6).toFixed(2) + " to the founder (Circle fee at most $" + (Number(maxUcret) / 1e6).toFixed(2) + "). Confirm in your wallet (on Arc; anyone can send it, it always goes to the founder)…");
+      const arcAg = AGLAR.find((a) => a.anahtar === "arc");
+      const h = await cuzdan.agdaGonder(arcAg, { to: v, data: new Interface(VEKIL).encodeFunctionData("ilet", [maxUcret]), value: "0x0" });
+      if ((await makbuz(arcAg, h)).status !== 1) throw new Error("Reverted: " + h);
+      durum("Sent to the founder" + (z === ARC_DOMAIN ? " on Arc." : ": it arrives on their chain in minutes."));
+    } catch (x) { durum((x && x.message) || "Could not send."); }
+  });
   const satDugme = el("button", { sinif: "dugme dugme--sessiz", attr: { type: "button" }, yazi: "Sell" });
   const itfaDugme = el("button", { sinif: "dugme dugme--sessiz", attr: { type: "button" }, yazi: "Redeem from the basket" });
   satDugme.addEventListener("click", () => gonder(0));
@@ -639,6 +669,10 @@ export async function ciz({ param } = {}) {
     ...(V2 ? [el("div", { sinif: "alan__ipucu", yazi: "Move tokens you hold on Arc to Solana, Sui or Aptos. The first one to move a token to a chain creates its twin there." }),
       el("div", { sinif: "girdi-grup" }, [tasZincir, tasTutar, el("span", { sinif: "girdi-grup__son", yazi: "tokens" })]), tasAlici, tasDugme, tasDurum,
       el("div", { sinif: "alan__ipucu", yazi: "On Sui a coin is its own type: once per token, anyone publishes it (4 approvals in a Sui wallet). Until then transfers to Sui wait there, safe, and are delivered by the same step." }),
-      suiDugme, suiDurum] : [])])));
+      suiDugme, suiDurum,
+      el("div", { sinif: "alan__ipucu", yazi: "The founder's 0.3% of every trade collects on Arc for this token. Anyone can send it on; it can only go to the founder, on the founder's chain." }),
+      kpDugme, kpDurum] : [])])));
+  /* Solana / Sui / Aptos wallets (docs/js/uzak-cuzdan.js) */
+  if (V2) import("../uzak-cuzdan.js").then((m) => kap.append(m.uzakCuzdanPaneli({ token, V2, kaymaOrani }))).catch(() => {});
   return kap;
 }

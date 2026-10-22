@@ -137,7 +137,7 @@ export const YOLLAR = [
     grup: "piyasa",
     ikon: "mum",
     durum: "canli",
-    ozet: "Candles, trade history, buy/sell panel, holder distribution, collateral reserve and buyback history.",
+    ozet: "First-generation tokens: candles, trade history, buy/sell panel, holders, collateral reserve and buyback history.",
     kaynak: "v4 Swap events + KopruKasasi + PulseHook events",
     sekme: true,
     gizliRay: true          /* reached from a token, not from the rail */
@@ -316,7 +316,7 @@ export const YOLLAR = [
     grup: "guven",
     ikon: "kalkan-artis",
     durum: "canli",
-    ozet: "The per-block cumulative sell threshold, the extra rate applied, and what the shield moves into the vault.",
+    ozet: "First generation: the per-block cumulative sell threshold, the extra rate applied, and what the shield moves into the vault.",
     /* The event is SavunmaAcildi on this hook; KalkanCalisti was the
        previous generation's name and no such event exists to listen for. */
     kaynak: "PulseHook.pencere() + SavunmaAcildi / SnipeKesildi events"
@@ -352,8 +352,8 @@ export const YOLLAR = [
     grup: "guven",
     ikon: "kitap",
     durum: "canli",
-    ozet: "How the system works: launching, fees, the floor, the shield, graduation.",
-    kaynak: "measured numbers"
+    ozet: "How the second generation works: one pool on Arc, twins on eleven chains, the basket, fees, what is not built yet.",
+    kaynak: "the contracts' constants + docs/js/egri.js"
   }
 ];
 

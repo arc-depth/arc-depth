@@ -2,6 +2,7 @@
 pragma solidity ^0.8.26;
 
 import {IHaberci, IHaberAlici, IERC20S, SepetMesaj, Adres} from "./IHaberci.sol";
+import {CikisMesaj} from "./Cikis.sol";
 
 /// @title SepetKasasi — the basket assets that live on this chain
 ///
@@ -29,8 +30,15 @@ import {IHaberci, IHaberAlici, IERC20S, SepetMesaj, Adres} from "./IHaberci.sol"
 ///
 /// WHAT LEAVES, AND HOW
 ///   Only a redemption ordered by the Defter: that launch's share of each
-///   asset, sold by auction, the dollars sent to the holder's chain. No
-///   owner, no pause, no withdrawal, no sweep.
+///   asset, the dollars sent to the holder's chain. No owner, no pause, no
+///   withdrawal, no sweep.
+///   v3: the holder may name, per asset, an exit on this chain. The units
+///   go there at once, no auction: their own address (the asset itself), or
+///   a relay.link deposit address their own browser made that turns the
+///   asset into dollars on their chain. Only the holder's own share can go
+///   to an exit the holder named, so a wrong one costs nobody else. An asset
+///   with no exit (or one the token refuses to send to) is sold by auction
+///   as before.
 contract SepetKasasi is IHaberAlici {
     IHaberci public immutable haberci;
     IERC20S public immutable usdc;
@@ -80,6 +88,7 @@ contract SepetKasasi is IHaberAlici {
     event Ilan(uint256 indexed id, uint8 tur, uint64 indexed launchId, address indexed varlik, uint256 verilen, uint256 baslangic);
     event Doldu(uint256 indexed id, address indexed dolduran, uint256 verilen, uint256 alinan);
     event Yeniden(uint256 indexed id, uint256 baslangic);
+    event Cikti(uint64 indexed launchId, address indexed varlik, address indexed cikis, uint256 miktar);
 
     error SadeceHaberci();
     error SadeceDefter();
@@ -120,7 +129,11 @@ contract SepetKasasi is IHaberAlici {
         } else if (tur == SepetMesaj.SAT) {
             (, uint64 l, bytes32[] memory varliklar, uint256 miktar, uint256 arz, uint32 hz, bytes32 alici) =
                 abi.decode(veri, (uint8, uint64, bytes32[], uint256, uint256, uint32, bytes32));
-            _satisEmri(l, varliklar, miktar, arz, hz, alici);
+            _satisEmri(l, varliklar, miktar, arz, hz, alici, new bytes32[](0));
+        } else if (tur == CikisMesaj.SAT_CIKIS) {
+            (, uint64 l, bytes32[] memory varliklar, uint256 miktar, uint256 arz, uint32 hz, bytes32 alici, bytes32[] memory cikislar) =
+                abi.decode(veri, (uint8, uint64, bytes32[], uint256, uint256, uint32, bytes32, bytes32[]));
+            _satisEmri(l, varliklar, miktar, arz, hz, alici, cikislar);
         } else {
             revert KotuMesaj();
         }
@@ -135,10 +148,13 @@ contract SepetKasasi is IHaberAlici {
         _ilan(ALIM, l, varlik, dolar, beklenen * BASLANGIC_KAT, 0, bytes32(0));
     }
 
-    /// A holder burned `miktar` of `arz`: their share of every asset this
-    /// launch holds here goes up for sale, and their share of its unspent
-    /// dollars is paid at once.
-    function _satisEmri(uint64 l, bytes32[] memory varliklar, uint256 miktar, uint256 arz, uint32 hz, bytes32 alici) internal {
+    /// A holder burned `miktar` of `arz`: their share of its unspent dollars
+    /// is paid at once, and their share of every asset this launch holds here
+    /// goes to the exit they named for it (`cikislar[i]`, for `varliklar[i]`),
+    /// or, with none, up for sale.
+    function _satisEmri(uint64 l, bytes32[] memory varliklar, uint256 miktar, uint256 arz, uint32 hz, bytes32 alici, bytes32[] memory cikislar)
+        internal
+    {
         if (arz == 0 || miktar == 0 || miktar > arz) revert KotuMesaj();
         uint256 d = (usdcBakiye[l] * miktar) / arz;
         if (d > 0) {
@@ -150,6 +166,7 @@ contract SepetKasasi is IHaberAlici {
             uint256 pay = (bakiye[l][v] * miktar) / arz;
             if (pay == 0) continue;
             bakiye[l][v] -= pay;
+            if (i < cikislar.length && _cikis(l, v, cikislar[i], pay)) continue;
             Fiyat memory f = sonFiyat[v];
             /* no fill price yet means the asset was never bought here, so
                the launch holds none of it and pay is 0 above */
@@ -157,6 +174,24 @@ contract SepetKasasi is IHaberAlici {
             if (beklenen == 0) beklenen = 1;
             _ilan(SATIM, l, v, pay, beklenen * BASLANGIC_KAT, hz, alici);
         }
+    }
+
+    /// Hand `pay` units of `v` to `c`. Never reverts: an exit that is not an
+    /// EVM address on this chain, or a token that will not send there (a
+    /// blocklist, a pause), returns false and the units are auctioned
+    /// instead, so a bad exit can never strand the order in its messenger.
+    function _cikis(uint64 l, address v, bytes32 c, uint256 pay) internal returns (bool) {
+        if (c == bytes32(0) || uint256(c) >> 160 != 0) return false;
+        address hedef = address(uint160(uint256(c)));
+        if (hedef == address(this)) return false;
+        /* judged by what left this vault, not by what the token returns: a
+           send that moved the units is an exit even if it answers oddly, and
+           one that moved nothing is not, whatever it answers */
+        uint256 once = IERC20S(v).balanceOf(address(this));
+        (bool ok,) = v.call(abi.encodeWithSelector(IERC20S.transfer.selector, hedef, pay));
+        if (!ok || IERC20S(v).balanceOf(address(this)) >= once) return false;
+        emit Cikti(l, v, hedef, pay);
+        return true;
     }
 
     function _ilan(uint8 tur, uint64 l, address varlik, uint256 verilen, uint256 baslangic, uint32 hz, bytes32 alici) internal {

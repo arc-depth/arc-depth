@@ -10,6 +10,31 @@
 import { el, sayfaUst, panel, bos, not, adres } from "../ui.js";
 import { para } from "../bicim.js";
 import { ozetOku, dolar } from "./analitik.js";
+import * as v2a from "../v2-analitik.js";
+
+const ZAD = { 26: "Arc", 6: "Base", 3: "Arbitrum", 0: "Ethereum", 1: "Avalanche", 15: "Monad", 19: "HyperEVM", 17: "BNB", 35: "Robinhood", 5: "Solana", 8: "Sui", 9: "Aptos" };
+
+/* the second generation, live from Arc */
+async function v2Siralar(kap) {
+  const V2 = await v2a.v2Ayar();
+  if (!V2) return;
+  let L;
+  try { L = await v2a.launchlar(V2); } catch (e) { kap.append(panel("One pool on Arc", bos("Could not read", e.message))); return; }
+  const ad = (t) => el("td", { yazi: (t.sembol || "?") + " · " + (t.ad || "") });
+  kap.append(liste("Tokens by market cap (one pool on Arc, live)", [...L].sort((a, b) => (b.piyasaDegeri || 0) - (a.piyasaDegeri || 0)),
+    [["Token", ad], ["Market cap", (t) => el("td", { yazi: para(t.piyasaDegeri || 0) })], ["Real dollars in pool", (t) => el("td", { yazi: para(t.gercekDolar || 0) })]]));
+  kap.append(liste("Tokens by basket dollars", [...L].sort((a, b) => (b.teminat + b.bekleyen) - (a.teminat + a.bekleyen)),
+    [["Token", ad], ["Basket at launch", (t) => el("td", { yazi: para(t.teminat) })], ["Waiting in the Defter", (t) => el("td", { yazi: para(t.bekleyen) })]]));
+  const K = {};
+  for (const t of L) {
+    const k = String(t.kurucu || t.vekil).toLowerCase();
+    (K[k] ||= { kurucu: t.kurucu ? "0x" + t.kurucu.slice(26) : t.vekil, zincir: t.kurucuZincir, launch: 0, pd: 0 });
+    K[k].launch++; K[k].pd += t.piyasaDegeri || 0;
+  }
+  kap.append(liste("Founders (one pool on Arc)", Object.values(K).sort((a, b) => b.launch - a.launch || b.pd - a.pd),
+    [["Founder", (f) => el("td", {}, [adres(f.kurucu)])], ["Paid on", (f) => el("td", { yazi: ZAD[f.zincir] || "?" })],
+     ["Launches", (f) => el("td", { yazi: String(f.launch) })], ["Their tokens' market cap", (f) => el("td", { yazi: para(f.pd) })]]));
+}
 
 function liste(baslik, satirlar, sutunlar) {
   if (!satirlar.length) return panel(baslik, bos("Nothing to rank yet", "No launch has happened on either chain."));
@@ -23,7 +48,9 @@ function liste(baslik, satirlar, sutunlar) {
 
 export async function ciz() {
   const kap = el("div", { sinif: "yigin" });
-  kap.append(sayfaUst("Leaderboards", "Top tokens and founders across Arc and Robinhood Chain"));
+  kap.append(sayfaUst("Leaderboards", "Top tokens and founders"));
+  await v2Siralar(kap);
+  kap.append(el("h3", { yazi: "First generation (snapshot)" }));
 
   let o;
   try { o = await ozetOku(); }

@@ -79,6 +79,15 @@ export const aptosCuzdan = {
     }
     const r = await c.eski.signAndSubmitTransaction({ type: "entry_function_payload", function: fn, type_arguments: typeArgs, arguments: args });
     return r.hash;
+  },
+  /* a Move script ({ bytecode, typeArguments, functionArguments } with typed arguments); returns the transaction hash */
+  async betik(yuk) {
+    const c = aptosCuzdani();
+    if (!_hesap) await this.baglan();
+    if (!c.standart) throw new Error("This needs a Wallet Standard Aptos wallet (Petra, Nightly…): the old injected API cannot sign scripts.");
+    const r = await c.standart.features["aptos:signAndSubmitTransaction"].signAndSubmitTransaction({ payload: yuk });
+    if (r.status === "Rejected") throw new Error("Rejected in the wallet.");
+    return r.args.hash;
   }
 };
 

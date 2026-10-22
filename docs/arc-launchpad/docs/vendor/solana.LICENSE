@@ -1,0 +1,3 @@
+docs/vendor/solana.mjs bundles (source entry: solana/tarayici/giris.mjs):
+  @solana/web3.js 1.99.0 (MIT), @solana/spl-token (Apache-2.0), buffer (MIT), bs58 (MIT).
+No LayerZero code: the endpoint accounts are derived in docs/js/lz-solana-hesap.js (ARC PULSE's own code).

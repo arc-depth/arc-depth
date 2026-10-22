@@ -10,6 +10,36 @@
 
 import { el, sayfaUst, panel, bos, not, olcum, adres } from "../ui.js";
 import { para } from "../bicim.js";
+import * as v2a from "../v2-analitik.js";
+
+/* the second generation, read live from Arc (no snapshot file) */
+async function v2Paneli(kap) {
+  const V2 = await v2a.v2Ayar();
+  if (!V2) return;
+  const yer = el("div", { sinif: "yigin" }, [el("div", { sinif: "yazi yazi--kucuk yazi--sessiz", yazi: "Reading the second generation from Arc…" })]);
+  kap.append(panel("One pool on Arc (second generation, live)", yer));
+  try {
+    const L = await v2a.launchlar(V2);
+    const top = (f) => L.reduce((t, x) => t + (f(x) || 0), 0);
+    yer.replaceChildren(el("div", { sinif: "izgara izgara--olcum" }, [
+      olcum("Launches", String(L.length), "the v2 registry on Arc"),
+      olcum("Real dollars in pools", para(top((x) => x.gercekDolar)), "what sellers can be paid from"),
+      olcum("Market cap, all tokens", para(top((x) => x.piyasaDegeri)), "price × supply"),
+      olcum("Basket dollars waiting", para(top((x) => x.bekleyen)), "in the Defter until a line reaches $50"),
+    ]));
+    const gun = el("div", { sinif: "yazi yazi--kucuk yazi--sessiz", yazi: "Last 24 hours: reading the hook's fee events…" });
+    yer.append(gun);
+    const s = await v2a.sonSaatler(V2, 24, (o) => { gun.textContent = "Last 24 hours: reading the hook's fee events… " + Math.round(o * 100) + "%"; });
+    const t = s.toplam;
+    gun.replaceWith(el("div", { sinif: "izgara izgara--olcum" }, [
+      olcum("Trades, 24h", String(t.islem), "hook fee events"),
+      olcum("Volume, 24h", para(t.hacim), "the 2% divided back"),
+      olcum("Founders, 24h", para(t.kurucu), "0.30%"),
+      olcum("Pool depth, 24h", para(t.derinlik), "0.70% back into pools"),
+      olcum("Collateral tax, 24h", para(t.vergi), "to the baskets"),
+    ]));
+  } catch (e) { yer.replaceChildren(bos("Could not read", e.message)); }
+}
 
 export async function ozetOku() {
   const r = await fetch("veri/analitik.json?t=" + Date.now(), { cache: "no-store" });
@@ -21,7 +51,9 @@ export const dolar = (ham, ondalik = 6) => Number(BigInt(ham || "0")) / 10 ** on
 
 export async function ciz() {
   const kap = el("div", { sinif: "yigin" });
-  kap.append(sayfaUst("Platform analytics", "Launches, volume, fees and reserves on Arc and Robinhood Chain"));
+  kap.append(sayfaUst("Platform analytics", "Launches, volume, fees and reserves"));
+  await v2Paneli(kap);
+  kap.append(el("h3", { yazi: "First generation (snapshot)" }));
 
   let o;
   try { o = await ozetOku(); }

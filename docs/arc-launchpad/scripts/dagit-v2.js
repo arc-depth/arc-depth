@@ -7,6 +7,10 @@
  *   node scripts/dagit-v2.js kur  [zincir...] --uygula   deploy (user command only)
  *   node scripts/dagit-v2.js bagla                       dry: the wiring still missing
  *   node scripts/dagit-v2.js bagla --uygula              wire (user command only)
+ *   node scripts/dagit-v2.js v3 [zincir...]              dry: the v3 redeploy (auction-free
+ *                                                        redemption exits), list and cost
+ *   node scripts/dagit-v2.js v3 [zincir...] --uygula     deploy it (user command only); then
+ *                                                        V2_KAYIT=dagitim-v3.json ... bagla
  *
  * WHAT GOES WHERE (CREATE at recorded nonces, addresses known before deploying)
  *   Arc        HaberciLZ, SepetDefteri, SepetKasasi, SepetUcu, PulseFabrika4,
@@ -41,7 +45,7 @@ const KOK = path.join(__dirname, "..");
 const ADIM = process.argv[2];
 const UYGULA = process.argv.includes("--uygula");
 const SECILEN = process.argv.slice(3).filter((a) => !a.startsWith("--"));
-const KAYIT = process.env.V2_KAYIT || path.join(KOK, "dagitim-v2.json");   // V2_KAYIT: a dry run against predicted addresses
+const KAYIT = process.env.V2_KAYIT || path.join(KOK, ADIM === "v3" ? "dagitim-v3.json" : "dagitim-v2.json");   // V2_KAYIT: a dry run against predicted addresses
 const MT = "0x81D40F21F12A8F0E3252Bccb954D722d4c464B64";
 const TM = "0x28b5a0e9C621a5BadaA536219b3a228C8168cf5d";
 const C2 = "0x4e59b44847b379578588920cA78FbF26c0B4956C";
@@ -85,9 +89,12 @@ const LZ = (() => {
 })();
 /* Solana, Sui, Aptos: LayerZero eid, CCTP domain, the confirmations they send with
    (LayerZero's defaults, read from Base's ReceiveUln302 on 18 Oct: 32, 5, 260) */
+/* the Sui twin's second hop (Base -> Sui), native value carried by the hub's option: 0.000525 ETH
+   measured on 20 Oct, with margin (v2 had 0.0008); written only where a new IkizHub is wired (v3) */
+const IKINCI_ADIM_SUI_V3 = 600_000_000_000_000n;
 const UZAK = { solana: { eid: 30168, domain: 5, onay: 32 }, sui: { eid: 30378, domain: 8, onay: 5 }, aptos: { eid: 30108, domain: 9, onay: 260 } };
 
-if (!["kur", "bagla", "arc-yenile"].includes(ADIM)) { console.error("kullanim: dagit-v2.js <kur|bagla|arc-yenile> [zincir...] [--uygula]"); process.exit(1); }
+if (!["kur", "bagla", "arc-yenile", "v3"].includes(ADIM)) { console.error("kullanim: dagit-v2.js <kur|bagla|arc-yenile|v3> [zincir...] [--uygula]"); process.exit(1); }
 const ZINCIRLER = SECILEN.length ? SECILEN : Object.keys(Z);
 if (!ZINCIRLER.includes("arc")) ZINCIRLER.unshift("arc");
 const evmAnahtar = () => fs.readFileSync("C:/bot/.env", "utf8").match(/^TRADER_PRIVATE_KEY\s*=\s*(.+)$/m)[1].trim();
@@ -146,6 +153,7 @@ function saglayici(ad) {
   for (const ad of ZINCIRLER) { saglayici(ad); Z[ad].ben = await Z[ad].w.getAddress(); kayit.zincir[ad] ||= {}; }
   if (ADIM === "kur") await kur(kayit, yaz);
   else if (ADIM === "arc-yenile") await arcYenile(kayit, yaz);
+  else if (ADIM === "v3") await v3(kayit, yaz);
   else await bagla(kayit, yaz);
 })().catch((e) => { console.error("HATA " + (e.shortMessage || e.message)); if (process.env.AYRINTI) console.error(e.stack); process.exitCode = 1; });
 
@@ -237,6 +245,129 @@ async function arcYenile(kayit, yaz) {
   r.PulseHook5 = r.hookTahmin = y.hookTahmin;
   yaz();
   console.log("  Arc kaydi yeni sete gecti; eski adresler arc.eski altinda");
+}
+
+/* ---- 1c v3 (20 Oct 2026) ---------------------------------------------------
+   Redemption without auctions: a holder names an exit per basket line (their
+   own address, or a relay.link deposit address their browser made), and each
+   EVM vault hands those units over at once (contracts/sepet/Cikis.sol,
+   SepetKasasi SAT_CIKIS, SepetDefteri ITFA_CIKIS, SepetUcu.itfaCikis).
+   A vault's code changed, and Defter.bagla is write-once per chain, so the
+   Defter is new, and with it everything bound to it by constructor:
+     Arc    SepetDefteri, SepetKasasi, SepetUcu, PulseLikiditeKasasi,
+            PulseLaunchpad5, IkizHub (its merkez is set once), MerkezKapi;
+            PulseHook5 by CREATE2
+     Base   SepetKasasi, AktarmaLZ (its hub is set once)
+     the other seven EVM chains   SepetKasasi
+   Kept, with all their wiring: HaberciLZ on all nine chains (twins, routes,
+   LayerZero and ULN configs, the BNB / Robinhood relay addresses),
+   PulseFabrika4 and FthmYakici (bound to nothing).
+   Record: dagitim-v3.json (dagitim-v2.json untouched), seeded from v2 with
+   only what is kept. Solana, Sui and Aptos keep their twins' fields but no
+   vault: their vaults name the v2 Defter and are rebound on their side first
+   (printed at the end); until then the v3 Defter refuses baskets with lines
+   there, and the dollars go back to the founder. */
+async function v3(kayit, yaz) {
+  if (path.resolve(KAYIT) === path.resolve(path.join(KOK, "dagitim-v2.json"))) throw new Error("v3 kendi kaydina yazar (dagitim-v3.json); V2_KAYIT ile v2 kaydi verilemez");
+  if (!art("SepetUcu").abi.some((x) => x.name === "itfaCikis")) throw new Error("build/SepetUcu.json eski kod (itfaCikis yok)");
+  const eski = JSON.parse(fs.readFileSync(path.join(KOK, "dagitim-v2.json"), "utf8"));
+  /* seed: what is kept */
+  for (const ad of Object.keys(Z)) {
+    const e = eski.zincir[ad] || {}, r = (kayit.zincir[ad] ||= {});
+    if (!e.HaberciLZ) continue;
+    r.HaberciLZ ||= e.HaberciLZ;
+    if (e.relayAdresi) r.relayAdresi ||= e.relayAdresi;
+    if (ad === "arc") { r.PulseFabrika4 ||= e.PulseFabrika4; r.FthmYakici ||= e.FthmYakici; }
+  }
+  kayit.uzak ||= {};
+  for (const [ad, u] of Object.entries(eski.uzak || {})) {
+    const t = (kayit.uzak[ad] ||= {});
+    /* the twins' side stays; the vault (bound to the v2 Defter) does not come along */
+    for (const f of ["karsi", "ikizKapi", "secenek", "ikizPaket", "kapiNesne", "oapp", "ikizHesap", "paket", "hesap"]) if (u[f] && !t[f]) t[f] = u[f];
+    if (ad === "sui") t.ikinciAdim = IKINCI_ADIM_SUI_V3.toString();
+    else if (u.ikinciAdim && !t.ikinciAdim) t.ikinciAdim = u.ikinciAdim;
+  }
+  kayit.v3 ||= { kaynak: "dagitim-v2.json", sebep: "itfada ihalesiz cikis (Cikis.sol); kasa kodu degisti, Defter.bagla tek seferlik" };
+  yaz();
+
+  for (const ad of ZINCIRLER) {
+    const z = Z[ad], r = kayit.zincir[ad];
+    if (!r.HaberciLZ) throw new Error(z.ad + ": v2 HaberciLZ yok");
+    const n3 = r.n3 != null ? r.n3 : await z.p.getTransactionCount(z.ben, "pending");
+    if (r.n3 == null) { r.n3 = n3; yaz(); }
+    const s = ad === "arc" ? ["SepetDefteri", "SepetKasasi", "SepetUcu", "PulseLikiditeKasasi", "PulseLaunchpad5", "IkizHub", "MerkezKapi"]
+      : ad === "base" ? ["SepetKasasi", "AktarmaLZ"] : ["SepetKasasi"];
+    const T = {};
+    s.forEach((n, i) => { T[n] = getCreateAddress({ from: z.ben, nonce: n3 + i }); });
+    if (ad === "arc") kayit.defter = T.SepetDefteri;
+    const D = b32(kayit.defter);
+    const lz = LZ[z.id];
+    let hookInit;
+    if (ad === "arc") {
+      hookInit = art("PulseHook5").bytecode + coder.encode(["address", "address", "address", "address", "address", "address", "address"],
+        [ARC_PM, T.PulseLaunchpad5, z.usdc, ARC_DEVPOOL, T.PulseLikiditeKasasi, ISLETME, r.FthmYakici]).slice(2);
+      const hh = keccak256(hookInit);
+      if (!r.hookTuz || r.hookInitHash !== hh) {
+        for (let i = 0; ; i++) {
+          const t = "0x" + i.toString(16).padStart(64, "0");
+          const a = getCreate2Address(C2, t, hh);
+          if ((parseInt(a.slice(-4), 16) & HOOK_MASKE) === HOOK_BIT) { r.hookTuz = t; r.hookTahmin = a; break; }
+        }
+        r.hookInitHash = hh; yaz();
+      }
+    }
+    const args = {
+      SepetDefteri: [r.HaberciLZ, z.usdc],
+      SepetKasasi: [r.HaberciLZ, z.usdc, 26, D],
+      SepetUcu: [r.HaberciLZ, z.usdc, 26, D, T.PulseLaunchpad5],
+      PulseLikiditeKasasi: [z.usdc, T.PulseLaunchpad5],
+      PulseLaunchpad5: [z.usdc, ARC_PM, r.hookTahmin, r.PulseFabrika4, T.SepetUcu, ARC_DEVPOOL, T.PulseLikiditeKasasi, ISLETME],
+      IkizHub: [lz.ep],
+      MerkezKapi: [T.PulseLaunchpad5, ARC_PM, IKIZ_YAYICI, TM, 26, T.SepetUcu, z.usdc, lz.ep, T.IkizHub],
+      AktarmaLZ: [lz.ep],
+    };
+    console.log("  " + z.ad + "  (nonce " + n3 + ")  kalan: HaberciLZ " + r.HaberciLZ + (ad === "arc" ? ", PulseFabrika4, FthmYakici" : ""));
+    for (const [i, n] of s.entries()) {
+      if (r[n] && (await z.p.getCode(r[n])).length > 2) { console.log("    " + n.padEnd(20) + r[n] + "  (zincirde)"); continue; }
+      const a = art(n);
+      const data = a.bytecode + coder.encode(a.abi.find((x) => x.type === "constructor")?.inputs.map((x) => x.type) || [], args[n]).slice(2);
+      if (!UYGULA) {
+        const g = await z.p.estimateGas({ from: z.ben, data }).catch(() => null);
+        z.kuruGaz = (z.kuruGaz || 0n) + (g || BigInt(Math.ceil((data.length - 2) / 2 * 220 + 300_000)));
+        console.log("    (kuru) " + n.padEnd(20) + T[n] + "  gaz " + (g || "? (boydan tahmin)"));
+        continue;
+      }
+      let simdi = await z.p.getTransactionCount(z.ben, "pending");
+      for (let d = 0; simdi < n3 + i && d < 20; d++) { await bekle(1500); simdi = await z.p.getTransactionCount(z.ben, "pending"); }
+      if (simdi !== n3 + i) throw new Error(z.ad + " " + n + ": nonce " + simdi + ", beklenen " + (n3 + i) + " (araya baska islem girdi)");
+      const m = await (await z.w.sendTransaction({ data })).wait();
+      if (m.status !== 1 || m.contractAddress.toLowerCase() !== T[n].toLowerCase()) throw new Error(z.ad + " " + n + " sapti");
+      r[n] = T[n]; yaz();
+      console.log("    " + n.padEnd(20) + T[n]);
+      if (ad === "base") await bekle(6000);
+    }
+    if (ad !== "arc") continue;
+    if (!UYGULA) { console.log("    (kuru) PulseHook5".padEnd(28) + r.hookTahmin + "  (CREATE2, tuz " + BigInt(r.hookTuz) + ")"); z.kuruGaz = (z.kuruGaz || 0n) + 3_500_000n; continue; }
+    if ((await z.p.getCode(r.hookTahmin)).length > 2) console.log("    PulseHook5".padEnd(24) + r.hookTahmin + "  (zincirde)");
+    else {
+      const m = await (await z.w.sendTransaction({ to: C2, data: r.hookTuz + hookInit.slice(2) })).wait();
+      let kod = await z.p.getCode(r.hookTahmin);
+      for (let d = 0; kod.length <= 2 && d < 20; d++) { await bekle(1500); kod = await z.p.getCode(r.hookTahmin); }
+      if (m.status !== 1 || kod.length <= 2) throw new Error("Arc hook yok");
+      console.log("    PulseHook5".padEnd(24) + r.hookTahmin);
+    }
+    r.PulseHook5 = r.hookTahmin; yaz();
+  }
+  if (!UYGULA) await maliyet();
+  console.log("  SONRA  V2_KAYIT=dagitim-v3.json node scripts/dagit-v2.js bagla   (kuru once; Defter'in 9 EVM bagi, IkizHub merkez + Base");
+  console.log("         aktarma, AktarmaLZ hub, Sui/Aptos aktarmali kapilar, Sui ikinci adim " + Number(IKINCI_ADIM_SUI_V3) / 1e18 + " ETH; HaberciLZ baglari zaten yazili)");
+  console.log("  EVM DISI (kasalari v2 Defter'e bagli; v3 Defter onlari baglayana dek o zincirlerde satir kabul etmez, dolar kurucuya doner):");
+  console.log("    Sui     paket ayni: sepet::haberci::kur<USDC>(8, 26, v3 Defter) yeniden -> yeni Kasa + Haberci nesnesi; ikiz_ekle(26, Arc HaberciLZ),");
+  console.log("            kilitle; kayda uzak.sui.kasa. Ikiz kapisi: oapp set_peer(Base, yeni AktarmaLZ)");
+  console.log("    Aptos   Arc HaberciLZ.ikiz[9] eski Haberci nesnesine yazili (tek seferlik): pulse_sepet paket yukseltmesi gerekir (Haberci'nin");
+  console.log("            defter'i kurucu kilitlemeden once bir kez yenilenebilsin). Ikiz kapisi: set_peer(Base, yeni AktarmaLZ)");
+  console.log("    Solana  Arc HaberciLZ.ikiz[5] eski pulse-kapi'ye yazili: pulse-sepet yukseltmesi (config.defter bir kez yenilenir) ve pulse-kapi");
+  console.log("            yukseltmesi (store.hub yeni IkizHub'a) gerekir; program kimlikleri ve Arc tarafindaki baglar ayni kalir");
 }
 
 async function kur(kayit, yaz) {
