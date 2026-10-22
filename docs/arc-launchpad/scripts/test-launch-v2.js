@@ -60,7 +60,8 @@ async function fthmBirim(arc) {
   const cg = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=ethereum,solana,sui,aptos&vs_currencies=usd").then((x) => x.json());
   const fthmPerUsdc = await fthmBirim(arc);
   const teklif = SEPET.map((s) => s.fiyat === "fthm" ? fthmPerUsdc * SATIR : BigInt(Math.floor((Number(SATIR) / 1e6 / cg[s.fiyat].usd) * 10 ** s.dec)));
-  const ikizSec = sec(3_500_000n);
+  /* creating a twin measured 4.54–4.78M gas on 22 Oct (Monad the most); 3.5M ran out on every chain */
+  const ikizSec = sec(6_300_000n);
   const ikizGercek = await new Contract(YAYICI, ["function ucret(address,uint32[],bytes) view returns (uint256)"], arc).ucret(FTHM, IKIZ_EID, ikizSec);
   const ikizUcret = (ikizGercek * 11n) / 10n;     // as the site: +10%, the unused part comes back on Arc
   const sepet = SEPET.map((s) => [s.zincir, s.varlik, SATIR]);

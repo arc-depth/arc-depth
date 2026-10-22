@@ -39,7 +39,8 @@ const usd = (x) => "$" + (Number(x) / 1e18).toFixed(2);
   const teklif = [260_000n * 10n ** 18n, 12n * 10n ** 14n, 6n * 10n ** 15n, 18n * 10n ** 16n, 13n * 10n ** 18n];
   const alim = 100_000_000n, teminat = 20_000_000n, toplam = alim + teminat;
   const evm = [30416, 30184, 30110, 30101, 30102, 30106, 30390, 30367];
-  const ikizSec = sec(3_500_000n);
+  /* creating a twin measured 4.54–4.78M gas on 22 Oct (Monad the most); 3.5M ran out on every chain */
+  const ikizSec = sec(6_300_000n);
   const evmGercek = await new Contract(YAYICI, ["function ucret(address,uint32[],bytes) view returns (uint256)"], arc).ucret(FTHM, evm, ikizSec);
   const hub = new Contract(V2.hub, ["function ucret(uint32,bytes) view returns (uint256)"], arc);
   const ornek = AbiCoder.defaultAbiCoder().encode(["uint8", "address", "string", "string"], [1, FTHM, "Teklif Prova", "TKLF"]);

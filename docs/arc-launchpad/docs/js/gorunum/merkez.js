@@ -347,7 +347,8 @@ export async function ciz({ param } = {}) {
       if (teminat < 20_000_000n) return durum("The basket must hold at least $20 in total.");
       /* the twins' LayerZero fee, read with a live token of the same shape; the excess comes back */
       durum("Reading the LayerZero fee for the twins…");
-      const ikizSec = sec(3_500_000n);
+      /* creating a twin measured 4.54–4.78M gas on 22 Oct (Monad the most); 3.5M ran out on every chain */
+      const ikizSec = sec(6_300_000n);
       const yayici = new Contract(YAYICI, ["function ucret(address,uint32[],bytes) view returns (uint256)"], arc);
       const ikizUcret = ((await yayici.ucret(FTHM_ARC, IKIZ_EID, ikizSec)) * 13n) / 10n;
       const deger = ikizUcret + 2n * 10n ** 18n;      // + the founder's tokens to your chain; unused value refunded

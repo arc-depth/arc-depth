@@ -232,7 +232,8 @@ export function uzakCuzdanPaneli({ token, V2, kaymaOrani }) {
       const sepet = [[26, b(FTHM), 10_000_000n], [6, b("0x4200000000000000000000000000000000000006"), 10_000_000n]];
       const teklif = [650_000n * 10n ** 18n, 3n * 10n ** 15n];
       const toplam = alim6 + 20_000_000n;
-      const ikizSec = sec(3_500_000n);
+      /* creating a twin measured 4.54–4.78M gas on 22 Oct (Monad the most); 3.5M ran out on every chain */
+      const ikizSec = sec(6_300_000n);
       const evm = lIkiz.checked ? EVM_EID : [];
       const ikizGercek = evm.length ? await new Contract(YAYICI, ["function ucret(address,uint32[],bytes) view returns (uint256)"], arc()).ucret(FTHM, evm, ikizSec) : 0n;
       const ikizUcret = (ikizGercek * 11n) / 10n;
