@@ -56,7 +56,8 @@ let _lz = null;
 async function lzSui() {
   if (!_lz) {
     const m = await import("../vendor/sui.mjs");
-    _lz = { m, client: new m.SuiJsonRpcClient({ url: SUI.rpc }) };
+    const { gqlTransport } = await import("./sui-gql.js");
+    _lz = { m, client: new m.SuiJsonRpcClient({ transport: gqlTransport, network: "mainnet" }) };
   }
   return _lz;
 }

@@ -679,7 +679,9 @@ async function bagla(kayit, yaz) {
       surum: kayit.v4 ? 4 : 2,
       zincir: Object.fromEntries(ZINCIRLER.map((ad) => [ad, { domain: Z[ad].domain, haberci: K(ad).HaberciLZ, kasa: K(ad).SepetKasasi, dolar: Z[ad].usdc }])),
       uzak: Object.fromEntries(Object.entries(U).map(([ad, u]) => [ad, { kasa: u.kasa, ikizKapi: u.ikizKapi, karsi: u.karsi, paket: u.paket, ikizPaket: u.ikizPaket,
-        kapiNesne: u.kapiNesne, oapp: u.oapp, hesap: u.hesap, ikizHesap: u.ikizHesap }])) };
+        kapiNesne: u.kapiNesne, oapp: u.oapp, hesap: u.hesap, ikizHesap: u.ikizHesap,
+        /* v4: the upgraded Sui package (its new types and functions) and receiver; the Solana programs */
+        v4Paket: u.v4Paket, v4Haberci: u.v4Haberci, sepetProgram: u.sepetProgram, kapiProgram: u.kapiProgram }])) };
     fs.writeFileSync(path.join(KOK, "docs", "veri", "sepet-v2.json"), JSON.stringify(site, null, 1));
     console.log("  site: docs/veri/sepet-v2.json yazildi");
   }

@@ -53,7 +53,9 @@ for (const [tur, f] of [["quote", "getQuoteIXAccountMetaForCPI"], ["send", "getS
 
 /* ---- Sui ---- */
 console.log("Sui");
-const client = new SuiJsonRpcClient({ url: "https://sui-rpc.publicnode.com", network: "mainnet" });
+/* Sui JSON-RPC is off on public nodes (Oct 2026): the site's GraphQL transport (docs/js/sui-gql.js) */
+const { gqlTransport } = await import("file:///C:/arc-launchpad/docs/js/sui-gql.js");
+const client = new SuiJsonRpcClient({ transport: gqlTransport, network: "mainnet" });
 const sdk = new SDK({ client });
 const ben = "0x9d547e639e4dad7b98f1ec9a6e8d684f42dd289fb0875f08a2ed8fc77fe7f078";
 const G = { paket: "0xe397f5cf0c1382cfff29068d73a60aa186436bcdfe3b0fdd8d46ba02a4446bfb", kapi: "0x05611ea5fa7f6b91d3cf9e934bd198d29c8898683b23995a6578706af5183dad",

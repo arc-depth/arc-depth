@@ -69,7 +69,7 @@ export const ZINCIRLER = {
   0: { ad: "Ethereum", kasif: "https://etherscan.io", usdc: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", rpc: "https://ethereum-rpc.publicnode.com", id: 1, ds: "ethereum", usdcDec: 6 },
   35: { ad: "Robinhood", kasif: "https://robin.etherscan.io", usdc: "0x3884564BA51B349e7661c7e28Ad947DEE327FeDF", rpc: "https://rpc.mainnet.chain.robinhood.com", id: 4663, ds: "robinhood", usdcDec: 6 },
   5: { ad: "Solana" },
-  8: { ad: "Sui", kasif: "https://suiscan.xyz/mainnet", rpc: "https://sui-rpc.publicnode.com", ds: "sui", usdcDec: 6 },
+  8: { ad: "Sui", kasif: "https://suiscan.xyz/mainnet", rpc: "https://graphql.mainnet.sui.io/graphql", ds: "sui", usdcDec: 6 },   // read through sui-gql.js
   9: { ad: "Aptos", kasif: "https://explorer.aptoslabs.com", rpc: "https://api.mainnet.aptoslabs.com/v1", ds: "aptos", usdcDec: 6 },
 };
 
@@ -134,11 +134,10 @@ async function evmSatirlari(cfg, d, id, satirlar) {
 }
 
 /* ---- Sui: the vault's dynamic fields name the coin type ---- */
+/* Sui's JSON-RPC is switched off on public nodes: the same calls answered from GraphQL */
 async function suiCagri(method, params) {
-  const r = await fetch(ZINCIRLER[8].rpc, { method: "POST", headers: { "content-type": "application/json" },
-    body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }) }).then((x) => x.json());
-  if (r.error) throw new Error(r.error.message);
-  return r.result;
+  const { suiJsonRpc } = await import("./sui-gql.js");
+  return suiJsonRpc(method, params);
 }
 async function suiSatirlari(cfg, id, satirlar) {
   const alanlar = [];
@@ -171,9 +170,9 @@ async function suiSatirlari(cfg, id, satirlar) {
 }
 
 /* ---- Aptos: view functions take the asset's metadata address ---- */
-async function aptosGorunum(fn, args) {
+async function aptosGorunum(fn, args, tipler = []) {
   const r = await fetch(ZINCIRLER[9].rpc + "/view", { method: "POST", headers: { "content-type": "application/json" },
-    body: JSON.stringify({ function: fn, type_arguments: [], arguments: args }) }).then((x) => x.json());
+    body: JSON.stringify({ function: fn, type_arguments: tipler, arguments: args }) }).then((x) => x.json());
   if (!Array.isArray(r)) throw new Error(r.message || "aptos view failed");
   return r;
 }
@@ -182,7 +181,8 @@ async function aptosSatirlari(cfg, id, satirlar) {
   const [dolar] = await aptosGorunum(m + "dolar_bakiye", [cfg.aptos.kasa, String(id)]);
   const kalemler = await Promise.all(satirlar.map(async (s) => {
     const [miktar] = await aptosGorunum(m + "bakiye", [cfg.aptos.kasa, String(id), s.varlik]);
-    const [dec] = await aptosGorunum("0x1::fungible_asset::decimals", [s.varlik]).catch(() => [8]);
+    /* decimals<T: key>(Object<T>): the type argument is required (without it Aptos answers 400) */
+    const [dec] = await aptosGorunum("0x1::fungible_asset::decimals", [s.varlik], ["0x1::fungible_asset::Metadata"]).catch(() => [8]);
     const piyasa = await piyasaFiyati("aptos", s.varlik);
     return { ...s, adres: s.varlik, miktar: BigInt(miktar), ondalik: Number(dec), deger: piyasa != null ? ham(BigInt(miktar), Number(dec)) * piyasa : (BigInt(miktar) === 0n ? 0 : null), kaynak: piyasa != null ? "market" : null };
   }));

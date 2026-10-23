@@ -74,7 +74,9 @@ console.log("Sui");
 const suiBen = "0x9d547e639e4dad7b98f1ec9a6e8d684f42dd289fb0875f08a2ed8fc77fe7f078";   // the Sui deployer: holds a little USDC (read only)
 const s0 = await U.suiTeklif(suiBen, FTHM, ARC_ALICI, 1_000_000n), s192 = await U.suiTeklif(suiBen, FTHM, ARC_ALICI, 1_000_000n, istek);
 ok(s0 > 0n && s192 >= s0, "kapi::teklif zincirin PTB tarifiyle uc noktadan gecti (kendi kodumuz)", (Number(s0) / 1e9).toFixed(4) + " / " + (Number(s192) / 1e9).toFixed(4) + " SUI");
-const c = new lz.SuiJsonRpcClient({ url: "https://sui-rpc.publicnode.com" });
+/* Sui JSON-RPC is off on public nodes (Oct 2026): the site's GraphQL transport (docs/js/sui-gql.js) */
+const { gqlTransport } = await import("file:///" + K + "/docs/js/sui-gql.js");
+const c = new lz.SuiJsonRpcClient({ transport: gqlTransport, network: "mainnet" });
 {
   const tx = new lz.Transaction();
   const [para] = tx.splitCoins(tx.gas, [tx.pure.u64(1000)]);

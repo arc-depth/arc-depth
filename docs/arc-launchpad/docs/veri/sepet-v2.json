@@ -73,7 +73,9 @@
    "paket": "0x7c0a195af1e87cd0ef263fa4e5753c5fa35c630537557977d16e6ac94c044ea4",
    "ikizPaket": "0xe397f5cf0c1382cfff29068d73a60aa186436bcdfe3b0fdd8d46ba02a4446bfb",
    "kapiNesne": "0x05611ea5fa7f6b91d3cf9e934bd198d29c8898683b23995a6578706af5183dad",
-   "oapp": "0xfddd7363e4a8fc4fee42c47952beece8fdae712b4d3ff231b7cdb6588ba5fe46"
+   "oapp": "0xfddd7363e4a8fc4fee42c47952beece8fdae712b4d3ff231b7cdb6588ba5fe46",
+   "v4Paket": "0x604481c6caa8d99f0f092e4bdf3b6bbf1171924d384426a736a978b5c4a6dbd3",
+   "v4Haberci": "0x57a90bd7587a7c4dbbc8dca70bdda31dd9542726c76199257da2e5ab54e45c89"
   },
   "aptos": {
    "kasa": "0x7953f9d5bd4ea9f687a555fe67cfb24e403a5c92ab452854c8c2ac5bc8623098",
@@ -83,7 +85,9 @@
    "ikizHesap": "0xcba3e9e320a9cc5874625975fde00a9dcb6aa79b758bd228913c76cb7c17cda3"
   },
   "solana": {
-   "kasa": "0x2023a1bf5548a5fb196f0673f6f9b78c0322878a16e6380a20bc302622ee9dbf"
+   "kasa": "0x2023a1bf5548a5fb196f0673f6f9b78c0322878a16e6380a20bc302622ee9dbf",
+   "sepetProgram": "9VyBC6ygFQrEP6V212maFci9du6R32BbKHxKmF9Wecto",
+   "kapiProgram": "G91zXh4LCEzY7UgE3JWic3Kt5ckBsnibkgdAXABatWJQ"
   }
  }
 }

@@ -25,11 +25,13 @@
  * Sui network with its own package and test dollar).
  * =========================================================================== */
 import { Transaction, SuiJsonRpcClient, normalizeSuiAddress, fromBase64, toBase64, bcs, sablonYukle, update_identifiers, update_constants } from "../vendor/sui.mjs";
+import { gqlTransport, SUI_GQL } from "./sui-gql.js";
 
 export const SUI = {
   anahtar: "sui", ad: "Sui", dolarSembol: "USDC", nesil: "move",
   zincir: "sui:mainnet",
-  rpc: "https://sui-rpc.publicnode.com",
+  /* JSON-RPC is switched off on Sui's public nodes (Oct 2026): the client speaks GraphQL through sui-gql.js */
+  rpc: SUI_GQL,
   gezgin: "https://suiscan.xyz/mainnet",
   paket: "0x76399a58d2015436ab081cda41d9d2dffed0e2bd87d6a0b238743cde59d941ff",
   config: "0x4ed9f80bcebde893969689839472f1621ed8e66df9a9f67d1d3f508f3de9f80a",
@@ -53,7 +55,7 @@ export function ayarla(degisen) { Object.assign(SUI, degisen); }
 
 /* ---- reads ---------------------------------------------------------- */
 let _istemci = null;
-export const istemci = () => (_istemci && _istemci.__url === SUI.rpc ? _istemci : (_istemci = Object.assign(new SuiJsonRpcClient({ url: SUI.rpc }), { __url: SUI.rpc })));
+export const istemci = () => (_istemci && _istemci.__url === SUI.rpc ? _istemci : (_istemci = Object.assign(new SuiJsonRpcClient({ transport: gqlTransport, network: "mainnet" }), { __url: SUI.rpc })));
 
 export async function usdcBakiye(adres) {
   return BigInt((await istemci().getBalance({ owner: adres, coinType: SUI.usdc })).totalBalance);

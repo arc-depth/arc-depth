@@ -198,6 +198,8 @@ function varlikKimligi(zincir, girdi) {
   }
   /* Solana: the mint's 32 bytes */
   if (zincir.tur === "solana") return toBeHex(decodeBase58(g), 32);
+  /* Aptos metadata addresses are often written short (APT is 0xa): left-pad the hex, any length */
+  if (zincir.tur === "aptos") return "0x" + g.toLowerCase().replace(/^0x/, "").padStart(64, "0");
   return zeroPadValue(g.toLowerCase(), 32);
 }
 
@@ -210,14 +212,20 @@ function suiTipi(girdi) {
 async function ondalik(zincir, girdi) {
   if (zincir.tur === "evm") return Number(await new Contract(girdi, E.fragments, new JsonRpcProvider(zincir.rpc, undefined, { staticNetwork: false })).decimals());
   if (zincir.tur === "sui") {
-    const r = await fetch("https://sui-rpc.publicnode.com", { method: "POST", headers: { "content-type": "application/json" },
-      body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "suix_getCoinMetadata", params: [girdi] }) }).then((x) => x.json());
-    return r.result.decimals;
+    const { suiJsonRpc } = await import("../sui-gql.js");
+    const m = await suiJsonRpc("suix_getCoinMetadata", [girdi]);
+    if (!m) throw new Error("No Sui coin of type " + girdi);
+    return m.decimals;
   }
   if (zincir.tur === "solana") {
+    /* the mint account itself (byte 44 is the decimals): publicnode refuses getTokenSupply without a personal token */
     const r = await fetch("https://solana-rpc.publicnode.com", { method: "POST", headers: { "content-type": "application/json" },
-      body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "getTokenSupply", params: [girdi] }) }).then((x) => x.json());
-    return r.result.value.decimals;
+      body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "getAccountInfo", params: [girdi, { encoding: "base64" }] }) }).then((x) => x.json());
+    const v = r.result && r.result.value;
+    if (!v) throw new Error("No Solana mint at " + girdi + (r.error ? " (" + r.error.message + ")" : ""));
+    const d = Uint8Array.from(atob(v.data[0]), (c) => c.charCodeAt(0));
+    if (d.length < 45) throw new Error(girdi + " is not a Solana token mint.");
+    return d[44];
   }
   const r = await fetch("https://api.mainnet.aptoslabs.com/v1/accounts/" + girdi + "/resource/0x1::fungible_asset::Metadata").then((x) => x.json());
   return Number(r.data.decimals);
@@ -278,7 +286,7 @@ export async function ciz({ param } = {}) {
   zincirSec.value = ag.anahtar;
   zincirSec.addEventListener("change", () => { ag = AGLAR.find((a) => a.anahtar === zincirSec.value); });
   kap.append(panel("Your chain", el("div", { sinif: "yigin" }, [zincirSec,
-    el("div", { sinif: "alan__ipucu", yazi: "Solana, Sui and Aptos wallets come next; today the doors are the EVM chains." })])));
+    el("div", { sinif: "alan__ipucu", yazi: V2 ? "EVM chains here. A Solana, Sui or Aptos wallet has its own panel at the bottom of this page." : "Solana, Sui and Aptos wallets come next; today the doors are the EVM chains." })])));
 
   /* ================= launch ================= */
   const ad = el("input", { sinif: "girdi", attr: { id: "merkez-ad", placeholder: "Name", maxlength: "32" } });
@@ -339,7 +347,8 @@ export async function ciz({ param } = {}) {
         hazirOdeme = null;
         lDugme.textContent = "Launch";
         await relayIle(ag, ben, h.toplam, h.deger, h.txs, durum);
-        durum("Paid. relay launches on Arc within seconds; your tokens arrive on " + ag.ad + " in a few minutes. Any LayerZero fee not used comes back to your address on Arc.");
+        durum(ag.anahtar === "arc" ? "Paid. Launched on Arc: the token and its pool are open and your tokens are in your wallet. Any LayerZero fee not used came back to you."
+          : "Paid. relay launches on Arc within seconds; your tokens arrive on " + ag.ad + " in a few minutes. Any LayerZero fee not used comes back to your address on Arc.");
         return;
       }
       if (!ad.value.trim() || !sembol.value.trim()) return durum("Give the token a name and a symbol.");
@@ -352,6 +361,14 @@ export async function ciz({ param } = {}) {
       for (const s of ss) {
         const asgari = !V2 && s.zincir.domain === 0 ? 25 : 4;
         if (!(s.dolar >= asgari)) return durum("Each basket line needs at least $" + asgari + ".");
+        /* v4: a Solana / Sui / Aptos vault buys only an asset its own list names (written before the lock);
+           any other line would wait as USDC forever, so it is refused here, before anything is signed */
+        if (v4mu() && ["solana", "sui", "aptos"].includes(s.zincir.tur)) {
+          durum("Checking that the " + s.zincir.ad + " vault can buy " + s.adres.slice(0, 14) + "…");
+          const { uzakVarlikUygunMu } = await import("../v4-uzak-varlik.js");
+          const u = await uzakVarlikUygunMu(s.zincir.tur, s.adres, V2.uzak);
+          if (!u.uygun) return durum(s.zincir.ad + " line refused: " + (u.neden || "the vault there cannot buy this asset."));
+        }
         durum("Pricing " + s.zincir.ad + " " + s.adres.slice(0, 10) + "… (DexScreener)…");
         const dolar6 = BigInt(Math.round(s.dolar * 1e6));
         sepet.push([s.zincir.domain, varlikKimligi(s.zincir, s.adres), dolar6]);
@@ -442,11 +459,14 @@ export async function ciz({ param } = {}) {
     } catch (x) { durum((x && x.message) || "Could not launch."); }
   });
   kap.append(panel("Launch", el("div", { sinif: "yigin" }, [
-    el("a", { sinif: "alan__ipucu", attr: { href: "#olustur-move" }, yazi: "Paying from a Sui or Aptos wallet? Use the Sui / Aptos launch form →" }),
+    V2 ? el("div", { sinif: "alan__ipucu", yazi: "Paying from a Solana, Sui or Aptos wallet? Use the panel \"From a Solana, Sui or Aptos wallet\" at the bottom of this page." })
+      : el("a", { sinif: "alan__ipucu", attr: { href: "#olustur-move" }, yazi: "Paying from a Sui or Aptos wallet? Use the Sui / Aptos launch form →" }),
     el("div", { sinif: "girdi-grup" }, [ad, sembol]),
     el("div", { sinif: "alan__ipucu", yazi: "First buy $100–$500 (2% launch fee; the rest becomes your tokens at the opening price: $3,500 for the whole supply of 1,000,000,000)." }),
     el("div", { sinif: "girdi-grup" }, [alim, el("span", { sinif: "girdi-grup__son", yazi: "$ first buy" })]), vergi,
-    el("div", { sinif: "alan__ipucu", yazi: "Collateral basket: up to 5 tokens, mixed as you like across the chains below, at least $4 a line ($25 on Ethereum), at least $20 in total. Bought into the vaults by auction; every trade's collateral tax re-buys it every $50." }),
+    el("div", { sinif: "alan__ipucu", yazi: v4mu()
+      ? "Collateral basket: up to 5 tokens, mixed as you like across the chains below, at least $4 a line, at least $20 in total. Each line waits as USDC on Arc until it reaches $50 (every trade's collateral tax adds to it); then its vault buys the token from that chain's pool (by auction on Arc, BNB, Monad and Robinhood, which have no pool with an average price). Until then the line is redeemable as USDC."
+      : "Collateral basket: up to 5 tokens, mixed as you like across the chains below, at least $4 a line ($25 on Ethereum), at least $20 in total. Bought into the vaults by auction; every trade's collateral tax re-buys it every $50." }),
     satirlar,
     V2 ? uzakEtiket : el("span"),
     el("div", { sinif: "alan__ipucu", yazi: "Every trade: 2.2% (0.3% you, 0.3% developers, 0.5% liquidity, 0.2% operations, 0.2% FTHM bought and burned, 0.7% back into the pool) plus your collateral tax." }),
@@ -507,7 +527,7 @@ export async function ciz({ param } = {}) {
         { to: S().kapi, data: KAPI_ABI.encodeFunctionData("al", [t, usdc6, asgari, teslimEid(ag), zeroPadValue(ben, 32), teslimEid(ag) ? sec(100_000n) : "0x", ben]), value: deger.toString() },
       ];
       await relayIle(ag, ben, usdc6, deger, txs, durum);
-      durum("Paid. Bought on Arc; the tokens arrive on " + ag.ad + " in a few minutes.");
+      durum(ag.anahtar === "arc" ? "Paid. Bought on Arc; the tokens are in your wallet." : "Paid. Bought on Arc; the tokens arrive on " + ag.ad + " in a few minutes.");
     } catch (x) { durum((x && x.message) || "Could not buy."); }
   });
 
@@ -686,6 +706,34 @@ export async function ciz({ param } = {}) {
       durum("Sent to the founder" + (z === ARC_DOMAIN ? " on Arc." : ": it arrives on their chain in minutes."));
     } catch (x) { durum((x && x.message) || "Could not send."); }
   });
+  /* v4: each trade's collateral tax lands in the launch's bucket (VergiKovasi) and the hook passes it on
+     within 1.5M gas. When several basket lines cross $50 in the same trade the passing needs more
+     (measured 1.38M for five lines plus the 63/64 reserve) and the dollars wait in the bucket; anyone
+     can pass them on here, with the gas it needs. Nothing is lost while they wait. */
+  const kovaDurum = el("div", { sinif: "yazi yazi--kucuk yazi--sessiz" });
+  const kovaDugme = el("button", { sinif: "dugme dugme--sessiz", attr: { type: "button" }, yazi: "Pass the waiting collateral tax to the basket" });
+  kovaDugme.addEventListener("click", async () => {
+    const durum = (x) => { kovaDurum.textContent = x; };
+    try {
+      if (!V2 || !(V2.surum >= 4)) return durum("Opens with basket v4.");
+      const lp = new Contract(V2.launchpad, ["function havuzAnahtari(address) view returns ((address,address,uint24,int24,address))",
+        "function launchIdOfPool(bytes32) view returns (uint256)",
+        "function launchAt(uint256) view returns ((address token,address acici,address kasa,uint256 teminat,address kurucu,uint256 kurucuToken,uint256 teklif,uint256 vergiPpm,uint64 zaman))"], arc);
+      const k = await lp.havuzAnahtari(token.value.trim());
+      const pid = keccak256(AbiCoder.defaultAbiCoder().encode(["address", "address", "uint24", "int24", "address"], [k[0], k[1], k[2], k[3], k[4]]));
+      /* launchIdOfPool counts from 1 (0: no launch); launchAt takes the 0-based index */
+      const no = await lp.launchIdOfPool(pid);
+      if (no === 0n) return durum("This token has no pool on the v4 launchpad.");
+      const kova = (await lp.launchAt(no - 1n)).kasa;
+      const b = await new Contract(ARC_USDC, ["function balanceOf(address) view returns (uint256)"], arc).balanceOf(kova);
+      if (b === 0n) return durum("Nothing waits: every trade's tax has reached the basket.");
+      durum("$" + (Number(b) / 1e6).toFixed(2) + " waits in the bucket. Confirm in your wallet (on Arc, a few cents of gas; the dollars can only go to this token's basket)…");
+      const arcAg = AGLAR.find((a) => a.anahtar === "arc");
+      const h = await cuzdan.agdaGonder(arcAg, { to: kova, data: new Interface(["function gonder()"]).encodeFunctionData("gonder", []), value: "0x0", gas: "0x3d0900" });
+      if ((await makbuz(arcAg, h)).status !== 1) throw new Error("Reverted: " + h);
+      durum("Passed on: the basket lines that crossed $50 are on their way to their vaults.");
+    } catch (x) { durum((x && x.message) || "Could not send."); }
+  });
   const satDugme = el("button", { sinif: "dugme dugme--sessiz", attr: { type: "button" }, yazi: "Sell" });
   const itfaDugme = el("button", { sinif: "dugme dugme--sessiz", attr: { type: "button" }, yazi: "Redeem from the basket" });
   satDugme.addEventListener("click", () => gonder(0));
@@ -704,7 +752,9 @@ export async function ciz({ param } = {}) {
       el("div", { sinif: "alan__ipucu", yazi: "On Sui a coin is its own type: once per token, anyone publishes it (4 approvals in a Sui wallet). Until then transfers to Sui wait there, safe, and are delivered by the same step." }),
       suiDugme, suiDurum,
       el("div", { sinif: "alan__ipucu", yazi: "The founder's 0.3% of every trade collects on Arc for this token. Anyone can send it on; it can only go to the founder, on the founder's chain." }),
-      kpDugme, kpDurum] : [])])));
+      kpDugme, kpDurum,
+      ...(V2.surum >= 4 ? [el("div", { sinif: "alan__ipucu", yazi: "Every trade's collateral tax goes to the basket in the same transaction. When several lines cross $50 at once it may need more gas than a trade gives it; then it waits, safe, and anyone passes it on here." }),
+        kovaDugme, kovaDurum] : [])] : [])])));
   /* Solana / Sui / Aptos wallets (docs/js/uzak-cuzdan.js) */
   if (V2) import("../uzak-cuzdan.js").then((m) => kap.append(m.uzakCuzdanPaneli({ token, V2, kaymaOrani }))).catch(() => {});
   return kap;

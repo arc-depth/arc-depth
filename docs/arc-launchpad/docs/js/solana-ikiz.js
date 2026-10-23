@@ -232,8 +232,11 @@ export async function ikizBakiye(sahip, token20) {
   const tk = hexB(token20.replace(/^0x/, "").toLowerCase().padStart(40, "0"));
   const [mint] = PublicKey.findProgramAddressSync([new TextEncoder().encode("ikiz"), tk], kapi);
   const ata = getAssociatedTokenAddressSync(mint, new PublicKey(sahip), false, TOKEN_PROGRAM_ID);
-  const b = await conn.getTokenAccountBalance(ata).catch(() => null);
-  return b ? BigInt(b.value.amount) : 0n;
+  /* the token account itself (amount: u64 at byte 64); publicnode refuses getTokenAccountBalance
+     ("indexed requests require a personal token"), which read as 0 here before 24 Oct */
+  const h = await conn.getAccountInfo(ata);
+  if (!h || h.data.length < 72) return 0n;
+  return new DataView(h.data.buffer, h.data.byteOffset).getBigUint64(64, true);
 }
 
 /// Where Circle pays USDC to this wallet on Solana: its USDC token account (CCTP mints to the
