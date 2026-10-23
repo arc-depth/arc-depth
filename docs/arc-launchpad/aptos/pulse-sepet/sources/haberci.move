@@ -87,15 +87,18 @@ module sepet::haberci {
 
     const EHavuz: u64 = 8;
 
-    /// v4: the founder, once and before the lock: the Defter this receiver
-    /// obeys (the v4 Defter on Arc). The Arc Haberci keeps naming this
-    /// object as the twin (that binding is write-once there).
+    /// v4: the founder, before the lock: the Defter this receiver obeys
+    /// (the Defter on Arc). The Arc Haberci keeps naming this object as the
+    /// twin (that binding is write-once there). v5 (24 Oct 2026): as often
+    /// as needed until the lock (v4 allowed it once; v5 moved the Defter
+    /// again); DefterDegisti now only records that it moved.
     public entry fun defter_degistir(k: &signer, haberci: address, defter: address) acquires Haberci {
         let h = borrow_global_mut<Haberci>(haberci);
         assert!(h.kurucu == option::some(signer::address_of(k)), ESadeceKurucu);
-        assert!(!exists<DefterDegisti>(haberci), EZatenBagli);
-        let hs = object::generate_signer_for_extending(&h.ref);
-        move_to(&hs, DefterDegisti {});
+        if (!exists<DefterDegisti>(haberci)) {
+            let hs = object::generate_signer_for_extending(&h.ref);
+            move_to(&hs, DefterDegisti {});
+        };
         h.defter = defter;
     }
 
@@ -123,6 +126,7 @@ module sepet::haberci {
     }
 
     #[view] public fun kasa_adresi(haberci: address): address acquires Haberci { borrow_global<Haberci>(haberci).kasa }
+    #[view] public fun defter_adresi(haberci: address): address acquires Haberci { borrow_global<Haberci>(haberci).defter }
 
     /* ---- the EVM ABI, one 32-byte word at a time ---- */
 

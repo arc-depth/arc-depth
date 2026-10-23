@@ -22,6 +22,7 @@ interface IDolasimH {
 /// The launch's tax bucket (VergiKovasi): passes what it holds on to the basket.
 interface IKovaH {
     function gonder() external;
+    function gonderimVar() external view returns (bool);
 }
 
 interface IPulseKayit {
@@ -180,12 +181,21 @@ contract PulseHook5 {
     uint256 public constant KALKAN_ESIK_PPM = 5_000;     // 0,50% of circulating
     uint256 public constant KALKAN_TAVAN_PPM = 30_000;   // 3,00% extra, capped
 
-    /* ---- the tax, passed on in the trade (v4) ------------------------ */
-    /// Gas the bucket may use to pass a trade's tax on to the Defter (and,
-    /// when a basket line crosses $50, to send it to its vault). Asked only
-    /// when this much is left with room to finish the swap; its failure is
-    /// ignored, the dollars then wait in the bucket for the next trade.
-    uint256 public constant KOVA_GAZ = 1_500_000;
+    /* ---- the tax, passed on in the trade (v4, v5) -------------------- */
+    /// Gas the bucket gets to pass a trade's tax on to the Defter when that
+    /// sends basket lines to their vaults (at most two per call, the Defter's
+    /// AZAMI_GONDERIM; the two dearest sends measured ~0.91M with the
+    /// booking, 24 Oct; this leaves well over half again).
+    uint256 public constant KOVA_GAZ = 2_000_000;
+    /// Gas to only book the tax on the lines (nothing reaches $50).
+    uint256 public constant KOVA_KUCUK = 400_000;
+    /// v5: a trade that does not carry this gas (plus room to finish) reverts
+    /// instead of skipping the bucket. v4 skipped it when gas was short, and a
+    /// wallet's gas estimate (the least gas that succeeds) is exactly a gas
+    /// that skips it: the tax would have waited for a rich trade. The
+    /// bucket's own failure is still ignored: the dollars wait for the next
+    /// trade and nothing else is held up.
+    error KovaGazi(uint256 gerekli);
 
     struct Pencere {
         uint64 blok;
@@ -644,9 +654,14 @@ contract PulseHook5 {
         if (i > 0 && !IERC20H(quote).transfer(isletmeKasasi, i)) revert TransferOlmadi();
         if (f > 0 && !IERC20H(quote).transfer(fthmYakici, f)) revert TransferOlmadi();
         if (v > 0 && !IERC20H(quote).transfer(kasa, v)) revert TransferOlmadi();
-        if (v > 0 && gasleft() > KOVA_GAZ + 250_000) {
+        if (v > 0) {
+            /* the bucket says whether this tax sends basket lines (then the
+               dear gas) or only books it; a bucket that cannot answer books */
+            (bool ok, bytes memory r) = kasa.staticcall{gas: 150_000}(abi.encodeWithSelector(IKovaH.gonderimVar.selector));
+            uint256 g = ok && r.length >= 32 && abi.decode(r, (bool)) ? KOVA_GAZ : KOVA_KUCUK;
+            if (gasleft() < g + 250_000) revert KovaGazi(g);
             /* the result is not read: a bucket that cannot pass it on now keeps it */
-            (bool gecti,) = kasa.call{gas: KOVA_GAZ}(abi.encodeWithSelector(IKovaH.gonder.selector));
+            (bool gecti,) = kasa.call{gas: g}(abi.encodeWithSelector(IKovaH.gonder.selector));
             gecti;
         }
         if (d > 0 && !IERC20H(quote).transfer(acici, d)) revert TransferOlmadi();

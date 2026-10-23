@@ -159,11 +159,22 @@ module sepet::takas_tests {
         kasa::takas_al(arb, k, 0);
     }
 
+    /// v5: the Defter moves as often as needed until the lock
     #[test(fw = @aptos_framework, yayinci = @sepet, arb = @0xa2b)]
-    #[expected_failure(abort_code = 7, location = sepet::haberci)]
-    fun defter_bir_kez_degisir(fw: &signer, yayinci: &signer, arb: &signer) {
+    fun defter_kilide_kadar_tekrar_degisir(fw: &signer, yayinci: &signer, arb: &signer) {
         let (h, _k, _usdc, _varlik, _p) = kur(fw, yayinci, arb, true, 2 * Q64);
         haberci::defter_degistir(yayinci, h, @0x44);
+        assert!(haberci::defter_adresi(h) == @0x44, 1);
+        haberci::defter_degistir(yayinci, h, @0x55);
+        assert!(haberci::defter_adresi(h) == @0x55, 2);
+    }
+
+    #[test(fw = @aptos_framework, yayinci = @sepet, arb = @0xa2b)]
+    #[expected_failure(abort_code = 1, location = sepet::haberci)]
+    fun kilitten_sonra_defter_degismez(fw: &signer, yayinci: &signer, arb: &signer) {
+        let (h, _k, _usdc, _varlik, _p) = kur(fw, yayinci, arb, true, 2 * Q64);
+        haberci::defter_degistir(yayinci, h, @0x44);
+        haberci::kilitle(yayinci, h);
         haberci::defter_degistir(yayinci, h, @0x55);
     }
 

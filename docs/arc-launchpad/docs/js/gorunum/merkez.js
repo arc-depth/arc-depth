@@ -605,7 +605,9 @@ export async function ciz({ param } = {}) {
         yuk = AbiCoder.defaultAbiCoder().encode(["uint8", "uint32", "bytes32", "uint256", "address"], [tur, odeme, zeroPadValue(ben, 32), asgari, ben]);
       }
       /* v4 redemption: Arc's dollar for the vault orders' fees rides with the compose (the unused part comes back on Arc) */
-      let secenekler = sec(200_000n, 900_000n);
+      /* the compose sells in the Arc pool: since v5 the hook requires the gas its tax may need to reach the
+         basket (up to ~2.7M for the dearest trade, measured 24 Oct), so the compose carries 3.5M */
+      let secenekler = sec(200_000n, 3_500_000n);
       if (tur === 1 && v4mu()) {
         const o = await odemeYeri(ag, ben);
         const u = await itfaUcreti(t, miktar, o.zincir, o.alici);

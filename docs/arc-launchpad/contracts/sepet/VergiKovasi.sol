@@ -5,6 +5,11 @@ import {IERC20S} from "./IHaberci.sol";
 
 interface ISepetUcuV {
     function vergi(address token, uint256 dolar) external;
+    function defter() external view returns (bytes32);
+}
+
+interface IDefterV {
+    function gonderimVar(bytes32 token, uint256 ek) external view returns (bool);
 }
 
 interface IHavuzRezerviV {
@@ -61,6 +66,15 @@ contract VergiKovasi {
         usdc.approve(address(ucu), b);
         ucu.vergi(token, b);
         emit Gonderildi(b);
+    }
+
+    /// For the hook (v5): whether passing on what is here now would send a
+    /// basket line to its vault (the Defter is on this chain), so the trade
+    /// must carry the gas for it.
+    function gonderimVar() external view returns (bool) {
+        uint256 b = usdc.balanceOf(address(this));
+        if (b == 0) return false;
+        return IDefterV(address(uint160(uint256(ucu.defter())))).gonderimVar(bytes32(uint256(uint160(token))), b);
     }
 
     function dolasim() external view returns (uint256) {

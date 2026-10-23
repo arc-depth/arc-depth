@@ -32,6 +32,17 @@
  *   4 the twin gate: oapp_core::set_peer(Base, v4 AktarmaLZ)
  * Nothing here locks: the seals (Solana Muhurle, Sui/Aptos kilitle) are in
  * scripts/kilitle-v2.js, after the joint test.
+ *
+ * v5 (24 Oct 2026): `node scripts/dagit-v4-uzak.js v5 [solana|sui|aptos] [--uygula]`
+ * (or V4_KAYIT=dagitim-v5.json) points the three chains at the v5 Defter and
+ * IkizHub the same way. The one-time moves of v4 became repeatable until the
+ * seal (Solana DefterDegistir / HubDegistir, Aptos defter_degistir), so
+ * Solana and Aptos are upgraded once more; the Solana gate also gets 3.5M gas
+ * toward Arc (SecenekDegistir: a sale from Solana reaches the Arc pool, whose
+ * hook now requires the gas the tax may need). Sui needs no upgrade: a new
+ * haberci::kur names the v5 Defter. Low memory: DERLEME_YOK=1 uses the builds
+ * in target/ana-ag; programs go up over TPU (no --use-rpc); an extension is
+ * at least 10,240 bytes.
  * =========================================================================== */
 const fs = require("fs");
 const path = require("path");
@@ -39,9 +50,12 @@ const cp = require("child_process");
 
 const KOK = path.join(__dirname, "..");
 const UYGULA = process.argv.includes("--uygula");
-const SECILEN = process.argv.slice(2).filter((a) => !a.startsWith("--"));
+const V5 = process.argv.includes("v5");
+const SECILEN = process.argv.slice(2).filter((a) => !a.startsWith("--") && a !== "v5");
 const V2 = JSON.parse(fs.readFileSync(path.join(KOK, "dagitim-v2.json"), "utf8"));
-const V4_YOL = process.env.V4_KAYIT || path.join(KOK, "dagitim-v4.json");
+const V4_YOL = process.env.V4_KAYIT || path.join(KOK, V5 ? "dagitim-v5.json" : "dagitim-v4.json");
+/* v5: the Solana gate's options toward Arc, lzReceive gas there (type 3, executor) */
+const GONDER_GAZ_V5 = 3_500_000n;
 const V4_VAR = fs.existsSync(V4_YOL);
 const V4 = V4_VAR ? JSON.parse(fs.readFileSync(V4_YOL, "utf8")) : { zincir: { arc: {}, base: {} } };
 const LISTE = JSON.parse(fs.readFileSync(path.join(KOK, "docs", "veri", "v4-uzak-liste.json"), "utf8"));
@@ -199,7 +213,20 @@ async function solana() {
         data: Buffer.concat([Buffer.from([4]), hub]) })]);
     }
   }
-  console.log("  ARC TARAFI: v4 IkizHub'in Solana (30168) yurutucu maxMessageSize'i 512 olmali (v2'de oldugu gibi; dagit-v2.js v4 baglamasi)");
+  /* 5 (v5) the options every Gonder carries toward Arc */
+  if (V5) {
+    const hedef = Buffer.concat([Buffer.from([0, 3, 1, 0, 0x11, 1]), Buffer.from(GONDER_GAZ_V5.toString(16).padStart(32, "0"), "hex")]);
+    const st2 = (await conn.getAccountInfo(store)).data;
+    const n = st2.readUInt16LE(166);
+    if (n === hedef.length && Buffer.compare(st2.subarray(168, 168 + n), hedef) === 0) console.log("  SecenekDegistir".padEnd(48) + "tamam  " + GONDER_GAZ_V5 + " gaz");
+    else if (calis) {
+      const len = Buffer.alloc(2); len.writeUInt16LE(hedef.length);
+      await gonder("SecenekDegistir -> lzReceive " + GONDER_GAZ_V5 + " gaz", [new TransactionInstruction({ programId: KAPI, keys: [SG, W(store)],
+        data: Buffer.concat([Buffer.from([5]), len, hedef]) })]);
+      V4.uzak ||= {}; V4.uzak.solana ||= {}; V4.uzak.solana.gonderSecenek = "0x" + hedef.toString("hex"); yaz();
+    }
+  }
+  console.log("  ARC TARAFI: IkizHub'in Solana (30168) yurutucu maxMessageSize'i (dagit-v2.js baglamasi)");
 }
 
 /* ---- Sui -------------------------------------------------------------------- */
@@ -338,7 +365,9 @@ async function aptos() {
   const P = k.hesap;
   /* 1 the upgrade: the same build as on the chain plus the v4 functions */
   const fonksiyonlar = (await ag.getAccountModule({ accountAddress: P, moduleName: "kasa" })).abi.exposed_functions.map((f) => f.name);
-  if (fonksiyonlar.includes("takas_al")) console.log("  yukseltme".padEnd(48) + "tamam");
+  /* v5 adds haberci::defter_adresi with the repeatable defter_degistir */
+  const hFonk = (await ag.getAccountModule({ accountAddress: P, moduleName: "haberci" })).abi.exposed_functions.map((f) => f.name);
+  if (fonksiyonlar.includes("takas_al") && (!V5 || hFonk.includes("defter_adresi"))) console.log("  yukseltme".padEnd(48) + "tamam");
   else {
     const cikti = path.join(KOK, "ozel", "yukseltme-pulse-sepet.json");
     cp.execFileSync("C:/Users/omen/araclar/aptos/aptos.exe", ["move", "build-publish-payload", "--package-dir", path.join(KOK, "aptos", "pulse-sepet"), "--named-addresses", "sepet=" + P,

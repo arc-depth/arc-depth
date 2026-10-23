@@ -756,7 +756,7 @@ fn v2_tablo_ile_her_mesaj_1232_altinda_ve_teslim_edilir() {
 
 /// v4: the gate pointed once at a new IkizHub, with a new table that fits it.
 #[test]
-fn hub_bir_kez_yeni_tabloyla_degisir_yeni_hubdan_mesaj_gelir() {
+fn hub_kilitten_once_yeni_tabloyla_degisir_yeni_hubdan_mesaj_gelir() {
     let mut e = kur_tablolu();
     let admin = e.admin.insecure_clone();
     let yeni = evm(0x2c);
@@ -784,8 +784,34 @@ fn hub_bir_kez_yeni_tabloyla_degisir_yeni_hubdan_mesaj_gelir() {
     hub_degistir(&mut e, t, &admin, yeni).unwrap();
     assert_eq!(&e.svm.get_account(&s).unwrap().data[38..70], &yeni, "store.hub");
     assert_eq!(&e.svm.get_account(&alt).unwrap().data[1..33], t.as_ref(), "yeni tablo");
-    let t3 = e.tablo(&sabit, true);
-    assert!(hub_degistir(&mut e, t3, &admin, evm(0x3d)).is_err(), "ikinci kez olmaz");
+    /* v5: a second move before Kilitle, with a table that fits that hub; then back to `yeni` for the rest */
+    let ucuncu = evm(0x3d);
+    let mut sabit3 = e.sabitler();
+    sabit3[5] = e.ep(&[b"Nonce", s.as_ref(), &arc, &ucuncu]);
+    let t3 = e.tablo(&sabit3, true);
+    hub_degistir(&mut e, t3, &admin, ucuncu).unwrap();
+    assert_eq!(&e.svm.get_account(&s).unwrap().data[38..70], &ucuncu, "ikinci degisim (v5)");
+    let t4 = e.tablo(&sabit, true);
+    hub_degistir(&mut e, t4, &admin, yeni).unwrap();
+    let t = t4;
+    /* v5: the options toward Arc, admin only */
+    let secenek = |e: &mut Env, kim: &Keypair, o: &[u8]| {
+        let mut d = vec![5u8];
+        d.extend((o.len() as u16).to_le_bytes());
+        d.extend(o);
+        let keys = vec![ms(kim.pubkey()), mw(s)];
+        let pid = e.pid;
+        e.send(vec![Instruction { program_id: pid, accounts: keys, data: d }], &[kim]).map(|_| ())
+    };
+    /* type 3, executor lzReceive 3,500,000 gas (16-byte big-endian gas) */
+    let mut yeni_sec: Vec<u8> = vec![0, 3, 1, 0, 0x11, 1];
+    yeni_sec.extend(3_500_000u128.to_be_bytes());
+    assert!(secenek(&mut e, &x, &yeni_sec).is_err(), "yabanci secenek yazamaz");
+    secenek(&mut e, &admin, &yeni_sec).unwrap();
+    let st = e.svm.get_account(&s).unwrap().data;
+    assert_eq!(u16::from_le_bytes([st[166], st[167]]) as usize, yeni_sec.len(), "secenek boyu");
+    assert_eq!(&st[168..168 + yeni_sec.len()], &yeni_sec[..], "secenek");
+    assert!(secenek(&mut e, &admin, &[0u8; 65]).is_err(), "64 bayttan uzun olmaz");
     /* the new hub's YARAT arrives on the v2 path with the new table; the old hub is a stranger now */
     e.svm.warp_to_slot(200);
     let p = e.gelir_v2(yeni, &yarat_mesaji(b"Pulse Test", b"PTEST1")).unwrap();
@@ -807,4 +833,7 @@ fn hub_bir_kez_yeni_tabloyla_degisir_yeni_hubdan_mesaj_gelir() {
     d.extend(yeni);
     let pid = k.pid;
     assert!(k.send(vec![Instruction { program_id: pid, accounts: vec![ms(a2.pubkey()), mw(ks), mw(kd), mw(ka), mr(t2), mr(SYSTEM)], data: d }], &[&a2]).is_err(), "kilitten sonra");
+    let mut sd = vec![5u8, 22, 0];
+    sd.extend([0u8; 22]);
+    assert!(k.send(vec![Instruction { program_id: pid, accounts: vec![ms(a2.pubkey()), mw(ks)], data: sd }], &[&a2]).is_err(), "kilitten sonra secenek de yok");
 }

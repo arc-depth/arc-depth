@@ -73,7 +73,8 @@
 //!  11 TakasSat  [caller s w, config w, fiyat w, ihale w, mint, asset_depo w, dollar_depo w, payee w, giden w,
 //!                 caller_dollar w, liste, system, token, then the same Raydium accounts]   data: ihale u64
 //!  12 ListeEkle [admin s w, config, liste w, mint, pool, muhur, system]   (before Muhurle)
-//!  13 DefterDegistir [admin s w, config w, degisti w, muhur, system]   data: defter 32, ikiz 32   (once, before Muhurle)
+//!  13 DefterDegistir [admin s w, config w, degisti w, muhur, system]   data: defter 32, ikiz 32   (before Muhurle;
+//!                 v5: again as often as needed until the seal — v4 allowed it once and v5 moved the Defter again)
 //!  14 Muhurle   [admin s w, muhur w, system]: the list and the Defter are fixed from here on
 //!
 //! `payee` is the holder's dollar ATA when they are paid on Solana, else the
@@ -818,7 +819,9 @@ fn defter_degistir(program_id: &Address, accounts: &mut [AccountView], data: &[u
     yonetici(&admin)?;
     ensure(!muhurlu(program_id, &muhur)?, E_MUHUR)?;
     read_config(program_id, &config)?;
-    isaret(program_id, &admin, &degisti, b"defter-degisti")?;
+    /* v5: the marker records that the Defter was moved at least once; it no longer stops a second move */
+    if degisti.data_len() == 0 { isaret(program_id, &admin, &degisti, b"defter-degisti")?; }
+    else { ensure(*degisti.address() == pda(&[b"defter-degisti"], program_id).0 && degisti.owned_by(program_id), E_BAD_ACCOUNT)?; }
     write(&mut config, 114, addr_at(data, 0)?.as_ref())?;
     write(&mut config, 146, addr_at(data, 32)?.as_ref())
 }

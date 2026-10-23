@@ -45,7 +45,7 @@ const KOK = path.join(__dirname, "..");
 const ADIM = process.argv[2];
 const UYGULA = process.argv.includes("--uygula");
 const SECILEN = process.argv.slice(3).filter((a) => !a.startsWith("--"));
-const KAYIT = process.env.V2_KAYIT || path.join(KOK, ADIM === "v4" ? "dagitim-v4.json" : "dagitim-v2.json");   // V2_KAYIT: a dry run against predicted addresses
+const KAYIT = process.env.V2_KAYIT || path.join(KOK, ADIM === "v4" ? "dagitim-v4.json" : ADIM === "v5" ? "dagitim-v5.json" : "dagitim-v2.json");   // V2_KAYIT: a dry run against predicted addresses
 const MT = "0x81D40F21F12A8F0E3252Bccb954D722d4c464B64";
 const TM = "0x28b5a0e9C621a5BadaA536219b3a228C8168cf5d";
 const C2 = "0x4e59b44847b379578588920cA78FbF26c0B4956C";
@@ -94,7 +94,7 @@ const LZ = (() => {
 const IKINCI_ADIM_SUI_V3 = 600_000_000_000_000n;
 const UZAK = { solana: { eid: 30168, domain: 5, onay: 32 }, sui: { eid: 30378, domain: 8, onay: 5 }, aptos: { eid: 30108, domain: 9, onay: 260 } };
 
-if (!["kur", "bagla", "arc-yenile", "v4"].includes(ADIM)) { console.error("kullanim: dagit-v2.js <kur|bagla|arc-yenile|v4> [zincir...] [--uygula]"); process.exit(1); }
+if (!["kur", "bagla", "arc-yenile", "v4", "v5"].includes(ADIM)) { console.error("kullanim: dagit-v2.js <kur|bagla|arc-yenile|v4|v5> [zincir...] [--uygula]"); process.exit(1); }
 const ZINCIRLER = SECILEN.length ? SECILEN : Object.keys(Z);
 if (!ZINCIRLER.includes("arc")) ZINCIRLER.unshift("arc");
 const evmAnahtar = () => fs.readFileSync("C:/bot/.env", "utf8").match(/^TRADER_PRIVATE_KEY\s*=\s*(.+)$/m)[1].trim();
@@ -153,7 +153,7 @@ function saglayici(ad) {
   for (const ad of ZINCIRLER) { saglayici(ad); Z[ad].ben = await Z[ad].w.getAddress(); kayit.zincir[ad] ||= {}; }
   if (ADIM === "kur") await kur(kayit, yaz);
   else if (ADIM === "arc-yenile") await arcYenile(kayit, yaz);
-  else if (ADIM === "v4") await v4(kayit, yaz);
+  else if (ADIM === "v4" || ADIM === "v5") await v4(kayit, yaz, ADIM === "v5" ? 5 : 4);
   else await bagla(kayit, yaz);
 })().catch((e) => { console.error("HATA " + (e.shortMessage || e.message)); if (process.env.AYRINTI) console.error(e.stack); process.exitCode = 1; });
 
@@ -267,7 +267,17 @@ async function arcYenile(kayit, yaz) {
    On Arc's kept HaberciLZ, while it is not locked: orders to chains whose
    vault swaps get 1.6M lzReceive gas (ozelSecenek, once per chain; with the
    600k default a redemption's sale has no room and goes in kind).
-   Record: dagitim-v4.json (dagitim-v2.json untouched). */
+   Record: dagitim-v4.json (dagitim-v2.json untouched).
+   v5 (24 Oct 2026, the same set again, record dagitim-v5.json, kept parts read
+   from dagitim-v4.json): the Defter sends at most two basket lines per call,
+   the fullest first, the rest with the next calls; the hook asks the bucket
+   whether a trade's tax sends lines and then REQUIRES the gas for it (v4
+   skipped the bucket when gas was short, and a wallet's estimate is exactly
+   such a gas: the tax waited for a rich trade; five lines crossing at once
+   did not fit v4's 1.5M either). Because a sale in the pool now needs that
+   gas, every path that sells from another chain carries more gas: the Base
+   hop's options toward Arc 3.5M (AktarmaLZ.hubKur), the Solana gate's
+   (SecenekDegistir, scripts/dagit-v4-uzak.js), the site's compose. */
 const V4_DEX = {
   /* Uniswap v3 factories and wrapped native coins, read from the chains on 23 Oct
      (feeAmountTickSpacing(500) = 10, USDC pools at 500 and 3000). HyperEVM: HyperSwap V3, a
@@ -284,13 +294,19 @@ const V4_DEX = {
 const V4_GAZ_ZINCIR = ["base", "arbitrum", "avalanche", "hyperevm"];
 const V4_GAZ = 1_600_000;
 const MT_ARC = "0x81D40F21F12A8F0E3252Bccb954D722d4c464B64";
+/* v5: the hub's lzReceive gas on Arc for a message from the Base hop (a sale from Sui / Aptos reaches the
+   pool there, and the hook may require 2M + room for the tax; measured 2.67M for the dearest trade) */
+const HUB_GAZ_V5 = 3_500_000;
 
-async function v4(kayit, yaz) {
-  if (path.resolve(KAYIT) === path.resolve(path.join(KOK, "dagitim-v2.json"))) throw new Error("v4 kendi kaydina yazar (dagitim-v4.json); V2_KAYIT ile v2 kaydi verilemez");
+async function v4(kayit, yaz, surumNo = 4) {
+  const KAYNAK = surumNo === 5 ? "dagitim-v4.json" : "dagitim-v2.json";
+  if (path.resolve(KAYIT) === path.resolve(path.join(KOK, "dagitim-v2.json")) || (surumNo === 5 && path.resolve(KAYIT) === path.resolve(path.join(KOK, "dagitim-v4.json"))))
+    throw new Error("v" + surumNo + " kendi kaydina yazar (dagitim-v" + surumNo + ".json)");
+  if (surumNo === 5 && !art("SepetDefteri").abi.some((x) => x.name === "gonderimVar")) throw new Error("build/SepetDefteri.json eski kod (gonderimVar yok)");
   if (!art("SepetDefteri").abi.some((x) => x.name === "itfaUcreti")) throw new Error("build/SepetDefteri.json eski kod (itfaUcreti yok)");
   if (!art("SepetKasasi").abi.some((x) => x.name === "havuzVar")) throw new Error("build/SepetKasasi.json eski kod (havuzVar yok)");
   cp.execFileSync("node", [path.join(KOK, "scripts", "derle.js"), "merkez/LaunchEmaneti"], { cwd: KOK, stdio: "ignore" });
-  const eski = JSON.parse(fs.readFileSync(path.join(KOK, "dagitim-v2.json"), "utf8"));
+  const eski = JSON.parse(fs.readFileSync(path.join(KOK, KAYNAK), "utf8"));
   for (const ad of Object.keys(Z)) {
     const e = eski.zincir[ad] || {}, r = (kayit.zincir[ad] ||= {});
     if (!e.HaberciLZ) continue;
@@ -305,9 +321,15 @@ async function v4(kayit, yaz) {
       "ikizSecenek", "yaratSecenek", "gonderSecenek"]) if (u[f] && !t[f]) t[f] = u[f];
     if (ad === "sui") t.ikinciAdim = IKINCI_ADIM_SUI_V3.toString();
     else if (u.ikinciAdim && !t.ikinciAdim) t.ikinciAdim = u.ikinciAdim;
+    /* v5: what v4 already changed on the far chains and stays (the upgraded Sui package; the Solana
+       gate, vault and dollar depot; the Aptos receiver object). Not the Sui receiver/vault (a new
+       haberci::kur names the v5 Defter) and not Solana's lookup table (it holds the hub's nonce). */
+    if (surumNo === 5) for (const f of ad === "sui" ? ["v4Paket"] : ad === "solana" ? ["kapi", "kasa", "dolarDepo", "arcMaxMesaj"] : ad === "aptos" ? ["kasa", "haberci"] : [])
+      if (u[f] && !t[f]) t[f] = u[f];
   }
   kayit.v4 ||= { kaynak: "dagitim-v2.json", tasarim: "arastirma/v4-tasarim.md",
     sebep: "itfa ucreti itfa edende, dolu kasaya emir; vergi islemde Defter'e; EVM kasalari Uniswap v3 TWAP sinirli; bahsisler" };
+  if (surumNo === 5) kayit.v5 ||= { kaynak: "dagitim-v4.json", sebep: "Defter cagri basina en fazla 2 satir; hook vergi gazini zorunlu kilar (KOVA_GAZ 2M / KOVA_KUCUK 400k); baska zincirden satis 3,5M gaz" };
   yaz();
 
   for (const ad of ZINCIRLER) {
@@ -398,7 +420,7 @@ async function v4(kayit, yaz) {
     }
   }
   if (!UYGULA) await maliyet();
-  console.log("  SONRA  V2_KAYIT=dagitim-v4.json node scripts/dagit-v2.js bagla   (kuru once; Defter'in EVM baglari, IkizHub merkez + Base aktarma,");
+  console.log("  SONRA  V2_KAYIT=dagitim-v" + surumNo + ".json node scripts/dagit-v2.js bagla   (kuru once; Defter'in EVM baglari, IkizHub merkez + Base aktarma,");
   console.log("         AktarmaLZ hub, Sui/Aptos aktarmali kapilar; HaberciLZ baglari zaten yazili)");
   console.log("  EVM DISI (mesaj bicimi ayni; yalniz Defter ve IkizHub adresi degisti; arastirma/v4-tasarim.md bolum 5):");
   console.log("    Sui     sepet::haberci::kur<USDC>(8, 26, v4 Defter) -> yeni Haberci + Kasa; ikiz_ekle(26, Arc HaberciLZ); ikiz kapisi set_peer(Base, v4 AktarmaLZ)");
@@ -622,7 +644,7 @@ async function bagla(kayit, yaz) {
   if ((await hub.aktarma()) === b32(SIFIR)) is("arc", "IkizHub aktarma (Base)", () => hub.aktarmaKur(LZ[8453].eid, b32(K("base").AktarmaLZ)));
   await yolYaz("arc", K("arc").IkizHub, LZ[8453].eid, LZ[8453].onay, "Base AktarmaLZ");
   const ak = k("base", "AktarmaLZ");
-  if ((await ak.hub()) === b32(SIFIR)) is("base", "AktarmaLZ hub", () => ak.hubKur(arcEid, b32(K("arc").IkizHub), secenek(800_000)));
+  if ((await ak.hub()) === b32(SIFIR)) is("base", "AktarmaLZ hub", () => ak.hubKur(arcEid, b32(K("arc").IkizHub), secenek(kayit.v5 ? HUB_GAZ_V5 : 800_000)));
   await yolYaz("base", K("base").AktarmaLZ, arcEid, LZ[5042].onay, "Arc IkizHub");
   if (U.solana && U.solana.kapi) {
     if ((await hub.kapi(UZAK.solana.eid)) === b32(SIFIR)) is("arc", "IkizHub Solana", () => hub.kapiEkle(UZAK.solana.eid, U.solana.kapi, U.solana.ikizSecenek));
@@ -676,7 +698,7 @@ async function bagla(kayit, yaz) {
       defter: K("arc").SepetDefteri, hub: K("arc").IkizHub, aktarma: K("base").AktarmaLZ, hook: K("arc").PulseHook5,
       /* the Sui / Aptos launch escrow: v4 deploys it with the set; v2 had it added later (dagit-launch-emaneti.js) */
       emanet: K("arc").LaunchEmaneti || (() => { try { return JSON.parse(fs.readFileSync(path.join(KOK, "docs", "veri", "sepet-v2.json"), "utf8")).emanet; } catch (e) { return undefined; } })(),
-      surum: kayit.v4 ? 4 : 2,
+      surum: kayit.v5 ? 5 : kayit.v4 ? 4 : 2,
       zincir: Object.fromEntries(ZINCIRLER.map((ad) => [ad, { domain: Z[ad].domain, haberci: K(ad).HaberciLZ, kasa: K(ad).SepetKasasi, dolar: Z[ad].usdc }])),
       uzak: Object.fromEntries(Object.entries(U).map(([ad, u]) => [ad, { kasa: u.kasa, ikizKapi: u.ikizKapi, karsi: u.karsi, paket: u.paket, ikizPaket: u.ikizPaket,
         kapiNesne: u.kapiNesne, oapp: u.oapp, hesap: u.hesap, ikizHesap: u.ikizHesap,

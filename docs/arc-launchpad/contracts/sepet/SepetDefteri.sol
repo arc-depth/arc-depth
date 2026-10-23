@@ -16,7 +16,12 @@ import {IHaberci, IHaberAlici, IERC20S, SepetMesaj, Adres} from "./IHaberci.sol"
 ///     vault on that line's chain with the order to buy (user, 18 Oct: "every
 ///     $50 of USDC buys the collateral token"). It happens inside the call
 ///     that brought the dollars — no one has to trigger it — and a send that
-///     fails leaves the dollars waiting, never the trade;
+///     fails leaves the dollars waiting, never the trade. At most
+///     AZAMI_GONDERIM lines leave in one call, the fullest first; the rest
+///     wait on their accounts (still part of the basket, still redeemable)
+///     and leave with the next calls (v5, 24 Oct 2026: five lines crossing
+///     $50 in one trade needed more gas than the hook gives the tax, and the
+///     tax stayed in the bucket);
 ///   - turns a burn on any chain into a redemption: each vault that holds
 ///     something of the launch sells the holder's share and pays them on
 ///     their chain. The redeemer pays those orders' messenger fees in the same
@@ -47,6 +52,14 @@ contract SepetDefteri is IHaberAlici {
     /// each line's dollars waiting here, as USDC, until they reach ESIK
     mapping(uint64 => mapping(uint256 => uint256)) public biriken;
     uint256 public constant ESIK = 50e6;          // a line buys in $50 lots (or more)
+    /// Lines sent to their vaults in one call: two worst-case sends
+    /// (LayerZero order + Circle burn, ~0.58M gas each, measured 24 Oct)
+    /// fit the gas the hook gives the tax (PulseHook5.KOVA_GAZ) with room.
+    uint256 public constant AZAMI_GONDERIM = 2;
+    /// A send that failed is not retried by the automatic path for this long
+    /// (a chain that cannot be reached would otherwise cost every trade).
+    uint256 public constant BEKLEME = 1 hours;
+    mapping(uint64 => mapping(uint256 => uint256)) public sonHata;
 
     /// The launchpad (also the burner) and the basket vault on each chain.
     mapping(uint32 => bytes32) public launchpad;
@@ -183,7 +196,7 @@ contract SepetDefteri is IHaberAlici {
             biriken[id][i] = k[i].dolar;
         }
         emit Kayit(id, kaynakZincir, token, arz, k.length, toplam);
-        _esikleriGonder(id);
+        _esikleriGonder(id, false, address(0));
     }
 
     function sepetGecerli(uint32 kaynakZincir, bytes32 token, uint256 arz, Kalem[] memory k, uint256[] memory ref, uint256 gelen)
@@ -230,37 +243,87 @@ contract SepetDefteri is IHaberAlici {
             biriken[id][i] += d;
         }
         emit Vergi(id, gelen, beklemede(id));
-        _esikleriGonder(id);
+        _esikleriGonder(id, false, address(0));
     }
 
-    /// Every line of `id` whose account holds ESIK or more: all of it goes to
-    /// its vault with the order to buy. A send that cannot go now (a
-    /// messenger fee it cannot cover, a chain not reachable yet) leaves the
-    /// dollars on the account; nothing above it reverts, and any later
-    /// dollars, or anyone calling `gonder`, try again.
-    function _esikleriGonder(uint64 id) internal {
+    /// Up to AZAMI_GONDERIM lines of `id` whose account holds ESIK or more,
+    /// the fullest first (ties: the lower line): all of each goes to its
+    /// vault with the order to buy. The others wait on their accounts and go
+    /// with the next calls. A send that cannot go now (a messenger fee it
+    /// cannot cover, a chain not reachable yet) leaves the dollars on the
+    /// account; nothing above it reverts. The automatic path (`hepsi` false)
+    /// skips a line that failed in the last BEKLEME; `bahsisAlan`, when set,
+    /// receives BAHSIS out of each line it sends.
+    function _esikleriGonder(uint64 id, bool hepsi, address bahsisAlan) internal {
         Kalem[] storage k = kalemler[id];
-        for (uint256 i = 0; i < k.length; i++) {
-            uint256 d = biriken[id][i];
-            if (d < ESIK) continue;
-            biriken[id][i] = 0;
-            uint256 ref = (teklifler[id][i] * d) / k[i].dolar;
-            usdc.approve(address(haberci), d);
-            try haberci.gonder(k[i].zincir, kasa[k[i].zincir], abi.encode(SepetMesaj.AL, id, k[i].varlik, ref), d) {
-                kasaDolu[id][k[i].zincir] = true;
-                emit Gonderildi(id, k[i].zincir, k[i].varlik, d);
-            } catch {
-                biriken[id][i] = d;
-                usdc.approve(address(haberci), 0);
-                emit Bekletildi(id, k[i].zincir, d);
+        uint256 denendi;   // bit i: line i already tried in this call
+        for (uint256 n = 0; n < AZAMI_GONDERIM; n++) {
+            uint256 sec = type(uint256).max;
+            uint256 enCok;
+            for (uint256 i = 0; i < k.length; i++) {
+                if (denendi & (1 << i) != 0) continue;
+                uint256 b = biriken[id][i];
+                if (b < ESIK || b <= enCok) continue;
+                if (!hepsi && block.timestamp < sonHata[id][i] + BEKLEME) continue;
+                sec = i; enCok = b;
             }
+            if (sec == type(uint256).max) return;
+            denendi |= 1 << sec;
+            _satirGonder(id, sec, bahsisAlan);
         }
     }
 
-    /// Anyone: try again the lines of `id` that reached ESIK but could not go.
+    function _satirGonder(uint64 id, uint256 i, address bahsisAlan) internal {
+        Kalem storage s = kalemler[id][i];
+        uint256 d = biriken[id][i];
+        biriken[id][i] = 0;
+        uint256 bahsis = bahsisAlan != address(0) && d >= ESIK + BAHSIS ? BAHSIS : 0;
+        uint256 g = d - bahsis;
+        uint256 ref = (teklifler[id][i] * g) / s.dolar;
+        usdc.approve(address(haberci), g);
+        try haberci.gonder(s.zincir, kasa[s.zincir], abi.encode(SepetMesaj.AL, id, s.varlik, ref), g) {
+            kasaDolu[id][s.zincir] = true;
+            emit Gonderildi(id, s.zincir, s.varlik, g);
+            if (bahsis > 0 && !usdc.transfer(bahsisAlan, bahsis)) revert TransferOlmadi();
+        } catch {
+            biriken[id][i] = d;
+            sonHata[id][i] = block.timestamp;
+            usdc.approve(address(haberci), 0);
+            emit Bekletildi(id, s.zincir, d);
+        }
+    }
+
+    /// Anyone: send (up to AZAMI_GONDERIM of) the lines of `id` that hold
+    /// ESIK or more, including ones that failed lately. No tip.
     function gonder(uint64 id) external kilitli {
         if (!launchlar[id].var_) revert BilinmeyenLaunch();
-        _esikleriGonder(id);
+        _esikleriGonder(id, true, address(0));
+    }
+
+    /// Anyone: the same, and the caller receives BAHSIS ($0.05) out of each
+    /// line sent. The automatic path does not need it: every taxed trade
+    /// sends what is due (the hook gives it the gas); this is for a launch
+    /// whose trading stopped with lines still above ESIK.
+    function bekleyenleriGonder(uint64 id) external kilitli {
+        if (!launchlar[id].var_) revert BilinmeyenLaunch();
+        _esikleriGonder(id, true, msg.sender);
+    }
+
+    /// Whether `ek` more tax dollars for the Arc launch `token` would leave a
+    /// line at ESIK or more for the automatic path (the launch's bucket asks
+    /// for the hook, which then gives the trade's tax the gas to send lines).
+    function gonderimVar(bytes32 token, uint256 ek) external view returns (bool) {
+        uint64 id = idOf[haberci.zincir()][token];
+        Launch storage L = launchlar[id];
+        if (!L.var_) return false;
+        Kalem[] storage k = kalemler[id];
+        uint256 kalan = ek;
+        for (uint256 i = 0; i < k.length; i++) {
+            uint256 d = i + 1 == k.length ? kalan : (ek * k[i].dolar) / L.agirlikToplam;
+            kalan -= d;
+            if (biriken[id][i] + d >= ESIK && block.timestamp >= sonHata[id][i] + BEKLEME) return true;
+        }
+        return false;
     }
 
     /// Dollars of `id` waiting here, all lines together (USDC, part of the collateral).

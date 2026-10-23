@@ -288,7 +288,7 @@ fn listede_olmayan_havuz_ve_muhurden_sonra_liste_reddedilir() {
 }
 
 #[test]
-fn defter_bir_kez_ve_yalniz_muhurden_once_degisir() {
+fn defter_muhurden_once_degisir_v5_tekrar_da() {
     let mut e = setup("sol-usdc");
     let yabanci = Keypair::new();
     e.svm.airdrop(&yabanci.pubkey(), 1_000_000_000).unwrap();
@@ -297,7 +297,12 @@ fn defter_bir_kez_ve_yalniz_muhurden_once_degisir() {
     e.defter_degistir([0x44; 32], &a).unwrap();
     let c = e.svm.get_account(&e.config).unwrap().data;
     assert_eq!(&c[114..146], &[0x44; 32], "yeni defter");
-    assert!(e.defter_degistir([0x55; 32], &a).is_err(), "ikinci kez olmaz");
+    /* v5: a second move before the seal (the Defter moved again) */
+    e.defter_degistir([0x55; 32], &a).unwrap();
+    assert_eq!(&e.svm.get_account(&e.config).unwrap().data[114..146], &[0x55; 32], "ikinci defter (v5)");
+    assert!(e.defter_degistir([0x66; 32], &yabanci).is_err(), "yabanci yine degistiremez");
+    e.muhurle().unwrap();
+    assert!(e.defter_degistir([0x66; 32], &a).unwrap_err().contains("Custom(17)"), "muhurden sonra yok");
     /* a fresh vault, sealed first: no change at all */
     let mut e2 = setup("sol-usdc");
     e2.muhurle().unwrap();

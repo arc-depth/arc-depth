@@ -42,7 +42,10 @@
 //!   3 AltKur     [admin s w, store, alt PDA w, the lookup table, system]: once, before Kilitle; the table must
 //!                hold `sabitler` in order and be frozen
 //!   4 HubDegistir [admin s w, store w, ["hub-degisti"] w, alt PDA w, the new lookup table, system]   data: hub 32
-//!                v4: once, before Kilitle: the new IkizHub and the table that fits it
+//!                v4: before Kilitle: the new IkizHub and the table that fits it (v5: as often as needed until Kilitle)
+//!   5 SecenekDegistir [admin s, store w]   data: options_len u16, options (at most 64 bytes)
+//!                v5, before Kilitle: the options every Gonder carries toward Arc (the hub's lzReceive gas there:
+//!                a sale in the Arc pool must carry the gas its tax may need to reach the basket)
 //!   lz_receive_types (v1) / lz_receive_types_info + lz_receive_types_v2 (v2, with the lookup table) /
 //!   lz_receive (Anchor discriminators), lz_receive accounts:
 //!     0 payer (the executor) s w, 1 store, 2..10 the endpoint's `clear` accounts
@@ -156,6 +159,7 @@ pub fn process(program_id: &Address, accounts: &mut [AccountView], data: &[u8]) 
         2 => gonder(program_id, accounts, rest),
         3 => alt_kur(program_id, accounts),
         4 => hub_degistir(program_id, accounts, rest),
+        5 => secenek_degistir(program_id, accounts, rest),
         _ => Err(err(E_BAD_DATA)),
     }
 }
@@ -422,10 +426,13 @@ fn hub_degistir(program_id: &Address, accounts: &mut [AccountView], data: &[u8])
     let hub: [u8; 32] = data.get(0..32).ok_or(err(E_BAD_DATA))?.try_into().unwrap();
     ensure(hub != [0u8; 32], E_ZERO)?;
     let (dp, db) = pda(&[b"hub-degisti"], program_id);
-    ensure(*degisti.address() == dp && degisti.data_len() == 0, E_ALREADY)?;
-    let dbs = [db];
-    create_pda(&admin, &degisti, 1, program_id, &[Seed::from(b"hub-degisti"), Seed::from(&dbs)])?;
-    write(&degisti, 0, &[1])?;
+    ensure(*degisti.address() == dp, E_BAD_ACCOUNT)?;
+    /* v5: the marker records the first move; it no longer stops another before Kilitle */
+    if degisti.data_len() == 0 {
+        let dbs = [db];
+        create_pda(&admin, &degisti, 1, program_id, &[Seed::from(b"hub-degisti"), Seed::from(&dbs)])?;
+        write(&degisti, 0, &[1])?;
+    } else { ensure(degisti.owned_by(program_id), E_BAD_ACCOUNT)?; }
     write(&store, 38, &hub)?;
     let s2 = read_store(program_id, &store)?;
     let (ap, ab) = pda(&[b"Alt"], program_id);
@@ -447,6 +454,22 @@ fn hub_degistir(program_id: &Address, accounts: &mut [AccountView], data: &[u8])
     d[1..33].copy_from_slice(tablo.address().as_ref());
     d[33] = ab;
     write(&alt, 0, &d)
+}
+
+/// v5 (24 Oct 2026): the admin, before Kilitle, sets the options every Gonder
+/// carries toward Arc. [admin s, store w]   data: options_len u16, options
+fn secenek_degistir(program_id: &Address, accounts: &mut [AccountView], data: &[u8]) -> ProgramResult {
+    let [admin, store, ..] = *accounts else { return Err(ProgramError::NotEnoughAccountKeys) };
+    let s = read_store(program_id, &store)?;
+    ensure(!s.kilitli, E_KILITLI)?;
+    ensure(admin.is_signer() && *admin.address() == s.admin, E_NOT_ADMIN)?;
+    let n = u16::from_le_bytes(data.get(0..2).ok_or(err(E_BAD_DATA))?.try_into().unwrap()) as usize;
+    ensure(n > 0 && n <= MAX_OPTIONS, E_BAD_DATA)?;
+    let o = data.get(2..2 + n).ok_or(err(E_BAD_DATA))?;
+    let mut d = [0u8; 2 + MAX_OPTIONS];
+    d[0..2].copy_from_slice(&(n as u16).to_le_bytes());
+    d[2..2 + n].copy_from_slice(o);
+    write(&store, 166, &d)
 }
 
 /// The executor's call (or anyone's): clear the message at the endpoint, then carry it out.

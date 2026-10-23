@@ -31,7 +31,8 @@ const path = require("path");
 const { Interface, AbiCoder, keccak256, zeroPadValue, solidityPacked, toUtf8Bytes, toBeHex, decodeBase58, getAddress } = require("ethers");
 
 const KOK = path.join(__dirname, "..");
-const V4 = JSON.parse(fs.readFileSync(path.join(KOK, "dagitim-v4.json"), "utf8"));
+/* CANLI_KAYIT: the record of the live set to test (default v4) */
+const V4 = JSON.parse(fs.readFileSync(process.env.CANLI_KAYIT || path.join(KOK, "dagitim-v4.json"), "utf8"));
 const S = JSON.parse(fs.readFileSync(path.join(KOK, "docs", "veri", "sepet-v2.json"), "utf8"));
 const A4 = V4.zincir.arc, B4 = V4.zincir.base;
 const art = (n) => new Interface(JSON.parse(fs.readFileSync(path.join(KOK, "build", n + ".json"), "utf8")).abi);

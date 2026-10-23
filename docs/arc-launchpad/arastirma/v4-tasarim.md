@@ -125,3 +125,14 @@ Mesaj biçimi değişmedi; değişen yalnız **Defter adresi** ve (Solana kapıs
 ## v3 çıkışları (Cikis.sol) neden kaldırıldı
 
 v3, sahibin tarayıcısının ürettiği relay yatırma adreslerine birim gönderiyordu; relay yalnız büyük tokenlerde adres veriyor (FTHM/ARB/meme reddedildi). v4'te EVM kasası payı **kendi DEX'inde TWAP sınırlı satıp** doları Circle/relay ile sahibin zincirine yolluyor; satılamayan kısım sahibin EVM adresine varlığın kendisi olarak gidiyor. Böylece tarayıcı adres üretmek zorunda değil, tek yol var, sözleşme küçüldü. `ITFA_CIKIS`/`SAT_CIKIS` (6/7) mesajları hiçbir zaman ana ağa çıkmadı.
+
+## v5 (24 Ekim 2026) — vergi her zaman sepete, 1–5 satır
+
+Canlı v4'te ölçüldü (`scripts/denetim-kova-gaz.js`): hook kovaya 1,5M gaz veriyor; aynı işlemde 4–5 satır $50'yi geçince yetmiyor ve vergi kovada kalıyor. Ayrıca v4 hook kovayı gaz azken atlıyordu; cüzdanın gaz tahmini (geçen en az gaz) tam da bunu yapan gaz olduğu için vergi ancak "zengin" bir işlemle akardı.
+
+- **Defter:** bir çağrıda en fazla `AZAMI_GONDERIM = 2` satır gönderir, en dolu önce (eşitlikte küçük sıra). Kalanlar hesabında bekler (sepetin parçası, itfa edilebilir) ve sonraki işlemlerle gider. Başarısız gönderim otomatik yolda 1 saat beklenir (`sonHata`, `BEKLEME`). `gonder(id)` herkes (bahşişsiz), `bekleyenleriGonder(id)` herkes ve gönderilen her satırdan $0,05 bahşiş. `gonderimVar(token, ek)` görünümü.
+- **Kova:** `gonderimVar()` — şimdiki bakiyesi Defter'e gidince bir satır gönderilecek mi.
+- **Hook:** kovaya sorar; gönderim varsa `KOVA_GAZ = 2.000.000`, yoksa `KOVA_KUCUK = 400.000`; işlem bu gaz + 250k taşımıyorsa `KovaGazi(gerekli)` ile geri döner (atlamaz). Kovanın kendi hatası yine yutulur.
+- **Bunun sonucu:** başka zincirden gelen satış Arc havuzunda bu gazı taşımalı: sitenin compose gazı 900k → 3,5M; Base aktarmasının Arc'a seçeneği 800k → 3,5M (`AktarmaLZ.hubKur`); Solana kapısının Arc'a seçeneği 800k → 3,5M (yeni `SecenekDegistir`, talimat 5).
+- **Uzak zincirler:** Solana `DefterDegistir` ve `HubDegistir`, Aptos `defter_degistir` artık mühür/kilit öncesi tekrar çalışır (v4'te bir kezdi). Sui'de yükseltme gerekmez: yeni `haberci::kur`.
+- **Dağıtım:** `node scripts/dagit-v2.js v5` (kayıt `dagitim-v5.json`, korunanlar `dagitim-v4.json`'dan), sonra `V2_KAYIT=dagitim-v5.json ... bagla`, sonra `DERLEME_YOK=1 node scripts/dagit-v4-uzak.js v5 [solana|sui|aptos]`.
