@@ -91,13 +91,17 @@ export async function ciz() {
     el("div", { sinif: "ikincil" }, [
       el("p", { yazi: "Each line's dollars wait as USDC in the Defter on Arc. Every trade's collateral tax is split across the lines " +
         "by their weight; when a line reaches $50 its asset is bought on its own chain and held in that chain's vault, for this token only." }),
-      el("p", { attr: { style: "margin-top:10px" }, yazi: "Dollars reach the vaults by Circle forwarding (Base, Arbitrum, Ethereum, Avalanche, " +
-        "Monad, HyperEVM, Solana), relay.link (BNB, Robinhood) or CCTP completed by whoever fills the auction (Sui, Aptos)." }),
+      el("p", { attr: { style: "margin-top:10px" }, yazi: "The vault buys the asset itself from that chain's pool: Uniswap v3 on Base, Arbitrum, " +
+        "Ethereum, Avalanche and HyperEVM (within ~3% of the pool's 30-minute average price), Raydium on Solana (the pool's own average), " +
+        "Cetus on Sui and Hyperion on Aptos (within ~3% of a slowly moving reference). If the price is outside the bound the dollars wait " +
+        "as USDC and anyone may retry later for a $0.05 tip. Arc, BNB, Monad and Robinhood have no such pool: there the line is filled by " +
+        "auction, and waits as USDC until someone fills it." }),
       el("p", { attr: { style: "margin-top:10px" }, yazi: "Redeeming burns tokens and pays (amount ÷ supply) of everything in the basket: the " +
-        "waiting dollars at once, each vault's assets as its auction is filled. A BNB or Robinhood line pays on that chain to the same EVM address." }),
+        "waiting dollars at once; each vault that holds something sells your share and pays you (or hands you the asset itself if it " +
+        "cannot sell). You pay the messaging fee of those orders in the same transaction, shown before you sign; an order that cannot " +
+        "go now waits in a queue and anyone may send it later for a $0.05 tip. Redemption never fails because a distant chain is slow." }),
     ]),
-    not("Today the vaults buy and sell by reverse Dutch auction: anyone can fill, at a profit. Until fillers exist, unbought dollars " +
-      "stay in the vault as USDC and remain redeemable. A version that swaps through relay.link instead of auctions is being built.", "uyari"),
+    not("Every trade's collateral tax reaches the basket in the same transaction; nobody has to push it.", "bilgi"),
   ]));
 
   /* ---- 6. twins on Solana, Sui, Aptos -------------------------------- */
@@ -115,7 +119,7 @@ export async function ciz() {
       ["Sell, redeem or send from a Solana, Sui or Aptos wallet", "in the page (Buy, sell, redeem); paid to your Solana USDC account, on Sui and Aptos to your Arc address (Circle does not forward to them)"],
       ["Launching from a Solana wallet", "through relay.link (it simulates the launch before it quotes)"],
       ["Launching from a Sui or Aptos wallet", "waits for LaunchEmaneti on Arc (not deployed); after Circle's attestation anyone presses Finish on Arc"],
-      ["Basket buys", "reverse Dutch auctions; until someone fills, the dollars wait in the vault as USDC and stay redeemable"],
+      ["Basket buys on Arc, BNB, Monad, Robinhood", "auctions (no pool with a readable average price there); the dollars wait as USDC and stay redeemable"],
       ["A real launch tested end to end", "not yet — the joint test launch comes before the lock"],
       ["Contracts locked", "after the joint test launch (every admin key and upgrade right closed)"],
     ]),

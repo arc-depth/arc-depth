@@ -27,4 +27,7 @@ M=pulse-swap-e2e/programs/mpl_token_metadata.so
 # the real LayerZero endpoint program, read from mainnet once (no transaction): the gate's receive side runs against it
 E=pulse-swap-e2e/programs/lz_endpoint.so
 [ -f $E ] || $T/solana-release/bin/solana.exe program dump -u mainnet-beta 76y77prsiCMvXMjuoZ5VRrhG5qYBrUMYTE5WgHqgjEn6 $E
+# the real Raydium CLMM program, read from mainnet once (no transaction): the vault's v4 DEX path runs against it
+R=pulse-swap-e2e/programs/raydium_clmm.so
+[ -f $R ] || $T/solana-release/bin/solana.exe program dump -u mainnet-beta CAMMCzo5YL8w4VFF8KVHrK22GGUsp5VTaW7grrKgrWqK $R
 cd pulse-swap-e2e && cargo test                      # both .so files end to end in LiteSVM

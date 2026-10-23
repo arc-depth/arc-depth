@@ -17,6 +17,16 @@ for (const f of fs.readdirSync(path.join(K, "sepet")).filter((x) => x.endsWith("
    once); the next version (each line in $50 lots) is measured by scripts/denetim-defter-v2.js */
 fs.writeFileSync(path.join(H, "sepet", "SepetDefteri.sol"),
   fs.readFileSync(path.join(K, "sepet", "v1", "SepetDefteri.sol"), "utf8").replace('from "../IHaberci.sol"', 'from "./IHaberci.sol"'));
+/* these suites measure the sets deployed on mainnet: the files v4 changed (23 Oct) are taken as
+   deployed (contracts/sepet/v2); v4's vault (Uniswap v3 with a TWAP limit) is measured by
+   test/Kasa4Dex.t.sol from src/arc/sepet4, the rest of v4 by scripts/denetim-v4-arc.js */
+for (const f of ["SepetKasasi.sol", "SepetUcu.sol", "VergiKovasi.sol", "PulseHook5.sol", "PulseLaunchpad5.sol"])
+  fs.writeFileSync(path.join(H, "sepet", f), fs.readFileSync(path.join(K, "sepet", "v2", f), "utf8")
+    .replace(/from "\.\.\/IHaberci\.sol"/g, 'from "./IHaberci.sol"').replace(/from "\.\.\/\.\.\/nesil4\//g, 'from "../nesil4/'));
+try { fs.unlinkSync(path.join(H, "sepet", "Cikis.sol")); } catch (e) { /* gone already */ }
+fs.mkdirSync(path.join(H, "sepet4"), { recursive: true });
+fs.writeFileSync(path.join(H, "sepet4", "SepetKasasi.sol"),
+  fs.readFileSync(path.join(K, "sepet", "SepetKasasi.sol"), "utf8").replace('from "./IHaberci.sol"', 'from "../sepet/IHaberci.sol"'));
 fs.mkdirSync(path.join(H, "taban"), { recursive: true });
 for (const f of fs.readdirSync(path.join(K, "taban"))) fs.copyFileSync(path.join(K, "taban", f), path.join(H, "taban", f));
 fs.mkdirSync(path.join(H, "isim"), { recursive: true });

@@ -248,7 +248,10 @@ export function uzakCuzdanPaneli({ token, V2, kaymaOrani }) {
       if (!V2.emanet) return durum("Launching from " + z.ad + " opens when LaunchEmaneti is deployed on Arc (scripts/dagit-launch-emaneti.js).");
       /* paid by a CCTP burn: the dollars and the launch arrive together at LaunchEmaneti; the LayerZero value comes out of them */
       const deger6 = (ikizUcret + 10n ** 12n - 1n) / 10n ** 12n;
-      const miktar6 = toplam + deger6;
+      /* v4: $0.05 more for whoever carries the launch out on Arc if this page is closed by then (LaunchEmaneti.BAHSIS);
+         when this page does it from your own Arc address, it comes back with the rest */
+      const bahsis6 = Number(V2.surum || 2) >= 4 ? 50_000n : 0n;
+      const miktar6 = toplam + deger6 + bahsis6;
       const kanca = z.u.launchKancasi(AbiCoder, istek(V2.emanet), kurucu);
       if (!confirm("Burn $" + (Number(miktar6) / 1e6).toFixed(2) + " USDC on " + z.ad + " for " + sembol + ": first buy $" + Number(alim6) / 1e6 +
         ", basket $20" + (evm.length ? ", twins on 8 EVM chains ≈ $" + (Number(ikizGercek) / 1e18).toFixed(2) + " (+10%)" : "") +
@@ -258,7 +261,8 @@ export function uzakCuzdanPaneli({ token, V2, kaymaOrani }) {
       durum("Burned on " + z.ad + " (" + r.hash.slice(0, 14) + "…). Circle attests it in a few minutes; then anyone runs it on Arc (LaunchEmaneti.isle). Waiting for the attestation…");
       for (let i = 0; i < 120; i++) {
         const o = await z.u.onay(r.kaynak, r.hash);
-        if (o) { bekleyen.onay = o; bitirD.hidden = false; return durum("Attested. Press \"Finish on Arc\" with any EVM wallet (or leave it to anyone: it can only launch your token, with your dollars)."); }
+        if (o) { bekleyen.onay = o; bitirD.hidden = false; return durum("Attested. Press \"Finish on Arc\" with any EVM wallet (or leave it to anyone: it can only launch your token, with your dollars" +
+          (Number(V2.surum || 2) >= 4 ? "; whoever does it gets $0.05 of them" : "") + ")."); }
         await new Promise((ok) => setTimeout(ok, 10_000));
       }
       durum("Still waiting for Circle's attestation; come back and press Launch's finish when it is ready (" + r.hash + ").");

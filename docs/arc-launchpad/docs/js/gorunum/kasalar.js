@@ -8,6 +8,11 @@
  * ask starts at twice the last price, halves every 30 minutes, stops at a
  * sixteenth and restarts after a day.
  *
+ * v4 vaults (23 Oct 2026) on a chain with Uniswap v3 buy and sell in the
+ * pool itself, within ~3% of its 30-minute average; the auction stays as
+ * their fallback. Each card reads which a vault does (its `fabrika`): a
+ * vault without one (every v2 vault) is auctions only.
+ *
  * Read live from each chain: the vault's dollars, how many auctions it has
  * opened, and the open ones with what they ask right now. Per-token
  * collateral is on Discover.
@@ -54,7 +59,9 @@ export async function ciz() {
   const kap = el("div", { sinif: "yigin" });
   kap.append(sayfaUst("Collateral vaults", "The basket vaults on eleven chains: what they hold and the auctions anyone can fill"));
   kap.append(not("Every launch's collateral is a basket of up to five tokens, each kept in the vault on its own chain. " +
-    "Vaults buy and sell through reverse Dutch auctions that anyone can fill: the ask starts at twice the last price, halves every 30 minutes, " +
+    "A vault on a chain with Uniswap v3 (shown on its card) buys and sells in the pool itself, no worse than ~3% from the pool's 30-minute average; " +
+    "anything the price limit stops waits and anyone can push it (for a $0.05 tip). Every other vault, and the fallback of all of them, " +
+    "is a reverse Dutch auction that anyone can fill: the ask starts at twice the last price, halves every 30 minutes, " +
     "never goes below a sixteenth, and restarts after a day. Each token's collateral is on Discover.", "bilgi"));
 
   const sonuclar = await Promise.allSettled(ACIK.map((d) => kasaOzeti(d)));
@@ -77,12 +84,19 @@ export async function ciz() {
     }
     const o = s.value;
     const olc = (et, dg) => el("div", { sinif: "jeton-kart__olcum" }, [el("div", { sinif: "et", yazi: et }), el("div", { sinif: "dg", yazi: dg })]);
+    /* how this vault buys: read from the vault (v4 has a Uniswap v3 factory; v2 and the Move / Solana vaults do not) */
+    const nasil = olc("Buys in", "…");
+    if (d === 8 || d === 9 || d === 5) nasil.lastChild.textContent = "auction";
+    else new Contract(o.kasa, ["function fabrika() view returns (address)"], saglayici(d)).fabrika()
+      .then((f) => { nasil.lastChild.textContent = /^0x0+$/.test(f) ? "auction" : "Uniswap v3 pool"; })
+      .catch(() => { nasil.lastChild.textContent = "auction"; });
     return el("div", { sinif: "jeton-kart" }, [
       el("div", { sinif: "tk__ust" }, [cip(z.ad), el("span", { sinif: "yazi yazi--kucuk yazi--sessiz" }, [adresLinki(d, o.kasa)])]),
       el("div", { sinif: "jeton-kart__olcumler" }, [
         olc("Dollars", o.dolar == null ? "—" : para(o.dolar)),
         olc("Auctions", String(o.ihaleSayisi)),
         olc("Open", o.acik ? String(o.acik.length) : "—"),
+        nasil,
       ]),
     ]);
   });

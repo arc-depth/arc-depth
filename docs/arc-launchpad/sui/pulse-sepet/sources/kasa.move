@@ -34,6 +34,8 @@ module sepet::kasa {
     use sui::hash;
     use sui::address;
     use sui::transfer::Receiving;
+    use cetus_clmm::config::GlobalConfig;
+    use cetus_clmm::pool::{Self as cpool, Pool};
 
     const BASLANGIC_KAT: u64 = 2;
     const TABAN_KAT: u64 = 16;
@@ -375,4 +377,239 @@ module sepet::kasa {
     }
 
     public fun giden_sayisi<C>(k: &Kasa<C>): u64 { k.giden_sayisi }
+
+    /* ---- v4: filling an auction from a Cetus pool ------------------------
+       (23 Oct 2026, arastirma/v4-tasarim.md) Anyone may fill an open auction
+       through the Cetus CLMM pool the list names for its coin; the vault
+       itself swaps. The list (pool, a reference price, a size cap) is written
+       by the receiver's founder before the lock, never after.
+
+       Cetus keeps no price history on chain, so the bound is a reference the
+       vault keeps per coin: it follows the pool's price by at most
+       IZCI_ADIM_BPS (in sqrt) per elapsed minute, IZCI_TAVAN_BPS at once. A
+       swap runs only while the pool sits within SAPMA_BPS of the reference,
+       its price limit is the reference +- SAPMA_BPS, at most `tavan` dollars
+       move per call, and what comes out must be worth the input at the
+       reference less TOLERANS_BPS. A price pushed and pulled back inside one
+       transaction can get a swap no worse than ~3% off the reference; moving
+       the reference itself takes repeating that for minutes. */
+
+    const BAHSIS: u64 = 50_000;           // $0.05 to whoever fills from the pool
+    const BAHSIS_ESIGI: u64 = 1_000_000;  // once at least $1 changed hands
+    const IZCI_ADIM_BPS: u256 = 50;       // sqrt, per minute (~1% in price)
+    const IZCI_TAVAN_BPS: u256 = 500;
+    const SAPMA_BPS: u256 = 150;          // sqrt (~3% in price)
+    const TOLERANS_BPS: u256 = 400;
+    const Q64: u256 = 18446744073709551616;
+
+    const EListede: u64 = 10;
+    const EHavuz: u64 = 11;
+    const EFiyat: u64 = 12;
+
+    public struct ListeKey has copy, drop, store { varlik: TypeName }
+    /// `dolar_a`: the dollar is the pool's coin A. `izci`: the reference
+    /// sqrt price (B per A, Q64) and when it last moved. `tavan`: dollars per call.
+    public struct Liste has store, drop { havuz: ID, dolar_a: bool, izci: u128, izci_ms: u64, tavan: u64 }
+
+    public struct Takas has copy, drop { ihale: u64, dolduran: address, verilen: u64, alinan: u64, kalan: u64 }
+
+    /// The receiver writes the list (its founder, before the lock).
+    public(package) fun liste_yaz<C, T>(k: &mut Kasa<C>, havuz: ID, dolar_a: bool, izci: u128, tavan: u64, clock: &Clock) {
+        let key = ListeKey { varlik: type_name::with_defining_ids<T>() };
+        if (df::exists(&k.id, key)) { df::remove<ListeKey, Liste>(&mut k.id, key); };
+        df::add(&mut k.id, key, Liste { havuz, dolar_a, izci, izci_ms: clock.timestamp_ms(), tavan });
+    }
+
+    public fun liste<C, T>(k: &Kasa<C>): (ID, bool, u128, u64, u64) {
+        let l = df::borrow<ListeKey, Liste>(&k.id, ListeKey { varlik: type_name::with_defining_ids<T>() });
+        (l.havuz, l.dolar_a, l.izci, l.izci_ms, l.tavan)
+    }
+
+    /// The reference moves toward `spot`, at most as far as the time since it
+    /// last moved allows; returns the reference before the move.
+    fun izle<C, T>(k: &mut Kasa<C>, havuz: ID, dolar_a: bool, spot: u128, clock: &Clock): (u128, u64) {
+        let key = ListeKey { varlik: type_name::with_defining_ids<T>() };
+        assert!(df::exists(&k.id, key), EListede);
+        let l = df::borrow_mut<ListeKey, Liste>(&mut k.id, key);
+        assert!(l.havuz == havuz && l.dolar_a == dolar_a, EHavuz);
+        let eski = l.izci;
+        let simdi = clock.timestamp_ms();
+        let mut adim = ((simdi - l.izci_ms) as u256) * IZCI_ADIM_BPS / 60_000;
+        if (adim > IZCI_TAVAN_BPS) adim = IZCI_TAVAN_BPS;
+        let r = eski as u256;
+        let alt = r * (10_000 - adim) / 10_000;
+        let ust = r * (10_000 + adim) / 10_000;
+        let s = spot as u256;
+        let yeni = if (s < alt) alt else if (s > ust) ust else s;
+        if (adim > 0) { l.izci = yeni as u128; l.izci_ms = simdi; };
+        (eski, l.tavan)
+    }
+
+    /// Price limit for a swap in direction `a2b` around reference `r`; aborts
+    /// when the pool sits too far from it.
+    fun sinir(r: u128, spot: u128, a2b: bool): u128 {
+        let (r, s) = (r as u256, spot as u256);
+        let fark = if (s > r) s - r else r - s;
+        assert!(fark * 10_000 <= r * SAPMA_BPS, EFiyat);
+        let limit = if (a2b) r * (10_000 - SAPMA_BPS) / 10_000 else r * (10_000 + SAPMA_BPS) / 10_000;
+        assert!(if (a2b) limit < s else limit > s, EFiyat);
+        limit as u128
+    }
+
+    /// What `girdi` of coin A (`a_dan`) or coin B is worth in the other at sqrt `r`.
+    fun karsilik(girdi: u64, r: u128, a_dan: bool): u256 {
+        let (g, r) = (girdi as u256, r as u256);
+        if (a_dan) g * r / Q64 * r / Q64 else g * Q64 / r * Q64 / r
+    }
+
+    fun en_az(deger: u256): u256 { deger * (10_000 - TOLERANS_BPS) / 10_000 }
+
+    /// The auction's open buy: (launch, verilen, harca) — the dollars it may spend now.
+    fun alim_acik<C, T>(k: &Kasa<C>, id: u64): (u64, u64, u64) {
+        let h = k.ihaleler.borrow(id);
+        assert!(!h.bitti, EBitti);
+        assert!(h.tur == ALIM, EYanlisTur);
+        assert!(h.varlik == type_name::with_defining_ids<T>(), EYanlisCoin);
+        let harca = oran(h.verilen, dolar_bakiye(k, h.launch), taahhut(k, h.launch));
+        (h.launch, h.verilen, harca)
+    }
+
+    /// Book a buy that spent `harcanan` (pay + tip) of the auction's `harca` and brought `gelen` units.
+    fun alim_yaz<C, T>(k: &mut Kasa<C>, id: u64, launch: u64, verilen: u64, harca: u64, harcanan: u64, odenen: u64,
+                       gelen: Balance<T>, ctx: &TxContext) {
+        let n = gelen.value();
+        let v = if (harca - harcanan < BAHSIS_ESIGI) verilen else { let x = oran(harcanan, verilen, harca); if (x == 0) 1 else if (x > verilen) verilen else x };
+        let t = taahhut(k, launch);
+        taahhut_yaz(k, launch, t - v);
+        {
+            let h = k.ihaleler.borrow_mut(id);
+            if (v == verilen) h.bitti = true
+            else { h.baslangic = { let b = oran(h.baslangic, verilen - v, verilen); if (b == 0) 1 else b }; h.verilen = verilen - v; };
+        };
+        varlik_mut<C, T>(k, launch).join(gelen);
+        fiyat_yaz(k, type_name::with_defining_ids<T>(), odenen, n);
+        event::emit(Takas { ihale: id, dolduran: ctx.sender(), verilen: odenen, alinan: n, kalan: verilen - v });
+    }
+
+    /// Anyone: fill buy auction `id` (or part of it) through pool<C, T> (the dollar is coin A). Returns the tip.
+    public fun takas_al_a<C, T>(k: &mut Kasa<C>, id: u64, cetus: &GlobalConfig, pool: &mut Pool<C, T>, clock: &Clock, ctx: &mut TxContext): Coin<C> {
+        let (launch, verilen, harca) = alim_acik<C, T>(k, id);
+        assert!(harca > BAHSIS, ESifir);
+        let spot = cpool::current_sqrt_price(pool);
+        let (r, tavan) = izle<C, T>(k, object::id(pool), true, spot, clock);
+        let limit = sinir(r, spot, true);
+        let mut girdi = harca - BAHSIS;
+        if (girdi > tavan) girdi = tavan;
+        let mut para = dolar_mut(k, launch).split(girdi);
+        let (sifir, gelen, makbuz) = cpool::flash_swap<C, T>(cetus, pool, true, true, girdi, limit, clock);
+        let odenen = cpool::swap_pay_amount(&makbuz);
+        cpool::repay_flash_swap<C, T>(cetus, pool, para.split(odenen), balance::zero(), makbuz);
+        sifir.destroy_zero();
+        dolar_mut(k, launch).join(para);
+        assert!(odenen > 0 && (gelen.value() as u256) >= en_az(karsilik(odenen, r, true)), EAz);
+        let bahsis = if (odenen >= BAHSIS_ESIGI) BAHSIS else 0;
+        let tip = dolar_mut(k, launch).split(bahsis);
+        alim_yaz<C, T>(k, id, launch, verilen, harca, odenen + bahsis, odenen, gelen, ctx);
+        coin::from_balance(tip, ctx)
+    }
+
+    /// The same through pool<T, C> (the dollar is coin B).
+    public fun takas_al_b<C, T>(k: &mut Kasa<C>, id: u64, cetus: &GlobalConfig, pool: &mut Pool<T, C>, clock: &Clock, ctx: &mut TxContext): Coin<C> {
+        let (launch, verilen, harca) = alim_acik<C, T>(k, id);
+        assert!(harca > BAHSIS, ESifir);
+        let spot = cpool::current_sqrt_price(pool);
+        let (r, tavan) = izle<C, T>(k, object::id(pool), false, spot, clock);
+        let limit = sinir(r, spot, false);
+        let mut girdi = harca - BAHSIS;
+        if (girdi > tavan) girdi = tavan;
+        let mut para = dolar_mut(k, launch).split(girdi);
+        let (gelen, sifir, makbuz) = cpool::flash_swap<T, C>(cetus, pool, false, true, girdi, limit, clock);
+        let odenen = cpool::swap_pay_amount(&makbuz);
+        cpool::repay_flash_swap<T, C>(cetus, pool, balance::zero(), para.split(odenen), makbuz);
+        sifir.destroy_zero();
+        dolar_mut(k, launch).join(para);
+        assert!(odenen > 0 && (gelen.value() as u256) >= en_az(karsilik(odenen, r, false)), EAz);
+        let bahsis = if (odenen >= BAHSIS_ESIGI) BAHSIS else 0;
+        let tip = dolar_mut(k, launch).split(bahsis);
+        alim_yaz<C, T>(k, id, launch, verilen, harca, odenen + bahsis, odenen, gelen, ctx);
+        coin::from_balance(tip, ctx)
+    }
+
+    /// The auction's open sale: (verilen, hedef zincir, alici).
+    fun satim_acik<C, T>(k: &Kasa<C>, id: u64): (u64, u32, address) {
+        let h = k.ihaleler.borrow(id);
+        assert!(!h.bitti, EBitti);
+        assert!(h.tur == SATIM, EYanlisTur);
+        assert!(h.varlik == type_name::with_defining_ids<T>(), EYanlisCoin);
+        (h.verilen, h.hedef_zincir, h.alici)
+    }
+
+    /// Book a sale of `satilan` units that brought `gelen` dollars; the holder is paid (less the tip).
+    fun satim_yaz<C, T>(k: &mut Kasa<C>, id: u64, verilen: u64, satilan: u64, hz: u32, alici: address, mut gelen: Balance<C>,
+                        ctx: &mut TxContext): Coin<C> {
+        let n = gelen.value();
+        let bahsis = if (n >= BAHSIS_ESIGI + BAHSIS) BAHSIS else 0;
+        let tip = gelen.split(bahsis);
+        {
+            let h = k.ihaleler.borrow_mut(id);
+            if (satilan == verilen) h.bitti = true
+            else { h.baslangic = { let b = oran(h.baslangic, verilen - satilan, verilen); if (b == 0) 1 else b }; h.verilen = verilen - satilan; };
+        };
+        if (satilan == verilen) { let e: Balance<T> = df::remove(&mut k.id, EmanetKey { ihale: id }); e.destroy_zero(); };
+        fiyat_yaz(k, type_name::with_defining_ids<T>(), n, satilan);
+        event::emit(Takas { ihale: id, dolduran: ctx.sender(), verilen: satilan, alinan: n, kalan: verilen - satilan });
+        ode(k, hz, alici, gelen, ctx);
+        coin::from_balance(tip, ctx)
+    }
+
+    /// Units of T worth `tavan` dollars at reference `r`, the coin T being A (`t_a`) or B.
+    fun birim_tavani(tavan: u64, r: u128, t_a: bool): u64 {
+        /* dollars -> units: the dollar is the other coin */
+        let v = karsilik(tavan, r, !t_a);
+        if (v > 18446744073709551615) 18446744073709551615 else (v as u64)
+    }
+
+    /// Anyone: fill sell auction `id` (or part of it) through pool<C, T> (the dollar is coin A). Returns the tip.
+    public fun takas_sat_a<C, T>(k: &mut Kasa<C>, id: u64, cetus: &GlobalConfig, pool: &mut Pool<C, T>, clock: &Clock, ctx: &mut TxContext): Coin<C> {
+        let (verilen, hz, alici) = satim_acik<C, T>(k, id);
+        let spot = cpool::current_sqrt_price(pool);
+        let (r, tavan) = izle<C, T>(k, object::id(pool), true, spot, clock);
+        /* T is coin B: selling it moves the price up */
+        let limit = sinir(r, spot, false);
+        let mut girdi = verilen;
+        let ust = birim_tavani(tavan, r, false);
+        if (girdi > ust) girdi = ust;
+        let mut para = df::borrow_mut<EmanetKey, Balance<T>>(&mut k.id, EmanetKey { ihale: id }).split(girdi);
+        let (gelen, sifir, makbuz) = cpool::flash_swap<C, T>(cetus, pool, false, true, girdi, limit, clock);
+        let satilan = cpool::swap_pay_amount(&makbuz);
+        cpool::repay_flash_swap<C, T>(cetus, pool, balance::zero(), para.split(satilan), makbuz);
+        sifir.destroy_zero();
+        df::borrow_mut<EmanetKey, Balance<T>>(&mut k.id, EmanetKey { ihale: id }).join(para);
+        assert!(satilan > 0 && (gelen.value() as u256) >= en_az(karsilik(satilan, r, false)), EAz);
+        satim_yaz<C, T>(k, id, verilen, satilan, hz, alici, gelen, ctx)
+    }
+
+    /// The same through pool<T, C> (the dollar is coin B).
+    public fun takas_sat_b<C, T>(k: &mut Kasa<C>, id: u64, cetus: &GlobalConfig, pool: &mut Pool<T, C>, clock: &Clock, ctx: &mut TxContext): Coin<C> {
+        let (verilen, hz, alici) = satim_acik<C, T>(k, id);
+        let spot = cpool::current_sqrt_price(pool);
+        let (r, tavan) = izle<C, T>(k, object::id(pool), false, spot, clock);
+        /* T is coin A: selling it moves the price down */
+        let limit = sinir(r, spot, true);
+        let mut girdi = verilen;
+        let ust = birim_tavani(tavan, r, true);
+        if (girdi > ust) girdi = ust;
+        let mut para = df::borrow_mut<EmanetKey, Balance<T>>(&mut k.id, EmanetKey { ihale: id }).split(girdi);
+        let (sifir, gelen, makbuz) = cpool::flash_swap<T, C>(cetus, pool, true, true, girdi, limit, clock);
+        let satilan = cpool::swap_pay_amount(&makbuz);
+        cpool::repay_flash_swap<T, C>(cetus, pool, para.split(satilan), balance::zero(), makbuz);
+        sifir.destroy_zero();
+        df::borrow_mut<EmanetKey, Balance<T>>(&mut k.id, EmanetKey { ihale: id }).join(para);
+        assert!(satilan > 0 && (gelen.value() as u256) >= en_az(karsilik(satilan, r, true)), EAz);
+        satim_yaz<C, T>(k, id, verilen, satilan, hz, alici, gelen, ctx)
+    }
+
+    /// Anyone: let the reference follow the pool (no swap).
+    public fun izle_a<C, T>(k: &mut Kasa<C>, pool: &Pool<C, T>, clock: &Clock) { izle<C, T>(k, object::id(pool), true, cpool::current_sqrt_price(pool), clock); }
+    public fun izle_b<C, T>(k: &mut Kasa<C>, pool: &Pool<T, C>, clock: &Clock) { izle<C, T>(k, object::id(pool), false, cpool::current_sqrt_price(pool), clock); }
 }

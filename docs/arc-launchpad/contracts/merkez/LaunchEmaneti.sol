@@ -71,6 +71,10 @@ contract LaunchEmaneti {
     uint32 public immutable buZincir;
 
     uint256 private constant OLCEK = 1e12;   // Arc's native dollar has 18 decimals, its ERC-20 view 6
+    /// What whoever carries a launch out here receives from its dollars
+    /// ($0.05; v4): the founder's own page does it, and if that page was
+    /// closed, anyone has a reason to.
+    uint256 public constant BAHSIS = 50_000;
     uint32 private constant KESINLIK = 2000;
 
     event Islendi(uint32 kaynakZincir, bytes32 gonderen, address token, uint256 net, uint256 iade);
@@ -129,6 +133,10 @@ contract LaunchEmaneti {
             if (!usdc.approve(address(kapi), 0)) revert TransferOlmadi();
         }
         uint256 kalan = usdc.balanceOf(address(this)) - once;
+        if (msg.sender != iade && kalan >= BAHSIS) {
+            kalan -= BAHSIS;
+            if (!usdc.transfer(msg.sender, BAHSIS)) revert TransferOlmadi();
+        }
         if (kalan > 0 && !usdc.transfer(iade, kalan)) revert TransferOlmadi();
         if (token == address(0)) emit Iade(kaynak, gonderen, kalan, 2);
         emit Islendi(kaynak, gonderen, token, net, kalan);

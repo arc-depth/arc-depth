@@ -753,3 +753,58 @@ fn v2_tablo_ile_her_mesaj_1232_altinda_ve_teslim_edilir() {
     println!("BOYUT2 en buyuk {} B, pay {} B", en_buyuk, 1232 - en_buyuk);
     assert!(en_buyuk + 64 <= 1232, "en az 64 bayt pay");
 }
+
+/// v4: the gate pointed once at a new IkizHub, with a new table that fits it.
+#[test]
+fn hub_bir_kez_yeni_tabloyla_degisir_yeni_hubdan_mesaj_gelir() {
+    let mut e = kur_tablolu();
+    let admin = e.admin.insecure_clone();
+    let yeni = evm(0x2c);
+    let s = e.store;
+    let arc = ARC_EID.to_be_bytes();
+    let mut sabit = e.sabitler();
+    sabit[5] = e.ep(&[b"Nonce", s.as_ref(), &arc, &yeni]);
+    let degisti = e.kapi_pda(&[b"hub-degisti"]);
+    let alt = e.kapi_pda(&[b"Alt"]);
+    let hub_degistir = |e: &mut Env, tablo: Address, kim: &Keypair, hub: [u8; 32]| {
+        let mut d = vec![4u8];
+        d.extend(hub);
+        let keys = vec![ms(kim.pubkey()), mw(s), mw(degisti), mw(alt), mr(tablo), mr(SYSTEM)];
+        let pid = e.pid;
+        e.send(vec![Instruction { program_id: pid, accounts: keys, data: d }], &[kim]).map(|_| ())
+    };
+    /* the old table no longer fits the new hub; a stranger cannot */
+    let eski = e.sabitler();
+    let eski_tablo = e.tablo(&eski, true);
+    assert!(hub_degistir(&mut e, eski_tablo, &admin, yeni).is_err(), "eski tablo uymaz");
+    let t = e.tablo(&sabit, true);
+    let x = Keypair::new();
+    e.svm.airdrop(&x.pubkey(), 1_000_000_000).unwrap();
+    assert!(hub_degistir(&mut e, t, &x, yeni).is_err(), "yabanci");
+    hub_degistir(&mut e, t, &admin, yeni).unwrap();
+    assert_eq!(&e.svm.get_account(&s).unwrap().data[38..70], &yeni, "store.hub");
+    assert_eq!(&e.svm.get_account(&alt).unwrap().data[1..33], t.as_ref(), "yeni tablo");
+    let t3 = e.tablo(&sabit, true);
+    assert!(hub_degistir(&mut e, t3, &admin, evm(0x3d)).is_err(), "ikinci kez olmaz");
+    /* the new hub's YARAT arrives on the v2 path with the new table; the old hub is a stranger now */
+    e.svm.warp_to_slot(200);
+    let p = e.gelir_v2(yeni, &yarat_mesaji(b"Pulse Test", b"PTEST1")).unwrap();
+    assert_eq!(p.alts, vec![t]);
+    assert!(e.svm.get_account(&e.mint()).is_some(), "ikiz yaratildi");
+    assert!(e.gelir(hub(), &yarat_mesaji(b"Pulse Test", b"PTEST1")).is_err(), "eski hub artik yabanci");
+    /* after Kilitle there is no change at all */
+    let mut k = kur_tablolu();
+    let a2 = k.admin.insecure_clone();
+    let reg = k.ep(&[b"OApp", k.store.as_ref()]);
+    let keys = vec![ms(a2.pubkey()), mw(k.store), mr(EP), mw(reg), mr(k.ep(&[b"__event_authority"]))];
+    k.send(vec![Instruction { program_id: k.pid, accounts: keys, data: vec![1] }], &[&a2]).unwrap();
+    let mut s2 = k.sabitler();
+    let ks = k.store;
+    s2[5] = k.ep(&[b"Nonce", ks.as_ref(), &arc, &yeni]);
+    let t2 = k.tablo(&s2, true);
+    let (kd, ka) = (k.kapi_pda(&[b"hub-degisti"]), k.kapi_pda(&[b"Alt"]));
+    let mut d = vec![4u8];
+    d.extend(yeni);
+    let pid = k.pid;
+    assert!(k.send(vec![Instruction { program_id: pid, accounts: vec![ms(a2.pubkey()), mw(ks), mw(kd), mw(ka), mr(t2), mr(SYSTEM)], data: d }], &[&a2]).is_err(), "kilitten sonra");
+}

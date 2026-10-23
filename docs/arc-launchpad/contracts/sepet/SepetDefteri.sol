@@ -2,7 +2,6 @@
 pragma solidity ^0.8.26;
 
 import {IHaberci, IHaberAlici, IERC20S, SepetMesaj, Adres} from "./IHaberci.sol";
-import {CikisMesaj} from "./Cikis.sol";
 
 /// @title SepetDefteri — the ledger on Arc for every basket-backed launch
 ///
@@ -18,8 +17,15 @@ import {CikisMesaj} from "./Cikis.sol";
 ///     $50 of USDC buys the collateral token"). It happens inside the call
 ///     that brought the dollars — no one has to trigger it — and a send that
 ///     fails leaves the dollars waiting, never the trade;
-///   - turns a burn on any chain into a redemption: each vault sells the
-///     holder's share and pays them on their chain.
+///   - turns a burn on any chain into a redemption: each vault that holds
+///     something of the launch sells the holder's share and pays them on
+///     their chain. The redeemer pays those orders' messenger fees in the same
+///     call; an order the fee does not cover (or a chain that cannot be
+///     reached now) waits in a queue that anyone may send, for a fixed tip
+///     set aside from the holder's own payout. A redemption never reverts
+///     because of a remote chain (v4, 23 Oct 2026: v2 paid these fees from
+///     the messenger's own balance, which was empty, so every redemption
+///     reverted — found by the joint test launch, PTEST2).
 ///
 /// THE SHARE
 ///   A token is a claim on 1 / arz of the basket, where arz is the supply
@@ -72,6 +78,17 @@ contract SepetDefteri is IHaberAlici {
     mapping(uint64 => uint256[]) internal teklifler;
     uint64 public launchSayisi;
 
+    /// Whether the vault on a chain ever received this launch's dollars: only
+    /// those vaults hold anything of it, so only those get a redemption order.
+    mapping(uint64 => mapping(uint32 => bool)) public kasaDolu;
+
+    /// A redemption order that could not leave in its redemption's call.
+    struct Emir { uint32 zincir; uint64 id; uint256 bahsis; bool gitti; bytes veri; }
+    Emir[] public emirler;
+    /// What whoever sends a queued order receives, set aside from the
+    /// redeemer's waiting dollars ($0.05).
+    uint256 public constant BAHSIS = 50_000;
+
     bool private _kilit;
 
     event Iade(uint32 indexed zincir, bytes32 indexed token, bytes32 sahip, uint256 dolar);
@@ -80,6 +97,9 @@ contract SepetDefteri is IHaberAlici {
     event Vergi(uint64 indexed id, uint256 dolar, uint256 bekleyen);
     event Bekletildi(uint64 indexed id, uint32 zincir, uint256 dolar);
     event Itfa(uint64 indexed id, uint256 miktar, uint256 arzOnce, uint32 hedefZincir, bytes32 alici, uint256 vergiPayi);
+    event EmirGitti(uint64 indexed id, uint32 zincir, uint256 ucret);
+    event EmirBekliyor(uint256 indexed emir, uint64 indexed id, uint32 zincir, uint256 bahsis);
+    event EmirGonderildi(uint256 indexed emir, address indexed gonderen, uint256 ucret, uint256 bahsis);
 
     error SadeceKurucu();
     error ZatenBagli();
@@ -93,6 +113,8 @@ contract SepetDefteri is IHaberAlici {
     /// An island vault pays only an EVM address (on the island): a holder
     /// redeeming a launch with an island line names one.
     error AdaEvmIster(uint32 ada);
+    error Gitti();
+    error TransferOlmadi();
 
     modifier kilitli() {
         if (_kilit) revert Yeniden_();
@@ -132,7 +154,7 @@ contract SepetDefteri is IHaberAlici {
         if (kaynak == bytes32(0) || launchpad[kaynakZincir] != kaynak) revert YetkisizKaynak();
         uint8 tur = uint8(uint256(bytes32(veri[:32])));
         if (tur == SepetMesaj.KAYIT) _kayit(kaynakZincir, veri, gelen);
-        else if (tur == SepetMesaj.ITFA || tur == CikisMesaj.ITFA_CIKIS) _itfa(kaynakZincir, veri, tur == CikisMesaj.ITFA_CIKIS);
+        else if (tur == SepetMesaj.ITFA) _itfa(kaynakZincir, veri, gelen);
         else if (tur == SepetMesaj.VERGI) _vergi(kaynakZincir, veri, gelen);
         else revert KotuMesaj();
     }
@@ -225,6 +247,7 @@ contract SepetDefteri is IHaberAlici {
             uint256 ref = (teklifler[id][i] * d) / k[i].dolar;
             usdc.approve(address(haberci), d);
             try haberci.gonder(k[i].zincir, kasa[k[i].zincir], abi.encode(SepetMesaj.AL, id, k[i].varlik, ref), d) {
+                kasaDolu[id][k[i].zincir] = true;
                 emit Gonderildi(id, k[i].zincir, k[i].varlik, d);
             } catch {
                 biriken[id][i] = d;
@@ -246,17 +269,15 @@ contract SepetDefteri is IHaberAlici {
         for (uint256 i = 0; i < n; i++) t += biriken[id][i];
     }
 
-    /// Tokens were burned on `kaynakZincir` for redemption. Each vault in
-    /// the basket hands over this share; the waiting tax pays its share here.
-    /// v3 (`cikisli`): the holder named an exit per basket line, in the
-    /// basket's order. An EVM vault hands those lines' units straight to
-    /// them; a line with no exit, and every line on Solana, Sui or Aptos, is
-    /// sold by auction as before. Exits of the wrong count are ignored, not
-    /// refused: the tokens are already burned.
-    function _itfa(uint32 kaynakZincir, bytes calldata veri, bool cikisli) internal {
+    /// Tokens were burned on `kaynakZincir` for redemption. The waiting
+    /// dollars pay their share here at once; each vault that holds something
+    /// of the launch gets an order to sell the holder's share there. `gelen`
+    /// is the redeemer's budget for those orders' messenger fees; what it
+    /// does not need goes back to `iade` on this chain.
+    function _itfa(uint32 kaynakZincir, bytes calldata veri, uint256 gelen) internal {
         (, bytes32 token, uint256 miktar, uint32 hz, bytes32 alici) = abi.decode(veri, (uint8, bytes32, uint256, uint32, bytes32));
-        bytes32[] memory cikis;
-        if (cikisli) (,,,,, cikis) = abi.decode(veri, (uint8, bytes32, uint256, uint32, bytes32, bytes32[]));
+        address iade;
+        if (veri.length >= 192) (,,,,, iade) = abi.decode(veri, (uint8, bytes32, uint256, uint32, bytes32, address));
         /* the launchpad on the chain where the tokens were burned vouches
            for the burn; the token is named by its address there */
         uint64 id = idOf[kaynakZincir][token];
@@ -267,54 +288,167 @@ contract SepetDefteri is IHaberAlici {
         L.arz = arz - miktar;
 
         Kalem[] storage k = kalemler[id];
-        if (cikis.length != k.length) cikis = new bytes32[](0);
         /* an island vault pays only an EVM address: refused before anything moves */
-        if (uint256(alici) >> 160 != 0) for (uint256 i = 0; i < k.length; i++) if (_ada(k[i].zincir)) revert AdaEvmIster(k[i].zincir);
+        if (uint256(alici) >> 160 != 0) {
+            for (uint256 i = 0; i < k.length; i++) if (kasaDolu[id][k[i].zincir] && _ada(k[i].zincir)) revert AdaEvmIster(k[i].zincir);
+        }
 
         uint256 vp;
-        Kalem[] storage kk = k;
-        for (uint256 i = 0; i < kk.length; i++) {
+        for (uint256 i = 0; i < k.length; i++) {
             uint256 b = biriken[id][i];
             if (b == 0) continue;
             uint256 pay = (b * miktar) / arz;
             biriken[id][i] = b - pay;
             vp += pay;
         }
-        if (vp > 0) _ode(hz, alici, vp);
 
-        /* one order per vault chain, naming every asset of this launch there */
+        /* one order per vault chain that holds something of this launch */
+        uint256 butce = gelen;
+        uint256 bekleyen;
         for (uint256 i = 0; i < k.length; i++) {
+            uint32 z = k[i].zincir;
+            if (!kasaDolu[id][z]) continue;
             bool once;
-            for (uint256 j = 0; j < i; j++) if (k[j].zincir == k[i].zincir) once = true;
+            for (uint256 j = 0; j < i; j++) if (k[j].zincir == z) once = true;
             if (once) continue;
-            uint256 n;
-            for (uint256 j = i; j < k.length; j++) if (k[j].zincir == k[i].zincir) n++;
-            bytes32[] memory v = new bytes32[](n);
-            bytes32[] memory c = new bytes32[](n);
-            bool cikisVar;
-            n = 0;
-            for (uint256 j = i; j < k.length; j++) {
-                if (k[j].zincir != k[i].zincir) continue;
-                if (cikis.length > 0 && cikis[j] != bytes32(0)) { c[n] = cikis[j]; cikisVar = true; }
-                v[n++] = k[j].varlik;
+            bytes memory m = _satEmri(id, i, miktar, arz, hz, alici);
+            (bool okundu, uint256 u) = _ucret6(z, m);
+            /* what the sent fee does not cover, the holder's own waiting dollars pay */
+            if (okundu && u > butce && u - butce <= vp) {
+                vp -= u - butce;
+                butce = u;
             }
-            /* An island vault (BNB, Robinhood) has no road out but relay's
-               fixed deposit addresses: it pays its share on the island itself,
-               to the same EVM address. Solana, Sui and Aptos reach islands
-               only through Arc: their share for an island holder is paid on
-               Arc, to the same EVM address. */
-            uint32 oz;
-            if (_ada(k[i].zincir)) {
-                oz = k[i].zincir;
-            } else {
-                oz = (_evmDisi(k[i].zincir) && _ada(hz)) ? haberci.zincir() : hz;
+            if (okundu && u <= butce) {
+                if (u > 0 && !usdc.transfer(address(haberci), u)) revert TransferOlmadi();
+                butce -= u;
+                /* a fee moved to the messenger and not spent stays there as fee money for the queue */
+                try haberci.gonder(z, kasa[z], m, 0) {
+                    emit EmirGitti(id, z, u);
+                    continue;
+                } catch {}
             }
-            /* the old order where no exit is named, and always to Solana, Sui and Aptos, whose vaults read only it */
-            haberci.gonder(k[i].zincir, kasa[k[i].zincir], cikisVar && !_evmDisi(k[i].zincir)
-                ? abi.encode(CikisMesaj.SAT_CIKIS, id, v, miktar, arz, oz, alici, c)
-                : abi.encode(SepetMesaj.SAT, id, v, miktar, arz, oz, alici), 0);
+            emirler.push(Emir(z, id, 0, false, m));
+            bekleyen++;
         }
+        /* the queued orders' tips: from this redemption's own waiting dollars,
+           and what those cannot cover from the launch's waiting dollars (a few
+           cents of the basket, so that someone always has a reason to send) */
+        if (bekleyen > 0) {
+            uint256 gerek = BAHSIS * bekleyen;
+            uint256 kendi = vp < gerek ? vp : gerek;
+            vp -= kendi;
+            uint256 ortak = _ortaktanAl(id, gerek - kendi);
+            uint256 bahsis = (kendi + ortak) / bekleyen;
+            for (uint256 n = emirler.length - bekleyen; n < emirler.length; n++) {
+                emirler[n].bahsis = bahsis;
+                emit EmirBekliyor(n, id, emirler[n].zincir, bahsis);
+            }
+        }
+        if (vp > 0) _ode(hz, alici, vp);
+        if (butce > 0) _iade(iade, hz, alici, butce);
         emit Itfa(id, miktar, arz, hz, alici, vp);
+    }
+
+    /// Up to `m` dollars from launch `id`'s waiting dollars, line by line.
+    function _ortaktanAl(uint64 id, uint256 m) internal returns (uint256 alinan) {
+        uint256 n = kalemler[id].length;
+        for (uint256 i = 0; i < n && alinan < m; i++) {
+            uint256 b = biriken[id][i];
+            uint256 al = b < m - alinan ? b : m - alinan;
+            biriken[id][i] = b - al;
+            alinan += al;
+        }
+    }
+
+    /// The v2 SAT order to the vault on line i's chain, naming every asset of
+    /// this launch there. Byte for byte the v2 wire format.
+    function _satEmri(uint64 id, uint256 i, uint256 miktar, uint256 arz, uint32 hz, bytes32 alici) internal view returns (bytes memory) {
+        Kalem[] storage k = kalemler[id];
+        uint32 z = k[i].zincir;
+        uint256 n;
+        for (uint256 j = i; j < k.length; j++) if (k[j].zincir == z) n++;
+        bytes32[] memory v = new bytes32[](n);
+        n = 0;
+        for (uint256 j = i; j < k.length; j++) if (k[j].zincir == z) v[n++] = k[j].varlik;
+        /* An island vault (BNB, Robinhood) has no road out but relay's
+           fixed deposit addresses: it pays its share on the island itself,
+           to the same EVM address. Solana, Sui and Aptos reach islands
+           only through Arc: their share for an island holder is paid on
+           Arc, to the same EVM address. */
+        uint32 oz;
+        if (_ada(z)) oz = z;
+        else oz = (_evmDisi(z) && _ada(hz)) ? haberci.zincir() : hz;
+        return abi.encode(SepetMesaj.SAT, id, v, miktar, arz, oz, alici);
+    }
+
+    /// The messenger's fee for an order to `z`, in 6-decimal dollars. A
+    /// route that sends no LayerZero message (Sui, Aptos: CCTP) costs 0, and
+    /// so does an order to this chain. A messenger that cannot say its route
+    /// (a test double) is read as free and the send itself decides; one that
+    /// cannot quote a LayerZero route returns false (the order is queued).
+    function _ucret6(uint32 z, bytes memory m) internal view returns (bool, uint256) {
+        (bool ok, bytes memory r) = address(haberci).staticcall(abi.encodeWithSignature("yol(uint32)", z));
+        if (!ok || r.length != 32) return (true, 0);
+        uint8 y = abi.decode(r, (uint8));
+        if (y == 4 || y == 5 || z == haberci.zincir()) return (true, 0);
+        (ok, r) = address(haberci).staticcall(abi.encodeWithSignature("ucret(uint32,bytes32,bytes,uint256)", z, kasa[z], m, uint256(0)));
+        if (!ok || r.length != 32) return (false, 0);
+        return (true, (abi.decode(r, (uint256)) + 1e12 - 1) / 1e12);
+    }
+
+    /// Unused fee budget: to `iade` on this chain; with none, to the holder
+    /// if they are an EVM address paid here; otherwise it stays with the
+    /// messenger as fee money (it can only ever pay this system's orders).
+    function _iade(address iade, uint32 hz, bytes32 alici, uint256 m) internal {
+        address a = iade;
+        if (a == address(0) && hz == haberci.zincir() && uint256(alici) >> 160 == 0) a = address(uint160(uint256(alici)));
+        if (a == address(0)) a = address(haberci);
+        if (!usdc.transfer(a, m)) revert TransferOlmadi();
+    }
+
+    /// What a redemption of `miktar` of launch `id`, paid to `alici` on `hz`,
+    /// costs in messenger fees (6-decimal dollars): the page asks this and
+    /// sends it with the burn. Fees move with gas prices: add a margin, the
+    /// rest comes back.
+    function itfaUcreti(uint64 id, uint256 miktar, uint32 hz, bytes32 alici) external view returns (uint256 t) {
+        Launch storage L = launchlar[id];
+        if (!L.var_ || miktar == 0 || miktar > L.arz) return 0;
+        Kalem[] storage k = kalemler[id];
+        for (uint256 i = 0; i < k.length; i++) {
+            uint32 z = k[i].zincir;
+            if (!kasaDolu[id][z]) continue;
+            bool once;
+            for (uint256 j = 0; j < i; j++) if (k[j].zincir == z) once = true;
+            if (once) continue;
+            (, uint256 u) = _ucret6(z, _satEmri(id, i, miktar, L.arz, hz, alici));
+            t += u;
+        }
+    }
+
+    /// What sending queued order `i` costs now (6-decimal dollars).
+    function emirUcreti(uint256 i) external view returns (uint256 u) {
+        Emir storage e = emirler[i];
+        (, u) = _ucret6(e.zincir, e.veri);
+    }
+
+    function emirSayisi() external view returns (uint256) { return emirler.length; }
+
+    /// Anyone: send queued order `i`, paying its messenger fee now (USDC
+    /// approved here; on Arc that is the native coin's ERC-20 face). The
+    /// order's tip goes to the sender. A send that fails reverts the call:
+    /// the order stays queued and nothing is spent.
+    function emirGonder(uint256 i) external kilitli {
+        Emir storage e = emirler[i];
+        if (e.gitti) revert Gitti();
+        e.gitti = true;
+        (bool okundu, uint256 u) = _ucret6(e.zincir, e.veri);
+        if (!okundu) revert KotuMesaj();
+        if (u > 0 && !usdc.transferFrom(msg.sender, address(haberci), u)) revert TransferOlmadi();
+        haberci.gonder(e.zincir, kasa[e.zincir], e.veri, 0);
+        /* an order queued when nothing was waiting takes its tip from what waits now */
+        uint256 b = e.bahsis > 0 ? e.bahsis : _ortaktanAl(e.id, BAHSIS);
+        if (b > 0 && !usdc.transfer(msg.sender, b)) revert TransferOlmadi();
+        emit EmirGonderildi(i, msg.sender, u, b);
     }
 
     function sepet(uint64 id) external view returns (Kalem[] memory) { return kalemler[id]; }

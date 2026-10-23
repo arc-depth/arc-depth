@@ -19,11 +19,13 @@ interface ITokenV {
 /// @title VergiKovasi — where a basket-backed launch's trading tax waits
 ///
 /// The pool's hook pays the collateral tax of every trade here, in dollars,
-/// as it pays a local vault in nesil 4. Sending each trade's few cents across
-/// chains would cost more than the cents, so the bucket holds them until
-/// GONDERIM_ESIGI and then anyone sends the lot to the basket through this
-/// chain's SepetUcu (which carries it to the Defter on Arc, which re-buys
-/// the basket every $50).
+/// and in the same trade asks the bucket to pass it on (v4, 23 Oct 2026):
+/// through this chain's SepetUcu to the Defter, which is on this same chain
+/// (Arc), so no bridge and no threshold — v2 held the cents until $10 and
+/// needed someone to call `gonder`. The Defter books them on the basket
+/// lines and re-buys each line every $50. If passing on fails (out of the
+/// gas the hook allows), the dollars wait here and go with the next trade,
+/// or with anyone's `gonder`.
 ///
 /// It also answers the hook's one question, `dolasim`, the same way
 /// TeminatKasasi4 does: total supply minus the pool's own reserve (counted
@@ -39,11 +41,7 @@ contract VergiKovasi {
     bytes32 public immutable havuzId;
     address public immutable acici;
 
-    uint256 public constant GONDERIM_ESIGI = 10e6;   // $10
-
     event Gonderildi(uint256 dolar);
-
-    error EsikAltinda();
 
     constructor(IERC20S _usdc, ISepetUcuV _ucu, address _token, IHavuzRezerviV _hook, bytes32 _havuzId, address _acici) {
         usdc = _usdc;
@@ -54,11 +52,12 @@ contract VergiKovasi {
         acici = _acici;
     }
 
-    /// Anyone, once GONDERIM_ESIGI has gathered: everything here goes to the
-    /// basket.
+    /// The hook after each trade's tax, or anyone: everything here goes to
+    /// the basket. With nothing here it returns quietly (the hook calls it
+    /// after every taxed trade).
     function gonder() external {
         uint256 b = usdc.balanceOf(address(this));
-        if (b < GONDERIM_ESIGI) revert EsikAltinda();
+        if (b == 0) return;
         usdc.approve(address(ucu), b);
         ucu.vergi(token, b);
         emit Gonderildi(b);

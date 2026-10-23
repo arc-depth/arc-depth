@@ -3,7 +3,7 @@ pragma solidity ^0.8.26;
 
 import { HaberciLZ, ILzUcNokta2, ITokenMesajciLZ } from "../sepet/HaberciLZ.sol";
 import { SepetDefteri } from "../sepet/SepetDefteri.sol";
-import { SepetKasasi } from "../sepet/SepetKasasi.sol";
+import { SepetKasasi, IV3Fabrika } from "../sepet/SepetKasasi.sol";
 import { IHaberci, IERC20S, SepetMesaj } from "../sepet/IHaberci.sol";
 import { ZincirTablosu } from "../lz/ZincirTablosu.sol";
 import { IMesajTasiyiciV2 } from "../nesil2/CctpMesaj.sol";
@@ -35,6 +35,9 @@ contract TestDefterV2 {
         uint256 arcGitti; bool baseGitti; uint256 baseKalan; uint256 ihaleVergi2; uint256 haberciKalan;
         uint256 avaxBekliyor; bool vergiDonmedi;
         uint256 itfaPay; uint256 beklemedeSonra; bool adaSolanaRed; bool adaEvmGitti;
+        /* v4: fee-paid redemption, the queue, the tip */
+        uint256 v4Teklif; uint256 v4Iade; uint256 v4KuyrukOnce; uint256 v4KuyrukSonra;
+        uint256 v4Bahsis; uint256 v4BahsisAlan; bool v4KuyrukGitti; bool v4IkinciRed; bool v4DoluYok; bool v4ItfaDonmedi;
     }
 
     function _b(address a) internal pure returns (bytes32) { return bytes32(uint256(uint160(a))); }
@@ -49,7 +52,7 @@ contract TestDefterV2 {
         h.secenekKur(_sec(600_000));
         /* Avalanche is bound in the Defter but the messenger has no route to it: a line there cannot go */
         SepetDefteri d = new SepetDefteri(IHaberci(address(h)), USDC);
-        SepetKasasi kArc = new SepetKasasi(IHaberci(address(h)), USDC, ARC, _b(address(d)));
+        SepetKasasi kArc = new SepetKasasi(IHaberci(address(h)), USDC, ARC, _b(address(d)), IV3Fabrika(address(0)), address(0));
         d.bagla(ARC, _b(address(this)), _b(address(kArc)));      // this contract plays the launchpad on Arc
         d.bagla(BASE, _b(address(0xB1)), _b(address(0xCA5A)));
         d.bagla(AVAX, _b(address(0xA1)), _b(address(0xCA5C)));
@@ -87,7 +90,7 @@ contract TestDefterV2 {
         s.avaxBekliyor = d.biriken(1, 2);
 
         /* a redemption (second launch, chains all reachable): a tenth of the supply takes a
-           tenth of the waiting USDC; its orders to the vaults pay LayerZero from the fee balance */
+           tenth of the waiting USDC; no vault holds anything of it yet, so no order leaves (v4) */
         SepetDefteri.Kalem[] memory k2 = new SepetDefteri.Kalem[](2);
         k2[0] = SepetDefteri.Kalem(ARC, _b(FTHM), 10e6);
         k2[1] = SepetDefteri.Kalem(BASE, WETH_BASE, 10e6);
@@ -95,7 +98,6 @@ contract TestDefterV2 {
         ref2[0] = 660_000e18; ref2[1] = 41e14;
         bytes32 token2 = _b(address(0x7E58));
         h.gonder(ARC, _b(address(d)), abi.encode(SepetMesaj.KAYIT, token2, _b(address(0x5A41B)), uint256(1e27), k2, ref2), 20e6);
-        USDC.transfer(address(h), 2e6);   // the fee balance a redemption tops up
         uint256 b0 = USDC.balanceOf(address(0xA11CE));
         uint256 once = d.beklemede(2);
         h.gonder(ARC, _b(address(d)), abi.encode(SepetMesaj.ITFA, token2, uint256(1e26), ARC, _b(address(0xA11CE))), 0);
@@ -104,9 +106,12 @@ contract TestDefterV2 {
         _ada(h, d, s);
     }
 
-    /// A launch with a BNB line (an island: dollars by a relay deposit address).
-    /// Redeeming it to a Solana address is refused at once (the island could
-    /// not pay it); to an EVM address its BNB order goes out.
+    /// A launch with a BNB line (an island: dollars by a relay deposit address)
+    /// that has reached its vault. Redeeming it to a Solana address is refused
+    /// at once (the island could not pay it); to an EVM address, with the fee
+    /// the Defter quotes, its BNB order goes out and the unused fee comes back;
+    /// with no fee the order waits in the queue, and a third party sends it
+    /// for the tip set aside from the holder's waiting dollars.
     function _ada(HaberciLZ h, SepetDefteri d, Sonuc memory s) internal {
         h.ikizEkle(BNB, 30102, _b(address(0xB0B)));
         h.yolKur(BNB, h.RELAY(), address(0xDE905), 0, bytes32(0));
@@ -118,13 +123,55 @@ contract TestDefterV2 {
         ref[0] = 660_000e18; ref[1] = 1e16;
         bytes32 token = _b(address(0x7E59));
         h.gonder(ARC, _b(address(d)), abi.encode(SepetMesaj.KAYIT, token, _b(address(0x5A41B)), uint256(1e27), k, ref), 20e6);
-        USDC.transfer(address(h), 2e6);
+        uint64 id = d.idOf(ARC, token);
+        s.v4DoluYok = !d.kasaDolu(id, BNB) && d.itfaUcreti(id, 1e25, BASE, _b(address(0xA11CE))) == 0;
+        /* $100 of tax: both lines pass $50 and go to their vaults (BNB by relay + LayerZero) */
+        h.gonder(ARC, _b(address(d)), abi.encode(SepetMesaj.VERGI, token), 100e6);
         bytes32 solana = keccak256("a Solana holder");
         try h.gonder(ARC, _b(address(d)), abi.encode(SepetMesaj.ITFA, token, uint256(1e25), uint32(5), solana), 0) { }
         catch (bytes memory e) { s.adaSolanaRed = bytes4(e) == SepetDefteri.AdaEvmIster.selector; }
+
+        /* the fee the page reads, sent with the burn, plus a margin that comes back */
+        s.v4Teklif = d.itfaUcreti(id, 1e25, BASE, _b(address(0xA11CE)));
+        uint256 r0 = USDC.balanceOf(address(0x1ADE));
+        uint256 q0 = d.emirSayisi();
+        h.gonder(ARC, _b(address(d)), abi.encode(SepetMesaj.ITFA, token, uint256(1e25), BASE, _b(address(0xA11CE)), address(0x1ADE)), s.v4Teklif + 1e6);
+        s.v4Iade = USDC.balanceOf(address(0x1ADE)) - r0;
+        s.adaEvmGitti = d.emirSayisi() == q0;
+
+        /* more tax waits under $50 on each line; then the same redemption with no fee:
+           the BNB order waits; the redemption itself goes through */
+        h.gonder(ARC, _b(address(d)), abi.encode(SepetMesaj.VERGI, token), 20e6);
+        (,, uint256 arz0,,,) = d.launchlar(id);
+        uint256 bek0 = d.beklemede(id);
         h.gonder(ARC, _b(address(d)), abi.encode(SepetMesaj.ITFA, token, uint256(1e25), BASE, _b(address(0xA11CE))), 0);
-        s.adaEvmGitti = true;
+        (,, uint256 arz1,,,) = d.launchlar(id);
+        /* the burn counted, and the holder's share of the waiting dollars left (paid to Base) */
+        s.v4ItfaDonmedi = arz1 == arz0 - 1e25 && d.beklemede(id) < bek0;
+        s.v4KuyrukOnce = q0;
+        s.v4KuyrukSonra = d.emirSayisi();
+        (,, uint256 bahsis,,) = d.emirler(s.v4KuyrukSonra - 1);
+        s.v4Bahsis = bahsis;
+        /* a third party sends it, paying the fee, and takes the tip */
+        Ucuncu u = new Ucuncu();
+        USDC.transfer(address(u), 5e6);
+        uint256 t0 = USDC.balanceOf(address(u));
+        uint256 ucret = d.emirUcreti(s.v4KuyrukSonra - 1);
+        u.gonder(d, s.v4KuyrukSonra - 1);
+        s.v4BahsisAlan = USDC.balanceOf(address(u)) + ucret - t0;
+        (,,, bool gitti,) = d.emirler(s.v4KuyrukSonra - 1);
+        s.v4KuyrukGitti = gitti;
+        try u.gonder(d, s.v4KuyrukSonra - 1) { } catch (bytes memory e) { s.v4IkinciRed = bytes4(e) == SepetDefteri.Gitti.selector; }
     }
 
     receive() external payable {}
+}
+
+/// A stranger who sends a queued redemption order.
+contract Ucuncu {
+    IERC20S constant USDC = IERC20S(0x3600000000000000000000000000000000000000);
+    function gonder(SepetDefteri d, uint256 i) external {
+        USDC.approve(address(d), type(uint256).max);
+        d.emirGonder(i);
+    }
 }

@@ -15,10 +15,11 @@
  *            (Base): kilitle() — kurucu = 0 and, for the LayerZero OApps, the
  *            endpoint delegate = 0xdead (no more peer, library or DVN change).
  *            The rest of the set has no owner (immutable constructors).
- *   Solana   pulse-kapi Kilitle (store admin cleared, delegate = incinerator);
+ *   Solana   pulse-kapi Kilitle (store admin cleared, delegate = incinerator; v4: HubDegistir with it);
+ *            v4 pulse-sepet Muhurle (its pool list and Defter fixed);
  *            both programs' upgrade authority set to none (final).
  *            The ALT is already frozen; pulse-sepet has no admin after Initialize.
- *   Sui      basket haberci::kilitle; the twin OApp's delegate = 0xdead and its
+ *   Sui      basket haberci::kilitle (v2's and v4's: the list goes with it); the twin OApp's delegate = 0xdead and its
  *            AdminCap sent to 0x0; both packages' UpgradeCaps made immutable.
  *   Aptos    basket haberci::kilitle; the twin OApp's delegate = 0xdead and
  *            renounce_admin; both accounts' keys closed (their packages cannot
@@ -118,6 +119,19 @@ async function solana() {
       { pubkey: pda([Buffer.from("__event_authority")], ENDPOINT), isSigner: false, isWritable: false }] });
     not("solana", "pulse-kapi Kilitle (delege " + INCINERATOR.slice(0, 8) + ")", await gonder("Kilitle", ix));
   }
+  /* v4 vault: the seal (Muhurle, 14) fixes its pool list and its Defter; on the v2 code the instruction is unknown (E_BAD_DATA 4) */
+  {
+    const SEPET = new PublicKey(S.sepetProgram);
+    const muhur = pda([Buffer.from("muhur")], SEPET);
+    if (await conn.getAccountInfo(muhur)) not("solana", "pulse-sepet Muhurle (liste + Defter)", "KILITLI");
+    else {
+      const ix = new TransactionInstruction({ programId: SEPET, data: Buffer.from([14]), keys: [
+        { pubkey: d.publicKey, isSigner: true, isWritable: true }, { pubkey: muhur, isSigner: false, isWritable: true },
+        { pubkey: new PublicKey("11111111111111111111111111111111"), isSigner: false, isWritable: false }] });
+      try { not("solana", "pulse-sepet Muhurle (liste + Defter)", await gonder("Muhurle", ix)); }
+      catch (e) { if (/"Custom":4/.test(e.message)) not("solana", "pulse-sepet Muhurle", "KILITLI (v2 kodu: liste ve Defter degistirme yok)"); else throw e; }
+    }
+  }
   /* upgrade authorities: ProgramData byte 12 = Some?, 13..45 the authority; SetAuthority (4) without a new one = final */
   for (const [ad, id] of [["pulse-sepet", S.sepetProgram], ["pulse-kapi", S.kapiProgram]]) {
     const prog = new PublicKey(id);
@@ -160,6 +174,15 @@ async function sui() {
   const kurucu = h.data.content.fields.kurucu;
   if (kurucu == null || (kurucu.fields && kurucu.fields.vec && kurucu.fields.vec.length === 0)) not("sui", "haberci kurucu", "KILITLI");
   else { const tx = new Transaction(); tx.moveCall({ target: k.paket + "::haberci::kilitle", arguments: [tx.object(k.haberci)] }); not("sui", "haberci::kilitle", await calistir("haberci::kilitle", tx)); }
+  /* v4: the receiver made for the v4 Defter (dagit-v4-uzak.js), its pool list written by the same founder */
+  const v4yol = process.env.V4_KAYIT || path.join(KOK, "dagitim-v4.json");
+  const v4 = fs.existsSync(v4yol) ? ((JSON.parse(fs.readFileSync(v4yol, "utf8")).uzak || {}).sui || {}) : {};
+  if (v4.v4Haberci) {
+    const h4 = await nesne(v4.v4Haberci);
+    const k4 = h4.data.content.fields.kurucu;
+    if (k4 == null || (k4.fields && k4.fields.vec && k4.fields.vec.length === 0)) not("sui", "v4 haberci kurucu (liste)", "KILITLI");
+    else { const tx = new Transaction(); tx.moveCall({ target: v4.v4Paket + "::haberci::kilitle", arguments: [tx.object(v4.v4Haberci)] }); not("sui", "v4 haberci::kilitle (liste)", await calistir("v4 haberci::kilitle", tx)); }
+  }
   /* the twin OApp: delegate, then the AdminCap away */
   const cap = await nesne(k.adminCap);
   if (!cap.data || (cap.data.owner && cap.data.owner.AddressOwner !== ben)) not("sui", "ikiz OApp AdminCap", "KILITLI (dagiticide degil: " + JSON.stringify(cap.data ? cap.data.owner : "yok") + ")");

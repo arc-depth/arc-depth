@@ -1,0 +1,15 @@
+[package]
+name = "hyperion_prova"
+version = "1.0.0"
+
+# A transaction script only, for simulation on mainnet (scripts/denetim-v4-uzak.mjs):
+# the Hyperion leg exactly as sepet::kasa (v4) makes it. Never published.
+[addresses]
+
+[dependencies.AptosFramework]
+git = "https://github.com/aptos-labs/aptos-framework.git"
+rev = "99f5e915b6d231d0ffbc1aff282d36148d2a8b24"
+subdir = "aptos-framework"
+
+[dependencies.dex]
+local = "../hyperion-dex"

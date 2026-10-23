@@ -29,3 +29,6 @@ local = "../cctp-iface/tmm"
 
 [dependencies.StablecoinHandler]
 local = "../cctp-iface/handler"
+
+[dependencies.dex]
+local = "../hyperion-dex"

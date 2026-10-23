@@ -29,8 +29,9 @@ interface IQuoteP5 {
 /// held by the SepetKasasi of each line's chain and recorded by the
 /// SepetDefteri on Arc. The collateral dollars go to this chain's SepetUcu
 /// in the launch transaction; the hook pays every trade's collateral tax into
-/// a VergiKovasi for the token, which sends it to the basket in lots; holders
-/// redeem through SepetUcu.itfa, on this chain or any other.
+/// a VergiKovasi for the token and has it pass the dollars on to the Defter
+/// in the same trade (v4); holders redeem through SepetUcu.itfa /
+/// itfaUcretli, on this chain or any other.
 ///
 /// What follows is PulseLaunchpad4's own header, unchanged.
 ///

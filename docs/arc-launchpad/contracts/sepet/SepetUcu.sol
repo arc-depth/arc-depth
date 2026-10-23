@@ -3,7 +3,6 @@ pragma solidity ^0.8.26;
 
 import {IHaberci, IERC20S, SepetMesaj, Adres} from "./IHaberci.sol";
 import {SepetDefteri} from "./SepetDefteri.sol";
-import {CikisMesaj} from "./Cikis.sol";
 
 interface IYakilabilirS {
     function burnFrom(address from, uint256 value) external;
@@ -16,7 +15,9 @@ interface IYakilabilirS {
 /// so it says nothing it has not checked:
 ///   baslat   the dollars for the whole basket are pulled here first, and
 ///            the token is registered as this chain's launch
-///   itfa     the tokens are burned here before the Defter is told
+///   itfa     the tokens are burned here before the Defter is told; the
+///            redeemer may send along the messenger fees of the vault orders
+///            (Defter.itfaUcreti), what is not needed comes back to `iade`
 ///   vergi    the tax dollars are pulled here before they are sent
 /// The founder's choice of assets is theirs; the only checks are the
 /// basket's shape (1 to 5 lines, $4 each), made again by the Defter.
@@ -36,7 +37,6 @@ contract SepetUcu {
 
     event Baslatildi(address indexed token, uint256 arz, uint256 dolar);
     event Itfa(address indexed token, address indexed sahip, uint256 miktar, uint32 hedefZincir, bytes32 alici);
-    event ItfaCikisli(address indexed token, address indexed sahip, uint256 miktar, uint32 hedefZincir, bytes32 alici, bytes32[] cikislar);
     event VergiGonderildi(address indexed token, uint256 dolar);
 
     error ZatenKayitli();
@@ -77,28 +77,28 @@ contract SepetUcu {
     }
 
     /// Burn `miktar` of your `token` (approved here) and redeem your share of
-    /// the whole basket, paid to `alici` on `hedefZincir`.
+    /// the whole basket, paid to `alici` on `hedefZincir`. No fee is sent:
+    /// enough while no vault holds anything of the launch; otherwise the
+    /// vault orders wait in the Defter's queue for anyone to send.
     function itfa(address token, uint256 miktar, uint32 hedefZincir, bytes32 alici) external {
-        if (!kayitli[token]) revert KayitsizToken();
-        if (miktar == 0) revert Sifir();
-        IYakilabilirS(token).burnFrom(msg.sender, miktar);
-        haberci.gonder(defterZincir, defter, abi.encode(SepetMesaj.ITFA, Adres.b32(token), miktar, hedefZincir, alici), 0);
-        emit Itfa(token, msg.sender, miktar, hedefZincir, alici);
+        _itfa(token, miktar, hedefZincir, alici, 0, address(0));
     }
 
-    /// The same, naming an exit per basket line (in the basket's order, as
-    /// `SepetDefteri.sepet` lists it): each EVM line's units are handed
-    /// there at once instead of auctioned. An exit is an address on that
-    /// line's chain: the holder's own (they get the asset itself) or a
-    /// relay.link deposit address their browser made for asset -> dollars
-    /// on `hedefZincir` to `alici`. bytes32(0) leaves a line to the auction.
-    function itfaCikis(address token, uint256 miktar, uint32 hedefZincir, bytes32 alici, bytes32[] calldata cikislar) external {
+    /// The same, with `ucret` dollars (approved here, 6 decimals) for the
+    /// vault orders' messenger fees: the page reads Defter.itfaUcreti and adds
+    /// a margin. What the orders do not use is paid back to `iade` on Arc.
+    function itfaUcretli(address token, uint256 miktar, uint32 hedefZincir, bytes32 alici, uint256 ucret, address iade) external {
+        if (ucret > 0 && !usdc.transferFrom(msg.sender, address(this), ucret)) revert TransferOlmadi();
+        _itfa(token, miktar, hedefZincir, alici, ucret, iade);
+    }
+
+    function _itfa(address token, uint256 miktar, uint32 hedefZincir, bytes32 alici, uint256 ucret, address iade) internal {
         if (!kayitli[token]) revert KayitsizToken();
         if (miktar == 0) revert Sifir();
-        if (cikislar.length == 0 || cikislar.length > 5) revert KotuSepet();
         IYakilabilirS(token).burnFrom(msg.sender, miktar);
-        haberci.gonder(defterZincir, defter, abi.encode(CikisMesaj.ITFA_CIKIS, Adres.b32(token), miktar, hedefZincir, alici, cikislar), 0);
-        emit ItfaCikisli(token, msg.sender, miktar, hedefZincir, alici, cikislar);
+        if (ucret > 0) usdc.approve(address(haberci), ucret);
+        haberci.gonder(defterZincir, defter, abi.encode(SepetMesaj.ITFA, Adres.b32(token), miktar, hedefZincir, alici, iade), ucret);
+        emit Itfa(token, msg.sender, miktar, hedefZincir, alici);
     }
 
     /// Send `dolar` of trading tax for `token` to the Defter. The pool's hook

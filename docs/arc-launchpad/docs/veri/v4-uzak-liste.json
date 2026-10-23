@@ -1,0 +1,12 @@
+{
+ "aciklama": "v4: Solana, Sui ve Aptos kasalarinin havuzdan alip sattigi varliklar ve havuzlari. Kilitten once kurucu (dagitici) listeler, sonra liste degismez. Solana: Raydium CLMM (havuzun kendi TWAP'i). Sui: Cetus, Aptos: Hyperion (kasanin kendi referans fiyati, cagri basina tavan). Kaynak: zincirden okundu 23 Eki 2026.",
+ "solana": [
+  { "ad": "SOL", "varlik": "So11111111111111111111111111111111111111112", "havuz": "3ucNos4NbumPLZNWztqGHNFFgkHeRMBQAVemeeomsUxv", "dex": "Raydium CLMM", "ucret": "0.04%" }
+ ],
+ "sui": [
+  { "ad": "SUI", "varlik": "0x0000000000000000000000000000000000000000000000000000000000000002::sui::SUI", "havuz": "0x51e883ba7c0b566a26cbc8a94cd33eb0abd418a77cc1e60ad22fd9b1f29cd2ab", "dolar_a": true, "tavan": 2000000000, "dex": "Cetus CLMM", "ucret": "0.05%" }
+ ],
+ "aptos": [
+  { "ad": "APT", "varlik": "0x000000000000000000000000000000000000000000000000000000000000000a", "havuz": "0x925660b8618394809f89f8002e2926600c775221f43bf1919782b297a79400d8", "tavan": 2000000000, "dex": "Hyperion CLMM", "ucret": "0.05%" }
+ ]
+}

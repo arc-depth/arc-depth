@@ -19,6 +19,11 @@ interface IDolasimH {
     function dolasim() external view returns (uint256);
 }
 
+/// The launch's tax bucket (VergiKovasi): passes what it holds on to the basket.
+interface IKovaH {
+    function gonder() external;
+}
+
 interface IPulseKayit {
     function havuzKaydi(PoolId id)
         external
@@ -174,6 +179,13 @@ contract PulseHook5 {
 
     uint256 public constant KALKAN_ESIK_PPM = 5_000;     // 0,50% of circulating
     uint256 public constant KALKAN_TAVAN_PPM = 30_000;   // 3,00% extra, capped
+
+    /* ---- the tax, passed on in the trade (v4) ------------------------ */
+    /// Gas the bucket may use to pass a trade's tax on to the Defter (and,
+    /// when a basket line crosses $50, to send it to its vault). Asked only
+    /// when this much is left with room to finish the swap; its failure is
+    /// ignored, the dollars then wait in the bucket for the next trade.
+    uint256 public constant KOVA_GAZ = 1_500_000;
 
     struct Pencere {
         uint64 blok;
@@ -632,6 +644,11 @@ contract PulseHook5 {
         if (i > 0 && !IERC20H(quote).transfer(isletmeKasasi, i)) revert TransferOlmadi();
         if (f > 0 && !IERC20H(quote).transfer(fthmYakici, f)) revert TransferOlmadi();
         if (v > 0 && !IERC20H(quote).transfer(kasa, v)) revert TransferOlmadi();
+        if (v > 0 && gasleft() > KOVA_GAZ + 250_000) {
+            /* the result is not read: a bucket that cannot pass it on now keeps it */
+            (bool gecti,) = kasa.call{gas: KOVA_GAZ}(abi.encodeWithSelector(IKovaH.gonder.selector));
+            gecti;
+        }
         if (d > 0 && !IERC20H(quote).transfer(acici, d)) revert TransferOlmadi();
         emit Ucret(id, alim, exactInput, k, g, l, i, v, d, snipe, 0);
     }

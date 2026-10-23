@@ -24,6 +24,7 @@ module sepet::haberci {
     use token_messenger_minter_v2::token_messenger_minter;
     use stablecoin_handler::handler;
     use sepet::kasa;
+    use dex::pool_v3::{Self, LiquidityPoolV3};
 
     const AL: u8 = 2;
     const SAT: u8 = 3;
@@ -78,6 +79,41 @@ module sepet::haberci {
         /* once per chain, never changed */
         assert!(!table::contains(&h.ikiz, domain), EZatenBagli);
         table::add(&mut h.ikiz, domain, karsi);
+    }
+
+    /* v4: marks the one Defter change (moved to the Haberci object) */
+    #[resource_group_member(group = aptos_framework::object::ObjectGroup)]
+    struct DefterDegisti has key {}
+
+    const EHavuz: u64 = 8;
+
+    /// v4: the founder, once and before the lock: the Defter this receiver
+    /// obeys (the v4 Defter on Arc). The Arc Haberci keeps naming this
+    /// object as the twin (that binding is write-once there).
+    public entry fun defter_degistir(k: &signer, haberci: address, defter: address) acquires Haberci {
+        let h = borrow_global_mut<Haberci>(haberci);
+        assert!(h.kurucu == option::some(signer::address_of(k)), ESadeceKurucu);
+        assert!(!exists<DefterDegisti>(haberci), EZatenBagli);
+        let hs = object::generate_signer_for_extending(&h.ref);
+        move_to(&hs, DefterDegisti {});
+        h.defter = defter;
+    }
+
+    /// v4: the founder, before the lock: asset `varlik` is bought and sold
+    /// through Hyperion pool `havuz` (its two tokens the dollar and the
+    /// asset), at most `tavan` dollars per call; the pool's price now is the
+    /// vault's first reference.
+    public entry fun liste_ekle(k: &signer, haberci: address, varlik: address, havuz: address, tavan: u64) acquires Haberci {
+        let h = borrow_global<Haberci>(haberci);
+        assert!(h.kurucu == option::some(signer::address_of(k)), ESadeceKurucu);
+        let v = pool_v3::supported_inner_assets(object::address_to_object<LiquidityPoolV3>(havuz));
+        let a = object::object_address(vector::borrow(&v, 0));
+        let b = object::object_address(vector::borrow(&v, 1));
+        let d = object::object_address(&h.dolar);
+        let dolar_a = a == d && b == varlik;
+        assert!(dolar_a || (b == d && a == varlik), EHavuz);
+        let (_, sqrt) = pool_v3::current_tick_and_price(havuz);
+        kasa::liste_yaz(h.kasa, varlik, havuz, dolar_a, sqrt, tavan);
     }
 
     public entry fun kilitle(k: &signer, haberci: address) acquires Haberci {

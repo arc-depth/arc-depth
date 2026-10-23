@@ -110,9 +110,23 @@ const arc = new JsonRpcProvider("https://arc-rpc.publicnode.com", 5042, { static
 const odemeAglari = () => AGLAR;
 /* where the gate delivers tokens for a wallet on `ag`: 0 means on Arc itself */
 const teslimEid = (ag) => (ag.anahtar === "arc" ? 0 : ag.eid);
-const sec = (lz, compose = 0) => compose
+const sec = (lz, compose = 0, composeDeger = 0n) => composeDeger
+  /* lzCompose with native value (v4 redemption from a twin: Arc's dollar pays the vault orders' fees) */
+  ? solidityPacked(["uint16", "uint8", "uint16", "uint8", "uint128", "uint8", "uint16", "uint8", "uint16", "uint128", "uint128"],
+    [3, 1, 17, 1, lz, 1, 35, 3, 0, compose, composeDeger])
+  : compose
   ? solidityPacked(["uint16", "uint8", "uint16", "uint8", "uint128", "uint8", "uint16", "uint8", "uint16", "uint128"], [3, 1, 17, 1, lz, 1, 19, 3, 0, compose])
   : solidityPacked(["uint16", "uint8", "uint16", "uint8", "uint128"], [3, 1, 17, 1, lz]);
+/* v4 (23 Oct 2026): a redemption pays the vault orders' messenger fees itself, quoted by the Defter */
+const DEFTER4_ABI = ["function idOf(uint32,bytes32) view returns (uint64)", "function itfaUcreti(uint64,uint256,uint32,bytes32) view returns (uint256)"];
+const v4mu = () => V2 && Number(V2.surum || 2) >= 4;
+/// The fee (6-decimal dollars) a redemption of `miktar` of `t`, paid to `alici` on `hz`, sends along: the Defter's quote + 10%.
+async function itfaUcreti(t, miktar, hz, alici) {
+  const d = new Contract(V2.defter, DEFTER4_ABI, arc);
+  const id = await d.idOf(ARC_DOMAIN, zeroPadValue(t, 32));
+  const u = await d.itfaUcreti(id, miktar, hz, alici);
+  return u === 0n ? 0n : (u * 11n) / 10n + 1n;
+}
 const OFT_ABI = ["function quoteSend((uint32,bytes32,uint256,uint256,bytes,bytes,bytes),bool) view returns ((uint256,uint256))",
   "function send((uint32,bytes32,uint256,uint256,bytes,bytes,bytes),(uint256,uint256),address) payable",
   "function balanceOf(address) view returns (uint256)"];
@@ -526,14 +540,25 @@ export async function ciz({ param } = {}) {
           if ((await makbuz(ag, h)).status !== 1) throw new Error("Reverted: " + h);
           return durum("Sold in the Arc pool; the USDC is in your wallet on Arc.");
         }
-        durum("Approve the burn (1/2)…");
+        /* v4: the vault orders' fees go with the burn (0 while no vault holds anything of the launch) */
+        const ucret = v4mu() ? await itfaUcreti(t, miktar, ARC_DOMAIN, zeroPadValue(ben, 32)) : 0n;
+        const adim = ucret > 0n ? 3 : 2;
+        durum("Approve the burn (1/" + adim + ")…" + (ucret > 0n ? " The vaults' messenger fee is $" + (Number(ucret) / 1e6).toFixed(2) + " (the unused part comes back)." : ""));
         let h = await cuzdan.agdaGonder(ag, { to: t, data: tk.interface.encodeFunctionData("approve", [S().ucu, miktar]), value: "0x0" });
         if ((await makbuz(ag, h)).status !== 1) throw new Error("Reverted: " + h);
-        durum("Redeem (2/2)…");
-        const U = new Interface(["function itfa(address,uint256,uint32,bytes32)"]);
-        h = await cuzdan.agdaGonder(ag, { to: S().ucu, data: U.encodeFunctionData("itfa", [t, miktar, ARC_DOMAIN, zeroPadValue(ben, 32)]), value: "0x0" });
+        if (ucret > 0n) {
+          durum("Approve the fee (2/3)…");
+          h = await cuzdan.agdaGonder(ag, { to: ARC_USDC, data: new Interface(["function approve(address,uint256) returns (bool)"]).encodeFunctionData("approve", [S().ucu, ucret]), value: "0x0" });
+          if ((await makbuz(ag, h)).status !== 1) throw new Error("Reverted: " + h);
+        }
+        durum("Redeem (" + adim + "/" + adim + ")…");
+        const U = new Interface(["function itfa(address,uint256,uint32,bytes32)", "function itfaUcretli(address,uint256,uint32,bytes32,uint256,address)"]);
+        const veri = ucret > 0n ? U.encodeFunctionData("itfaUcretli", [t, miktar, ARC_DOMAIN, zeroPadValue(ben, 32), ucret, ben])
+          : U.encodeFunctionData("itfa", [t, miktar, ARC_DOMAIN, zeroPadValue(ben, 32)]);
+        h = await cuzdan.agdaGonder(ag, { to: S().ucu, data: veri, value: "0x0" });
         if ((await makbuz(ag, h)).status !== 1) throw new Error("Reverted: " + h);
-        return durum("Burned for redemption; each vault sells your share by auction and pays you on Arc.");
+        return durum(v4mu() ? "Burned for redemption: the waiting dollars' share is in your wallet now; each vault sells your share in its own pool (auction where it has none) and pays you on Arc."
+          : "Burned for redemption; each vault sells your share by auction and pays you on Arc.");
       }
       const ikiz = await new Contract(YAYICI, ["function ikizAdresi(address) view returns (address)"], arc).ikizAdresi(t);
       const p = new JsonRpcProvider(ag.rpc, ag.id, { staticNetwork: true });
@@ -559,14 +584,21 @@ export async function ciz({ param } = {}) {
         yer = odeme === ARC_DOMAIN ? "Arc (your same address)" : ag.ad;
         yuk = AbiCoder.defaultAbiCoder().encode(["uint8", "uint32", "bytes32", "uint256", "address"], [tur, odeme, zeroPadValue(ben, 32), asgari, ben]);
       }
-      const prm = [ARC_EID, zeroPadValue(S().kapi, 32), miktar, (miktar * 99n) / 100n, sec(200_000n, 900_000n), yuk, "0x"];
+      /* v4 redemption: Arc's dollar for the vault orders' fees rides with the compose (the unused part comes back on Arc) */
+      let secenekler = sec(200_000n, 900_000n);
+      if (tur === 1 && v4mu()) {
+        const o = await odemeYeri(ag, ben);
+        const u = await itfaUcreti(t, miktar, o.zincir, o.alici);
+        if (u > 0n) secenekler = sec(200_000n, 1_500_000n, u * 10n ** 12n);
+      }
+      const prm = [ARC_EID, zeroPadValue(S().kapi, 32), miktar, (miktar * 99n) / 100n, secenekler, yuk, "0x"];
       const [ucret] = await oft.quoteSend(prm, false);
       durum("Sending to the gate on Arc (LayerZero fee " + (Number(ucret) / 1e18).toPrecision(3) + " " + ag.gaz + ")…");
       const h = await cuzdan.agdaGonder(ag, { to: ikiz, data: new Interface(OFT_ABI).encodeFunctionData("send", [prm, [ucret, 0], ben]), value: "0x" + ucret.toString(16) });
       const m = await makbuz(ag, h);
       if (m.status !== 1) throw new Error("Reverted: " + h);
       durum(tur === 0 ? "Sent. Sold in the Arc pool; the USDC is paid on " + yer + " (minutes; Ethereum-anchored chains up to ~20)." :
-        "Sent. Burned for redemption; each vault sells your share by auction and pays on " + yer + ".");
+        "Sent. Burned for redemption; each vault sells your share " + (v4mu() ? "in its own pool (auction where it has none)" : "by auction") + " and pays on " + yer + ".");
     } catch (x) { durum((x && x.message) || "Could not send."); }
   };
   const tasZincir = el("select", { sinif: "girdi" }, Object.keys(UZAK_EID).map((z) => el("option", { attr: { value: z }, yazi: z[0].toUpperCase() + z.slice(1) })));

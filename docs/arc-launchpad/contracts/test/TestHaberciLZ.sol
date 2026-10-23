@@ -2,7 +2,7 @@
 pragma solidity ^0.8.26;
 
 import { HaberciLZ, ILzUcNokta2, ITokenMesajciLZ, LzOrigin2, LzParams2, LzFee2 } from "../sepet/HaberciLZ.sol";
-import { SepetKasasi } from "../sepet/SepetKasasi.sol";
+import { SepetKasasi, IV3Fabrika } from "../sepet/SepetKasasi.sol";
 import { IHaberci, IHaberAlici, IERC20S, SepetMesaj } from "../sepet/IHaberci.sol";
 import { ZincirTablosu } from "../lz/ZincirTablosu.sol";
 import { IMesajTasiyiciV2 } from "../nesil2/CctpMesaj.sol";
@@ -167,7 +167,7 @@ contract TestHaberciLZ {
         try this.disaridan(h) { } catch { s.sadeceUcNokta = true; }
 
         /* the real vault code takes such an order and opens its buy auction */
-        SepetKasasi k = new SepetKasasi(IHaberci(address(h)), USDC, ARC, _b(address(0xDEF)));
+        SepetKasasi k = new SepetKasasi(IHaberci(address(h)), USDC, ARC, _b(address(0xDEF)), IV3Fabrika(address(0)), address(0));
         USDC.transfer(address(h), 4e6);
         uint256 g0 = gasleft();
         h.lzReceive(o, bytes32(0), abi.encode(_b(address(0xDEF)), _b(address(k)),

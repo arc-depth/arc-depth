@@ -1,0 +1,19 @@
+[package]
+name = "dex"
+version = "1.0.0"
+upgrade_policy = "compatible"
+
+# Hyperion CLMM on Aptos mainnet, as the basket vault's DEX path (sepet::kasa,
+# v4) uses it: the package is "dex" at 0x8b4a…e05c, policy compatible, read
+# from its PackageRegistry on 23 Oct 2026 (the name must match for Aptos's
+# dependency check). Signatures from the chain's ABI. NEVER PUBLISHED. The
+# bodies are a working stand-in for local tests: one price range, constant
+# liquidity, a fee, a price limit; plus helpers to make a pool and push its
+# price that exist only here.
+[addresses]
+dex = "0x8b4a2c4bb53857c718a04c020b98f8c2e1f99a68b0f57389a8bf5434cd22e05c"
+
+[dependencies.AptosFramework]
+git = "https://github.com/aptos-labs/aptos-framework.git"
+rev = "99f5e915b6d231d0ffbc1aff282d36148d2a8b24"
+subdir = "aptos-framework"

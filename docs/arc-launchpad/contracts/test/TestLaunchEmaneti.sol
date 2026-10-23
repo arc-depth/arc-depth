@@ -47,6 +47,7 @@ contract TestLaunchEmaneti {
         bool yanlisCagiranRed; bool tekrarRed; bool cozDisaridanRed; bool yanlisAliciRed;
         uint256 iadeF; address tokenF;
         uint256 iadeTopluluk;
+        uint256 bahsis;
     }
 
     SahteIletici mt;
@@ -82,6 +83,8 @@ contract TestLaunchEmaneti {
         mt = new SahteIletici();
         require(USDC.transfer(address(mt), 1_000e6), "fund");
         em = new LaunchEmaneti(IMesajIletici2(address(mt)), TM, KAPI, USDC, 26);
+        /* this contract carries every launch out: it is not the founder's refund address, so it earns the tip */
+        uint256 bahsis0 = USDC.balanceOf(address(this));
 
         /* A) $122 burned on Sui ($1 Circle fee): $100 first buy + $20 basket, $1 of LayerZero value unused -> back to IADE */
         bytes memory m = _mesaj(address(em), address(em), 122e6, 1e6, abi.encode(_istek(100e6), IADE));
@@ -118,6 +121,7 @@ contract TestLaunchEmaneti {
         once = USDC.balanceOf(IADE);
         s.tokenF = em.isle(_mesaj(address(em), address(em), 130e6, 0, abi.encode(kotu, IADE)), "");
         s.iadeF = USDC.balanceOf(IADE) - once;
+        s.bahsis = USDC.balanceOf(address(this)) - bahsis0;
         s.iadeTopluluk = USDC.balanceOf(address(em));
     }
 

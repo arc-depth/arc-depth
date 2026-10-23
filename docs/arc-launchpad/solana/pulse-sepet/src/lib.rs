@@ -2,6 +2,7 @@
 //! contracts/sepet/SepetKasasi.sol, sui/pulse-sepet and aptos/pulse-sepet.
 #![cfg_attr(target_os = "solana", no_std)]
 pub mod egri;
+pub mod fiyat;
 
 #[cfg(target_os = "solana")]
 pub mod program;

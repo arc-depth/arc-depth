@@ -28,6 +28,8 @@ module sepet::haberci {
     use message_transmitter_v2::receive_message::{Self as rm, Receipt, ReceiveMessageTicket, StampReceiptTicket};
     use token_messenger_minter_v2::deposit_for_burn::{Self as dfb, DepositForBurnWithPackageAuthTicket};
     use sepet::kasa::{Self, Kasa};
+    use sui::clock::Clock;
+    use cetus_clmm::pool::{Self as cpool, Pool};
 
     const AL: u8 = 2;
     const SAT: u8 = 3;
@@ -67,6 +69,22 @@ module sepet::haberci {
         /* once per chain, never changed */
         assert!(!h.ikiz.contains(domain), EZatenBagli);
         h.ikiz.add(domain, karsi);
+    }
+
+    /// v4: the founder, before the lock: coin T is bought and sold through
+    /// Cetus pool `pool` (the dollar its coin A), at most `tavan` dollars per
+    /// call; the pool's price now is the vault's first reference.
+    public fun liste_ekle_a<C, T>(h: &Haberci, k: &mut Kasa<C>, pool: &Pool<C, T>, tavan: u64, clock: &Clock, ctx: &TxContext) {
+        assert!(h.kurucu == option::some(ctx.sender()), ESadeceKurucu);
+        assert!(kasa::kimlik(k) == h.kasa, EYanlisKasa);
+        kasa::liste_yaz<C, T>(k, object::id(pool), true, cpool::current_sqrt_price(pool), tavan, clock);
+    }
+
+    /// The same for pool<T, C> (the dollar its coin B).
+    public fun liste_ekle_b<C, T>(h: &Haberci, k: &mut Kasa<C>, pool: &Pool<T, C>, tavan: u64, clock: &Clock, ctx: &TxContext) {
+        assert!(h.kurucu == option::some(ctx.sender()), ESadeceKurucu);
+        assert!(kasa::kimlik(k) == h.kasa, EYanlisKasa);
+        kasa::liste_yaz<C, T>(k, object::id(pool), false, cpool::current_sqrt_price(pool), tavan, clock);
     }
 
     public fun kilitle(h: &mut Haberci, ctx: &TxContext) {

@@ -60,6 +60,7 @@ interface IIkizHubM {
 
 interface ISepetUcuM {
     function itfa(address token, uint256 miktar, uint32 hedefZincir, bytes32 alici) external;
+    function itfaUcretli(address token, uint256 miktar, uint32 hedefZincir, bytes32 alici, uint256 ucret, address iade) external;
 }
 
 /// @title KurucuVekili — the founder of one launch made through MerkezKapi
@@ -323,9 +324,16 @@ contract MerkezKapi {
                 if (kalan > 0) _ver(token, yedek, kalan, 4);
             } catch { _ver(token, yedek, miktar, 1); }
         } else if (q.tur == ITFA) {
-            try this.itfaEt(token, miktar, q.odemeZincir, q.alici) {
+            /* v4: the compose's native value (Arc's dollar, 18 decimals) pays the
+               vault orders' messenger fees; without it the orders wait in the
+               Defter's queue. From the hub (Solana / Sui / Aptos) there is none. */
+            uint256 ucret = msg.value / 1e12;
+            try this.itfaEt(token, miktar, q.odemeZincir, q.alici, ucret, yedek) {
                 emit ItfaEdildi(token, miktar, q.odemeZincir, q.alici);
-            } catch { _ver(token, yedek, miktar, 2); }
+            } catch {
+                _ver(token, yedek, miktar, 2);
+                if (ucret > 0 && !usdc.transfer(yedek, ucret)) revert TransferOlmadi();
+            }
         } else {
             _ver(token, yedek, miktar, 3);
         }
@@ -339,11 +347,18 @@ contract MerkezKapi {
         Odeme.ode(tokenMesajci, usdc, buZincir, odemeZincir, alici, cikan, maxUcret);
     }
 
-    /// Only from `lzCompose`: burn through the chain entry; the basket pays `alici` on `odemeZincir`.
-    function itfaEt(address token, uint256 miktar, uint32 odemeZincir, bytes32 alici) external {
+    /// Only from `lzCompose`: burn through the chain entry; the basket pays
+    /// `alici` on `odemeZincir`; `ucret` dollars go along for the vault
+    /// orders' fees, what they do not use back to `iade` on Arc.
+    function itfaEt(address token, uint256 miktar, uint32 odemeZincir, bytes32 alici, uint256 ucret, address iade) external {
         if (msg.sender != address(this)) revert SadeceKendisi();
         if (!IERC20S(token).approve(address(ucu), miktar)) revert TransferOlmadi();
-        ucu.itfa(token, miktar, odemeZincir, alici);
+        if (ucret == 0) {
+            ucu.itfa(token, miktar, odemeZincir, alici);
+            return;
+        }
+        if (!usdc.approve(address(ucu), ucret)) revert TransferOlmadi();
+        ucu.itfaUcretli(token, miktar, odemeZincir, alici, ucret, iade);
     }
 
     /* ------------------------------------------- held on Arc itself ---- */

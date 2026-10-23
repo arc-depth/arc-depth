@@ -41,6 +41,8 @@
 //!                data: token 20, alici 32, miktar u64, native_fee u64, istek_len u32, istek
 //!   3 AltKur     [admin s w, store, alt PDA w, the lookup table, system]: once, before Kilitle; the table must
 //!                hold `sabitler` in order and be frozen
+//!   4 HubDegistir [admin s w, store w, ["hub-degisti"] w, alt PDA w, the new lookup table, system]   data: hub 32
+//!                v4: once, before Kilitle: the new IkizHub and the table that fits it
 //!   lz_receive_types (v1) / lz_receive_types_info + lz_receive_types_v2 (v2, with the lookup table) /
 //!   lz_receive (Anchor discriminators), lz_receive accounts:
 //!     0 payer (the executor) s w, 1 store, 2..10 the endpoint's `clear` accounts
@@ -153,6 +155,7 @@ pub fn process(program_id: &Address, accounts: &mut [AccountView], data: &[u8]) 
         1 => kilitle(program_id, accounts),
         2 => gonder(program_id, accounts, rest),
         3 => alt_kur(program_id, accounts),
+        4 => hub_degistir(program_id, accounts, rest),
         _ => Err(err(E_BAD_DATA)),
     }
 }
@@ -397,6 +400,48 @@ fn alt_kur(program_id: &Address, accounts: &mut [AccountView]) -> ProgramResult 
     }
     let abs = [ab];
     create_pda(&admin, &alt, ALT_LEN, program_id, &[Seed::from(b"Alt"), Seed::from(&abs)])?;
+    let mut d = [0u8; ALT_LEN];
+    d[0] = 1;
+    d[1..33].copy_from_slice(tablo.address().as_ref());
+    d[33] = ab;
+    write(&alt, 0, &d)
+}
+
+/// v4 (23 Oct 2026, arastirma/v4-tasarim.md): the admin, once and before
+/// Kilitle, points the gate at a new IkizHub on Arc and at a new frozen
+/// lookup table holding `sabitler` for it (the hub's Nonce PDA is one of
+/// them, so the old table no longer fits). The endpoint's nonce for the new
+/// sender is initialized by the admin as the OApp's delegate, outside this
+/// program. ["hub-degisti"] marks it done; there is no second time.
+/// [admin s w, store w, degisti w, alt w (["Alt"]), tablo, system]   data: hub 32
+fn hub_degistir(program_id: &Address, accounts: &mut [AccountView], data: &[u8]) -> ProgramResult {
+    let [admin, store, degisti, alt, tablo, _system, ..] = *accounts else { return Err(ProgramError::NotEnoughAccountKeys) };
+    let s = read_store(program_id, &store)?;
+    ensure(!s.kilitli, E_KILITLI)?;
+    ensure(admin.is_signer() && *admin.address() == s.admin, E_NOT_ADMIN)?;
+    let hub: [u8; 32] = data.get(0..32).ok_or(err(E_BAD_DATA))?.try_into().unwrap();
+    ensure(hub != [0u8; 32], E_ZERO)?;
+    let (dp, db) = pda(&[b"hub-degisti"], program_id);
+    ensure(*degisti.address() == dp && degisti.data_len() == 0, E_ALREADY)?;
+    let dbs = [db];
+    create_pda(&admin, &degisti, 1, program_id, &[Seed::from(b"hub-degisti"), Seed::from(&dbs)])?;
+    write(&degisti, 0, &[1])?;
+    write(&store, 38, &hub)?;
+    let s2 = read_store(program_id, &store)?;
+    let (ap, ab) = pda(&[b"Alt"], program_id);
+    ensure(*alt.address() == ap, E_BAD_ACCOUNT)?;
+    ensure(tablo.owned_by(&ALT_PROGRAM), E_BAD_ACCOUNT)?;
+    {
+        let d = tablo.try_borrow()?;
+        let sabit = sabitler(&s2, store.address());
+        ensure(d.len() == 56 + 32 * ALT_SAYI && d[0..4] == [1, 0, 0, 0] && d[4..12] == [0xff; 8] && d[21] == 0, E_BAD_ACCOUNT)?;
+        for (i, x) in sabit.iter().enumerate() { ensure(d[56 + 32 * i..88 + 32 * i] == *x.as_ref(), E_BAD_ACCOUNT)?; }
+    }
+    if alt.data_len() == 0 {
+        let abs = [ab];
+        create_pda(&admin, &alt, ALT_LEN, program_id, &[Seed::from(b"Alt"), Seed::from(&abs)])?;
+    }
+    ensure(alt.owned_by(program_id) && alt.data_len() == ALT_LEN, E_BAD_ACCOUNT)?;
     let mut d = [0u8; ALT_LEN];
     d[0] = 1;
     d[1..33].copy_from_slice(tablo.address().as_ref());

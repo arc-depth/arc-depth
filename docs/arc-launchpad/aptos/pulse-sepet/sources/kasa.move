@@ -35,6 +35,7 @@ module sepet::kasa {
     use aptos_framework::dispatchable_fungible_asset;
     use aptos_framework::primary_fungible_store;
     use aptos_framework::timestamp;
+    use dex::pool_v3::{Self, LiquidityPoolV3};
 
     const BASLANGIC_KAT: u64 = 2;
     const TABAN_KAT: u64 = 16;
@@ -316,5 +317,180 @@ module sepet::kasa {
         let g = table::remove(&mut k.giden, id);
         let dm = k.dolar;
         (g.zincir, g.alici, cek(k, dm, g.miktar))
+    }
+
+    /* ---- v4: filling an auction from a Hyperion pool ----------------------
+       (23 Oct 2026, arastirma/v4-tasarim.md) Anyone may fill an open auction
+       through the Hyperion CLMM pool the list names for its asset; the vault
+       itself swaps. The list (pool, a reference price, a size cap) is written
+       by the receiver's founder before the lock, never after. Hyperion's own
+       price observations are not readable from outside its package, so the
+       bound is a reference the vault keeps per asset, exactly as on Sui: it
+       follows the pool by at most IZCI_ADIM_BPS (in sqrt) per elapsed minute,
+       IZCI_TAVAN_BPS at once; a swap runs only while the pool sits within
+       SAPMA_BPS of it, with that band as its price limit, at most `tavan`
+       dollars per call, and what comes out must be worth the input at the
+       reference less TOLERANS_BPS. */
+
+    const BAHSIS: u64 = 50000;            // $0.05 to whoever fills from the pool
+    const BAHSIS_ESIGI: u64 = 1000000;    // once at least $1 changed hands
+    const IZCI_ADIM_BPS: u256 = 50;
+    const IZCI_TAVAN_BPS: u256 = 500;
+    const SAPMA_BPS: u256 = 150;
+    const TOLERANS_BPS: u256 = 400;
+    const Q64: u256 = 18446744073709551616;
+
+    const EListede: u64 = 10;
+    const EFiyat: u64 = 12;
+    const EHavuzVarlik: u64 = 13;
+
+    /// `dolar_a`: the dollar is the pool's token A. `izci`: the reference sqrt
+    /// price (B per A, Q64) and when it last moved. `tavan`: dollars per call.
+    struct Kayit has copy, drop, store { havuz: address, dolar_a: bool, izci: u128, izci_zaman: u64, tavan: u64 }
+
+    #[resource_group_member(group = aptos_framework::object::ObjectGroup)]
+    struct TakasListe has key { liste: Table<address, Kayit> }
+
+    #[event] struct Takas has drop, store { ihale: u64, dolduran: address, verilen: u64, alinan: u64, kalan: u64 }
+
+    /// The receiver writes the list (its founder, before the lock).
+    public(package) fun liste_yaz(kasa: address, varlik: address, havuz: address, dolar_a: bool, izci: u128, tavan: u64) acquires Kasa, TakasListe {
+        if (!exists<TakasListe>(kasa)) {
+            let s = object::generate_signer_for_extending(&borrow_global<Kasa>(kasa).ref);
+            move_to(&s, TakasListe { liste: table::new() });
+        };
+        table::upsert(&mut borrow_global_mut<TakasListe>(kasa).liste, varlik, Kayit { havuz, dolar_a, izci, izci_zaman: timestamp::now_seconds(), tavan });
+    }
+
+    #[view]
+    public fun liste(kasa: address, varlik: address): (address, bool, u128, u64, u64) acquires TakasListe {
+        let r = *table::borrow(&borrow_global<TakasListe>(kasa).liste, varlik);
+        (r.havuz, r.dolar_a, r.izci, r.izci_zaman, r.tavan)
+    }
+
+    /// The asset's list entry before the reference follows `spot`; the reference moves.
+    fun izle_ic(kasa: address, varlik: address): (Kayit, u128) acquires TakasListe {
+        assert!(exists<TakasListe>(kasa) && table::contains(&borrow_global<TakasListe>(kasa).liste, varlik), EListede);
+        let r = table::borrow_mut(&mut borrow_global_mut<TakasListe>(kasa).liste, varlik);
+        let eski = *r;
+        let (_, spot) = pool_v3::current_tick_and_price(r.havuz);
+        let simdi = timestamp::now_seconds();
+        let adim = ((simdi - r.izci_zaman) as u256) * IZCI_ADIM_BPS / 60;
+        if (adim > IZCI_TAVAN_BPS) adim = IZCI_TAVAN_BPS;
+        let ref = (r.izci as u256);
+        let alt = ref * (10000 - adim) / 10000;
+        let ust = ref * (10000 + adim) / 10000;
+        let s = (spot as u256);
+        let yeni = if (s < alt) alt else if (s > ust) ust else s;
+        if (adim > 0) { r.izci = (yeni as u128); r.izci_zaman = simdi; };
+        (eski, spot)
+    }
+
+    /// Anyone: let the reference follow the pool (no swap).
+    public entry fun izle(kasa: address, varlik: address) acquires TakasListe { izle_ic(kasa, varlik); }
+
+    /// Price limit for a swap in direction `a2b` around reference `r`; aborts
+    /// when the pool sits too far from it.
+    fun sinir(r: u128, spot: u128, a2b: bool): u128 {
+        let ref = (r as u256);
+        let s = (spot as u256);
+        let fark = if (s > ref) s - ref else ref - s;
+        assert!(fark * 10000 <= ref * SAPMA_BPS, EFiyat);
+        let limit = if (a2b) ref * (10000 - SAPMA_BPS) / 10000 else ref * (10000 + SAPMA_BPS) / 10000;
+        assert!(if (a2b) limit < s else limit > s, EFiyat);
+        (limit as u128)
+    }
+
+    /// What `girdi` of token A (`a_dan`) or token B is worth in the other at sqrt `r`.
+    fun karsilik(girdi: u64, r: u128, a_dan: bool): u256 {
+        let g = (girdi as u256);
+        let ref = (r as u256);
+        if (a_dan) g * ref / Q64 * ref / Q64 else g * Q64 / ref * Q64 / ref
+    }
+
+    fun en_az(deger: u256): u256 { deger * (10000 - TOLERANS_BPS) / 10000 }
+
+    /// Hyperion's two returned assets: (`hedef` out, the rest).
+    fun ayir(a: FungibleAsset, b: FungibleAsset, hedef: Object<Metadata>): (FungibleAsset, FungibleAsset) {
+        if (fungible_asset::metadata_from_asset(&a) == hedef) (a, b) else (b, a)
+    }
+
+    /// Anyone: fill buy auction `id` (or part of it) from the listed pool; the tip goes to the caller.
+    public entry fun takas_al(dolduran: &signer, kasa: address, id: u64) acquires Kasa, TakasListe {
+        let h = *table::borrow(&borrow_global<Kasa>(kasa).ihaleler, id);
+        assert!(!h.bitti && h.tur == ALIM, EYanlisTur);
+        let (kayit, spot) = izle_ic(kasa, h.varlik);
+        let k = borrow_global_mut<Kasa>(kasa);
+        let t = oku(&k.taahhut, h.launch);
+        let b = oku(&k.dolar_bakiye, h.launch);
+        let harca = oran(h.verilen, b, t);
+        assert!(harca > BAHSIS, ESifir);
+        let a2b = kayit.dolar_a;
+        let limit = sinir(kayit.izci, spot, a2b);
+        let girdi = harca - BAHSIS;
+        if (girdi > kayit.tavan) girdi = kayit.tavan;
+        let dm = k.dolar;
+        let vm = object::address_to_object<Metadata>(h.varlik);
+        let fa = cek(k, dm, girdi);
+        let (_, o1, o2) = pool_v3::swap(object::address_to_object<LiquidityPoolV3>(kayit.havuz), a2b, true, girdi, fa, limit);
+        let (out, kalan) = ayir(o1, o2, vm);
+        assert!(fungible_asset::metadata_from_asset(&out) == vm, EHavuzVarlik);
+        let geri = yatir(k, kalan);
+        let odenen = girdi - geri;
+        let gelen = yatir(k, out);
+        assert!(odenen > 0 && gelen > 0 && (gelen as u256) >= en_az(karsilik(odenen, kayit.izci, a2b)), EAz);
+        let bahsis = if (odenen >= BAHSIS_ESIGI) BAHSIS else 0;
+        let harcanan = odenen + bahsis;
+        let v = if (harca - harcanan < BAHSIS_ESIGI) h.verilen else {
+            let x = oran(harcanan, h.verilen, harca);
+            if (x == 0) 1 else if (x > h.verilen) h.verilen else x
+        };
+        table::upsert(&mut k.taahhut, h.launch, t - v);
+        table::upsert(&mut k.dolar_bakiye, h.launch, b - harcanan);
+        {
+            let ih = table::borrow_mut(&mut k.ihaleler, id);
+            if (v == h.verilen) ih.bitti = true
+            else { let bs = oran(h.baslangic, h.verilen - v, h.verilen); ih.baslangic = if (bs == 0) 1 else bs; ih.verilen = h.verilen - v; };
+        };
+        let bk = bakiye_oku(k, h.launch, h.varlik);
+        bakiye_yaz(k, h.launch, h.varlik, bk + gelen);
+        table::upsert(&mut k.son_fiyat, h.varlik, Fiyat { dolar: odenen, varlik: gelen });
+        if (bahsis > 0) { let tip = cek(k, dm, bahsis); primary_fungible_store::deposit(signer::address_of(dolduran), tip); };
+        event::emit(Takas { ihale: id, dolduran: signer::address_of(dolduran), verilen: odenen, alinan: gelen, kalan: h.verilen - v });
+    }
+
+    /// Anyone: fill sell auction `id` (or part of it) through the listed
+    /// pool; the dollars go to the holder as an auction fill would pay them.
+    public entry fun takas_sat(dolduran: &signer, kasa: address, id: u64) acquires Kasa, TakasListe {
+        let h = *table::borrow(&borrow_global<Kasa>(kasa).ihaleler, id);
+        assert!(!h.bitti && h.tur == SATIM, EYanlisTur);
+        let (kayit, spot) = izle_ic(kasa, h.varlik);
+        let k = borrow_global_mut<Kasa>(kasa);
+        /* the asset in: it is token A when the dollar is not */
+        let a2b = !kayit.dolar_a;
+        let limit = sinir(kayit.izci, spot, a2b);
+        let girdi = h.verilen;
+        let ust = karsilik(kayit.tavan, kayit.izci, !a2b);
+        if ((girdi as u256) > ust) girdi = (ust as u64);
+        let dm = k.dolar;
+        let vm = object::address_to_object<Metadata>(h.varlik);
+        let fa = cek(k, vm, girdi);
+        let (_, o1, o2) = pool_v3::swap(object::address_to_object<LiquidityPoolV3>(kayit.havuz), a2b, true, girdi, fa, limit);
+        let (out, kalan) = ayir(o1, o2, dm);
+        assert!(fungible_asset::metadata_from_asset(&out) == dm, EHavuzVarlik);
+        let geri = yatir(k, kalan);
+        let satilan = girdi - geri;
+        let gelen = yatir(k, out);
+        assert!(satilan > 0 && gelen > 0 && (gelen as u256) >= en_az(karsilik(satilan, kayit.izci, a2b)), EAz);
+        let bahsis = if (gelen >= BAHSIS_ESIGI + BAHSIS) BAHSIS else 0;
+        {
+            let ih = table::borrow_mut(&mut k.ihaleler, id);
+            if (satilan == h.verilen) ih.bitti = true
+            else { let bs = oran(h.baslangic, h.verilen - satilan, h.verilen); ih.baslangic = if (bs == 0) 1 else bs; ih.verilen = h.verilen - satilan; };
+        };
+        table::upsert(&mut k.son_fiyat, h.varlik, Fiyat { dolar: gelen, varlik: satilan });
+        ode(k, h.hedef_zincir, h.alici, gelen - bahsis);
+        if (bahsis > 0) { let tip = cek(k, dm, bahsis); primary_fungible_store::deposit(signer::address_of(dolduran), tip); };
+        event::emit(Takas { ihale: id, dolduran: signer::address_of(dolduran), verilen: satilan, alinan: gelen, kalan: h.verilen - satilan });
     }
 }
