@@ -1,0 +1,233 @@
+{
+ "zaman": "2026-10-23",
+ "sozlesmeler": [
+  {
+   "chainId": 5042,
+   "ad": "HaberciLZ",
+   "adres": "0x994534bA2023c1B3831765B141BA41EA8c57FAC1",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 5042,
+   "ad": "PulseFabrika4",
+   "adres": "0x509a19DF89aF887D4cae7aA358596D82EE6Ae8E4",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 5042,
+   "ad": "FthmYakici",
+   "adres": "0x4D78b78A49a9AdDdfA9Be56d5F1bc33591452ff2",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 5042,
+   "ad": "SepetDefteri",
+   "adres": "0x7eEF8D86fA61277f85499774c3c52DFBE4b288A3",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 5042,
+   "ad": "SepetKasasi",
+   "adres": "0x5ab6A308D3b19f838C84f11da40C589E99abCA5e",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 5042,
+   "ad": "SepetUcu",
+   "adres": "0xb49C8C2bC47b26690fCC0d18B9185e2C5e858EC4",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 5042,
+   "ad": "PulseLikiditeKasasi",
+   "adres": "0x8152F4f3a24f10f79E2A7aB6484fEDE2b9735cfE",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 5042,
+   "ad": "PulseLaunchpad5",
+   "adres": "0x7DDCd031027d19bf0669b5270A703066f9D964e1",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 5042,
+   "ad": "IkizHub",
+   "adres": "0x968b6c1E456ff986904082c60FD5aC961211c5eE",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 5042,
+   "ad": "MerkezKapi",
+   "adres": "0x0a6F407BB1Ba948bE255Da49EcCeA4EeD4eC1094",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 5042,
+   "ad": "LaunchEmaneti",
+   "adres": "0xFeB43413eE9c4d9b1141efeC237A5B2DDA62ac82",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 5042,
+   "ad": "PulseHook5",
+   "adres": "0xcE5B5511F5F2463408347c13A44De6086D90eEcC",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 5042,
+   "ad": "IkizYayici",
+   "adres": "0x24C644e7C29F6582B892cb5D89d7b23Bc34d1bD9",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 8453,
+   "ad": "HaberciLZ",
+   "adres": "0x611F9C36D91B474E8C4Fa95f67e315A76BCFc32c",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 8453,
+   "ad": "SepetKasasi",
+   "adres": "0x08863E6b86AC2cCcAB38Dd8B67226E2275934D92",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 8453,
+   "ad": "AktarmaLZ",
+   "adres": "0xDa6cADe70Cb33A1bb92a286808B441740f92A9e8",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 8453,
+   "ad": "IkizYayici",
+   "adres": "0x24C644e7C29F6582B892cb5D89d7b23Bc34d1bD9",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 42161,
+   "ad": "HaberciLZ",
+   "adres": "0x4A500118Be1b5Ea77d4883FC94b9e678fE4008Ff",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 42161,
+   "ad": "SepetKasasi",
+   "adres": "0x4d486FcA7468fb171351C1573F2e55fA417c73C1",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 42161,
+   "ad": "IkizYayici",
+   "adres": "0x24C644e7C29F6582B892cb5D89d7b23Bc34d1bD9",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 1,
+   "ad": "HaberciLZ",
+   "adres": "0x0929aF000aC0de282dd965D6B853b74Ab0911F9D",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 1,
+   "ad": "SepetKasasi",
+   "adres": "0x001599dB024a9e37aBEbFFa9493113a5E2d1c6f9",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 1,
+   "ad": "IkizYayici",
+   "adres": "0x24C644e7C29F6582B892cb5D89d7b23Bc34d1bD9",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 43114,
+   "ad": "HaberciLZ",
+   "adres": "0x5ABCF3Dbe86F9ffC5e69E13686Ec2876b29124A6",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 43114,
+   "ad": "SepetKasasi",
+   "adres": "0xcD702183e3e3F6Ed66d580b93953B34a3f82DE88",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 43114,
+   "ad": "IkizYayici",
+   "adres": "0x24C644e7C29F6582B892cb5D89d7b23Bc34d1bD9",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 143,
+   "ad": "HaberciLZ",
+   "adres": "0x5ABCF3Dbe86F9ffC5e69E13686Ec2876b29124A6",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 143,
+   "ad": "SepetKasasi",
+   "adres": "0xcD702183e3e3F6Ed66d580b93953B34a3f82DE88",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 143,
+   "ad": "IkizYayici",
+   "adres": "0x24C644e7C29F6582B892cb5D89d7b23Bc34d1bD9",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 999,
+   "ad": "HaberciLZ",
+   "adres": "0xCe5b0513C3D5fB830227C06a3BE80Cca1C6FE233",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 999,
+   "ad": "SepetKasasi",
+   "adres": "0x4094Eee7c46377C751F419E0E8f7dA6269Eb67D9",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 999,
+   "ad": "IkizYayici",
+   "adres": "0x24C644e7C29F6582B892cb5D89d7b23Bc34d1bD9",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 56,
+   "ad": "HaberciLZ",
+   "adres": "0x4d486FcA7468fb171351C1573F2e55fA417c73C1",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 56,
+   "ad": "SepetKasasi",
+   "adres": "0x30D4BC3D31f2fcF714F3fc407Ebd34aFbB6c4Fb5",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 56,
+   "ad": "IkizYayici",
+   "adres": "0x24C644e7C29F6582B892cb5D89d7b23Bc34d1bD9",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 4663,
+   "ad": "HaberciLZ",
+   "adres": "0x386968f036cbc0d0965C81bf1fCEd0b40EE11E14",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 4663,
+   "ad": "SepetKasasi",
+   "adres": "0x46E14d98a0597B4D65259F24608625f58d68e2C0",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 4663,
+   "ad": "IkizYayici",
+   "adres": "0x24C644e7C29F6582B892cb5D89d7b23Bc34d1bD9",
+   "eslesme": "exact_match"
+  }
+ ]
+}

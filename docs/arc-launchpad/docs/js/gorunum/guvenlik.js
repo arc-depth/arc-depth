@@ -98,6 +98,32 @@ export async function ciz() {
   kap.append(sayfaUst("Security and verification",
     blok ? "Arc block " + blok.toLocaleString("en-US") : "Arc"));
 
+  /* ---- the live set: every address, its source verified on Sourcify ---- */
+  const dogrulama = await fetch("veri/kaynak-dogrulama.json", { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+  if (dogrulama) {
+    const ZAD = { 5042: "Arc", 8453: "Base", 42161: "Arbitrum", 1: "Ethereum", 43114: "Avalanche", 143: "Monad", 999: "HyperEVM", 56: "BNB", 4663: "Robinhood" };
+    const t = el("table", { sinif: "tablo tablo--kart" });
+    t.append(el("thead", {}, [el("tr", {}, ["Chain", "Contract", "Address", "Source"].map((h) => el("th", { yazi: h })))]));
+    const g = el("tbody");
+    for (const x of dogrulama.sozlesmeler) {
+      const tam = x.eslesme === "exact_match" || x.eslesme === "match";
+      g.append(el("tr", {}, [
+        el("td", { attr: { "data-et": "Chain" }, yazi: ZAD[x.chainId] || String(x.chainId) }),
+        el("td", { attr: { "data-et": "Contract" } }, [el("strong", { yazi: x.ad })]),
+        el("td", { attr: { "data-et": "Address" } }, [adres(x.adres)]),
+        el("td", { attr: { "data-et": "Source" } }, [tam
+          ? el("a", { sinif: "etiket etiket--alis", attr: { href: "https://repo.sourcify.dev/" + x.chainId + "/" + x.adres, target: "_blank", rel: "noopener" }, yazi: x.eslesme === "exact_match" ? "verified (exact)" : "verified" })
+          : el("span", { sinif: "etiket etiket--uyari", yazi: "not verified" })]),
+      ]));
+    }
+    t.append(g);
+    kap.append(panel("Live contracts and their verified source", el("div", { sinif: "yigin" }, [
+      el("div", { sinif: "ikincil", yazi: "Every contract the app sends a transaction to, on every chain. Each source is published on Sourcify and compiled to the exact bytes on chain. The app only asks your wallet to send transactions (eth_sendTransaction): approvals are for the exact amount of the action, never unlimited, and it never asks you to sign a message or a permit." }),
+      el("div", { sinif: "tablo-sarmal" }, [t]),
+      el("div", { sinif: "ucuncul", yazi: "Source: github.com/arc-depth/arc-depth (folder arc-launchpad). Security contact: .well-known/security.txt. Checked " + dogrulama.zaman + "." }),
+    ])));
+  }
+
   /* ---- deployment state, first ------------------------------------- */
   const dagitildi = Object.entries(PULSE).filter(([, v]) => canli(v));
   const bekleyen = Object.entries(PULSE).filter(([, v]) => !canli(v));
@@ -171,8 +197,8 @@ export async function ciz() {
   kap.append(panel("What is true, and how to check it", kanitlar));
 
   kap.append(not(
-    "Every claim on this page names the script that establishes it. A " +
-    "claim that cannot be checked does not go on this page.",
+    "These claims concern the first generation; the scripts that establish them are kept " +
+    "in the project's repository, not on this site.",
     "bilgi"
   ));
 
