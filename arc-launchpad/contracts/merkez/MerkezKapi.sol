@@ -16,7 +16,30 @@ interface ILaunchpadM {
     function launch(string calldata ad, string calldata sembol, SepetDefteri.Kalem[] calldata sepet, uint256[] calldata teklif,
         uint256 vergiPpm, uint256 alim) external returns (address token, address kasa);
     function havuzAnahtari(address token) external view returns (PoolKey memory);
+    function launchCount() external view returns (uint256);
+    function launchAt(uint256 i) external view returns (KayitM memory);
+    function likiditeKasasi() external view returns (address);
+    function hook() external view returns (address);
 }
+
+/// PulseLaunchpad5.Kayit, as the gate reads it.
+struct KayitM {
+    address token; address acici; address kasa; uint256 teminat; address kurucu;
+    uint256 kurucuToken; uint256 teklif; uint256 vergiPpm; uint64 zaman;
+}
+
+/* v7 upkeep: the contracts that hold a trade's slices until something moves them on */
+interface IAciciM { function biriktir() external returns (uint128); }
+interface ILikiditeM { function besle(uint256 launchId) external returns (uint128); }
+interface IHookFthmM { function fthmYakici() external view returns (address); }
+interface IFthmYakiciM {
+    function fthm() external view returns (address);
+    function verilen() external view returns (uint256);
+    function istenen() external view returns (uint256);
+    function ilan() external;
+    function doldur(uint256 teklif) external;
+}
+interface IVekilM { function kurucuZincir() external view returns (uint32); function ilet(uint256 maxUcret) external; }
 
 interface IIkizYayiciM {
     function adapterAdresi(address token) external view returns (address);
@@ -171,6 +194,36 @@ contract MerkezKapi {
     mapping(address => address) public vekilOf;
     /// a launch token's Arc adapter -> the token (set at launch)
     mapping(address => address) public tokenOfAdapter;
+    /// v7: a launch token -> its index in the launchpad (launchAt), for upkeep
+    mapping(address => uint256) public launchNo;
+
+    /* ---- v7 upkeep -----------------------------------------------------
+       Three slices of every trade wait in contracts until something moves
+       them on, and nothing did (measured on v6, 24 Oct 2026):
+         the hook's depth slice and snipe tax  -> the pool opener (acici):
+             pool liquidity only after `biriktir()`
+         the 0.50% liquidity slice             -> PulseLikiditeKasasi:
+             pool liquidity only after `besle(id)`
+         the 0.20% FTHM slice                  -> FthmYakici: burned FTHM
+             only after `ilan()` and a filler's `doldur()`
+       and a founder paid on Arc had to come for their own slice. Now every
+       buy, sale and launch through this gate ends with `_bakim`: each step
+       in its own try, with bounded gas, skipped when the transaction does not
+       carry the gas, never able to revert the trade. The same functions stay
+       open to anyone, so a trade that skipped them is caught up by the next. */
+    IFthmYakiciM public immutable fthmYakici;
+    address public immutable likiditeKasasi;
+    address public immutable fthm;
+    /// FTHM's own pool on Arc (dagitim-fathom.json): USDC / FTHM and its hook
+    PoolKey internal fthmHavuz;
+    uint256 public constant BAKIM_GAZ = 1_300_000;      // the least a transaction must still carry to do upkeep
+    uint256 public constant ADIM_GAZ = 900_000;         // per step
+    uint256 public constant DERINLIK_ESIK = 1e6;        // $1 at the opener before it is placed
+    uint256 public constant LIKIDITE_ESIK = 5e6;        // $5 in the liquidity vault before it is fed
+    uint256 public constant KURUCU_ESIK = 1e6;          // $1 for a founder paid on Arc
+    uint8 private constant FTHM_MODU = 2;
+    uint256 public constant FTHM_ARALIK = 5 minutes;    // the least time between two attempts to fill the burner
+    uint256 public sonFthmDeneme;
 
     struct LaunchIstegi {
         string ad;
@@ -219,8 +272,10 @@ contract MerkezKapi {
     error TransferOlmadi();
     error IadeOlmadi();
     error TipYanlis(uint256 kalem);
+    error BakimGazi(uint256 gaz);
 
-    constructor(ILaunchpadM lp_, IPoolManager pm_, IIkizYayiciM yayici_, ITokenMesajciM tm_, uint32 buZincir_, ISepetUcuM ucu_, IERC20S usdc_, address lz_, IIkizHubM hub_) {
+    constructor(ILaunchpadM lp_, IPoolManager pm_, IIkizYayiciM yayici_, ITokenMesajciM tm_, uint32 buZincir_, ISepetUcuM ucu_, IERC20S usdc_, address lz_, IIkizHubM hub_,
+        PoolKey memory fthmHavuz_, IFthmYakiciM fthmYakici_) {
         launchpad = lp_;
         havuzYoneticisi = pm_;
         ikizYayici = yayici_;
@@ -230,6 +285,12 @@ contract MerkezKapi {
         ikizHub = hub_;
         usdc = usdc_;
         lzUcNokta = lz_;
+        /* where the launchpad sends its liquidity slice: read once, fixed */
+        likiditeKasasi = lp_.likiditeKasasi();
+        /* the burner is named, not read from the hook: the hook is created after this gate */
+        fthmYakici = fthmYakici_;
+        fthm = fthmYakici_.fthm();
+        fthmHavuz = fthmHavuz_;
     }
 
     receive() external payable {}
@@ -250,6 +311,7 @@ contract MerkezKapi {
         uint256 kurucuToken;
         (token, kurucuToken) = v.launchEt(launchpad, r.ad, r.sembol, r.sepet, r.teklif, r.vergiPpm, r.alim, toplam);
         vekilOf[token] = address(v);
+        launchNo[token] = launchpad.launchCount() - 1;
 
         /* the twins: IkizYayici creates the Arc adapter and messages each chain */
         ikizYayici.yay{ value: r.ikizUcret }(token, r.ikizler, r.ikizSecenek);
@@ -263,6 +325,7 @@ contract MerkezKapi {
         _yerelIade(r.iade);
         emit SepetTipleri(token, r.tipler);
         emit MerkezLaunch(token, address(v), r.kurucu, r.kurucuZincir, kurucuToken);
+        _bakim(token, true);
     }
 
     /* --------------------------------------------------------- buy ---- */
@@ -283,6 +346,7 @@ contract MerkezKapi {
         if (kalan > 0 && !usdc.transfer(iade, kalan)) revert TransferOlmadi();
         _yerelIade(iade);
         emit Alindi(token, girdi, alinan, hedefEid, alici);
+        _bakim(token, true);
     }
 
     /* ---------------------------------------------- sell / redeem ---- */
@@ -304,6 +368,7 @@ contract MerkezKapi {
         Istek memory q = abi.decode(istek, (Istek));
         /* what a price limit leaves unsold, or a failure, goes to the seller's fallback on Arc */
         _isle(token, miktar, q, q.yedek == address(0) ? gonderen : q.yedek);
+        _bakim(token, false);
     }
 
     /// Twins burned on Solana, Sui or Aptos with an order: the hub has
@@ -314,6 +379,7 @@ contract MerkezKapi {
         if (msg.sender != address(ikizHub)) revert SadeceUcNokta();
         Istek memory q = abi.decode(istek, (Istek));
         _isle(token, miktar, q, q.yedek);
+        _bakim(token, false);
     }
 
     function _isle(address token, uint256 miktar, Istek memory q, address yedek) internal {
@@ -377,11 +443,13 @@ contract MerkezKapi {
         if (kalan > 0) _ver(token, msg.sender, kalan, 4);
         Odeme.ode(tokenMesajci, usdc, buZincir, odemeZincir, alici, cikan, maxUcret);
         emit Satildi(token, miktar, cikan, odemeZincir, alici);
+        _bakim(token, true);
     }
 
     function unlockCallback(bytes calldata v) external returns (bytes memory) {
         if (msg.sender != address(havuzYoneticisi)) revert SadeceHavuzYoneticisi();
         (uint8 mod, address token, uint256 girdi, address alici) = abi.decode(v, (uint8, address, uint256, address));
+        if (mod == FTHM_MODU) return _fthmDoldurIc(girdi);
         PoolKey memory k = launchpad.havuzAnahtari(token);
         bool tokenSifirinci = Currency.unwrap(k.currency0) == token;
         /* a sale puts the token in, a buy puts the dollar in */
@@ -399,6 +467,90 @@ contract MerkezKapi {
         havuzYoneticisi.settle();
         uint256 alinan = uint256(uint128(cikan));
         havuzYoneticisi.take(cc, alici, alinan);
+        return abi.encode(alinan);
+    }
+
+    /* ------------------------------------------------------ upkeep ---- */
+
+    event Bakim(address indexed token, uint8 adim, bool oldu);
+
+    /// Anyone: the same upkeep a trade ends with, for `token`'s pool.
+    function bakim(address token) external { _bakim(token, true); }
+
+    /// What is due for `token` now (the page and the diagnosis read it) and the gas it needs.
+    function bakimGerek(address token) public view returns (bool besle, bool biriktir, bool ilan, bool doldur, bool kurucu, uint256 gaz) {
+        if (vekilOf[token] == address(0)) return (false, false, false, false, false, 0);
+        besle = usdc.balanceOf(likiditeKasasi) >= LIKIDITE_ESIK;
+        if (!besle) biriktir = usdc.balanceOf(launchpad.launchAt(launchNo[token]).acici) >= DERINLIK_ESIK;
+        uint256 verilen = fthmYakici.verilen();
+        ilan = verilen == 0 && usdc.balanceOf(address(fthmYakici)) >= 10e6;
+        doldur = verilen != 0 && block.timestamp >= sonFthmDeneme + FTHM_ARALIK;
+        address vk = vekilOf[token];
+        kurucu = IVekilM(vk).kurucuZincir() == buZincir && usdc.balanceOf(vk) >= KURUCU_ESIK;
+        gaz = (besle || biriktir ? ADIM_GAZ : 0) + (ilan ? 200_000 : 0) + (doldur ? ADIM_GAZ : 0) + (kurucu ? 200_000 : 0);
+    }
+
+    /// `zorunlu`: a transaction its sender estimates (a buy, a sale, a launch
+    /// on Arc). There, upkeep that is due and does not fit reverts with
+    /// BakimGazi, so a wallet's estimate (the least gas that succeeds) always
+    /// includes it — skipping it when gas is short would make every estimate
+    /// skip it. A delivery from another chain carries a fixed gas: there it is
+    /// only skipped, and the next trade does it.
+    function _bakim(address token, bool zorunlu) internal {
+        (bool bes, bool bir, bool ila, bool dol, bool kur, uint256 gaz) = bakimGerek(token);
+        if (gaz == 0) return;
+        if (gasleft() < gaz + 150_000) {
+            if (zorunlu) revert BakimGazi(gaz);
+            return;
+        }
+        if (bes) {
+            try ILikiditeM(likiditeKasasi).besle{ gas: ADIM_GAZ }(launchNo[token]) { emit Bakim(token, 1, true); } catch { emit Bakim(token, 1, false); }
+        } else if (bir) {
+            try IAciciM(launchpad.launchAt(launchNo[token]).acici).biriktir{ gas: ADIM_GAZ }() { emit Bakim(token, 2, true); }
+            catch { emit Bakim(token, 2, false); }
+        }
+        if (ila) {
+            try fthmYakici.ilan{ gas: 200_000 }() { emit Bakim(token, 3, true); } catch { emit Bakim(token, 3, false); }
+        } else if (dol) {
+            sonFthmDeneme = block.timestamp;
+            try havuzYoneticisi.unlock{ gas: ADIM_GAZ }(abi.encode(FTHM_MODU, fthm, fthmYakici.verilen(), address(0))) { emit Bakim(token, 5, true); }
+            catch { emit Bakim(token, 5, false); }
+        }
+        if (kur) {
+            try IVekilM(vekilOf[token]).ilet{ gas: 200_000 }(0) { emit Bakim(token, 4, true); } catch { emit Bakim(token, 4, false); }
+        }
+    }
+
+    /// The burner auctions its dollars for at least `istenen` FTHM, the ask
+    /// halving every 30 minutes. The gate fills it, at most every
+    /// FTHM_ARALIK, the moment FTHM's own pool gives at least that much FTHM
+    /// for ALL of the auction's dollars: in one unlock it swaps exactly those
+    /// dollars, burns every FTHM it got through the auction, and pays the
+    /// pool with the dollars the auction pays out. Nothing is kept, the
+    /// burner never takes less than its own ask, nobody is needed to fill it.
+    /// Inside the unlock: `d` dollars into FTHM's pool, all the FTHM into the
+    /// auction (burned), the auction's `d` dollars to the pool. Reverts, and
+    /// so undoes everything, if the pool gives less FTHM than the auction asks.
+    function _fthmDoldurIc(uint256 d) internal returns (bytes memory) {
+        PoolKey memory k = fthmHavuz;
+        bool usdcSifirinci = Currency.unwrap(k.currency0) == address(usdc);
+        BalanceDelta bd = havuzYoneticisi.swap(k,
+            SwapParams(usdcSifirinci, -int256(d), usdcSifirinci ? TickMath.MIN_SQRT_PRICE + 1 : TickMath.MAX_SQRT_PRICE - 1), "");
+        (int128 du, int128 df) = usdcSifirinci ? (bd.amount0(), bd.amount1()) : (bd.amount1(), bd.amount0());
+        uint256 maliyet = uint256(uint128(-du));
+        uint256 alinan = uint256(uint128(df));
+        uint256 ist = fthmYakici.istenen();
+        if (alinan < ist) revert AzCikti(alinan, ist);
+        havuzYoneticisi.take(Currency.wrap(fthm), address(this), alinan);
+        uint256 once = usdc.balanceOf(address(this));
+        if (!IERC20S(fthm).approve(address(fthmYakici), alinan)) revert TransferOlmadi();
+        fthmYakici.doldur(alinan);
+        uint256 gelen = usdc.balanceOf(address(this)) - once;
+        if (maliyet > gelen) revert AzCikti(gelen, maliyet);
+        havuzYoneticisi.sync(Currency.wrap(address(usdc)));
+        if (!usdc.transfer(address(havuzYoneticisi), maliyet)) revert TransferOlmadi();
+        havuzYoneticisi.settle();
+        if (gelen > maliyet && !usdc.transfer(address(fthmYakici), gelen - maliyet)) revert TransferOlmadi();
         return abi.encode(alinan);
     }
 

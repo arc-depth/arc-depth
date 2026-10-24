@@ -1,9 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
+import { PoolKey } from "@uniswap/v4-core/src/types/PoolKey.sol";
+import { Currency } from "@uniswap/v4-core/src/types/Currency.sol";
+import { IHooks } from "@uniswap/v4-core/src/interfaces/IHooks.sol";
+
 import { IkizHub, IMerkezHub } from "../lz/IkizHub.sol";
 import { ILzUcNokta2, LzParams2, LzFee2, LzOrigin2 } from "../sepet/HaberciLZ.sol";
-import { MerkezKapi, IIkizHubM, KurucuVekili, ILaunchpadM, IIkizYayiciM, ITokenMesajciM, ISepetUcuM, Odeme } from "../merkez/MerkezKapi.sol";
+import { IFthmYakiciM, MerkezKapi, IIkizHubM, KurucuVekili, ILaunchpadM, IIkizYayiciM, ITokenMesajciM, ISepetUcuM, Odeme } from "../merkez/MerkezKapi.sol";
 import { SepetDefteri } from "../sepet/SepetDefteri.sol";
 import { IERC20S } from "../sepet/IHaberci.sol";
 import { IPoolManager } from "@uniswap/v4-core/src/interfaces/IPoolManager.sol";
@@ -69,7 +73,7 @@ contract TestMerkezKapi {
         hub.aktarmaKur(BASE_EID, AKTARMA);
         hub.aktarmaliKapiEkle(SUI_EID, _b(address(0x5017)), _sec(300_000));
         hub.yaratSecenekKur(SUI_EID, _sec(500_000));
-        MerkezKapi kapi = new MerkezKapi(LP, PM, YAYICI, TM, ARC, UCU, USDC, address(this), IIkizHubM(address(hub)));
+        MerkezKapi kapi = new MerkezKapi(LP, PM, YAYICI, TM, ARC, UCU, USDC, address(this), IIkizHubM(address(hub)), PoolKey(Currency.wrap(0x3600000000000000000000000000000000000000), Currency.wrap(0x8c2016b8DbB9034c2Fe173000639A9a1380b26AE), 0, 60, IHooks(0x72fd3c2eE8A499E97D87e2a642B7DFd908D58A44)), IFthmYakiciM(0x4D78b78A49a9AdDdfA9Be56d5F1bc33591452ff2));
         hub.merkezKur(IMerkezHub(address(kapi)));
         USDC.approve(address(kapi), type(uint256).max);
 

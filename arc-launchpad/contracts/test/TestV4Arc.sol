@@ -1,13 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import { MerkezKapi, ILaunchpadM, IIkizYayiciM, ITokenMesajciM, ISepetUcuM, IIkizHubM } from "../merkez/MerkezKapi.sol";
+import { IFthmYakiciM, MerkezKapi, ILaunchpadM, IIkizYayiciM, ITokenMesajciM, ISepetUcuM, IIkizHubM } from "../merkez/MerkezKapi.sol";
 import { SepetDefteri } from "../sepet/SepetDefteri.sol";
 import { SepetKasasi, IV3Fabrika } from "../sepet/SepetKasasi.sol";
 import { SepetUcu } from "../sepet/SepetUcu.sol";
 import { PulseLaunchpad5, IQuoteP5 } from "../sepet/PulseLaunchpad5.sol";
 import { PulseFabrika4 } from "../nesil4/PulseFabrika4.sol";
-import { PulseLikiditeKasasi, IERC20PL, IPulseKayitPL } from "../PulseLikiditeKasasi.sol";
+import { PulseLikiditeKasasi5, IERC20LK5, IPulseKayitLK5 } from "../sepet/LikiditeKasasi5.sol";
+import { PoolKey } from "@uniswap/v4-core/src/types/PoolKey.sol";
+import { Currency } from "@uniswap/v4-core/src/types/Currency.sol";
 import { IkizHub } from "../lz/IkizHub.sol";
 import { ILzUcNokta2 } from "../sepet/HaberciLZ.sol";
 import { IHaberci, IERC20S } from "../sepet/IHaberci.sol";
@@ -51,7 +53,7 @@ contract TestV4Arc {
     SepetDefteri public defter;
     SepetKasasi public kasa;
     SepetUcu public ucu;
-    PulseLikiditeKasasi public likidite;
+    PulseLikiditeKasasi5 public likidite;
     IkizHub public hub;
     address public hook;
     PulseLaunchpad5 public lp;
@@ -70,7 +72,7 @@ contract TestV4Arc {
         /* the launchpad is created at this contract's 6th nonce (block 2) */
         address lpTahmin = _create(6);
         ucu = new SepetUcu(IHaberci(a.haberci), USDC, ARC, _b(address(defter)), lpTahmin);
-        likidite = new PulseLikiditeKasasi(IERC20PL(address(USDC)), IPulseKayitPL(lpTahmin));
+        likidite = new PulseLikiditeKasasi5(IERC20LK5(address(USDC)), IPulseKayitLK5(lpTahmin));
         hub = new IkizHub(ILzUcNokta2(a.ep));
     }
 
@@ -82,7 +84,8 @@ contract TestV4Arc {
             a.devpool, address(likidite), a.isletme);
         require(address(lp) == _create(6), "lp nonce");
         kapi = new MerkezKapi(ILaunchpadM(address(lp)), IPoolManager(a.pm), IIkizYayiciM(a.yayici), ITokenMesajciM(a.tm), ARC,
-            ISepetUcuM(address(ucu)), USDC, a.ep, IIkizHubM(address(hub)));
+            ISepetUcuM(address(ucu)), USDC, a.ep, IIkizHubM(address(hub)),
+            PoolKey(Currency.wrap(0x3600000000000000000000000000000000000000), Currency.wrap(0x8c2016b8DbB9034c2Fe173000639A9a1380b26AE), 0, 60, IHooks(0x72fd3c2eE8A499E97D87e2a642B7DFd908D58A44)), IFthmYakiciM(0x4D78b78A49a9AdDdfA9Be56d5F1bc33591452ff2));
         defter.bagla(ARC, _b(address(ucu)), _b(address(kasa)));
         defter.bagla(BASE, bytes32(uint256(1)), _b(a.kasaBase));
         return hook;

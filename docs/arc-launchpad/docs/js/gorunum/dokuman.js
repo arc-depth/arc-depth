@@ -36,7 +36,7 @@ export async function ciz() {
   kap.append(panel("2 — Launching: what you pay", [
     tablo(["Item", "Amount"], [
       ["First buy (your tokens, at the opening price)", "$100 – $500"],
-      ["— launch fee", "2%"],
+      ["— launch fee", "2%: 30% developer fund, 50% the pool's depth, 20% the DAO-controlled fund"],
       ["— at $100: your tokens", "28,000,000 (2.8% of supply)"],
       ["— your net dollars become the pool's bid", "below the opening price, down to −60%"],
       ["Collateral basket", "1 to 5 tokens on any of the 12 chains, at least $4 a line, $20 in total"],
@@ -78,12 +78,17 @@ export async function ciz() {
   kap.append(panel("4 — Every trade", [
     tablo(["Goes to", "Share"], [
       ["the token's founder", "0.30%"], ["developer fund", "0.30%"], ["protocol liquidity", "0.50%"], ["operations (to the DAO-controlled developer fund)", "0.20%"],
-      ["FTHM bought and burned", "0.20%"], ["back into the pool (depth)", "0.70%"], ["the token's basket (collateral tax)", "1% – 5%, set at launch"],
+      ["FTHM bought and burned", "0.20%"], ["back into the pool (depth)", "0.70%"], ["the token's basket (collateral tax)", "1% – 5%, set at launch (1% if not chosen)"],
     ]),
     el("div", { sinif: "ikincil", attr: { style: "margin-top:12px" }, yazi:
       "Anti-snipe: a buy in the launch's first second pays 99%, then a quarter of that each second, nothing from the fifth; it goes back " +
       "into the pool. Whale shield: sales in one block above 0.5% of the circulating supply pay the excess (at most 3% more), into the basket. The founder's slice collects on Arc and anyone can " +
       "send it on to the founder's chain (Buy, sell, redeem → founder's trading income)." }),
+    not("Every trade through the gate also does the upkeep itself: the depth slice, the snipe tax and the 0.5% liquidity slice become " +
+      "locked liquidity in that token's own pool, the FTHM slice is auctioned and the auction filled from FTHM's pool (the FTHM burned), " +
+      "and a founder paid on Arc receives their slice — in the same transaction, nobody has to press anything. A founder on another chain " +
+      "sends their income on with one click (Circle's delivery fee needs a fresh quote). There is no 'drawdown defence': an earlier hook " +
+      "set a flag 60% below the peak that nothing used; v7 removed it.", "bilgi"),
   ]));
 
   /* ---- 5. the basket -------------------------------------------------- */

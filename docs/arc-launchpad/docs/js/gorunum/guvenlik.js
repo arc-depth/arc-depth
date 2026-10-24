@@ -16,7 +16,21 @@ import { PULSE, DIS, ESKI, HEDEFLER, EKONOMI, canli } from "../adresler.js";
 import { sonBlok } from "../zincir.js";
 import { bloktanSure } from "../bicim.js";
 
-/* Claims, each with the script that establishes it. */
+/* The live set's claims (v7), each with the script that establishes it on mainnet state (eth_simulateV1, nothing sent). */
+const V7_KANITLAR = [
+  { baslik: "A whole launch works end to end on the live contracts", betik: "CANLI_KAYIT=dagitim-v7.json node scripts/denetim-v4-canli.js",
+    yazi: "Launch, snipe tax, a $40,000 buy, a whale-shield sale, redemption with its fee, a queued order sent by a stranger for the tip, the Base vault buying WETH from Uniswap v3 and selling a holder's share, a founder on Arc paid inside the trade and a founder on Base paid by ilet: 40 checks." },
+  { baslik: "Nothing waits for anyone: every slice reaches its place inside trades", betik: "CANLI_KAYIT=dagitim-v7.json node scripts/denetim-v7-bakim.js",
+    yazi: "On the live gate: the depth slice and the liquidity vault became locked pool liquidity (the pool's real bid grew from $98 to $1,277 in the run), the FTHM slice was swapped in FTHM's pool and burned, the Arc founder was paid, and a wallet's least-gas estimate cannot skip the upkeep: 14 checks." },
+  { baslik: "The basket never jams", betik: "node scripts/denetim-v5-kova.js",
+    yazi: "Five lines crossing $50 in one trade, on every mix of chains: at most two go per trade, the rest with the next trades; the tax never stays in the bucket." },
+  { baslik: "Any launch can be diagnosed from the chain and fixed by anyone", betik: "CANLI_KAYIT=dagitim-v7.json node scripts/denetim-teshis.js",
+    yazi: "LaunchpadTeshis reports waiting lines, queued orders, the bucket and founder income; a stranger runs each fix and the report comes back clean: 16 checks." },
+  { baslik: "Every contract's source is verified", betik: "node scripts/dogrula-kaynak.js",
+    yazi: "All 49 live contracts on 9 chains compile to the exact bytes on chain (Sourcify exact match)." },
+];
+
+/* First-generation claims, each with the script that establishes it. */
 const KANITLAR = [
   {
     baslik: "Every transfer out of the vault goes to msg.sender",
@@ -124,7 +138,18 @@ export async function ciz() {
     ])));
   }
 
-  /* ---- deployment state, first ------------------------------------- */
+  /* ---- the live set's proofs ---------------------------------------- */
+  const v7k = el("div", { sinif: "yigin yigin--sik" });
+  for (const k of V7_KANITLAR) {
+    v7k.append(el("div", { sinif: "jeton-kart" }, [
+      el("div", { sinif: "satir satir--arasi" }, [el("strong", { yazi: k.baslik }), el("span", { sinif: "etiket etiket--alis", yazi: "measured" })]),
+      el("div", { sinif: "ikincil", yazi: k.yazi }),
+      el("code", { sinif: "mono ucuncul", yazi: k.betik })
+    ]));
+  }
+  kap.append(panel("The live set (v7): what is true, and how to check it", v7k));
+
+  /* ---- first generation: deployment state ---------------------------- */
   const dagitildi = Object.entries(PULSE).filter(([, v]) => canli(v));
   const bekleyen = Object.entries(PULSE).filter(([, v]) => !canli(v));
 
@@ -135,7 +160,7 @@ export async function ciz() {
         "the interface that sends a transaction is active. Every proof " +
         "below was measured against real Arc mainnet with eth_call — " +
         "deploying is a separate step."
-      : "The contracts for this model are deployed.",
+      : "First generation (the earlier floor-and-buyback model, still on chain): its contracts are deployed. Nothing below applies to the live v7 set.",
     bekleyen.length ? "uyari" : "bilgi"
   ));
 
@@ -194,7 +219,7 @@ export async function ciz() {
       el("code", { sinif: "mono ucuncul", yazi: "node " + k.betik })
     ]));
   }
-  kap.append(panel("What is true, and how to check it", kanitlar));
+  kap.append(panel("First generation (earlier contracts): what was measured", kanitlar));
 
   kap.append(not(
     "These claims concern the first generation; the scripts that establish them are kept " +
