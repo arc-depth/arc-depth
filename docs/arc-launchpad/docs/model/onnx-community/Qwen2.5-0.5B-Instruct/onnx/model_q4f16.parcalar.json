@@ -1,0 +1,38 @@
+{
+ "dosya": "onnx/model_q4f16.onnx",
+ "boyut": 483003582,
+ "sha256": "b11c1dd99efd57e6c6e5bc4443a019931a5fbd5dd500d48644d8225f5ce0b2cb",
+ "kaynak": "huggingface.co/onnx-community/Qwen2.5-0.5B-Instruct (LFS oid = sha256), Apache-2.0",
+ "parcalar": [
+  {
+   "ad": "model_q4f16.onnx.parca0",
+   "boyut": 85000000,
+   "sha256": "fce0b75ddbb6a2c78a79d1f90b9421e90edcafea0a3bccc9c016c032e06fb94e"
+  },
+  {
+   "ad": "model_q4f16.onnx.parca1",
+   "boyut": 85000000,
+   "sha256": "0aa16ed80e3fe3434f812715256ff16d0cc5bfc962c0150438456e88f8955332"
+  },
+  {
+   "ad": "model_q4f16.onnx.parca2",
+   "boyut": 85000000,
+   "sha256": "92e9f6ebeefa8e4d0528d66a7e9e63fb63964484f5b4c7ae51e5e84a8c0b072d"
+  },
+  {
+   "ad": "model_q4f16.onnx.parca3",
+   "boyut": 85000000,
+   "sha256": "367ae0d91562061f67479322763ff535031cea7b3e1561e8ffaac659c1fdde84"
+  },
+  {
+   "ad": "model_q4f16.onnx.parca4",
+   "boyut": 85000000,
+   "sha256": "a6b5a1a4eadb248c8c165c6511d07d8b31d01032977efaacc06ef7efe17f7bca"
+  },
+  {
+   "ad": "model_q4f16.onnx.parca5",
+   "boyut": 58003582,
+   "sha256": "9a6db612af8ce623c86ae2864e5a770fbb46f8b7d2116e9d7ef81a65a546b6a8"
+  }
+ ]
+}

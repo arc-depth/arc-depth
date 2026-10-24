@@ -1,0 +1,6 @@
+onnxruntime-web 1.22.0-dev.20250409-89f8206ba4 (ort-wasm-simd-threaded.jsep.*, and the runtime bundled
+inside transformers.min.js) — MIT License, Copyright (c) Microsoft Corporation.
+https://github.com/microsoft/onnxruntime/blob/main/LICENSE
+
+transformers.min.js is @huggingface/transformers 3.5.1 (Apache-2.0, see transformers.LICENSE),
+served from this site; nothing is fetched from a CDN.

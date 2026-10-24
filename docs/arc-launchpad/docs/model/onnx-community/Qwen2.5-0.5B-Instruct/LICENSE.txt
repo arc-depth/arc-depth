@@ -1,0 +1,4 @@
+Qwen2.5-0.5B-Instruct (Alibaba Cloud), Apache License 2.0; ONNX export by onnx-community.
+https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct  ·  https://huggingface.co/onnx-community/Qwen2.5-0.5B-Instruct
+The weights file onnx/model_q4f16.onnx is served here in six parts (model_q4f16.parcalar.json lists
+each part's size and sha256 and the whole file's sha256, b11c1dd9…0b2cb, as published by Hugging Face).

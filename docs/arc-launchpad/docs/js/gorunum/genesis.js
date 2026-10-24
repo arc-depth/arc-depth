@@ -39,9 +39,16 @@ const DIL = [
   "function durum() view returns (uint256,uint256,bytes32)"
 ];
 const ACIK_MODEL = "onnx-community/Qwen2.5-0.5B-Instruct";
-/* The in-browser open model (~500 MB from Hugging Face via jsDelivr) is off: it would make every
-   visitor's browser talk to two third parties, and the files are too large to host ourselves. */
-const ACIK_MODEL_KAPALI = true;
+/* The open model is served by this site only: transformers.js and the ONNX runtime from
+   vendor/transformers/, the tokenizer and config from model/, and the weights (onnx/model_q4f16.onnx,
+   483 MB) in six parts under GitHub's 100 MB file limit. The page joins the parts, checks the whole
+   file's sha256 against the hash GENESIS registers on chain (or, until it is registered, the hash
+   Hugging Face publishes for that file, pinned here and in model_q4f16.parcalar.json), and only then
+   runs it. Nothing is fetched from any other host; the verified copy stays in this browser's cache. */
+const MODEL_YOLU = new URL("../../model/", import.meta.url).href;
+const MODEL_DOSYA = "onnx/model_q4f16.onnx";
+const MODEL_SHA256 = "b11c1dd99efd57e6c6e5bc4443a019931a5fbd5dd500d48644d8225f5ce0b2cb";
+const MODEL_ONBELLEK = "genesis-model-v1";
 const ev = () => AGLAR.find((a) => a.anahtar === "arc");
 const zincirler = () => GENESIS.zincirler.map((k) => AGLAR.find((a) => a.anahtar === k)).filter(Boolean);
 const kisa = (a) => a.slice(0, 6) + "…" + a.slice(-4);
@@ -122,8 +129,84 @@ export function ilgili(soru, liste, n = 3) {
 }
 
 let uretici = null;
-async function acikModeliYukle() {
-  if (ACIK_MODEL_KAPALI) throw new Error("the open model is not offered: it would load from third-party servers");
+const hex = (buf) => Array.from(new Uint8Array(buf), (x) => x.toString(16).padStart(2, "0")).join("");
+const mb = (n) => (n / 1e6).toFixed(0) + " MB";
+
+/// The hash the weights must have: GENESIS's registration of this exact file if it exists on Arc
+/// (id = keccak256("<repo>/<file>"), agirlikHash = its sha256), else the published one pinned above.
+async function beklenenHash() {
+  try {
+    const { keccak256 } = await import("../../vendor/ethers.min.js");
+    const id = keccak256(toUtf8Bytes(ACIK_MODEL + "/" + MODEL_DOSYA));
+    const [m] = await cokluOku(ev(), [[GENESIS.cekirdek, ["function model(bytes32) view returns ((bytes32 id,bytes32 ebeveyn,bytes32 agirlikHash,bytes32 mimariHash,bytes32 metrikHash,uint8 mod,address adres,string uri))"], "model", [id]]]);
+    if (m && m.agirlikHash && !/^0x0+$/.test(m.agirlikHash)) return { hash: m.agirlikHash.slice(2).toLowerCase(), kaynak: "registered on chain in GENESIS memory" };
+  } catch (e) { /* not readable now: fall back to the pinned hash, and say so */ }
+  return { hash: MODEL_SHA256, kaynak: "published by Hugging Face (not yet registered on chain)" };
+}
+
+/// The weights, joined from this site's six parts, checked, cached in this browser.
+async function agirliklar(durum) {
+  const beklenen = await beklenenHash();
+  const anahtar = MODEL_YOLU + ACIK_MODEL + "/" + MODEL_DOSYA;
+  let onbellek = null;
+  try { onbellek = await caches.open(MODEL_ONBELLEK); } catch (e) { /* no Cache API (private mode): download each time */ }
+  let veri = null;
+  const kayitli = onbellek ? await onbellek.match(anahtar) : null;
+  if (kayitli) {
+    durum.textContent = "Checking the open model saved in this browser…";
+    veri = new Uint8Array(await kayitli.arrayBuffer());
+  } else {
+    const liste = await fetch(MODEL_YOLU + ACIK_MODEL + "/onnx/model_q4f16.parcalar.json").then((r) => r.json());
+    veri = new Uint8Array(liste.boyut);
+    let o = 0;
+    for (const p of liste.parcalar) {
+      const r = await fetch(MODEL_YOLU + ACIK_MODEL + "/onnx/" + p.ad);
+      if (!r.ok) throw new Error("part " + p.ad + " could not be downloaded (" + r.status + ")");
+      const okuyucu = r.body.getReader();
+      for (;;) {
+        const { done, value } = await okuyucu.read();
+        if (done) break;
+        veri.set(value, o); o += value.length;
+        durum.textContent = "Downloading the open model to your device from this site: " + mb(o) + " of " + mb(liste.boyut);
+      }
+    }
+    if (o !== liste.boyut) throw new Error("the model arrived incomplete (" + o + " of " + liste.boyut + " bytes)");
+  }
+  durum.textContent = "Checking the model's fingerprint (sha256)…";
+  const ozet = hex(await crypto.subtle.digest("SHA-256", veri));
+  if (ozet !== beklenen.hash) {
+    if (onbellek) await onbellek.delete(anahtar).catch(() => {});
+    throw new Error("the model's sha256 is " + ozet.slice(0, 12) + "…, not the expected " + beklenen.hash.slice(0, 12) + "… (" + beklenen.kaynak + "): refused, it will not run");
+  }
+  if (onbellek && !kayitli) await onbellek.put(anahtar, new Response(veri, { headers: { "content-type": "application/octet-stream" } })).catch(() => {});
+  return { veri, beklenen };
+}
+
+async function acikModeliYukle(durum) {
+  if (uretici) return uretici;
+  const { veri, beklenen } = await agirliklar(durum);
+  durum.textContent = "Starting the open model on your device…";
+  const tf = await import("../../vendor/transformers/transformers.min.js");
+  /* this site only: no Hugging Face, no CDN; the runtime's wasm from vendor/transformers/ */
+  tf.env.allowRemoteModels = false;
+  tf.env.allowLocalModels = true;
+  tf.env.localModelPath = MODEL_YOLU;
+  tf.env.useBrowserCache = false;
+  tf.env.backends.onnx.wasm.wasmPaths = new URL("../../vendor/transformers/", import.meta.url).href;
+  tf.env.backends.onnx.wasm.proxy = false;
+  /* the verified weights are handed over from memory; every other file comes from model/ */
+  tf.env.useCustomCache = true;
+  tf.env.customCache = {
+    match: async (k) => (String(k).endsWith(MODEL_DOSYA) ? new Response(veri, { headers: { "content-type": "application/octet-stream" } }) : undefined),
+    put: async () => {},
+  };
+  const secenek = { dtype: "q4f16" };
+  /* WebGPU only when the device really has an adapter: a failed WebGPU start leaves the runtime
+     unable to fall back in the same page, so the choice is made before the first session */
+  let gpu = false;
+  try { gpu = !!(navigator.gpu && (await navigator.gpu.requestAdapter())); } catch (e) { gpu = false; }
+  uretici = await tf.pipeline("text-generation", ACIK_MODEL, { ...secenek, device: gpu ? "webgpu" : "wasm" });
+  uretici.dogrulama = beklenen;
   return uretici;
 }
 
@@ -161,7 +244,7 @@ export async function ciz() {
       satir("Identity, memory, model & module registry", "On chain; synced between chains over LayerZero", "GenesisCekirdek " + kisa(GENESIS.cekirdek)),
       satir("GENESIS-0 language model (learn + generate + measure)", "1 — entirely on chain", "GenesisDil " + kisa(GENESIS.dil)),
       satir("Compute network", "2 — independent providers, agreement settled on chain (not a proof)", "GenesisHesap, one per chain"),
-      satir("Open model in this page (Qwen2.5-0.5B)", "3 — on your device; weights hash on chain", "registered in memory"),
+      satir("Open model in this page (Qwen2.5-0.5B, q4f16)", "3 — on your device, served by this site; its sha256 is checked before it runs", "hash: GENESIS registration, else the publisher's"),
     ])
   ])));
 
@@ -170,13 +253,13 @@ export async function ciz() {
   const soru = el("textarea", { sinif: "girdi", attr: { rows: "3", placeholder: "Ask GENESIS anything, in any language." } });
   const durum = el("div", { sinif: "yazi yazi--kucuk yazi--sessiz" });
   const sor = el("button", { sinif: "dugme dugme--marka", attr: { type: "button" }, yazi: "Ask" });
-  const yukle = el("button", { sinif: "dugme dugme--sessiz", attr: { type: "button", disabled: "" }, yazi: "Open model: off (it would load from third-party servers)" });
+  const yukle = el("button", { sinif: "dugme dugme--sessiz", attr: { type: "button" }, yazi: "Load the open model on this device (483 MB, once; from this site only)" });
   const zincirdeSor = el("input", { attr: { type: "checkbox" } });
   const zincirdeEtiket = el("label", { sinif: "yazi yazi--kucuk yazi--sessiz" }, [zincirdeSor,
     el("span", { yazi: " Also ask GENESIS-0 on chain (your question is sent to the Arc RPC as a read call; nothing is stored). Off by default: otherwise your question never leaves this page." })]);
   let hafiza = null;
   yukle.addEventListener("click", async () => {
-    try { yukle.disabled = true; await acikModeliYukle(durum); durum.textContent = "Open model ready, running on your device."; yukle.textContent = "Open model loaded"; }
+    try { yukle.disabled = true; const d = (await acikModeliYukle(durum)).dogrulama; durum.textContent = "Open model ready, running on your device. sha256 matches the hash " + d.kaynak + "."; yukle.textContent = "Open model loaded"; }
     catch (e) { durum.textContent = "Could not load the open model here: " + (e.message || e); yukle.disabled = false; }
   });
 
