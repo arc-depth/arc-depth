@@ -1,5 +1,5 @@
 {
- "zaman": "2026-10-23",
+ "zaman": "2026-10-24",
  "sozlesmeler": [
   {
    "chainId": 5042,
@@ -227,6 +227,66 @@
    "chainId": 4663,
    "ad": "IkizYayici",
    "adres": "0x24C644e7C29F6582B892cb5D89d7b23Bc34d1bD9",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 5042,
+   "ad": "Jeton",
+   "adres": "0x8c2016b8DbB9034c2Fe173000639A9a1380b26AE",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 5042,
+   "ad": "LaunchToken",
+   "adres": "0x35afC95D3900A9672C07812347fb3190D3D15673",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 5042,
+   "ad": "IkizAdapterAg",
+   "adres": "0xdEF3496054f8CEa27C78b8AFcf0b33898D581A01",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 8453,
+   "ad": "IkizOFTAg",
+   "adres": "0x71BB76124b14E7D682D519FBC3cca7C419cFE9ff",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 42161,
+   "ad": "IkizOFTAg",
+   "adres": "0x71BB76124b14E7D682D519FBC3cca7C419cFE9ff",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 56,
+   "ad": "IkizOFTAg",
+   "adres": "0x71BB76124b14E7D682D519FBC3cca7C419cFE9ff",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 43114,
+   "ad": "IkizOFTAg",
+   "adres": "0x71BB76124b14E7D682D519FBC3cca7C419cFE9ff",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 999,
+   "ad": "IkizOFTAg",
+   "adres": "0x71BB76124b14E7D682D519FBC3cca7C419cFE9ff",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 143,
+   "ad": "IkizOFTAg",
+   "adres": "0x71BB76124b14E7D682D519FBC3cca7C419cFE9ff",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 4663,
+   "ad": "IkizOFTAg",
+   "adres": "0x71BB76124b14E7D682D519FBC3cca7C419cFE9ff",
    "eslesme": "exact_match"
   }
  ]
