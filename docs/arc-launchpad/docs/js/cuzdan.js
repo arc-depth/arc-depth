@@ -44,10 +44,19 @@ if (typeof window !== "undefined") {
    dashboard.reown.com (arcpulse.app; arc-depth.github.io before 24 Oct 2026). The 2 MB bundle is loaded on
    the click, and on load only when a session was left open here. */
 const WC_PROJE = "3732e09480d6f286889688c0f4a70918";
+/* The relay answers "Unauthorized: origin not allowed" (code 3000) for arcpulse.app until the
+   domain is on this project's allowlist at dashboard.reown.com (measured 24 Oct 2026). Off until
+   then: the wallet apps' own links open the page inside them, no relay needed. */
+export const WC_ACIK = false;
 /* HyperEVM (999) is left out on purpose: chainid.network lists 999 as
    "Wanchain Testnet", so wallets that check the registry flag it. */
 const WC_ZINCIRLER = [5042, 4663, 8453, 42161, 1, 56, 43114, 143];
 const WC_ISARET = "arcpulse-wc";
+/* Set when the visitor presses Disconnect: an extension wallet keeps the site's permission, so
+   without this a refresh would quietly reconnect through eth_accounts. Cleared by Connect. */
+const KOPUK = "arcpulse-kopuk";
+const kopukMu = () => { try { return localStorage.getItem(KOPUK) === "1"; } catch (e) { return false; } };
+const kopukYaz = (v) => { try { v ? localStorage.setItem(KOPUK, "1") : localStorage.removeItem(KOPUK); } catch (e) { /* storage may be blocked */ } };
 let _wc = null;
 
 async function wcKur() {
@@ -105,6 +114,7 @@ export function cuzdanUygulamalari() {
     { ad: "MetaMask", url: "https://metamask.app.link/dapp/" + yalin },
     { ad: "Coinbase Wallet", url: "https://go.cb-w.com/dapp?cb_url=" + encodeURIComponent(tam) },
     { ad: "Trust Wallet", url: "https://link.trustwallet.com/open_url?coin_id=60&url=" + encodeURIComponent(tam) },
+    { ad: "OKX Wallet", url: "okx://wallet/dapp/url?dappUrl=" + encodeURIComponent(tam) },
   ];
 }
 
@@ -178,7 +188,7 @@ export const cuzdan = {
     const p = saglayici();
     if (!p) return null;
     try {
-      const h = await p.request({ method: "eth_accounts" });
+      const h = kopukMu() ? [] : await p.request({ method: "eth_accounts" });
       _hesap = h && h.length ? h[0] : null;
     } catch (e) {
       _hesap = null;
@@ -190,6 +200,7 @@ export const cuzdan = {
 
   /** WalletConnect: opens its own QR / wallet-list modal. Only from a click. */
   async walletConnect() {
+    kopukYaz(false);
     const p = await wcKur();
     if (!p.session) await p.connect();
     try { localStorage.setItem(WC_ISARET, "1"); } catch (e) { /* storage may be blocked */ }
@@ -199,9 +210,18 @@ export const cuzdan = {
     return _hesap;
   },
 
-  /** End a WalletConnect session (an extension wallet is disconnected in the wallet). */
+  /** Disconnect: ends a WalletConnect session; for an extension wallet asks it to drop this
+      site's permission (wallet_revokePermissions: MetaMask, Rabby and others) and, whether or not
+      the wallet supports that, stops this page from reconnecting until the visitor presses Connect. */
   async kes() {
     if (_wc) await _wc.disconnect().catch(() => {});
+    _wc = null;
+    try { localStorage.removeItem(WC_ISARET); } catch (e) { /* storage may be blocked */ }
+    const p = saglayici();
+    if (p) { try { await p.request({ method: "wallet_revokePermissions", params: [{ eth_accounts: {} }] }); } catch (e) { /* not supported: the flag below still holds */ } }
+    kopukYaz(true);
+    _hesap = null; _zincir = null;
+    duyur();
   },
   wcMi() { return !!(_wc && _wc.session); },
 
@@ -211,6 +231,8 @@ export const cuzdan = {
       revoked in the wallet itself. */
   async unut() {
     if (_wc) await _wc.disconnect().catch(() => {});
+    const p = saglayici();
+    if (p) { try { await p.request({ method: "wallet_revokePermissions", params: [{ eth_accounts: {} }] }); } catch (e) { /* not supported */ } }
     _wc = null; _hesap = null; _zincir = null;
     try { localStorage.clear(); } catch (e) { /* storage may be blocked */ }
     try { sessionStorage.clear(); } catch (e) { /* storage may be blocked */ }
@@ -218,6 +240,7 @@ export const cuzdan = {
       const dbs = indexedDB.databases ? await indexedDB.databases() : [];
       await Promise.all(dbs.map((d) => d.name && new Promise((ok) => { const r = indexedDB.deleteDatabase(d.name); r.onsuccess = r.onerror = r.onblocked = ok; })));
     } catch (e) { /* not supported: nothing to clear */ }
+    kopukYaz(true);
     duyur();
   },
 
@@ -234,6 +257,7 @@ export const cuzdan = {
       window.dispatchEvent(new CustomEvent("cuzdan-yok"));
       throw e;
     }
+    kopukYaz(false);
     const h = await p.request({ method: "eth_requestAccounts" });
     _hesap = h && h.length ? h[0] : null;
     await zinciriOku();
@@ -356,7 +380,7 @@ export const cuzdan = {
 setTimeout(() => {
   const p = saglayici();
   if (p && p.on) {
-    p.on("accountsChanged", (h) => { _hesap = h && h.length ? h[0] : null; duyur(); });
+    p.on("accountsChanged", (h) => { _hesap = !kopukMu() && h && h.length ? h[0] : null; duyur(); });
     p.on("chainChanged", (c) => { _zincir = c; duyur(); });
   }
   /* a WalletConnect session left open on this device: restore it quietly */

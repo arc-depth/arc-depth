@@ -27,7 +27,7 @@
 import { YOLLAR, GRUPLAR, yolBul, grubunYollari } from "./yol.js";
 import { ikon } from "./ikon.js";
 import { el, temizle, dagitimBekliyor, yapimda, hata, iskelet } from "./ui.js";
-import { cuzdan, cuzdanUygulamalari, mobilMi, tarayiciCuzdani } from "./cuzdan.js";
+import { cuzdan, cuzdanUygulamalari, mobilMi, tarayiciCuzdani, WC_ACIK } from "./cuzdan.js";
 
 const VARSAYILAN = "kesfet";
 
@@ -273,9 +273,30 @@ function cuzdanDugmesiniTazele() {
 }
 
 kCuzdanDugme.addEventListener("click", () => {
-  if (cuzdan.hesap()) { location.hash = "#/portfoy"; return; }
+  if (cuzdan.hesap()) { hesapMenusu(); return; }
   cuzdanSec();
 });
+
+/* Connected: the address button opens a small menu — portfolio, copy, disconnect. */
+function hesapMenusu() {
+  const eski = document.querySelector(".hesap-menu");
+  if (eski) { eski.remove(); return; }
+  const h = cuzdan.hesap();
+  const kapat = () => { menu.remove(); document.removeEventListener("click", disari, true); };
+  const disari = (e) => { if (!menu.contains(e.target) && e.target !== kCuzdanDugme) kapat(); };
+  const satir = (yazi, f) => el("button", { sinif: "dugme dugme--sade", attr: { type: "button", style: "width:100%;text-align:left" }, yazi, on: { click: async () => { await f(); } } });
+  const r = kCuzdanDugme.getBoundingClientRect();
+  const menu = el("div", { sinif: "hesap-menu kart", attr: { role: "menu", style:
+    "position:fixed;z-index:60;min-width:220px;padding:6px;top:" + Math.round(r.bottom + 6) + "px;right:" + Math.max(8, Math.round(innerWidth - r.right)) + "px" } }, [
+    el("div", { sinif: "mono yazi--kucuk yazi--sessiz", attr: { style: "padding:6px 10px" }, yazi: h.slice(0, 10) + "…" + h.slice(-8) }),
+    satir("Portfolio", () => { kapat(); location.hash = "#/portfoy"; }),
+    satir("Copy address", async () => { try { await navigator.clipboard.writeText(h); } catch (e) { /* clipboard blocked */ } kapat(); }),
+    satir("Disconnect", async () => { kapat(); await cuzdan.kes(); }),
+    satir("Disconnect and forget this device", async () => { kapat(); await cuzdan.unut(); }),
+  ]);
+  document.body.append(menu);
+  setTimeout(() => document.addEventListener("click", disari, true), 0);
+}
 
 /* Only a new account redraws the view. A chain switch is often the page's
    own doing in the middle of a send (a launch asks the wallet to move to
@@ -323,17 +344,19 @@ function cuzdanSec() {
   const tarayici = tarayiciCuzdani();
   const liste = [];
   if (tarayici) liste.push(eylem(tarayici.ad, "Connect the wallet in this browser", "Detected", tarayici.ikon, () => cuzdan.bagla()));
-  liste.push(eylem("WalletConnect", mobil ? "Any wallet app on this phone" : "Scan a QR code with any wallet app", tarayici ? null : "Any wallet", null,
+  if (WC_ACIK) liste.push(eylem("WalletConnect", mobil ? "Any wallet app on this phone" : "Scan a QR code with any wallet app", tarayici ? null : "Any wallet", null,
     /* hidden, not closed, while the WalletConnect modal is up: if pairing
        fails the error still has a dialog to land in */
     async () => {
       perde.style.display = "none";
       try { await cuzdan.walletConnect(); } finally { perde.style.display = ""; }
     }));
-  if (!tarayici && mobil) for (const u of cuzdanUygulamalari()) liste.push(baglanti(u.ad, "Open this page in the " + u.ad + " app", u.url, null, false));
+  /* on a phone the wallet apps open this page in their own browser, where the wallet is built in */
+  if (mobil) for (const u of cuzdanUygulamalari()) liste.push(baglanti(u.ad, "Open this page in the " + u.ad + " app", u.url, tarayici ? null : "App", false));
   if (!tarayici && !mobil) {
     liste.push(baglanti("MetaMask", "Install the browser extension", "https://metamask.io/download/", null, true));
     liste.push(baglanti("Rabby", "Install the browser extension", "https://rabby.io/", null, true));
+    liste.push(el("p", { sinif: "cuzdan-kutu__metin", yazi: "On your phone: open " + location.host + " in your wallet app's browser (MetaMask, Trust, Coinbase, OKX)." }));
   }
 
   const kutu = el("div", { sinif: "cuzdan-kutu", attr: { role: "dialog", "aria-modal": "true", "aria-labelledby": "cuzdan-baslik" } }, [
