@@ -25,7 +25,7 @@ import { GENESIS } from "../genesis-adres.js";
 import { cokluOku, rpcPost } from "../ag-okur.js";
 import { cuzdan } from "../cuzdan.js";
 import { Interface, toUtf8Bytes, toUtf8String, hexlify } from "../../vendor/ethers.min.js";
-import { teshisEt, zincirAdi } from "../teshis.js";
+import { teshisEt, zincirAdi, paketBul, islemPaketleri, teslimIslemi } from "../teshis.js";
 
 const CEKIRDEK = [
   "function kayitSayisi(uint32) view returns (uint256)",
@@ -121,7 +121,11 @@ export async function bilgiler(ag) {
   return out.filter((b) => !eskiyen.has(b.eid + ":" + b.sira));
 }
 
-const kelimeler = (s) => (s.toLocaleLowerCase("tr").match(/[\p{L}\p{N}]{3,}/gu) || []);
+/* words that carry no topic: they must not make a record "match" (the records are English) */
+const BOS = new Set(("the and for are was were what who whom whose which when where why how with from that this these those there their them they you your " +
+  "has have had not but can could would should will about into than then also any all its it's our out one two does did is be been being of on in to an a or as at by").split(" "));
+const kok = (w) => (w.length > 3 && w.endsWith("s") ? w.slice(0, -1) : w).slice(0, 6);
+const kelimeler = (s) => (s.toLocaleLowerCase("tr").match(/[\p{L}\p{N}]{3,}/gu) || []).filter((w) => !BOS.has(w)).map(kok);
 export function ilgili(soru, liste, n = 3) {
   /* words weighted by how rare they are in memory (idf): "launch" is in
      half the records and says little, "fee" is in two and says a lot */
@@ -131,7 +135,7 @@ export function ilgili(soru, liste, n = 3) {
   return liste.map((b, i) => {
     const puan = q.filter((w) => belgeler[i].has(w)).reduce((t, w) => t + idf(w), 0) / Math.sqrt(belgeler[i].size + 1);
     return { ...b, puan };
-  }).filter((b) => b.puan > 0).sort((x, y) => y.puan - x.puan).slice(0, n);
+  }).filter((b) => b.puan > 0.12).sort((x, y) => y.puan - x.puan).slice(0, n);
 }
 
 let uretici = null;
@@ -287,20 +291,33 @@ export async function ciz() {
         el("div", { sinif: "yazi yazi--kucuk", yazi: "• " + b.metin + "  [" + b.zincir + " #" + b.sira + "]" })));
 
       let cevap;
-      if (uretici) {
+      /* strictly grounded: no matching on-chain record, no generated answer */
+      if (!bulunan.length) {
+        cevap = balon("GENESIS", el("div", { yazi: "Not in GENESIS memory. " + (hafiza.length ? "I only answer from verified on-chain records, and none matches this. You can propose what you know below." :
+          "GENESIS memory could not be read from the chain just now.") }), "on-chain memory");
+      } else if (uretici) {
         durum.textContent = "Thinking on your device…";
         const baglam = bulunan.map((b, i) => "[" + (i + 1) + "] " + b.metin).join("\n") || "(no record matches this question)";
         const mesajlar = [
-          { role: "system", content: "You are PULSE GENESIS, the AI of the ARC PULSE ecosystem. Answer in the user's language, briefly and plainly. For anything about ARC PULSE, FTHM, Arc or GENESIS, use ONLY the MEMORY records below and cite them as [n]. If the records do not contain the answer, say you do not have verified information on it. For general questions answer from general knowledge and say it is not from GENESIS memory. Never invent numbers or addresses.\n\nMEMORY:\n" + baglam },
+          { role: "system", content: "You are PULSE GENESIS. Answer in the user's language, in at most three short sentences, using ONLY the MEMORY records below, and cite each fact as [n]. Do not add anything that is not in the records: no outside knowledge, no guesses, no numbers or addresses that are not written there. If the records do not answer the question, reply exactly: Not in GENESIS memory.\n\nMEMORY:\n" + baglam },
           { role: "user", content: q }
         ];
-        const r = await uretici(mesajlar, { max_new_tokens: 220, do_sample: false });
-        cevap = balon("GENESIS", el("div", { sinif: "yigin yigin--sik" }, [el("div", { yazi: r[0].generated_text.at(-1).content }), kaynaklar]),
-          "open model on your device (mode 3), facts from on-chain memory");
+        const r = await uretici(mesajlar, { max_new_tokens: 160, do_sample: false });
+        let metin = String(r[0].generated_text.at(-1).content || "").trim();
+        /* a number or address the records do not contain means the model invented it: show the records instead */
+        const kayitMetni = bulunan.map((b) => b.metin).join(" ");
+        const sayiUydurma = (metin.match(/0x[0-9a-fA-F]{6,}|\d[\d.,]*/g) || []).some((x) => !kayitMetni.includes(x.replace(/[.,]$/, "")));
+        /* and a wording mostly made of words the records do not contain is the model talking, not memory */
+        const kayitKelime = new Set(kelimeler(kayitMetni));
+        const cevapKelime = kelimeler(metin).filter((w) => w.length >= 4 && !["not", "genesi", "memory", "pulse"].includes(w));
+        const yabanci = cevapKelime.filter((w) => !kayitKelime.has(w)).length;
+        const uydurma = sayiUydurma || (cevapKelime.length > 0 && yabanci / cevapKelime.length > 0.35);
+        if (uydurma) metin = "From verified memory (the model's wording added something the records do not say, so here are the records themselves):";
+        cevap = balon("GENESIS", el("div", { sinif: "yigin yigin--sik" }, [el("div", { yazi: metin }), kaynaklar]),
+          "open model on your device (mode 3), only from on-chain memory");
       } else {
         cevap = balon("GENESIS", bulunan.length ? el("div", { sinif: "yigin yigin--sik" }, [el("div", { yazi: "From verified memory:" }), kaynaklar])
-          : el("div", { yazi: hafiza.length ? "I have no verified memory on this yet. You can propose what you know below." :
-            "GENESIS memory is not on chain yet, so I have nothing verified to answer from." }), "on-chain memory");
+          : el("div", { yazi: "Not in GENESIS memory." }), "on-chain memory");
       }
       kayit.prepend(cevap);
 
@@ -388,16 +405,19 @@ async function teshisBolumu(arc) {
         "   ·   founder income $" + (Number(r.vekilDolar) / 1e6).toFixed(2) + "   ·   queued orders " + t.emirler.length }));
       if (t.ikizler && t.ikizler.length) sonuc.append(el("div", { sinif: "yazi yazi--kucuk mono yazi--sessiz", yazi: "Twins: " + t.ikizler.map((k) => k.ag + (k.hata ? " (unread)" : k.var_ === false ? " none" :
         " " + k.oradaIslenen + "/" + k.arcdanGiden + " in, " + k.arcdaIslenen + "/" + k.oradanGiden + " back")).join(" · ") }));
+      if (t.kasalar && t.kasalar.length) sonuc.append(el("div", { sinif: "yazi yazi--kucuk mono yazi--sessiz", yazi: "Vaults: " + t.kasalar.map((k) => k.ag + (k.hata ? " (unread)" :
+        ": waiting $" + (Number(k.bekleyen) / 1e6).toFixed(2) + ", " + (k.yolVar ? (k.simdiAlinir ? "pool buys now" : "pool outside the bound") : "no pool (auction)"))).join(" · ") }));
       if (!t.sorunlar.length) sonuc.append(not("No problem found: nothing waiting, nothing queued, every twin message delivered.", "bilgi"));
       for (const s of t.sorunlar) {
         const satir = el("div", { sinif: "yigin yigin--sik" }, [el("div", { yazi: "• " + s.metin })]);
+        if (s.paket) satir.append(...paketDugmesi(s.paket));
         if (s.duzelt) {
           const b = el("button", { sinif: "dugme dugme--sessiz", attr: { type: "button" }, yazi: s.duzelt.ad + (s.duzelt.bahsis ? " — you receive " + s.duzelt.bahsis : "") });
           const d = el("div", { sinif: "yazi yazi--kucuk yazi--sessiz" });
           b.addEventListener("click", async () => {
             try {
               if (!(cuzdan.hesap() || (await cuzdan.bagla()))) { d.textContent = "Connect a wallet first."; return; }
-              const ag = AGLAR.find((a) => a.anahtar === "arc");
+              const ag = s.duzelt.ag || AGLAR.find((a) => a.anahtar === "arc");
               if (s.duzelt.onay) {
                 d.textContent = "Approve the exact fee in your wallet…";
                 await cuzdan.agdaGonder(ag, { to: s.duzelt.onay.token, data: new Interface(["function approve(address,uint256)"]).encodeFunctionData("approve", [s.duzelt.onay.harcayan, s.duzelt.onay.miktar]) });
@@ -414,9 +434,62 @@ async function teshisBolumu(arc) {
       durum.textContent = "Read from the chains just now. Nothing was stored.";
     } catch (e) { durum.textContent = (e && (e.shortMessage || e.message)) || "Could not read this launch."; }
   });
+  /* any transaction's LayerZero messages: paste the sending transaction, see each message's state, deliver a stuck one */
+  const kaynakSec = el("select", { sinif: "girdi" }, AGLAR.filter((a) => a.eid && a.id).map((a) => el("option", { attr: { value: a.anahtar }, yazi: a.ad })));
+  const txGirdi = el("input", { sinif: "girdi", attr: { placeholder: "Sending transaction hash (0x…)", spellcheck: "false" } });
+  const txDugme = el("button", { sinif: "dugme dugme--sessiz", attr: { type: "button" }, yazi: "Check its LayerZero messages" });
+  const txSonuc = el("div", { sinif: "yigin yigin--sik" });
+  txDugme.addEventListener("click", async () => {
+    txSonuc.replaceChildren(el("div", { sinif: "yazi yazi--kucuk yazi--sessiz", yazi: "Reading the transaction and each destination…" }));
+    try {
+      const ag = AGLAR.find((a) => a.anahtar === kaynakSec.value);
+      const liste = await islemPaketleri(ag, String(txGirdi.value || ""));
+      txSonuc.replaceChildren();
+      if (!liste.length) txSonuc.append(el("div", { sinif: "yazi yazi--kucuk", yazi: "This transaction sent no LayerZero message." }));
+      for (const m of liste) txSonuc.append(el("div", { sinif: "yigin yigin--sik" }, [
+        el("div", { sinif: "yazi yazi--kucuk mono", yazi: "→ " + (m.ag ? m.ag.ad : "eid " + m.dstEid) + " #" + m.nonce + ": " +
+          ({ teslim: "delivered", bekliyor: "verified, NOT delivered — anyone can deliver it", dogrulanmadi: "not verified by the DVNs yet (wait)", bilinmiyor: "unknown chain" }[m.durum]) }),
+        ...(m.durum === "bekliyor" ? teslimDugmesi(m) : [])]));
+    } catch (e) { txSonuc.replaceChildren(el("div", { sinif: "yazi yazi--kucuk", yazi: (e && (e.shortMessage || e.message)) || "Could not read it." })); }
+  });
+
   return panel("Diagnose a launch", el("div", { sinif: "yigin" }, [
-    not("GENESIS reads a launch's health straight from the chains: basket lines waiting at $50, queued redemption orders, the tax bucket, the founder's income, and every LayerZero message between the token and its twins. Each fix is a public call anyone may make from their own wallet; where the contract pays a tip, it goes to you.", "bilgi"),
+    not("GENESIS reads a launch's health straight from the chains: basket lines waiting at $50, queued redemption orders, the tax bucket, the founder's income, every basket vault, and every LayerZero message between the token and its twins. Each fix is a public call anyone may make from their own wallet; where the contract pays a tip, it goes to you.", "bilgi"),
     el("div", { sinif: "satir" }, [girdi, dugme]), durum, sonuc,
+    el("div", { sinif: "yazi yazi--kucuk", yazi: "A stuck cross-chain message, from any transaction:" }),
+    el("div", { sinif: "satir" }, [kaynakSec, txGirdi, txDugme]), txSonuc,
     el("div", { sinif: "yazi yazi--kucuk yazi--sessiz", yazi: V && V.teshis ? "LaunchpadTeshis on Arc: " + V.teshis + " (view only, no owner)" : "" })
   ]));
+}
+
+/* deliver one verified-but-undelivered LayerZero message from the visitor's wallet on its destination */
+function teslimDugmesi(m) {
+  const b = el("button", { sinif: "dugme dugme--sessiz", attr: { type: "button" }, yazi: "Deliver it on " + m.ag.ad + " (EndpointV2.lzReceive, you pay its gas)" });
+  const d = el("div", { sinif: "yazi yazi--kucuk yazi--sessiz" });
+  b.addEventListener("click", async () => {
+    try {
+      if (!(cuzdan.hesap() || (await cuzdan.bagla()))) { d.textContent = "Connect a wallet first."; return; }
+      d.textContent = "Estimating the gas on " + m.ag.ad + "…";
+      const t = await teslimIslemi(m, cuzdan.hesap());
+      d.textContent = "Confirm in your wallet (on " + m.ag.ad + ")…";
+      const h = await cuzdan.agdaGonder(t.ag, { to: t.hedef, data: t.veri, gas: t.gaz });
+      d.textContent = "Sent: " + h + ". Check again in a minute.";
+    } catch (e) { d.textContent = (e && (e.shortMessage || e.message)) || "Could not deliver it."; }
+  });
+  return [b, d];
+}
+
+/* a gap seen by the diagnosis: find the message bytes in recent PacketSent events, then deliver */
+function paketDugmesi(p) {
+  const b = el("button", { sinif: "dugme dugme--sessiz", attr: { type: "button" }, yazi: "Find message #" + p.nonce + " and deliver it" });
+  const d = el("div", { sinif: "yigin yigin--sik" });
+  b.addEventListener("click", async () => {
+    d.replaceChildren(el("div", { sinif: "yazi yazi--kucuk yazi--sessiz", yazi: "Searching recent " + p.kaynak.ad + " blocks for the message…" }));
+    try {
+      const m = await paketBul(p.kaynak, p.sender, p.dstEid, p.receiver, p.nonce);
+      if (!m) { d.replaceChildren(el("div", { sinif: "yazi yazi--kucuk", yazi: "Not in the recent blocks. Paste the sending transaction below (LayerZero Scan shows it) to deliver it." })); return; }
+      d.replaceChildren(el("div", { sinif: "yazi yazi--kucuk mono", yazi: "Found: " + m.durum }), ...(m.durum === "bekliyor" ? teslimDugmesi(m) : []));
+    } catch (e) { d.replaceChildren(el("div", { sinif: "yazi yazi--kucuk", yazi: (e && (e.shortMessage || e.message)) || "Search failed." })); }
+  });
+  return [b, d];
 }

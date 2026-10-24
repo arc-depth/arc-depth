@@ -120,17 +120,17 @@ export async function ciz() {
   ]));
 
   /* ---- 7. not yet ------------------------------------------------------ */
-  kap.append(panel("7 — Wallets on Solana, Sui, Aptos — and what is not done yet", [
+  kap.append(panel("7 — Known limits (stated plainly)", [
     tablo(["What", "Today"], [
-      ["Sell, redeem or send from a Solana, Sui or Aptos wallet", "in the page (Buy, sell, redeem); paid to your Solana USDC account, on Sui and Aptos to your Arc address (Circle does not forward to them)"],
-      ["Launching from a Solana wallet", "through relay.link (it simulates the launch before it quotes)"],
-      ["Launching from a Sui or Aptos wallet", "waits for LaunchEmaneti on Arc (not deployed); after Circle's attestation anyone presses Finish on Arc"],
-      ["Something stuck (a waiting basket line, a queued redemption, founder income)", "GENESIS → Diagnose a launch reads it from the chain and offers the fix; anyone can send it from their own wallet and takes the tip"],
-      ["A real launch tested end to end", "not yet — the joint test launch comes before the lock"],
-      ["Contracts locked", "after the joint test launch (every admin key and upgrade right closed)"],
+      ["Price protection on Arc, Sui and Aptos vaults", "their pools have no readable 30-minute average; the vault keeps its own slowly moving reference (about 1% a minute) and trades only within about 3% of it, so a sandwich can cost at most about 3% on those chains. EVM chains with Uniswap v3 / PancakeSwap use the pool's 30-minute average."],
+      ["Independent audit", "none yet. Every contract is open source and Sourcify-verified, the tests are public, and a disclosure and bounty policy is below (section 9)."],
+      ["GENESIS's open model", "small (0.5B). It answers only from on-chain memory records and says \"Not in GENESIS memory\" when none matches; when its wording adds what the records do not say, the page shows the records instead."],
+      ["Older contract sets (v2, v4, v5, v6)", "still on chain; they hold no live launch except the PTEST2 test token. The lock closes their admin keys together with v7."],
+      ["PTEST2", "a test token from the joint test of 22 Oct 2026; not a project, do not buy it."],
+      ["Wallet signatures", "simulated on mainnet state for every flow; the first real launches are the live test. Until the lock, a bug can still be fixed."],
+      ["Something stuck (a basket line, a queued redemption, a LayerZero message, a vault buy)", "GENESIS → Diagnose a launch reads it from the chains and offers the fix; anyone can send it from their own wallet and takes the tip where there is one."],
     ]),
   ]));
-  /* ---- 8. privacy ---------------------------------------------------- */
   kap.append(panel("8 — Privacy", [
     el("div", { sinif: "ikincil" }, [
       el("p", { yazi: "No accounts, no cookies, no analytics, no trackers, and no server of ours. This page is static files; " +
@@ -151,6 +151,32 @@ export async function ciz() {
       "In this browser the page keeps one flag (whether WalletConnect was used); the WalletConnect library keeps its session keys. " +
       "\"Disconnect and forget this device\" in the wallet dialog wipes both. An extension wallet's permission is revoked in the wallet itself." }),
   ]));
+  /* ---- 9. security --------------------------------------------------- */
+  kap.append(panel("9 — Security: reporting a vulnerability, and the bounty", [
+    el("div", { sinif: "ikincil" }, [
+      el("p", { yazi: "In scope: the live v7 contracts on all twelve chains (the Security page lists every address with its Sourcify-verified source), the site at arcpulse.app and GENESIS's diagnosis code. " +
+        "Out of scope: third parties we depend on (Circle CCTP, LayerZero, relay.link, Uniswap, Raydium, Cetus, Hyperion, wallets), the older sets v2–v6 except where they still hold funds, price movements, and anything that needs a stolen key." }),
+      el("p", { attr: { style: "margin-top:10px" }, yazi: "Report privately: GitHub → arc-depth/arc-depth → Security → Report a vulnerability (private advisory), or a direct message to @Arcdepthoock on X. " +
+        "Please do not open a public issue or exploit it on mainnet beyond what proves it. We answer within 72 hours and publish the fix and the report after it is safe." }),
+      el("p", { attr: { style: "margin-top:10px" }, yazi: "Reward: there is no company and no treasury of ours. Bounties are paid from the DAO-controlled developer fund by a DAO proposal; the amount is decided by that vote, " +
+        "guided by severity (funds at risk, how many launches, whether it can be undone). We will write the proposal for a valid report; we cannot promise its outcome." }),
+      el("p", { attr: { style: "margin-top:10px" }, yazi: "Safe harbour: research done in good faith, within this scope, without harming users or keeping funds, will not be pursued by us. No third-party audit has been done yet." }),
+    ]),
+  ]));
+
+  /* ---- 10. run it yourself ------------------------------------------- */
+  const ipfs = await fetch("veri/ipfs-cid.json", { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+  kap.append(panel("10 — Run it yourself (IPFS)", [
+    el("div", { sinif: "ikincil" }, [
+      el("p", { yazi: "The site is static files. Nothing here needs our server or our computer: the same files are published on IPFS under a content address, so anyone can serve or pin them, and any gateway shows the same bytes." }),
+      ipfs && ipfs.cid
+        ? el("p", { attr: { style: "margin-top:10px" }, sinif: "mono", yazi: "Site CID (v1): " + ipfs.cid + (ipfs.tarih ? "  ·  " + ipfs.tarih : "") })
+        : el("p", { attr: { style: "margin-top:10px" }, yazi: "You are reading the IPFS copy, or the CID file could not be read; the CID is also written on chain in GENESIS memory." }),
+      el("p", { attr: { style: "margin-top:10px" }, yazi: "Verify it: clone github.com/arc-depth/arc-depth, take docs/arc-launchpad/docs without the model folder and veri/ipfs-cid.json, and run `ipfs add -r --cid-version=1 --only-hash` on it: the root must equal the CID above. " +
+        "Open it at any gateway as <gateway>/ipfs/<CID>/app.html. The open model (483 MB) is a separate IPFS folder, also recorded on chain with its sha256." }),
+    ]),
+  ]));
+
   return kap;
 }
 

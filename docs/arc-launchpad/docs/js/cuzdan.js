@@ -79,8 +79,8 @@ async function wcKur() {
     metadata: {
       name: "ARC PULSE",
       description: "Token launchpad with a collateral vault behind every token",
-      url: location.origin,
-      icons: [location.origin + "/arc-launchpad/docs/veri/ikon.png"],
+      url: new URL(".", location.href).href,
+      icons: [new URL("veri/ikon.png", location.href).href],
     },
   });
   _wc.on("accountsChanged", (h) => { _hesap = h && h.length ? h[0] : null; duyur(); });

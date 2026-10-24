@@ -8,10 +8,16 @@
  * were sent and how many arrived (outboundNonce on the sender's chain,
  * inboundNonce / lazyInboundNonce on the receiver's): a gap is a message
  * verified but not delivered, which anyone can deliver with more gas.
+ * A gap gets a fix: the message bytes are found in the sender chain's
+ * PacketSent event, checked against the receiver endpoint's
+ * inboundPayloadHash, and delivered with EndpointV2.lzReceive from the
+ * visitor's wallet on that chain. The basket vault on every EVM chain is read
+ * too (dollars waiting for a pool buy, units held, whether the pool buys now),
+ * with its public retry (dene) where dollars wait.
  * No server, nothing stored; the user's wallet is used only for a fix the
  * user chooses, and its tip (if any) goes to that wallet.
  * =========================================================================== */
-import { JsonRpcProvider, Contract, Interface, zeroPadValue, getAddress } from "../vendor/ethers.min.js";
+import { JsonRpcProvider, Contract, Interface, zeroPadValue, getAddress, keccak256, concat, dataSlice, getBytes, hexlify } from "../vendor/ethers.min.js";
 import { AGLAR } from "./aglar.js";
 
 const USDC = "0x3600000000000000000000000000000000000000";
@@ -34,6 +40,97 @@ const saglayici = (ag) => {
   return saglayicilar.get(ag.id);
 };
 const arcAg = () => AGLAR.find((a) => a.anahtar === "arc");
+
+const UC_TAM = [...UC, "function inboundPayloadHash(address,uint32,bytes32,uint64) view returns (bytes32)",
+  "function lzReceive((uint32,bytes32,uint64),address,bytes32,bytes,bytes) payable"];
+const PAKET = new Interface(["event PacketSent(bytes encodedPayload, bytes options, address sendLibrary)"]);
+const agEid = (eid) => AGLAR.find((a) => a.eid === Number(eid)) || null;
+const SIFIR32 = "0x" + "0".repeat(64);
+
+/// A LayerZero v2 packet: header (version 1, nonce 8, srcEid 4, sender 32, dstEid 4, receiver 32), guid 32, message.
+export function paketCoz(encoded) {
+  const b = getBytes(encoded);
+  const oku = (a, n) => hexlify(b.slice(a, a + n));
+  return { nonce: BigInt(oku(1, 8)), srcEid: Number(BigInt(oku(9, 4))), sender: oku(13, 32), dstEid: Number(BigInt(oku(45, 4))),
+    receiver: getAddress("0x" + oku(49, 32).slice(26)), guid: oku(81, 32), message: hexlify(b.slice(113)) };
+}
+
+/// State of one packet at its destination: "teslim" (delivered), "bekliyor" (verified, not delivered: anyone
+/// can deliver it), "dogrulanmadi" (the DVNs have not verified it yet: nobody can deliver it yet).
+export async function paketDurumu(m) {
+  const ag = agEid(m.dstEid);
+  if (!ag || !UC_NOKTA[ag.id]) return { ...m, durum: "bilinmiyor" };
+  const uc = new Contract(UC_NOKTA[ag.id], UC_TAM, saglayici(ag));
+  const [h, lazy] = await Promise.all([uc.inboundPayloadHash(m.receiver, m.srcEid, m.sender, m.nonce), uc.lazyInboundNonce(m.receiver, m.srcEid, m.sender)]);
+  const beklenen = keccak256(concat([m.guid, m.message]));
+  const durum = h === beklenen ? "bekliyor" : (h === SIFIR32 && m.nonce <= lazy ? "teslim" : "dogrulanmadi");
+  return { ...m, ag, durum, uc: UC_NOKTA[ag.id] };
+}
+
+/// The fix for a waiting packet: EndpointV2.lzReceive on its destination, gas estimated for `kimden` (+25%).
+export async function teslimIslemi(m, kimden) {
+  const veri = new Interface(UC_TAM).encodeFunctionData("lzReceive", [[m.srcEid, m.sender, m.nonce], m.receiver, m.guid, m.message, "0x"]);
+  const gaz = await saglayici(m.ag).estimateGas({ from: kimden, to: m.uc, data: veri });
+  return { ag: m.ag, hedef: m.uc, veri, gaz: "0x" + ((gaz * 125n) / 100n).toString(16) };
+}
+
+/// Every LayerZero packet a transaction sent, with its state at the destination. `ag`: the sending chain.
+export async function islemPaketleri(ag, txHash) {
+  const r = await saglayici(ag).getTransactionReceipt(txHash.trim());
+  if (!r) throw new Error("Transaction not found on " + ag.ad + ".");
+  const uc = (UC_NOKTA[ag.id] || "").toLowerCase();
+  const konu = PAKET.getEvent("PacketSent").topicHash;
+  const out = [];
+  for (const l of r.logs) {
+    if (l.address.toLowerCase() !== uc || l.topics[0] !== konu) continue;
+    out.push(await paketDurumu(paketCoz(PAKET.parseLog(l).args.encodedPayload)));
+  }
+  return out;
+}
+
+/// Find packet `nonce` from `sender` (on `ag`) to `receiver` on `dstEid` among recent PacketSent events:
+/// windows of 5,000 blocks back from now (Arc's RPC refuses wider), `pencere` windows at most.
+export async function paketBul(ag, sender, dstEid, receiver, nonce, pencere = 60) {
+  const p = saglayici(ag);
+  const son = await p.getBlockNumber();
+  const s32 = zeroPadValue(sender, 32).toLowerCase(), r = getAddress(receiver);
+  const konu = PAKET.getEvent("PacketSent").topicHash;
+  for (let i = 0; i < pencere; i++) {
+    const b = son - i * 5000;
+    if (b < 0) break;
+    const loglar = await p.getLogs({ address: UC_NOKTA[ag.id], topics: [konu], fromBlock: Math.max(0, b - 4999), toBlock: b }).catch(() => []);
+    for (const l of loglar) {
+      const m = paketCoz(PAKET.parseLog(l).args.encodedPayload);
+      if (m.nonce === BigInt(nonce) && m.dstEid === Number(dstEid) && m.sender.toLowerCase() === s32 && m.receiver === r) return paketDurumu(m);
+    }
+  }
+  return null;
+}
+
+const KASA = ["function alimBekleyen(uint64,address) view returns (uint256)", "function bakiye(uint64,address) view returns (uint256)",
+  "function havuzVar(address) view returns (bool,bool,bool)", "function dene(uint64,address)"];
+
+/// The basket vault of each EVM line, read on its own chain.
+async function kasaDurumlari(V, r, sorunlar) {
+  const out = [];
+  for (const s of r.satirlar) {
+    const z = Object.entries(V.zincir || {}).find(([, v]) => Number(v.domain) === Number(s.zincir));
+    if (!z || !z[1].kasa) continue;
+    const ag = AGLAR.find((a) => a.anahtar === z[0]);
+    if (!ag) continue;
+    const varlik = getAddress(dataSlice(s.varlik, 12));
+    try {
+      const k = new Contract(z[1].kasa, KASA, saglayici(ag));
+      const [bekleyen, birim, yol] = await Promise.all([k.alimBekleyen(r.id, varlik), k.bakiye(r.id, varlik), k.havuzVar(varlik).catch(() => [false, false, false])]);
+      out.push({ ag: ag.ad, varlik, bekleyen, birim, yolVar: yol[0], simdiAlinir: yol[2] });
+      if (bekleyen > 0n) sorunlar.push(yol[2]
+        ? { tur: "kasa", metin: d6(bekleyen) + " wait in the " + ag.ad + " vault to buy " + varlik.slice(0, 10) + "…; its pool is inside the price bound now.",
+            duzelt: { ad: "Buy it now on " + ag.ad + " (SepetKasasi.dene)", ag, hedef: z[1].kasa, veri: new Interface(KASA).encodeFunctionData("dene", [r.id, varlik]), bahsis: "$0.05 when at least $1 is spent" } }
+        : { tur: "kasa", metin: d6(bekleyen) + " wait in the " + ag.ad + " vault: its pool's price is outside the bound (or its oracle is young); the next delivery or anyone's retry buys when it returns." });
+    } catch (e) { out.push({ ag: ag.ad, varlik, hata: String(e.shortMessage || e.message).slice(0, 80) }); }
+  }
+  return out;
+}
 
 /// The whole diagnosis of `token` (an Arc launch). `V` is docs/veri/sepet-v2.json.
 export async function teshisEt(V, token) {
@@ -95,12 +192,13 @@ export async function teshisEt(V, token) {
         oradanGiden: Number(gidenUzak), arcdaDogrulanan: Number(varanArc), arcdaIslenen: Number(islenenArc) };
       /* inboundNonce counts verified messages; lazyInboundNonce the ones delivered past a gap. A verified
          message above the delivered one is waiting for delivery: LayerZero scan, or EndpointV2.lzReceive by anyone. */
-      if (k.oradaDogrulanan > k.oradaIslenen) sorunlar.push({ tur: "lz", metin: (k.oradaDogrulanan - k.oradaIslenen) + " LayerZero message(s) from Arc are verified on " + ag.ad +
-        " but not delivered yet. Anyone can deliver them with more gas (EndpointV2.lzReceive; the message bytes are on Arc in the PacketSent event)." });
-      if (k.arcdaDogrulanan > k.arcdaIslenen) sorunlar.push({ tur: "lz", metin: (k.arcdaDogrulanan - k.arcdaIslenen) + " LayerZero message(s) from " + ag.ad +
-        " are verified on Arc but not delivered yet." });
+      for (let n = k.oradaIslenen + 1; n <= k.oradaDogrulanan; n++) sorunlar.push({ tur: "lz", metin: "LayerZero message #" + n + " from Arc is verified on " + ag.ad +
+        " but not delivered yet. Anyone can deliver it with more gas.", paket: { kaynak: arcAg(), sender: adapter, dstEid: ag.eid, receiver: ikiz, nonce: n } });
+      for (let n = k.arcdaIslenen + 1; n <= k.arcdaDogrulanan; n++) sorunlar.push({ tur: "lz", metin: "LayerZero message #" + n + " from " + ag.ad +
+        " is verified on Arc but not delivered yet. Anyone can deliver it with more gas.", paket: { kaynak: ag, sender: ikiz, dstEid: 30417, receiver: adapter, nonce: n } });
       return k;
     } catch (e) { return { ag: ag.ad, hata: String(e.shortMessage || e.message).slice(0, 80) }; }
   }));
-  return { token, var_: true, rapor: r, emirler, sorunlar, ikizler, adapter, ikiz };
+  const kasalar = await kasaDurumlari(V, r, sorunlar).catch(() => []);
+  return { token, var_: true, rapor: r, emirler, sorunlar, ikizler, kasalar, adapter, ikiz };
 }
