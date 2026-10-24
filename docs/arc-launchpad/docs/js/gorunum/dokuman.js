@@ -124,6 +124,27 @@ export async function ciz() {
       ["Contracts locked", "after the joint test launch (every admin key and upgrade right closed)"],
     ]),
   ]));
+  /* ---- 8. privacy ---------------------------------------------------- */
+  kap.append(panel("8 — Privacy", [
+    el("div", { sinif: "ikincil" }, [
+      el("p", { yazi: "No accounts, no cookies, no analytics, no trackers, and no server of ours. This page is static files; " +
+        "it keeps nothing about you anywhere, and we cannot see who visits or who connects a wallet." }),
+      el("p", { attr: { style: "margin-top:10px" }, yazi: "What is public by nature: blockchain transactions. Any address that trades, " +
+        "launches or redeems is visible on-chain to everyone, as on every public blockchain. We add nothing to that." }),
+      el("p", { attr: { style: "margin-top:10px" }, yazi: "Who your browser talks to, and when (the page's security policy refuses anything else):" }),
+    ]),
+    tablo(["Service", "When", "What it sees"], [
+      ["Chain RPC providers (Arc, Base, …; publicnode, drpc, the chains' own)", "reading prices, pools, your balances; sending your signed transaction", "your IP and the addresses in the read or transaction"],
+      ["relay.link", "only when you ask for a cross-chain quote or payment", "your address and the amount (it needs them to route)"],
+      ["Circle (iris-api)", "fees and attestations of USDC transfers", "the transfer, not you"],
+      ["DexScreener", "token prices", "no user data"],
+      ["WalletConnect relay (Reown)", "only if you choose WalletConnect", "end-to-end encrypted messages; telemetry and analytics are switched off"],
+      ["GitHub Pages", "serving these files", "standard web-server logs kept by GitHub; we have no access to them"],
+    ]),
+    el("div", { sinif: "ikincil", attr: { style: "margin-top:10px" }, yazi:
+      "In this browser the page keeps one flag (whether WalletConnect was used); the WalletConnect library keeps its session keys. " +
+      "\"Disconnect and forget this device\" in the wallet dialog wipes both. An extension wallet's permission is revoked in the wallet itself." }),
+  ]));
   return kap;
 }
 

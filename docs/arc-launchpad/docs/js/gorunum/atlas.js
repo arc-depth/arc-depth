@@ -254,20 +254,29 @@ async function rotalar(kaynak, hedef, miktar, ben) {
   }
   /* relay.link: solvers, open API */
   try {
-    const govde = { user: ben || "0x000000000000000000000000000000000000dEaD", recipient: ben || "0x000000000000000000000000000000000000dEaD",
+    /* a comparison only: never the visitor's address (relay sees a placeholder) */
+    const govde = { user: "0x000000000000000000000000000000000000dEaD", recipient: "0x000000000000000000000000000000000000dEaD",
       originChainId: kaynak.id, destinationChainId: hedef.id, originCurrency: kaynak.dolar, destinationCurrency: hedef.dolar,
       amount: String(BigInt(Math.round(miktar * 1e6)) * (kaynak.sarmal ? 10n ** 12n : 1n)), tradeType: "EXACT_INPUT" };
     const q = await fetch(RELAY + "/quote", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(govde) }).then((r) => r.json());
     if (q.details) {
       const cik = Number(q.details.currencyOut.amountFormatted), sure = q.details.timeEstimate;
       out.push({ ad: "relay.link (solver fill)", cikti: cik, ucret: miktar - cik, sure: sure != null ? sure + " s (estimate)" : "—",
-        risk: "a solver fronts the funds on the destination; you are exposed only for the fill time", yurut: ben ? q : null });
+        risk: "a solver fronts the funds on the destination; you are exposed only for the fill time", yurut: { govde } });
     } else out.push({ ad: "relay.link", hata: q.message || "no route" });
   } catch (e) { out.push({ ad: "relay.link", hata: "did not answer" }); }
   return out;
 }
 
-async function relayYurut(q, ag, durumYaz) {
+async function relayYurut(q0, ag, durumYaz) {
+  /* the comparison was quoted for a placeholder address; the real quote, with the user's address,
+     is asked for only now, when they choose to send */
+  const ben = cuzdan.hesap() || (await cuzdan.bagla());
+  if (!ben) throw new Error("Connect a wallet first.");
+  durumYaz("Asking relay.link for the route to your address…");
+  const govde = { ...q0.govde, user: ben, recipient: ben };
+  const q = await fetch(RELAY + "/quote", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(govde) }).then((r) => r.json());
+  if (!q.steps) throw new Error("relay.link gave no route: " + (q.message || "try again"));
   for (const adim of q.steps || []) for (const it of adim.items || []) {
     if (adim.kind !== "transaction") continue;
     durumYaz((adim.id === "approve" ? "Approve" : "Confirm") + " in your wallet…");

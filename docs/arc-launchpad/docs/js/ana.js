@@ -345,6 +345,10 @@ function cuzdanSec() {
     durum,
     el("p", { sinif: "cuzdan-kutu__guven", yazi:
       "ARC PULSE never asks for a seed phrase or a private key. Your wallet only connects and signs transactions you can read in the wallet before you approve them." }),
+    el("p", { sinif: "cuzdan-kutu__guven", yazi:
+      "Private by design: no accounts, no cookies, no analytics, no server of ours. We cannot see who connects. See Documentation → Privacy." }),
+    el("button", { sinif: "dugme dugme--sade", attr: { type: "button" }, yazi: "Disconnect and forget this device",
+      on: { click: async () => { await cuzdan.unut(); durum.textContent = "Disconnected. Nothing about you is stored in this browser now."; } } }),
     el("p", { sinif: "cuzdan-kutu__guven", attr: { style: "opacity:.7" }, yazi: "WalletConnect: Portions © 2025 Reown, Inc. All Rights Reserved." }),
   ]);
   const perde = el("div", { sinif: "cuzdan-perde", on: { click: (e) => { if (e.target === perde) kapat(); } } }, [kutu]);

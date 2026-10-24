@@ -61,7 +61,12 @@ async function wcKur() {
        and the page asks it to add Arc when a send needs it */
     optionalChains: WC_ZINCIRLER,
     rpcMap,
+    /* privacy: no telemetry to WalletConnect's event service (pulse.walletconnect.org), and the QR
+       modal without analytics, email/social login, on-ramp or swaps; what remains is the
+       end-to-end encrypted relay pairing and the public wallet list */
+    telemetryEnabled: false,
     showQrModal: true,
+    qrModalOptions: { features: { analytics: false, email: false, socials: false, onramp: false, swaps: false, send: false, receive: false, history: false } },
     metadata: {
       name: "ARC PULSE",
       description: "Token launchpad with a collateral vault behind every token",
@@ -199,6 +204,22 @@ export const cuzdan = {
     if (_wc) await _wc.disconnect().catch(() => {});
   },
   wcMi() { return !!(_wc && _wc.session); },
+
+  /** Disconnect and forget this device: ends a WalletConnect session and wipes everything this
+      site and the WalletConnect library keep in this browser (local/session storage, IndexedDB).
+      Nothing was ever kept anywhere else. An extension wallet's own permission for the site is
+      revoked in the wallet itself. */
+  async unut() {
+    if (_wc) await _wc.disconnect().catch(() => {});
+    _wc = null; _hesap = null; _zincir = null;
+    try { localStorage.clear(); } catch (e) { /* storage may be blocked */ }
+    try { sessionStorage.clear(); } catch (e) { /* storage may be blocked */ }
+    try {
+      const dbs = indexedDB.databases ? await indexedDB.databases() : [];
+      await Promise.all(dbs.map((d) => d.name && new Promise((ok) => { const r = indexedDB.deleteDatabase(d.name); r.onsuccess = r.onerror = r.onblocked = ok; })));
+    } catch (e) { /* not supported: nothing to clear */ }
+    duyur();
+  },
 
   /** Prompt. Only ever from a click. */
   async bagla() {

@@ -39,7 +39,9 @@ const DIL = [
   "function durum() view returns (uint256,uint256,bytes32)"
 ];
 const ACIK_MODEL = "onnx-community/Qwen2.5-0.5B-Instruct";
-const TRANSFORMERS = "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.5.1";
+/* The in-browser open model (~500 MB from Hugging Face via jsDelivr) is off: it would make every
+   visitor's browser talk to two third parties, and the files are too large to host ourselves. */
+const ACIK_MODEL_KAPALI = true;
 const ev = () => AGLAR.find((a) => a.anahtar === "arc");
 const zincirler = () => GENESIS.zincirler.map((k) => AGLAR.find((a) => a.anahtar === k)).filter(Boolean);
 const kisa = (a) => a.slice(0, 6) + "…" + a.slice(-4);
@@ -120,15 +122,8 @@ export function ilgili(soru, liste, n = 3) {
 }
 
 let uretici = null;
-async function acikModeliYukle(durum) {
-  if (uretici) return uretici;
-  const { pipeline } = await import(TRANSFORMERS);
-  const ilerleme = (x) => { if (x.status === "progress" && x.total) durum.textContent = "Downloading the open model to your device: " + Math.round((x.loaded / x.total) * 100) + "% of " + x.file; };
-  try {
-    uretici = await pipeline("text-generation", ACIK_MODEL, { dtype: "q4f16", device: "webgpu", progress_callback: ilerleme });
-  } catch (e) {
-    uretici = await pipeline("text-generation", ACIK_MODEL, { dtype: "q4", device: "wasm", progress_callback: ilerleme });
-  }
+async function acikModeliYukle() {
+  if (ACIK_MODEL_KAPALI) throw new Error("the open model is not offered: it would load from third-party servers");
   return uretici;
 }
 
@@ -175,7 +170,10 @@ export async function ciz() {
   const soru = el("textarea", { sinif: "girdi", attr: { rows: "3", placeholder: "Ask GENESIS anything, in any language." } });
   const durum = el("div", { sinif: "yazi yazi--kucuk yazi--sessiz" });
   const sor = el("button", { sinif: "dugme dugme--marka", attr: { type: "button" }, yazi: "Ask" });
-  const yukle = el("button", { sinif: "dugme dugme--sessiz", attr: { type: "button" }, yazi: "Load the open model on this device (~500 MB, once)" });
+  const yukle = el("button", { sinif: "dugme dugme--sessiz", attr: { type: "button", disabled: "" }, yazi: "Open model: off (it would load from third-party servers)" });
+  const zincirdeSor = el("input", { attr: { type: "checkbox" } });
+  const zincirdeEtiket = el("label", { sinif: "yazi yazi--kucuk yazi--sessiz" }, [zincirdeSor,
+    el("span", { yazi: " Also ask GENESIS-0 on chain (your question is sent to the Arc RPC as a read call; nothing is stored). Off by default: otherwise your question never leaves this page." })]);
   let hafiza = null;
   yukle.addEventListener("click", async () => {
     try { yukle.disabled = true; await acikModeliYukle(durum); durum.textContent = "Open model ready, running on your device."; yukle.textContent = "Open model loaded"; }
@@ -212,7 +210,7 @@ export async function ciz() {
           "open model on your device (mode 3), facts from on-chain memory");
       } else {
         cevap = balon("GENESIS", bulunan.length ? el("div", { sinif: "yigin yigin--sik" }, [el("div", { yazi: "From verified memory:" }), kaynaklar])
-          : el("div", { yazi: hafiza.length ? "I have no verified memory on this yet. Load the open model for general questions, or propose what you know below." :
+          : el("div", { yazi: hafiza.length ? "I have no verified memory on this yet. You can propose what you know below." :
             "GENESIS memory is not on chain yet, so I have nothing verified to answer from." }), "on-chain memory");
       }
       kayit.prepend(cevap);
@@ -222,7 +220,9 @@ export async function ciz() {
       if (at) kayit.prepend(balon("GENESIS ATLAS", el("div", { sinif: "yigin yigin--sik" }, at.satirlar.map((t) => el("div", { sinif: "yazi yazi--kucuk", yazi: t }))),
         "on-chain data for " + at.zincir + ", read by the Atlas indexer"));
 
-      if (arcCanli) {
+      /* the on-chain model reads the question through an RPC call (nothing is stored, but the RPC
+         provider sees the text): only when the user asks for it */
+      if (arcCanli && zincirdeSor.checked) {
         const v = toUtf8Bytes(q.slice(-120));
         const [u] = await cokluOku(arc, [[GENESIS.dil, DIL, "uret", [v, 120, BigInt(Date.now()), true]]]);
         let t = ""; try { t = u ? toUtf8String(u) : ""; } catch (e) { t = "(not valid text)"; }
@@ -250,7 +250,7 @@ export async function ciz() {
 
   kap.append(panel("Talk to GENESIS", el("div", { sinif: "yigin" }, [
     not("Nothing you type here is stored or sent anywhere. Answers about ARC PULSE come only from GENESIS's verified on-chain memory; when it has nothing verified, it says so.", "bilgi"),
-    soru, el("div", { sinif: "satir" }, [sor, yukle]), durum, kayit
+    soru, zincirdeEtiket, el("div", { sinif: "satir" }, [sor, yukle]), durum, kayit
   ])));
 
   /* paid knowledge: titles are on chain, the text is sold through the Atlas API */

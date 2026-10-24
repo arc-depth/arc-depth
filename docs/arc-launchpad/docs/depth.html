@@ -2,12 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval' 'sha256-CuQPggvIagoskpWAS/ceerrkQASUOTEF+s5hBzGwNvI='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://api.web3modal.org; font-src 'self' data:; connect-src 'self' https://rpc.mainnet.arc.io https://arc-rpc.publicnode.com https://rpc.drpc.mainnet.arc.io https://rpc.blockdaemon.mainnet.arc.io https://arc-mainnet.drpc.org https://mainnet.base.org https://base-rpc.publicnode.com https://base.drpc.org https://arb1.arbitrum.io https://arbitrum-one-rpc.publicnode.com https://arbitrum.drpc.org https://ethereum-rpc.publicnode.com https://eth.drpc.org https://api.avax.network https://avalanche-c-chain-rpc.publicnode.com https://avalanche.drpc.org https://rpc.monad.xyz https://monad.drpc.org https://monad-mainnet.drpc.org https://rpc.hyperliquid.xyz https://hyperliquid.drpc.org https://bsc-dataseed.bnbchain.org https://bsc-dataseed1.bnbchain.org https://bsc-rpc.publicnode.com https://rpc.mainnet.chain.robinhood.com https://robinhood-rpc.publicnode.com https://robinhood.drpc.org https://robinhood-mainnet.drpc.org https://optimism-rpc.publicnode.com https://polygon-bor-rpc.publicnode.com https://unichain-rpc.publicnode.com https://solana-rpc.publicnode.com https://graphql.mainnet.sui.io https://api.mainnet.aptoslabs.com https://api.relay.link https://iris-api.circle.com https://api.dexscreener.com wss://relay.walletconnect.org https://relay.walletconnect.org https://verify.walletconnect.org https://verify.walletconnect.com https://api.web3modal.org; frame-src 'self' https://verify.walletconnect.org https://verify.walletconnect.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="dark">
 <title>Arc Depth · DEPTH</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#090a0c; --panel:#12141a; --panel2:#171a21; --raise:#1d212a;
@@ -222,7 +221,7 @@ footer{border-top:1px solid var(--line);margin-top:44px;padding:26px 0 40px;
 
 <script type="module">
 import { BrowserProvider, Contract, JsonRpcProvider, parseUnits, formatUnits, MaxUint256 }
-  from "https://cdn.jsdelivr.net/npm/ethers@6.13.4/+esm";
+  from "./vendor/ethers.min.js";
 
 const ARC = { chainId:5042, chainIdHex:"0x13b2", name:"Arc",
   rpc:"https://rpc.mainnet.arc.io", explorer:"https://explorer.arc.io",
