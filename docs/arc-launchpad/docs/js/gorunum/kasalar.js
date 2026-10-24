@@ -13,6 +13,11 @@
  * their fallback. Each card reads which a vault does (its `fabrika`): a
  * vault without one (every v2 vault) is auctions only.
  *
+ * v6 vaults (24 Oct 2026) buy from a pool on every chain: Uniswap v4 on
+ * Arc (a slowly moving reference price), PancakeSwap v3 on BNB, Uniswap v3
+ * elsewhere, Raydium / Cetus / Hyperion off EVM. The auction is only the
+ * fallback for an asset with no pool (the launch form refuses those).
+ *
  * Read live from each chain: the vault's dollars, how many auctions it has
  * opened, and the open ones with what they ask right now. Per-token
  * collateral is on Discover.
@@ -57,8 +62,14 @@ function ondalik(d, varlik) {
 
 export async function ciz() {
   const kap = el("div", { sinif: "yigin" });
-  kap.append(sayfaUst("Collateral vaults", "The basket vaults on eleven chains: what they hold and the auctions anyone can fill"));
-  kap.append(not("Every launch's collateral is a basket of up to five tokens, each kept in the vault on its own chain. " +
+  const v6 = await fetch("veri/sepet-v2.json", { cache: "no-store" }).then((x) => x.json()).then((j) => Number(j.surum || 2) >= 6).catch(() => false);
+  kap.append(sayfaUst("Collateral vaults", v6 ? "The basket vaults on twelve chains: what they hold, and the pool each one buys from" : "The basket vaults on eleven chains: what they hold and the auctions anyone can fill"));
+  if (v6) kap.append(not("Every launch's collateral is a basket of up to five tokens, each kept in the vault on its own chain. " +
+    "Every vault buys and sells in a pool on its own chain: Uniswap v4 on Arc, PancakeSwap v3 on BNB, Uniswap v3 on Base, Arbitrum, Ethereum, " +
+    "Avalanche, Monad and Robinhood, HyperSwap on HyperEVM, Raydium on Solana, Cetus on Sui, Hyperion on Aptos — each within ~3% of a protected " +
+    "price (the pool's 30-minute average, or a reference that moves at most ~1% a minute). What the bound stops waits, and anyone can push it " +
+    "for a $0.05 tip. A token with no pool is refused at launch; the auction remains only as the last fallback.", "bilgi"));
+  else kap.append(not("Every launch's collateral is a basket of up to five tokens, each kept in the vault on its own chain. " +
     "A vault on a chain with Uniswap v3 (shown on its card) buys and sells in the pool itself, no worse than ~3% from the pool's 30-minute average; " +
     "anything the price limit stops waits and anyone can push it (for a $0.05 tip). Every other vault, and the fallback of all of them, " +
     "is a reverse Dutch auction that anyone can fill: the ask starts at twice the last price, halves every 30 minutes, " +
@@ -86,9 +97,10 @@ export async function ciz() {
     const olc = (et, dg) => el("div", { sinif: "jeton-kart__olcum" }, [el("div", { sinif: "et", yazi: et }), el("div", { sinif: "dg", yazi: dg })]);
     /* how this vault buys: read from the vault (v4 has a Uniswap v3 factory; v2 and the Move / Solana vaults do not) */
     const nasil = olc("Buys in", "…");
-    if (d === 8 || d === 9 || d === 5) nasil.lastChild.textContent = "auction";
+    if (d === 8 || d === 9 || d === 5) nasil.lastChild.textContent = v6 ? { 8: "Cetus pool", 9: "Hyperion pool", 5: "Raydium pool" }[d] : "auction";
+    else if (v6 && d === 26) nasil.lastChild.textContent = "Uniswap v4 pool";
     else new Contract(o.kasa, ["function fabrika() view returns (address)"], saglayici(d)).fabrika()
-      .then((f) => { nasil.lastChild.textContent = /^0x0+$/.test(f) ? "auction" : "Uniswap v3 pool"; })
+      .then((f) => { nasil.lastChild.textContent = /^0x0+$/.test(f) ? "auction" : d === 17 ? "PancakeSwap v3 pool" : d === 19 ? "HyperSwap v3 pool" : "Uniswap v3 pool"; })
       .catch(() => { nasil.lastChild.textContent = "auction"; });
     return el("div", { sinif: "jeton-kart" }, [
       el("div", { sinif: "tk__ust" }, [cip(z.ad), el("span", { sinif: "yazi yazi--kucuk yazi--sessiz" }, [adresLinki(d, o.kasa)])]),

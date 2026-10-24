@@ -66,7 +66,7 @@ contract TestV4Arc {
 
     function kur1(Adres calldata a) external {
         defter = new SepetDefteri(IHaberci(a.haberci), USDC);
-        kasa = new SepetKasasi(IHaberci(a.haberci), USDC, ARC, _b(address(defter)), IV3Fabrika(address(0)), address(0));
+        kasa = new SepetKasasi(IHaberci(a.haberci), USDC, ARC, _b(address(defter)), IV3Fabrika(address(0)), address(0), address(0), 0);
         /* the launchpad is created at this contract's 6th nonce (block 2) */
         address lpTahmin = _create(6);
         ucu = new SepetUcu(IHaberci(a.haberci), USDC, ARC, _b(address(defter)), lpTahmin);

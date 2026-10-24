@@ -77,7 +77,7 @@ export async function ciz() {
   /* ---- 4. fees -------------------------------------------------------- */
   kap.append(panel("4 — Every trade", [
     tablo(["Goes to", "Share"], [
-      ["the token's founder", "0.30%"], ["developer fund", "0.30%"], ["protocol liquidity", "0.50%"], ["operations", "0.20%"],
+      ["the token's founder", "0.30%"], ["developer fund", "0.30%"], ["protocol liquidity", "0.50%"], ["operations (to the DAO-controlled developer fund)", "0.20%"],
       ["FTHM bought and burned", "0.20%"], ["back into the pool (depth)", "0.70%"], ["the token's basket (collateral tax)", "1% – 5%, set at launch"],
     ]),
     el("div", { sinif: "ikincil", attr: { style: "margin-top:12px" }, yazi:
@@ -91,11 +91,12 @@ export async function ciz() {
     el("div", { sinif: "ikincil" }, [
       el("p", { yazi: "Each line's dollars wait as USDC in the Defter on Arc. Every trade's collateral tax is split across the lines " +
         "by their weight; when a line reaches $50 its asset is bought on its own chain and held in that chain's vault, for this token only." }),
-      el("p", { attr: { style: "margin-top:10px" }, yazi: "The vault buys the asset itself from that chain's pool: Uniswap v3 on Base, Arbitrum, " +
-        "Ethereum, Avalanche and HyperEVM (within ~3% of the pool's 30-minute average price), Raydium on Solana (the pool's own average), " +
-        "Cetus on Sui and Hyperion on Aptos (within ~3% of a slowly moving reference). If the price is outside the bound the dollars wait " +
-        "as USDC and anyone may retry later for a $0.05 tip. Arc, BNB, Monad and Robinhood have no such pool: there the line is filled by " +
-        "auction, and waits as USDC until someone fills it." }),
+      el("p", { attr: { style: "margin-top:10px" }, yazi: "Every vault buys the asset itself from a pool on its own chain: Uniswap v4 on Arc, " +
+        "Uniswap v3 on Base, Arbitrum, Ethereum, Avalanche, Monad and Robinhood, HyperSwap v3 on HyperEVM and PancakeSwap v3 on BNB (within ~3% " +
+        "of the pool's 30-minute average price), Raydium on Solana (the pool's own average), and Cetus on Sui, Hyperion on Aptos and the Arc " +
+        "pools (within ~3% of a slowly moving reference price). The launch form refuses a token that has no such pool. If the price is " +
+        "outside the bound the dollars wait as USDC and anyone may retry later for a $0.05 tip. At most two lines go to their vaults per " +
+        "trade; the rest go with the next trades, so nothing ever waits for a person." }),
       el("p", { attr: { style: "margin-top:10px" }, yazi: "Redeeming burns tokens and pays (amount ÷ supply) of everything in the basket: the " +
         "waiting dollars at once; each vault that holds something sells your share and pays you (or hands you the asset itself if it " +
         "cannot sell). You pay the messaging fee of those orders in the same transaction, shown before you sign; an order that cannot " +
@@ -119,7 +120,7 @@ export async function ciz() {
       ["Sell, redeem or send from a Solana, Sui or Aptos wallet", "in the page (Buy, sell, redeem); paid to your Solana USDC account, on Sui and Aptos to your Arc address (Circle does not forward to them)"],
       ["Launching from a Solana wallet", "through relay.link (it simulates the launch before it quotes)"],
       ["Launching from a Sui or Aptos wallet", "waits for LaunchEmaneti on Arc (not deployed); after Circle's attestation anyone presses Finish on Arc"],
-      ["Basket buys on Arc, BNB, Monad, Robinhood", "auctions (no pool with a readable average price there); the dollars wait as USDC and stay redeemable"],
+      ["Something stuck (a waiting basket line, a queued redemption, founder income)", "GENESIS → Diagnose a launch reads it from the chain and offers the fix; anyone can send it from their own wallet and takes the tip"],
       ["A real launch tested end to end", "not yet — the joint test launch comes before the lock"],
       ["Contracts locked", "after the joint test launch (every admin key and upgrade right closed)"],
     ]),

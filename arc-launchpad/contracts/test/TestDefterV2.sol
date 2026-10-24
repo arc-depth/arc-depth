@@ -52,7 +52,7 @@ contract TestDefterV2 {
         h.secenekKur(_sec(600_000));
         /* Avalanche is bound in the Defter but the messenger has no route to it: a line there cannot go */
         SepetDefteri d = new SepetDefteri(IHaberci(address(h)), USDC);
-        SepetKasasi kArc = new SepetKasasi(IHaberci(address(h)), USDC, ARC, _b(address(d)), IV3Fabrika(address(0)), address(0));
+        SepetKasasi kArc = new SepetKasasi(IHaberci(address(h)), USDC, ARC, _b(address(d)), IV3Fabrika(address(0)), address(0), address(0), 0);
         d.bagla(ARC, _b(address(this)), _b(address(kArc)));      // this contract plays the launchpad on Arc
         d.bagla(BASE, _b(address(0xB1)), _b(address(0xCA5A)));
         d.bagla(AVAX, _b(address(0xA1)), _b(address(0xCA5C)));

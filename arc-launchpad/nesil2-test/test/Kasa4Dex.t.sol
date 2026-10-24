@@ -6,6 +6,10 @@ import {IHaberci, IHaberAlici, IERC20S, SepetMesaj, Adres} from "../src/arc/sepe
 import {SepetKasasi, IV3Fabrika, IV3Havuz} from "../src/arc/sepet4/SepetKasasi.sol";
 import {TickMath} from "@uniswap/v4-core/src/libraries/TickMath.sol";
 
+interface IDolar6T {
+    function sar(uint256 birim) external returns (uint256);
+}
+
 interface IERC20D {
     function balanceOf(address) external view returns (uint256);
     function transfer(address, uint256) external returns (bool);
@@ -52,7 +56,9 @@ contract Iten {
     }
     /// Push the price `tick` ticks in the swap's direction (as far as `m` allows).
     function itTick(address p, bool zf1, int256 m, address girdi, int24 tick) external {
-        (, int24 t,,,,,) = IV3Havuz(p).slot0();
+        /* slot0's second word is the tick; PancakeSwap's slot0 does not decode as Uniswap's */
+        (, bytes memory r) = p.staticcall(abi.encodeWithSelector(IV3Havuz.slot0.selector));
+        int24 t = int24(abi.decode(_kes(r, 32), (int256)));
         IV3Havuz(p).swap(address(this), zf1, m, TickMath.getSqrtPriceAtTick(zf1 ? t - tick : t + tick), abi.encode(girdi));
     }
     function uniswapV3SwapCallback(int256 a0, int256 a1, bytes calldata v) public {
@@ -60,6 +66,11 @@ contract Iten {
         IERC20D(g).transfer(msg.sender, uint256(a0 > 0 ? a0 : a1));
     }
     function hyperswapV3SwapCallback(int256 a0, int256 a1, bytes calldata v) external { uniswapV3SwapCallback(a0, a1, v); }
+    function pancakeV3SwapCallback(int256 a0, int256 a1, bytes calldata v) external { uniswapV3SwapCallback(a0, a1, v); }
+    function _kes(bytes memory r, uint256 o) internal pure returns (bytes memory w) {
+        w = new bytes(32);
+        for (uint256 i = 0; i < 32; i++) w[i] = r[o + i];
+    }
 }
 
 /// v4 vaults buy and sell in the chain's own Uniswap v3 pools, within ~3% of
@@ -78,8 +89,22 @@ abstract contract Kasa4DexTaban is Test {
     IERC20S usdc;
     address weth;
     IV3Fabrika fabrika;
+    /// the dollar the pools hold (BNB: Binance-Peg USDC under the vault's Dolar6) and its scale
+    address q;
+    uint256 olc;
 
     function _zincir() internal virtual returns (string memory);
+    function _ham() internal virtual returns (address, uint256) { return (address(0), 0); }
+
+    /// `m` of the vault's dollar to `to` (BNB: real Dolar6, wrapped from dealt Binance-Peg USDC).
+    function _paraVer(address to, uint256 m) internal virtual {
+        (address hm, uint256 o) = _ham();
+        if (hm == address(0)) { deal(address(usdc), to, usdc.balanceOf(to) + m); return; }
+        deal(hm, address(this), m * o);
+        IERC20S(hm).approve(address(usdc), m * o);
+        IDolar6T(address(usdc)).sar(m);
+        usdc.transfer(to, m);
+    }
     function _adresler() internal virtual returns (address usdc_, address weth_, address fabrika_, uint32 domain);
     function _ikiAdimAdaylari() internal virtual returns (address[] memory);
 
@@ -89,11 +114,14 @@ abstract contract Kasa4DexTaban is Test {
         usdc = IERC20S(u); weth = w; fabrika = IV3Fabrika(f);
         h = new Haberci4(d, usdc);
         h.defterKur(DEFTER);
-        k = new SepetKasasi(IHaberci(address(h)), usdc, 26, DEFTER, fabrika, weth);
+        (address hm, uint256 o) = _ham();
+        k = new SepetKasasi(IHaberci(address(h)), usdc, 26, DEFTER, fabrika, weth, hm, o);
+        q = hm == address(0) ? u : hm;
+        olc = hm == address(0) ? 1 : o;
     }
 
     function _al(uint64 l, address v, uint256 m) internal {
-        deal(address(usdc), address(h), m);
+        _paraVer(address(h), m);
         h.teslim(address(k), abi.encode(SepetMesaj.AL, l, Adres.b32(v), uint256(1)), m, DEFTER);
     }
 
@@ -109,9 +137,9 @@ abstract contract Kasa4DexTaban is Test {
     }
 
     function _enIyi(address a, address b) internal view returns (address enIyi) {
-        uint24[4] memory u = [uint24(100), 500, 3000, 10000];
+        uint24[5] memory u = [uint24(100), 500, 2500, 3000, 10000];
         uint128 L;
-        for (uint256 i = 0; i < 4; i++) {
+        for (uint256 i = 0; i < 5; i++) {
             address p = fabrika.getPool(a, b, u[i]);
             if (p == address(0)) continue;
             uint128 l = IV3Havuz(p).liquidity();
@@ -122,7 +150,7 @@ abstract contract Kasa4DexTaban is Test {
     function test_alim_twap_icinde() public {
         (bool yol, bool iki, bool simdi) = k.havuzVar(weth);
         assertTrue(yol && !iki && simdi, "USDC/WETH havuzu secilebilir");
-        uint256 beklenen = _twapBirim(_enIyi(address(usdc), weth), address(usdc), weth, 50e6);
+        uint256 beklenen = _twapBirim(_enIyi(q, weth), q, weth, 50e6 * olc);
         _al(1, weth, 50e6);
         uint256 b = k.bakiye(1, weth);
         emit log_named_uint("50 $ ile alinan WETH (wei)", b);
@@ -133,19 +161,19 @@ abstract contract Kasa4DexTaban is Test {
     }
 
     function test_sandvic_sinirda_durur_sonra_bahsisle_biter() public {
-        address p = _enIyi(address(usdc), weth);
+        address p = _enIyi(q, weth);
         Iten it = new Iten();
         /* a sandwicher pushes WETH up hard just before the vault's buy */
-        uint256 cok = 150_000_000e6;
-        deal(address(usdc), address(it), cok);
-        it.itTick(p, address(usdc) < weth, int256(cok), address(usdc), 700);
+        uint256 cok = 150_000_000e6 * olc;
+        deal(q, address(it), cok);
+        it.itTick(p, q < weth, int256(cok), q, 700);
         _al(1, weth, 50e6);
         uint256 bekleyen = k.alimBekleyen(1, weth);
         emit log_named_uint("sinirda bekleyen dolar", bekleyen);
         assertGt(bekleyen, 0, "fiyat sinirin otesinde: dolar bekliyor");
         /* the price comes back (the sandwicher sells), anyone finishes the buy and takes the tip */
         uint256 wethElde = IERC20D(weth).balanceOf(address(it));
-        it.itTick(p, weth < address(usdc), int256(wethElde), weth, 700);
+        it.itTick(p, weth < q, int256(wethElde), weth, 700);
         address ben = makeAddr("deneyen");
         vm.prank(ben);
         k.dene(1, weth);
@@ -158,8 +186,8 @@ abstract contract Kasa4DexTaban is Test {
         address[] memory a = _ikiAdimAdaylari();
         address v;
         for (uint256 i = 0; i < a.length; i++) {
-            address d = _enIyi(address(usdc), a[i]);
-            if ((d == address(0) || usdc.balanceOf(d) < 5_000e6) && _enIyi(weth, a[i]) != address(0)) { v = a[i]; break; }
+            address d = _enIyi(q, a[i]);
+            if ((d == address(0) || IERC20S(q).balanceOf(d) < 5_000e6 * olc) && _enIyi(weth, a[i]) != address(0)) { v = a[i]; break; }
         }
         if (v == address(0)) { emit log("iki adimli aday bulunamadi"); return; }
         (bool yol, bool iki,) = k.havuzVar(v);
@@ -188,21 +216,38 @@ abstract contract Kasa4DexTaban is Test {
     function test_itfa_sinirda_kalan_ayni_verilir() public {
         _al(1, weth, 50e6);
         uint256 b = k.bakiye(1, weth);
-        address p = _enIyi(address(usdc), weth);
+        address p = _enIyi(q, weth);
         Iten it = new Iten();
         /* the price pushed DOWN past the limit: the vault will not sell there */
-        uint256 cok = 60_000e18;
+        uint256 cok = _cokWeth();
         deal(weth, address(it), cok);
-        it.itTick(p, weth < address(usdc), int256(cok), weth, 700);
+        assertEq(IERC20D(weth).balanceOf(address(it)), cok, "itenin WETH'i yazildi");
+        int24 t0 = _tick(p);
+        it.itTick(p, weth < q, int256(cok), weth, 700);
+        emit log_named_int("itilen tick", int256(t0) - int256(_tick(p)));
         bytes32[] memory v = new bytes32[](1);
         v[0] = Adres.b32(weth);
         h.teslim(address(k), abi.encode(SepetMesaj.SAT, uint64(1), v, uint256(1e26), uint256(1e27), uint32(99), Adres.b32(SAHIP)), 0, DEFTER);
-        assertEq(IERC20D(weth).balanceOf(SAHIP), b / 10, "satilamayan pay sahibin EVM adresine, varligin kendisi");
+        /* either the vault refused the pushed price and handed the share over in kind, or (a chain with
+           several deep pools, Robinhood) it sold in a pool the push did not move, at a fair price */
+        uint256 verilen = IERC20D(weth).balanceOf(SAHIP);
+        uint256 odenen = h.odenen(Adres.b32(SAHIP));
+        emit log_named_uint("ayni verilen", verilen);
+        emit log_named_uint("odenen dolar", odenen);
+        assertTrue(verilen == b / 10 || odenen >= (5e6 * 94) / 100, "itilen fiyattan satilmadi");
         assertEq(k.ihaleSayisi(), 0, "ihale acilmadi");
     }
 
+    function _tick(address p) internal view returns (int24 t) {
+        (, bytes memory r) = p.staticcall(abi.encodeWithSelector(IV3Havuz.slot0.selector));
+        assembly { t := mload(add(r, 64)) }
+    }
+
+    /// enough of the wrapped native coin to move its main pool past the limit
+    function _cokWeth() internal virtual returns (uint256) { return 60_000e18; }
+
     function test_isleVeAl_bahsis() public {
-        deal(address(usdc), address(h), 50e6);
+        _paraVer(address(h), 50e6);
         h.beklet(address(k), abi.encode(SepetMesaj.AL, uint64(1), Adres.b32(weth), uint256(1)), 50e6);
         address ben = makeAddr("yurutucu");
         vm.prank(ben);
@@ -265,5 +310,47 @@ contract Kasa4DexHyperEvm is Kasa4DexTaban {
     }
     function _ikiAdimAdaylari() internal pure override returns (address[] memory a) {
         a = new address[](0);
+    }
+}
+
+/// v6 (24 Oct): BNB. The vault's dollar is Dolar6 (6 decimals) over Binance-Peg USDC
+/// (18 decimals); the pools are PancakeSwap v3 (tier 2500, pancakeV3SwapCallback,
+/// a slot0 with a uint32 fee field). WBNB is the middle coin.
+contract Kasa4DexBnb is Kasa4DexTaban {
+    function _zincir() internal pure override returns (string memory) { return "bsc"; }
+    function _adresler() internal pure override returns (address, address, address, uint32) {
+        return (0xb233F129F7255F86d67BDAEA4e8c4f8274Fa70d9, 0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c, 0x0BFbCF9fa4f9C56B0F40a671Ad40E0805A091865, 17);
+    }
+    function _ham() internal pure override returns (address, uint256) { return (0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d, 1e12); }
+    function _cokWeth() internal pure override returns (uint256) { return 400_000e18; }
+    function _ikiAdimAdaylari() internal pure override returns (address[] memory a) {
+        a = new address[](3);
+        a[0] = 0x0E09FaBB73Bd3Ade0a17ECC321fD13a19e81cE82;   // CAKE
+        a[1] = 0x2170Ed0880ac9A755fd29B2688956BD959F933F8;   // ETH (Binance-Peg)
+        a[2] = 0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c;   // BTCB
+    }
+}
+
+/// v6: Monad. Uniswap v3 (factory read from the MON/USDC pool, 24 Oct), WMON.
+contract Kasa4DexMonad is Kasa4DexTaban {
+    function _zincir() internal pure override returns (string memory) { return "monad"; }
+    function _adresler() internal pure override returns (address, address, address, uint32) {
+        return (0x754704Bc059F8C67012fEd69BC8A327a5aafb603, 0x3bd359C1119dA7Da1D913D1C4D2B7c461115433A, 0x204FAca1764B154221e35c0d20aBb3c525710498, 15);
+    }
+    function _cokWeth() internal pure override returns (uint256) { return 50_000_000e18; }
+    function _ikiAdimAdaylari() internal pure override returns (address[] memory a) { a = new address[](0); }
+}
+
+/// v6: Robinhood Chain. The dollar there is USDG (Paxos); Uniswap v3 (factory read from
+/// its pools, 24 Oct; USDG/WETH 0.01% holds ~$3.4M), WETH.
+contract Kasa4DexRobinhood is Kasa4DexTaban {
+    function _zincir() internal pure override returns (string memory) { return "robinhood"; }
+    function _adresler() internal pure override returns (address, address, address, uint32) {
+        return (0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168, 0x0Bd7D308f8E1639FAb988df18A8011f41EAcAD73, 0x1f7d7550B1b028f7571E69A784071F0205FD2EfA, 35);
+    }
+    function _cokWeth() internal pure override returns (uint256) { return 20_000e18; }
+    function _ikiAdimAdaylari() internal pure override returns (address[] memory a) {
+        a = new address[](1);
+        a[0] = 0xdF0992E440dD0be65BD8439b609d6D4366bf1CB5;   // CRCL (USDG pool)
     }
 }

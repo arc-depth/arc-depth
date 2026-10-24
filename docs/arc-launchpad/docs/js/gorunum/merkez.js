@@ -120,6 +120,16 @@ const sec = (lz, compose = 0, composeDeger = 0n) => composeDeger
 /* v4 (23 Oct 2026): a redemption pays the vault orders' messenger fees itself, quoted by the Defter */
 const DEFTER4_ABI = ["function idOf(uint32,bytes32) view returns (uint64)", "function itfaUcreti(uint64,uint256,uint32,bytes32) view returns (uint256)"];
 const v4mu = () => V2 && Number(V2.surum || 2) >= 4;
+/* v6: every basket chain's vault buys from a pool (Arc: Uniswap v4; BNB: PancakeSwap v3; the rest Uniswap v3) */
+const v6mu = () => V2 && Number(V2.surum || 2) >= 6;
+/// v6: can the vault on this EVM chain buy `varlik` from a pool? The same view the vault uses (havuzVar).
+async function evmHavuzVar(zincir, varlik) {
+  const k = V2 && V2.zincir && V2.zincir[zincir.ds];
+  if (!k || !k.kasa) return { yol: false, neden: "no vault on " + zincir.ad };
+  const p = new JsonRpcProvider(zincir.rpc, zincir.id, { staticNetwork: true });
+  const [yol, ikiAdim, simdi] = await new Contract(k.kasa, ["function havuzVar(address) view returns (bool,bool,bool)"], p).havuzVar(varlik);
+  return { yol, ikiAdim, simdi };
+}
 /// The fee (6-decimal dollars) a redemption of `miktar` of `t`, paid to `alici` on `hz`, sends along: the Defter's quote + 10%.
 async function itfaUcreti(t, miktar, hz, alici) {
   const d = new Contract(V2.defter, DEFTER4_ABI, arc);
@@ -369,6 +379,12 @@ export async function ciz({ param } = {}) {
           const u = await uzakVarlikUygunMu(s.zincir.tur, s.adres, V2.uzak);
           if (!u.uygun) return durum(s.zincir.ad + " line refused: " + (u.neden || "the vault there cannot buy this asset."));
         }
+        /* v6: an EVM line's vault must find a pool for the asset, or the line is refused before anything is signed */
+        if (v6mu() && s.zincir.tur === "evm") {
+          durum("Checking that the " + s.zincir.ad + " vault can buy " + s.adres.slice(0, 14) + " from a pool…");
+          const h = await evmHavuzVar(s.zincir, s.adres).catch((e) => ({ yol: false, neden: "could not read the vault (" + (e.shortMessage || e.message || "").slice(0, 60) + ")" }));
+          if (!h.yol) return durum(s.zincir.ad + " line refused: " + (h.neden || "no pool on " + s.zincir.ad + " holds this asset against the dollar, so its vault could not buy it. Pick an asset with a pool there."));
+        }
         durum("Pricing " + s.zincir.ad + " " + s.adres.slice(0, 10) + "… (DexScreener)…");
         const dolar6 = BigInt(Math.round(s.dolar * 1e6));
         sepet.push([s.zincir.domain, varlikKimligi(s.zincir, s.adres), dolar6]);
@@ -455,7 +471,7 @@ export async function ciz({ param } = {}) {
         ];
         await relayIle(ag, ben, toplam, deger, txs, durum);
       }
-      durum("Paid. relay launches on Arc within seconds; your tokens arrive on " + ag.ad + " in a few minutes, the basket is bought by auction over the next hours.");
+      durum("Paid. relay launches on Arc within seconds; your tokens arrive on " + ag.ad + " in a few minutes" + (v6mu() ? "; each basket line is bought from its chain's pool when it reaches $50." : ", the basket is bought by auction over the next hours."));
     } catch (x) { durum((x && x.message) || "Could not launch."); }
   });
   kap.append(panel("Launch", el("div", { sinif: "yigin" }, [
@@ -465,7 +481,7 @@ export async function ciz({ param } = {}) {
     el("div", { sinif: "alan__ipucu", yazi: "First buy $100–$500 (2% launch fee; the rest becomes your tokens at the opening price: $3,500 for the whole supply of 1,000,000,000)." }),
     el("div", { sinif: "girdi-grup" }, [alim, el("span", { sinif: "girdi-grup__son", yazi: "$ first buy" })]), vergi,
     el("div", { sinif: "alan__ipucu", yazi: v4mu()
-      ? "Collateral basket: up to 5 tokens, mixed as you like across the chains below, at least $4 a line, at least $20 in total. Each line waits as USDC on Arc until it reaches $50 (every trade's collateral tax adds to it); then its vault buys the token from that chain's pool (by auction on Arc, BNB, Monad and Robinhood, which have no pool with an average price). Until then the line is redeemable as USDC."
+      ? "Collateral basket: up to 5 tokens, mixed as you like across the chains below, at least $4 a line, at least $20 in total. Each line waits as USDC on Arc until it reaches $50 (every trade's collateral tax adds to it); then its vault buys the token from that chain's pool" + (v6mu() ? " (Uniswap v3 / v4, PancakeSwap v3 on BNB, Raydium, Cetus, Hyperion), within ~3% of a protected price; a token with no pool on its chain is refused here before you sign." : " (by auction on Arc, BNB, Monad and Robinhood, which have no pool with an average price).") + " Until then the line is redeemable as USDC."
       : "Collateral basket: up to 5 tokens, mixed as you like across the chains below, at least $4 a line ($25 on Ethereum), at least $20 in total. Bought into the vaults by auction; every trade's collateral tax re-buys it every $50." }),
     satirlar,
     V2 ? uzakEtiket : el("span"),
@@ -577,7 +593,7 @@ export async function ciz({ param } = {}) {
           : U.encodeFunctionData("itfa", [t, miktar, ARC_DOMAIN, zeroPadValue(ben, 32)]);
         h = await cuzdan.agdaGonder(ag, { to: S().ucu, data: veri, value: "0x0" });
         if ((await makbuz(ag, h)).status !== 1) throw new Error("Reverted: " + h);
-        return durum(v4mu() ? "Burned for redemption: the waiting dollars' share is in your wallet now; each vault sells your share in its own pool (auction where it has none) and pays you on Arc."
+        return durum(v4mu() ? "Burned for redemption: the waiting dollars' share is in your wallet now; each vault sells your share in its own pool" + (v6mu() ? "" : " (auction where it has none)") + " and pays you on Arc."
           : "Burned for redemption; each vault sells your share by auction and pays you on Arc.");
       }
       const ikiz = await new Contract(YAYICI, ["function ikizAdresi(address) view returns (address)"], arc).ikizAdresi(t);
@@ -620,7 +636,7 @@ export async function ciz({ param } = {}) {
       const m = await makbuz(ag, h);
       if (m.status !== 1) throw new Error("Reverted: " + h);
       durum(tur === 0 ? "Sent. Sold in the Arc pool; the USDC is paid on " + yer + " (minutes; Ethereum-anchored chains up to ~20)." :
-        "Sent. Burned for redemption; each vault sells your share " + (v4mu() ? "in its own pool (auction where it has none)" : "by auction") + " and pays on " + yer + ".");
+        "Sent. Burned for redemption; each vault sells your share " + (v6mu() ? "in its own pool" : v4mu() ? "in its own pool (auction where it has none)" : "by auction") + " and pays on " + yer + ".");
     } catch (x) { durum((x && x.message) || "Could not send."); }
   };
   const tasZincir = el("select", { sinif: "girdi" }, Object.keys(UZAK_EID).map((z) => el("option", { attr: { value: z }, yazi: z[0].toUpperCase() + z.slice(1) })));

@@ -22,61 +22,61 @@
   {
    "chainId": 5042,
    "ad": "SepetDefteri",
-   "adres": "0x7eEF8D86fA61277f85499774c3c52DFBE4b288A3",
+   "adres": "0x5BfD03a9a99cC0F87a4af270632689A3B4cE67Ab",
    "eslesme": "exact_match"
   },
   {
    "chainId": 5042,
-   "ad": "SepetKasasi",
-   "adres": "0x5ab6A308D3b19f838C84f11da40C589E99abCA5e",
+   "ad": "SepetKasasiArc",
+   "adres": "0xB83ED7606724c9f4DBd8A7091529b1D582cd120A",
    "eslesme": "exact_match"
   },
   {
    "chainId": 5042,
    "ad": "SepetUcu",
-   "adres": "0xb49C8C2bC47b26690fCC0d18B9185e2C5e858EC4",
+   "adres": "0x024E21dbF5cc6ab2A966c39Ef72e09b0c324F1dE",
    "eslesme": "exact_match"
   },
   {
    "chainId": 5042,
    "ad": "PulseLikiditeKasasi",
-   "adres": "0x8152F4f3a24f10f79E2A7aB6484fEDE2b9735cfE",
+   "adres": "0x97854455B531614cF5D1C75d0B9429D89ADcEd13",
    "eslesme": "exact_match"
   },
   {
    "chainId": 5042,
    "ad": "PulseLaunchpad5",
-   "adres": "0x7DDCd031027d19bf0669b5270A703066f9D964e1",
+   "adres": "0x9D287D6c28DE9816b9827A08814bA8804EF0888C",
    "eslesme": "exact_match"
   },
   {
    "chainId": 5042,
    "ad": "IkizHub",
-   "adres": "0x968b6c1E456ff986904082c60FD5aC961211c5eE",
+   "adres": "0xd99f3D914C9a45a31dFe45015C3dF526151942b4",
    "eslesme": "exact_match"
   },
   {
    "chainId": 5042,
    "ad": "MerkezKapi",
-   "adres": "0x0a6F407BB1Ba948bE255Da49EcCeA4EeD4eC1094",
+   "adres": "0xc4536020F06D9117e2B7c52731B2ce69a8a67C97",
    "eslesme": "exact_match"
   },
   {
    "chainId": 5042,
    "ad": "LaunchEmaneti",
-   "adres": "0xFeB43413eE9c4d9b1141efeC237A5B2DDA62ac82",
+   "adres": "0xfDe9f51f31CDAf2F60BF3B157f1F8237c44387e2",
    "eslesme": "exact_match"
   },
   {
    "chainId": 5042,
    "ad": "PulseHook5",
-   "adres": "0xcE5B5511F5F2463408347c13A44De6086D90eEcC",
+   "adres": "0xA88f1901FE786934Bf0c851605F959e4AB2D2Ecc",
    "eslesme": "exact_match"
   },
   {
    "chainId": 5042,
    "ad": "LaunchpadTeshis",
-   "adres": "0xb85DCF81C15080C1807eB3d3011fDb0aAc027806",
+   "adres": "0x88AdD2A54Ef3814Cf94A2B36A0840DA8b209ed17",
    "eslesme": "exact_match"
   },
   {
@@ -94,13 +94,13 @@
   {
    "chainId": 8453,
    "ad": "SepetKasasi",
-   "adres": "0x08863E6b86AC2cCcAB38Dd8B67226E2275934D92",
+   "adres": "0x298Ec5CfD21460bf362Cd670c78816942D786848",
    "eslesme": "exact_match"
   },
   {
    "chainId": 8453,
    "ad": "AktarmaLZ",
-   "adres": "0xDa6cADe70Cb33A1bb92a286808B441740f92A9e8",
+   "adres": "0x6151fF8F7CA372185807133B1f06e27Db261974d",
    "eslesme": "exact_match"
   },
   {
@@ -118,7 +118,7 @@
   {
    "chainId": 42161,
    "ad": "SepetKasasi",
-   "adres": "0x4d486FcA7468fb171351C1573F2e55fA417c73C1",
+   "adres": "0x6582EaaA0AedDb3020e9898344aF6ef99b8D593F",
    "eslesme": "exact_match"
   },
   {
@@ -136,7 +136,7 @@
   {
    "chainId": 1,
    "ad": "SepetKasasi",
-   "adres": "0x001599dB024a9e37aBEbFFa9493113a5E2d1c6f9",
+   "adres": "0xB55B27BD78E99C1e6c2ad14c858CaC5282E9f8f3",
    "eslesme": "exact_match"
   },
   {
@@ -154,7 +154,7 @@
   {
    "chainId": 43114,
    "ad": "SepetKasasi",
-   "adres": "0xcD702183e3e3F6Ed66d580b93953B34a3f82DE88",
+   "adres": "0xBC01886831daaE54b96BAF228AE9873C53E607A4",
    "eslesme": "exact_match"
   },
   {
@@ -172,7 +172,7 @@
   {
    "chainId": 143,
    "ad": "SepetKasasi",
-   "adres": "0xcD702183e3e3F6Ed66d580b93953B34a3f82DE88",
+   "adres": "0xBC01886831daaE54b96BAF228AE9873C53E607A4",
    "eslesme": "exact_match"
   },
   {
@@ -190,7 +190,7 @@
   {
    "chainId": 999,
    "ad": "SepetKasasi",
-   "adres": "0x4094Eee7c46377C751F419E0E8f7dA6269Eb67D9",
+   "adres": "0xA33f201C4428dd0d4Bb4ac25fFee9DE83024991e",
    "eslesme": "exact_match"
   },
   {
@@ -208,7 +208,7 @@
   {
    "chainId": 56,
    "ad": "SepetKasasi",
-   "adres": "0x30D4BC3D31f2fcF714F3fc407Ebd34aFbB6c4Fb5",
+   "adres": "0xA8769EEEa51baadc0Ec6ae143830BCA64a62E0d4",
    "eslesme": "exact_match"
   },
   {
@@ -226,7 +226,7 @@
   {
    "chainId": 4663,
    "ad": "SepetKasasi",
-   "adres": "0x46E14d98a0597B4D65259F24608625f58d68e2C0",
+   "adres": "0x28A885d6DF6F6c88DeDD881C2D3fACf493CB9518",
    "eslesme": "exact_match"
   },
   {

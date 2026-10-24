@@ -167,7 +167,7 @@ contract TestHaberciLZ {
         try this.disaridan(h) { } catch { s.sadeceUcNokta = true; }
 
         /* the real vault code takes such an order and opens its buy auction */
-        SepetKasasi k = new SepetKasasi(IHaberci(address(h)), USDC, ARC, _b(address(0xDEF)), IV3Fabrika(address(0)), address(0));
+        SepetKasasi k = new SepetKasasi(IHaberci(address(h)), USDC, ARC, _b(address(0xDEF)), IV3Fabrika(address(0)), address(0), address(0), 0);
         USDC.transfer(address(h), 4e6);
         uint256 g0 = gasleft();
         h.lzReceive(o, bytes32(0), abi.encode(_b(address(0xDEF)), _b(address(k)),

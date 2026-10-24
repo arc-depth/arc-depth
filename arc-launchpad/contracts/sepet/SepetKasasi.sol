@@ -20,6 +20,13 @@ interface IV3Havuz {
         external returns (int256 amount0, int256 amount1);
 }
 
+/// Dolar6 (BNB): the vault's dollar is a 6-decimal wrap of Binance-Peg USDC
+/// (18 decimals), which is what the pools hold.
+interface ISarici6 {
+    function sar(uint256 birim) external returns (uint256);
+    function coz(uint256 birim) external returns (uint256);
+}
+
 /// The chain's HaberciLZ: carries out the orders whose dollars have arrived.
 interface IHaberciIsle {
     function isle() external;
@@ -32,7 +39,14 @@ interface IHaberciIsle {
 /// money can never pay another launch, and nothing outside the ledger
 /// (an airdrop, a donation, a flash balance) counts toward anyone's share.
 ///
-/// HOW IT BUYS AND SELLS (v4, 23 Oct 2026)
+/// HOW IT BUYS AND SELLS (v4, 23 Oct 2026; v6, 24 Oct: every chain)
+///   v6: Uniswap v3 and its forks with the same pool interface (PancakeSwap
+///   v3 on BNB: five fee tiers incl. 2500, its own callback name and a
+///   slot0 that is read raw because its fee field is wider; HyperSwap V3 on
+///   HyperEVM; Uniswap v3 on Monad and Robinhood). Where the vault's dollar
+///   is a wrap of the pools' dollar (`ham`, BNB: Dolar6 over Binance-Peg
+///   USDC) it unwraps before a buy and wraps what a sale brings. Arc's vault
+///   is SepetKasasiArc (Uniswap v4, a slowly moving reference price).
 ///   Where this chain has Uniswap v3 (`fabrika` set at deployment), the
 ///   vault swaps on arrival, in the same call that brings the dollars:
 ///     - the pool is found at swap time, ownerless: the USDC/asset pool of
@@ -73,6 +87,10 @@ contract SepetKasasi is IHaberAlici {
     /// native coin the two-step route goes through.
     IV3Fabrika public immutable fabrika;
     address public immutable weth;
+    /// The dollar the pools hold: `usdc` itself, or (BNB) the token `usdc`
+    /// wraps, `olcek` of its smallest units per smallest unit of `usdc`.
+    address public immutable ham;
+    uint256 public immutable olcek;
 
     uint256 public constant BASLANGIC_KAT = 2;
     uint256 public constant TABAN_KAT = 16;
@@ -162,13 +180,17 @@ contract SepetKasasi is IHaberAlici {
         _kilit = false;
     }
 
-    constructor(IHaberci _haberci, IERC20S _usdc, uint32 _defterZincir, bytes32 _defter, IV3Fabrika _fabrika, address _weth) {
+    constructor(IHaberci _haberci, IERC20S _usdc, uint32 _defterZincir, bytes32 _defter, IV3Fabrika _fabrika, address _weth,
+        address _ham, uint256 _olcek)
+    {
         haberci = _haberci;
         usdc = _usdc;
         defterZincir = _defterZincir;
         defter = _defter;
         fabrika = _fabrika;
         weth = _weth;
+        ham = _ham == address(0) ? address(_usdc) : _ham;
+        olcek = _ham == address(0) ? 1 : _olcek;
     }
 
     /* ---- orders, from the Defter only ------------------------------ */
@@ -186,8 +208,7 @@ contract SepetKasasi is IHaberAlici {
                 _tetikBahsis += BAHSIS;
             }
             address varlik = Adres.evm(varlik32);
-            (address h1,) = _yol(varlik);
-            if (h1 == address(0)) {
+            if (!_rotaVar(varlik)) {
                 /* no Uniswap route here: the v2 auction */
                 usdcBakiye[l] += gelen;
                 taahhut[l] += gelen;
@@ -248,10 +269,16 @@ contract SepetKasasi is IHaberAlici {
         _ilan(ALIM, l, varlik, dolar, beklenen * BASLANGIC_KAT, 0, bytes32(0));
     }
 
+    /// Is there a pool route for `varlik` here (else: the auction fallback).
+    function _rotaVar(address varlik) internal view virtual returns (bool) {
+        (address h1,) = _yol(varlik);
+        return h1 != address(0);
+    }
+
     /// Spend launch `l`'s waiting dollars for `varlik` along its route, within
     /// the price limit. A two-step route's leftover middle coin stays the
     /// launch's (bakiye[l][weth]) and is paid out in redemptions.
-    function _dexAl(uint64 l, address varlik) internal {
+    function _dexAl(uint64 l, address varlik) internal virtual {
         uint256 d = alimBekleyen[l][varlik];
         if (d == 0) return;
         if (gasleft() < 2 * TAKAS_GAZ) {
@@ -260,26 +287,47 @@ contract SepetKasasi is IHaberAlici {
         }
         (address h1, address h2) = _yol(varlik);
         if (h1 == address(0)) return;
+        uint256 hm = _hamaCevir(d);
         uint256 giren;
         uint256 cikan;
         if (h2 == address(0)) {
-            (giren, cikan) = _takas(h1, address(usdc), varlik, d);
+            (giren, cikan) = _takas(h1, ham, varlik, hm);
         } else {
             uint256 ara;
-            (giren, ara) = _takas(h1, address(usdc), weth, d);
+            (giren, ara) = _takas(h1, ham, weth, hm);
             uint256 ara2;
             if (ara > 0) (ara2, cikan) = _takas(h2, weth, varlik, ara);
             if (ara > ara2) bakiye[l][weth] += ara - ara2;
         }
+        /* what the swap did not take goes back into the vault's dollar */
+        uint256 harcanan = d - _usdcyeCevir(hm - giren);
         if (giren == 0) {
             emit Bekliyor(l, varlik, d);
             return;
         }
-        alimBekleyen[l][varlik] = d - giren;
+        alimBekleyen[l][varlik] = d - harcanan;
         bakiye[l][varlik] += cikan;
-        if (cikan > 0) sonFiyat[varlik] = Fiyat(uint128(giren), uint128(cikan));
-        emit Alindi(l, varlik, giren, cikan);
-        if (d > giren) emit Bekliyor(l, varlik, d - giren);
+        if (cikan > 0) sonFiyat[varlik] = Fiyat(uint128(harcanan), uint128(cikan));
+        emit Alindi(l, varlik, harcanan, cikan);
+        if (d > harcanan) emit Bekliyor(l, varlik, d - harcanan);
+    }
+
+    /// The vault's dollars `d` as the pools' dollar (BNB: unwrapped).
+    function _hamaCevir(uint256 d) internal returns (uint256) {
+        if (ham == address(usdc) || d == 0) return d;
+        ISarici6(address(usdc)).coz(d);
+        return d * olcek;
+    }
+
+    /// The pools' dollar `m` back into the vault's dollar (BNB: wrapped; less
+    /// than one smallest unit of it stays here as dust). Returns the units.
+    function _usdcyeCevir(uint256 m) internal returns (uint256) {
+        if (ham == address(usdc) || m == 0) return m;
+        uint256 n = m / olcek;
+        if (n == 0) return 0;
+        IERC20S(ham).approve(address(usdc), n * olcek);
+        ISarici6(address(usdc)).sar(n);
+        return n;
     }
 
     /// A holder burned `miktar` of `arz`: their share of the launch's dollars
@@ -306,7 +354,7 @@ contract SepetKasasi is IHaberAlici {
     }
 
     /// The holder's share of `v`: sold for dollars (returned), the rest handed over or auctioned.
-    function _payiSat(uint64 l, address v, uint256 miktar, uint256 arz, uint32 hz, bytes32 alici) internal returns (uint256 dolar) {
+    function _payiSat(uint64 l, address v, uint256 miktar, uint256 arz, uint32 hz, bytes32 alici) internal virtual returns (uint256 dolar) {
         uint256 pay = (bakiye[l][v] * miktar) / arz;
         if (pay == 0) return 0;
         bakiye[l][v] -= pay;
@@ -314,14 +362,15 @@ contract SepetKasasi is IHaberAlici {
         (address h1, address h2) = gasleft() < 2 * TAKAS_GAZ ? (address(0), address(0)) : _yol(v);
         if (h1 != address(0)) {
             if (h2 == address(0)) {
-                (satilan, dolar) = _takas(h1, v, address(usdc), pay);
+                (satilan, dolar) = _takas(h1, v, ham, pay);
             } else {
                 uint256 ara;
                 (satilan, ara) = _takas(h1, v, weth, pay);
                 uint256 ara2;
-                if (ara > 0) (ara2, dolar) = _takas(h2, weth, address(usdc), ara);
+                if (ara > 0) (ara2, dolar) = _takas(h2, weth, ham, ara);
                 if (ara > ara2) _artan(l, weth, ara - ara2, hz, alici);
             }
+            dolar = _usdcyeCevir(dolar);
             if (satilan > 0) {
                 if (dolar > 0) sonFiyat[v] = Fiyat(uint128(dolar), uint128(satilan));
                 emit Satildi(l, v, satilan, dolar);
@@ -361,20 +410,21 @@ contract SepetKasasi is IHaberAlici {
     /// DERINLIK dollars, else two pools through weth, else the thin direct
     /// pool. Each pool is the most liquid of the four fee tiers; zero: no route.
     function _yol(address varlik) internal view returns (address h1, address h2) {
-        if (address(fabrika) == address(0) || varlik == address(usdc)) return (address(0), address(0));
-        h1 = _enIyi(address(usdc), varlik);
+        if (address(fabrika) == address(0) || varlik == address(usdc) || varlik == ham) return (address(0), address(0));
+        h1 = _enIyi(ham, varlik);
         if (weth == address(0) || varlik == weth) return (h1, address(0));
-        if (h1 != address(0) && usdc.balanceOf(h1) >= DERINLIK) return (h1, address(0));
-        address a = _enIyi(address(usdc), weth);
+        if (h1 != address(0) && IERC20S(ham).balanceOf(h1) >= DERINLIK * olcek) return (h1, address(0));
+        address a = _enIyi(ham, weth);
         address b = _enIyi(weth, varlik);
         if (a == address(0) || b == address(0)) return (h1, address(0));
         return (a, b);
     }
 
     function _enIyi(address a, address b) internal view returns (address enIyi) {
-        uint24[4] memory ucretler = [uint24(100), 500, 3000, 10000];
+        /* Uniswap's four tiers and PancakeSwap's 2500 (a tier a factory lacks returns no pool) */
+        uint24[5] memory ucretler = [uint24(100), 500, 2500, 3000, 10000];
         uint128 enCok;
-        for (uint256 i = 0; i < 4; i++) {
+        for (uint256 i = 0; i < 5; i++) {
             address p = fabrika.getPool(a, b, ucretler[i]);
             if (p == address(0) || p.code.length == 0) continue;
             uint128 L = IV3Havuz(p).liquidity();
@@ -413,7 +463,8 @@ contract SepetKasasi is IHaberAlici {
         if (sinir <= TickMath.MIN_TICK) sinir = TickMath.MIN_TICK + 1;
         if (sinir >= TickMath.MAX_TICK) sinir = TickMath.MAX_TICK - 1;
         uint160 sp = TickMath.getSqrtPriceAtTick(sinir);
-        (uint160 simdi,,,,,,) = IV3Havuz(p).slot0();
+        uint160 simdi = _fiyat(p);
+        if (simdi == 0) return (0, 0);
         /* already past the limit: nothing to do now */
         if (sifirdanBire ? simdi <= sp : simdi >= sp) return (0, 0);
         uint256 once = IERC20S(cikti).balanceOf(address(this));
@@ -426,11 +477,23 @@ contract SepetKasasi is IHaberAlici {
         if (giren > 0) cikan = IERC20S(cikti).balanceOf(address(this)) - once;
     }
 
+    /// The pool's sqrt price, read from the first word of slot0: PancakeSwap v3's
+    /// slot0 has a uint32 fee field where Uniswap's has uint8, so it is not
+    /// decoded as a whole.
+    function _fiyat(address p) internal view returns (uint160 sp) {
+        (bool ok, bytes memory r) = p.staticcall(abi.encodeWithSelector(IV3Havuz.slot0.selector));
+        if (!ok || r.length < 32) return 0;
+        sp = uint160(uint256(bytes32(r)));
+    }
+
     /// Uniswap v3 asks for what the swap owes: only the pool we are swapping in.
     function uniswapV3SwapCallback(int256 a0, int256 a1, bytes calldata veri) external { _borcOde(a0, a1, veri); }
 
     /// The same, as HyperSwap V3 (HyperEVM's Uniswap v3 fork) names it.
     function hyperswapV3SwapCallback(int256 a0, int256 a1, bytes calldata veri) external { _borcOde(a0, a1, veri); }
+
+    /// The same, as PancakeSwap v3 (BNB) names it.
+    function pancakeV3SwapCallback(int256 a0, int256 a1, bytes calldata veri) external { _borcOde(a0, a1, veri); }
 
     function _borcOde(int256 a0, int256 a1, bytes calldata veri) internal {
         if (msg.sender != _havuz || _havuz == address(0)) revert SadeceHavuz();
@@ -441,7 +504,7 @@ contract SepetKasasi is IHaberAlici {
 
     /// For the page: can an asset be chosen for this chain's basket line,
     /// and can it be bought right now (the pools' oracles reach 30 minutes)?
-    function havuzVar(address varlik) external view returns (bool yolVar, bool ikiAdim, bool simdiAlinir) {
+    function havuzVar(address varlik) external view virtual returns (bool yolVar, bool ikiAdim, bool simdiAlinir) {
         (address h1, address h2) = _yol(varlik);
         if (h1 == address(0)) return (false, false, false);
         (, bool o1) = _twap(h1);

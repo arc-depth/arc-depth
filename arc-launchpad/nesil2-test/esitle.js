@@ -24,9 +24,13 @@ for (const f of ["SepetKasasi.sol", "SepetUcu.sol", "VergiKovasi.sol", "PulseHoo
   fs.writeFileSync(path.join(H, "sepet", f), fs.readFileSync(path.join(K, "sepet", "v2", f), "utf8")
     .replace(/from "\.\.\/IHaberci\.sol"/g, 'from "./IHaberci.sol"').replace(/from "\.\.\/\.\.\/nesil4\//g, 'from "../nesil4/'));
 try { fs.unlinkSync(path.join(H, "sepet", "Cikis.sol")); } catch (e) { /* gone already */ }
+/* SepetKasasiArc (v6, Uniswap v4 on Arc) builds on the current vault: it lives beside it in sepet4 */
+try { fs.unlinkSync(path.join(H, "sepet", "SepetKasasiArc.sol")); } catch (e) { /* not copied */ }
 fs.mkdirSync(path.join(H, "sepet4"), { recursive: true });
 fs.writeFileSync(path.join(H, "sepet4", "SepetKasasi.sol"),
   fs.readFileSync(path.join(K, "sepet", "SepetKasasi.sol"), "utf8").replace('from "./IHaberci.sol"', 'from "../sepet/IHaberci.sol"'));
+fs.writeFileSync(path.join(H, "sepet4", "SepetKasasiArc.sol"),
+  fs.readFileSync(path.join(K, "sepet", "SepetKasasiArc.sol"), "utf8").replace('from "./IHaberci.sol"', 'from "../sepet/IHaberci.sol"'));
 fs.mkdirSync(path.join(H, "taban"), { recursive: true });
 for (const f of fs.readdirSync(path.join(K, "taban"))) fs.copyFileSync(path.join(K, "taban", f), path.join(H, "taban", f));
 fs.mkdirSync(path.join(H, "isim"), { recursive: true });
