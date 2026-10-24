@@ -1,0 +1,14 @@
+{
+ "aciklama": "IPFS CIDv1 of docs/model/onnx-community/Qwen2.5-0.5B-Instruct exactly as `ipfs add -r --cid-version=1` builds it (kubo defaults: raw leaves, 256 KiB fixed chunks, balanced DAG of 174 links). Computed locally on 24 Oct 2026 (C:/Users/omen/araclar/ipfs/cid.mjs); nothing pinned by us. Anyone can serve the model by adding that folder to IPFS: the root CID must come out the same.",
+ "kok": "bafybeieb6fvjr74xfzlhtc2wkct3b3w56stayyebv6pyqlgbg5mcftxqqy",
+ "onnx": "bafybeiffxiwp6baapo5s4mcasisbta5fxkrvzrxhmc6afyn7lc37gcbkke",
+ "parcalar": {
+  "model_q4f16.onnx.parca0": "bafybeiczkr3wneeldoxy7um2keoxda4bgqs57fyfjbun6vcisfuszjgejq",
+  "model_q4f16.onnx.parca1": "bafybeic7kuksgvbzvreuq4ucjvgd6aa73wjd76jjhfolsnhbgwng4hewr4",
+  "model_q4f16.onnx.parca2": "bafybeihyhj3wmyisgjw3snymvtnwtfrtkfrwomxydoewicfuljpur4mese",
+  "model_q4f16.onnx.parca3": "bafybeic53stp3owlfyzwpf6re6nmbyycnd3rowp3kqpnb44tfxudoam6rq",
+  "model_q4f16.onnx.parca4": "bafybeicliuvyydgdk4owzz5qa4hvbhvhxlobmlvlktgjq3pashlqnnpfim",
+  "model_q4f16.onnx.parca5": "bafybeictt2oj5klg4ytxvviilo7jd5ad47bi5ynuvmvdyuzx32urma4xiq",
+  "model_q4f16.parcalar.json": "bafkreieje75flbyzdktm4fpqv4pzeuitjhrtw47pbv6ylxbpgbd4qfgbfm"
+ }
+}

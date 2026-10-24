@@ -75,6 +75,12 @@
   },
   {
    "chainId": 5042,
+   "ad": "LaunchpadTeshis",
+   "adres": "0xb85DCF81C15080C1807eB3d3011fDb0aAc027806",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 5042,
    "ad": "IkizYayici",
    "adres": "0x24C644e7C29F6582B892cb5D89d7b23Bc34d1bD9",
    "eslesme": "exact_match"

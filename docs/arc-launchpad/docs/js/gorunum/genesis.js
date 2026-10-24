@@ -25,6 +25,7 @@ import { GENESIS } from "../genesis-adres.js";
 import { cokluOku, rpcPost } from "../ag-okur.js";
 import { cuzdan } from "../cuzdan.js";
 import { Interface, toUtf8Bytes, toUtf8String, hexlify } from "../../vendor/ethers.min.js";
+import { teshisEt, zincirAdi } from "../teshis.js";
 
 const CEKIRDEK = [
   "function kayitSayisi(uint32) view returns (uint256)",
@@ -99,7 +100,7 @@ export async function bilgiler(ag) {
   const sayilar = await cokluOku(ag, zincirler().map((z) => [GENESIS.cekirdek, CEKIRDEK, "kayitSayisi", [z.eid]]));
   const istek = [];
   zincirler().forEach((z, i) => { for (let s = 0; s < Number(sayilar[i] || 0); s++) istek.push([GENESIS.cekirdek, CEKIRDEK, "kayitVeri", [z.eid, s], z, s]); });
-  const out = [];
+  const out = [], eskiyen = new Set();
   for (let i = 0; i < istek.length; i += 40) {
     const parca = istek.slice(i, i + 40);
     const r = await cokluOku(ag, parca.map((x) => x.slice(0, 4)));
@@ -109,10 +110,15 @@ export async function bilgiler(ag) {
       if (Number(k.tur) !== 2 || Number(k.saklama) !== 0) return;
       let metin; try { metin = toUtf8String(v); } catch (e) { return; }
       if (konuKaydi(metin)) return;          // a paid topic's title, not a free fact
-      out.push({ metin, zincir: parca[j][4].ad, sira: parca[j][5] });
+      /* {"v":2,"eskir":{zincir,siralar}}: memory is append-only, so a newer record names the ones it replaces */
+      if (metin.startsWith('{"v":2')) {
+        try { const o = JSON.parse(metin); if (o.eskir) for (const s of o.eskir.siralar || []) eskiyen.add(o.eskir.zincir + ":" + s); } catch (e) { /* not a marker */ }
+        return;
+      }
+      out.push({ metin, zincir: parca[j][4].ad, eid: parca[j][4].eid, sira: parca[j][5] });
     });
   }
-  return out;
+  return out.filter((b) => !eskiyen.has(b.eid + ":" + b.sira));
 }
 
 const kelimeler = (s) => (s.toLocaleLowerCase("tr").match(/[\p{L}\p{N}]{3,}/gu) || []);
@@ -336,6 +342,8 @@ export async function ciz() {
     soru, zincirdeEtiket, el("div", { sinif: "satir" }, [sor, yukle]), durum, kayit
   ])));
 
+  kap.append(await teshisBolumu(arc));
+
   /* paid knowledge: titles are on chain, the text is sold through the Atlas API */
   const kl = arcCanli ? await konular(arc).catch(() => []) : [];
   kap.append(panel("What GENESIS knows (paid answers)", el("div", { sinif: "yigin" }, [
@@ -358,4 +366,57 @@ export async function ciz() {
     if (korkuluk) kap.append(panel("Guardrails (immutable, in the contract)", el("div", { sinif: "yazi yazi--kucuk", yazi: korkuluk })));
   }
   return kap;
+}
+
+
+/* ---- Diagnose a launch: GENESIS reads the launch's health from the chains and offers the fixes ---- */
+async function teshisBolumu(arc) {
+  const V = await fetch("veri/sepet-v2.json", { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+  const girdi = el("input", { sinif: "girdi", attr: { placeholder: "Token address on Arc (0x…)", spellcheck: "false" } });
+  const dugme = el("button", { sinif: "dugme dugme--marka", attr: { type: "button" }, yazi: "Diagnose" });
+  const durum = el("div", { sinif: "yazi yazi--kucuk yazi--sessiz" });
+  const sonuc = el("div", { sinif: "yigin" });
+  dugme.addEventListener("click", async () => {
+    sonuc.replaceChildren();
+    if (!V || !V.teshis) { durum.textContent = "The diagnosis contract is not configured."; return; }
+    try {
+      durum.textContent = "Reading the launch from Arc and its twins from every chain…";
+      const t = await teshisEt(V, String(girdi.value || ""));
+      const r = t.rapor;
+      if (t.var_) sonuc.append(el("div", { sinif: "yazi yazi--kucuk mono", yazi: "Basket lines: " + r.satirlar.map((s) => zincirAdi(Number(s.zincir)) + " $" + (Number(s.biriken) / 1e6).toFixed(2) +
+        (s.lotHazir ? " (lot ready)" : "") + (s.kasaDolu ? " · vault holds it" : "")).join(" | ") + "   ·   tax bucket $" + (Number(r.kovaDolar) / 1e6).toFixed(2) +
+        "   ·   founder income $" + (Number(r.vekilDolar) / 1e6).toFixed(2) + "   ·   queued orders " + t.emirler.length }));
+      if (t.ikizler && t.ikizler.length) sonuc.append(el("div", { sinif: "yazi yazi--kucuk mono yazi--sessiz", yazi: "Twins: " + t.ikizler.map((k) => k.ag + (k.hata ? " (unread)" : k.var_ === false ? " none" :
+        " " + k.oradaIslenen + "/" + k.arcdanGiden + " in, " + k.arcdaIslenen + "/" + k.oradanGiden + " back")).join(" · ") }));
+      if (!t.sorunlar.length) sonuc.append(not("No problem found: nothing waiting, nothing queued, every twin message delivered.", "bilgi"));
+      for (const s of t.sorunlar) {
+        const satir = el("div", { sinif: "yigin yigin--sik" }, [el("div", { yazi: "• " + s.metin })]);
+        if (s.duzelt) {
+          const b = el("button", { sinif: "dugme dugme--sessiz", attr: { type: "button" }, yazi: s.duzelt.ad + (s.duzelt.bahsis ? " — you receive " + s.duzelt.bahsis : "") });
+          const d = el("div", { sinif: "yazi yazi--kucuk yazi--sessiz" });
+          b.addEventListener("click", async () => {
+            try {
+              if (!(cuzdan.hesap() || (await cuzdan.bagla()))) { d.textContent = "Connect a wallet first."; return; }
+              const ag = AGLAR.find((a) => a.anahtar === "arc");
+              if (s.duzelt.onay) {
+                d.textContent = "Approve the exact fee in your wallet…";
+                await cuzdan.agdaGonder(ag, { to: s.duzelt.onay.token, data: new Interface(["function approve(address,uint256)"]).encodeFunctionData("approve", [s.duzelt.onay.harcayan, s.duzelt.onay.miktar]) });
+              }
+              d.textContent = "Confirm in your wallet…";
+              const h = await cuzdan.agdaGonder(ag, { to: s.duzelt.hedef, data: s.duzelt.veri, ...(s.duzelt.gaz ? { gas: s.duzelt.gaz } : {}) });
+              d.textContent = "Sent: " + h + ". Diagnose again in a few seconds to see the result.";
+            } catch (e) { d.textContent = (e && (e.shortMessage || e.message)) || "Could not send."; }
+          });
+          satir.append(b, d);
+        }
+        sonuc.append(satir);
+      }
+      durum.textContent = "Read from the chains just now. Nothing was stored.";
+    } catch (e) { durum.textContent = (e && (e.shortMessage || e.message)) || "Could not read this launch."; }
+  });
+  return panel("Diagnose a launch", el("div", { sinif: "yigin" }, [
+    not("GENESIS reads a launch's health straight from the chains: basket lines waiting at $50, queued redemption orders, the tax bucket, the founder's income, and every LayerZero message between the token and its twins. Each fix is a public call anyone may make from their own wallet; where the contract pays a tip, it goes to you.", "bilgi"),
+    el("div", { sinif: "satir" }, [girdi, dugme]), durum, sonuc,
+    el("div", { sinif: "yazi yazi--kucuk yazi--sessiz", yazi: V && V.teshis ? "LaunchpadTeshis on Arc: " + V.teshis + " (view only, no owner)" : "" })
+  ]));
 }
