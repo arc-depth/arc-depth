@@ -3,7 +3,7 @@ Contact: https://github.com/arc-depth/arc-depth/issues
 Contact: https://x.com/Arcdepthoock
 Expires: 2027-10-24T00:00:00.000Z
 Preferred-Languages: en, tr
-Canonical: https://arc-depth.github.io/arc-depth/arc-launchpad/docs/.well-known/security.txt
-Policy: https://arc-depth.github.io/arc-depth/arc-launchpad/docs/app.html#/guvenlik
+Canonical: https://arcpulse.app/.well-known/security.txt
+Policy: https://arcpulse.app/arc-launchpad/docs/app.html#/guvenlik
 # Contract sources are published and verified on Sourcify (exact match):
 # https://github.com/arc-depth/arc-depth/tree/main/arc-launchpad

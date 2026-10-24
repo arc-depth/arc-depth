@@ -41,7 +41,7 @@ if (typeof window !== "undefined") {
 /* WalletConnect: any wallet, by QR on a computer or by link on a phone.
    The project id is public by design (it names the site to the relay, it
    grants nothing); the relay only serves the domains allowed for it on
-   dashboard.reown.com (arc-depth.github.io). The 2 MB bundle is loaded on
+   dashboard.reown.com (arcpulse.app; arc-depth.github.io before 24 Oct 2026). The 2 MB bundle is loaded on
    the click, and on load only when a session was left open here. */
 const WC_PROJE = "3732e09480d6f286889688c0f4a70918";
 /* HyperEVM (999) is left out on purpose: chainid.network lists 999 as
@@ -71,7 +71,7 @@ async function wcKur() {
       name: "ARC PULSE",
       description: "Token launchpad with a collateral vault behind every token",
       url: location.origin,
-      icons: ["https://arc-depth.github.io/arc-depth/arc-launchpad/docs/veri/ikon.png"],
+      icons: [location.origin + "/arc-launchpad/docs/veri/ikon.png"],
     },
   });
   _wc.on("accountsChanged", (h) => { _hesap = h && h.length ? h[0] : null; duyur(); });
