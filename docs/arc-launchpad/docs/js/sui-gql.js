@@ -144,12 +144,22 @@ const olaylar = (e) => ((e && e.events && e.events.nodes) || []).map((x, i) => (
   packageId: x.transactionModule && x.transactionModule.package.address, transactionModule: x.transactionModule && x.transactionModule.name,
   sender: x.sender && x.sender.address, type: x.contents.type.repr, parsedJson: x.contents.json }));
 
+/* object changes in the JSON-RPC shape, for a simulated or an executed transaction */
+const DEGISIM = `objectChanges(first: 50) { nodes { address idCreated idDeleted outputState { address version digest ${SAHIP} asMoveObject { contents { type { repr } } } asMovePackage { address } } } }`;
+const degisimler = (nodes) => (nodes || []).map((c) => {
+  const o = c.outputState;
+  if (o && o.asMovePackage) return { type: "published", packageId: o.address, version: String(o.version), digest: o.digest, modules: [] };
+  if (c.idDeleted) return { type: "deleted", objectId: c.address };
+  const ortak = { objectId: c.address, objectType: o && o.asMoveObject ? o.asMoveObject.contents.type.repr : null, version: o ? String(o.version) : null, digest: o ? o.digest : null, owner: o ? sahip(o.owner) : null };
+  return { type: c.idCreated ? "created" : "mutated", ...ortak };
+});
+
 async function dryRun(b64) {
-  const d = await gq(`query($t: JSON!) { simulateTransaction(transaction: $t) { ${ETKI} } }`, { t: { bcs: { value: b64 } } });
+  const d = await gq(`query($t: JSON!) { simulateTransaction(transaction: $t) { ${ETKI} effects { ${DEGISIM} } } }`, { t: { bcs: { value: b64 } } });
   const e = d.simulateTransaction.effects;
   const g = (e.gasEffects && e.gasEffects.gasSummary) || {};
   return { effects: { messageVersion: "v1", status: durum(e), gasUsed: { computationCost: String(g.computationCost || 0), storageCost: String(g.storageCost || 0),
-    storageRebate: String(g.storageRebate || 0), nonRefundableStorageFee: String(g.nonRefundableStorageFee || 0) } }, balanceChanges: [], objectChanges: [], events: olaylar(e), input: null };
+    storageRebate: String(g.storageRebate || 0), nonRefundableStorageFee: String(g.nonRefundableStorageFee || 0) } }, balanceChanges: [], objectChanges: degisimler(e.objectChanges && e.objectChanges.nodes), events: olaylar(e), input: null };
 }
 
 async function devInspect(sender, kindB64) {
@@ -164,18 +174,10 @@ async function devInspect(sender, kindB64) {
 }
 
 async function islem(digest) {
-  const d = await gq(`query($d: String!) { transaction(digest: $d) { digest effects { status executionError { message } timestamp
-    objectChanges(first: 50) { nodes { address idCreated idDeleted outputState { address version digest ${SAHIP} asMoveObject { contents { type { repr } } } asMovePackage { address } } } } } } }`, { d: digest });
+  const d = await gq(`query($d: String!) { transaction(digest: $d) { digest effects { status executionError { message } timestamp ${DEGISIM} } } }`, { d: digest });
   const t = d.transaction;
   if (!t || !t.effects) throw new Error("Could not find the referenced transaction [" + digest + "]");
-  const degisim = t.effects.objectChanges.nodes.map((c) => {
-    const o = c.outputState;
-    if (o && o.asMovePackage) return { type: "published", packageId: o.address, version: String(o.version), digest: o.digest, modules: [] };
-    if (c.idDeleted) return { type: "deleted", objectId: c.address };
-    const ortak = { objectId: c.address, objectType: o && o.asMoveObject ? o.asMoveObject.contents.type.repr : null, version: o ? String(o.version) : null, digest: o ? o.digest : null, owner: o ? sahip(o.owner) : null };
-    return { type: c.idCreated ? "created" : "mutated", ...ortak };
-  });
-  return { digest: t.digest, effects: { status: durum(t.effects) }, objectChanges: degisim, timestampMs: t.effects.timestamp ? String(Date.parse(t.effects.timestamp)) : null };
+  return { digest: t.digest, effects: { status: durum(t.effects) }, objectChanges: degisimler(t.effects.objectChanges.nodes), timestampMs: t.effects.timestamp ? String(Date.parse(t.effects.timestamp)) : null };
 }
 
 async function dinamikAlanlar(parent, imlec, limit) {
