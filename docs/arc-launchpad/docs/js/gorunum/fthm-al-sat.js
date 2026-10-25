@@ -13,7 +13,8 @@
  * Measured on mainnet 15 Oct 2026: Base 1.568 USDC -> 79,086 FTHM on Base;
  * Base 50,000 FTHM -> 0.746 USDC on Arc (rapor/fthm-her-zincir.json).
  * =========================================================================== */
-import { el, sayfaUst, panel, not, temizle } from "../ui.js";
+import { el, sayfaUst, panel, not, temizle, olcum } from "../ui.js";
+import { FTHM, fthmDurum } from "../fthm-veri.js";
 import { AGLAR } from "../aglar.js";
 import { cuzdan } from "../cuzdan.js";
 import { JsonRpcProvider, Contract, Interface, AbiCoder, zeroPadValue } from "../../vendor/ethers.min.js";
@@ -45,8 +46,46 @@ async function makbuz(ag, hash) {
 
 export async function ciz() {
   const kap = el("div", { sinif: "yigin" });
-  kap.append(sayfaUst("FTHM on any chain", "One market on Arc, reachable from every chain"));
-  kap.append(not("Buying and selling both go through FTHM's pool on Arc, so the price is the same wherever you hold it. You sign on your own chain; you never need Arc gas to buy.", "bilgi"));
+  kap.append(sayfaUst("FTHM", "The token every ARC PULSE trade buys and burns — one market on Arc, reachable from every chain"));
+
+  /* ---- live tokenomics, read from Arc on every visit ---- */
+  const tok = (x) => Math.round(x).toLocaleString("en-US");
+  const usd = (x) => "$" + (x >= 1000 ? Math.round(x).toLocaleString("en-US") : x.toPrecision(4));
+  const canli = el("div", { sinif: "izgara izgara--olcum" }, [olcum("Price", "reading…"), olcum("Supply", "reading…")]);
+  const dagilim = el("div", { sinif: "yigin" });
+  fthmDurum(arc).then((d) => {
+    temizle(canli);
+    canli.append(
+      olcum("Price", usd(d.fiyat), tok(d.fthmPerUsdc) + " FTHM per $1, from the Arc pool"),
+      olcum("Fully diluted value", usd(d.fdv), "price × supply"),
+      olcum("Market cap", usd(d.piyasaDegeri), "price × circulating"),
+      olcum("Total supply", tok(d.arz), "fixed: the token has no mint function"),
+      olcum("Circulating", tok(d.dolasim), "supply − staking − vesting − burned"),
+      olcum("Burned", tok(d.yakilan), "bought by ARC PULSE trades and burned"));
+    temizle(dagilim);
+    dagilim.append(el("div", { sinif: "tablo-sarmal" }, [el("table", { sinif: "tablo tablo--kart" }, [
+      el("thead", {}, [el("tr", {}, ["Allocation", "Now on chain", "Held by"].map((h) => el("th", { yazi: h })))]),
+      el("tbody", {}, [
+        ["Staking rewards", tok(d.stake), FTHM.stake, "paid out to stakers over time"],
+        ["Founder vesting", tok(d.vesting), FTHM.vesting, "unlocks on schedule"],
+        ["Market", tok(d.arz - d.stake - d.vesting - d.yakilan), FTHM.poolManager, "the Arc pool and holders"],
+        ["Burned", tok(d.yakilan), "0x000000000000000000000000000000000000dEaD", "gone for good"],
+      ].map(([ad, mik, adr, alt]) => el("tr", {}, [
+        el("td", { attr: { "data-et": "Allocation" } }, [el("div", { yazi: ad }), el("div", { sinif: "yazi yazi--kucuk yazi--sessiz", yazi: alt })]),
+        el("td", { sinif: "sayi", attr: { "data-et": "Now on chain" }, yazi: mik }),
+        el("td", { sinif: "mono", attr: { "data-et": "Held by" } }, [el("a", { attr: { href: "https://explorer.arc.io/address/" + adr, target: "_blank", rel: "noopener" }, yazi: adr.slice(0, 6) + "…" + adr.slice(-4) })]),
+      ]))),
+    ])]));
+  }).catch(() => { temizle(canli); canli.append(olcum("Live figures", "Arc RPC busy — reload in a moment")); });
+  kap.append(panel("FTHM live from Arc", el("div", { sinif: "yigin" }, [canli, dagilim])));
+  kap.append(panel("Why FTHM", el("div", { sinif: "yigin" }, [
+    el("p", { yazi: "Every trade on ARC PULSE sets aside 0.2% for FTHM. The trades themselves buy FTHM from its pool on Arc and burn it — no team wallet in between, nobody has to press a button. More launches and more trading on ARC PULSE mean more FTHM bought and burned." }),
+    el("p", { yazi: "One pool on Arc, the same price on every chain: FTHM moves to Base, Arbitrum, Ethereum, BNB, Avalanche, Monad, HyperEVM, Robinhood, Solana, Sui and Aptos over LayerZero." }),
+    el("p", {}, ["Contracts: ", el("a", { attr: { href: "https://repo.sourcify.dev/5042/" + FTHM.token, target: "_blank", rel: "noopener" }, yazi: "FTHM (source verified on Sourcify)" }),
+      " · ", el("a", { attr: { href: "https://repo.sourcify.dev/5042/" + FTHM.yakici, target: "_blank", rel: "noopener" }, yazi: "FTHM burner" }),
+      " · ", el("a", { attr: { href: "#/guvenlik" }, yazi: "every live contract" })]),
+  ])));
+  kap.append(not("Buy from any chain below: you pay in your chain's USDC and receive FTHM on the same chain. Buying and selling both go through FTHM's pool on Arc, so the price is the same wherever you hold it.", "bilgi"));
 
   let ag = evmler().find((a) => a.anahtar === "base") || evmler()[0];
   const zincirSec = el("select", { sinif: "girdi" }, evmler().map((a) => el("option", { attr: { value: a.anahtar }, yazi: a.ad })));
@@ -113,7 +152,7 @@ export async function ciz() {
   });
 
   kap.append(panel("Your chain", zincirSec));
-  kap.append(panel("Buy", el("div", { sinif: "yigin" }, [
+  kap.append(panel("Buy FTHM from any chain", el("div", { sinif: "yigin" }, [
     el("div", { sinif: "alan__ipucu", yazi: "Pay in your chain's USDC. The FTHM arrives on the same chain." }),
     el("div", { sinif: "girdi-grup" }, [alTutar, el("span", { sinif: "girdi-grup__son", yazi: "USDC" })]), alDugme, alDurum])));
   kap.append(panel("Sell", el("div", { sinif: "yigin" }, [
