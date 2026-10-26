@@ -115,7 +115,7 @@ export const YOLLAR = [
     grup: "piyasa",
     ikon: "pusula",
     durum: "canli",
-    ozet: "Buy FTHM with your chain's USDC or sell it, from any chain, through the one pool on Arc.",
+    ozet: "Buy and sell FTHM on Arc now; paying with your own chain's USDC from the other chains opens next.",
     kaynak: "relay.link + KapiAg + FTHM OFT",
     sekme: true
   },
