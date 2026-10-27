@@ -24,6 +24,9 @@ const ADAPTOR = "0x6e591AfAf47A0Ff6aB26a4F5c077De7715C34bf0";
 const IKIZ = "0x933F764D62ff7C0D86626972003f6c5138B9eBdd";
 const ARC_USDC = "0x3600000000000000000000000000000000000000";
 const RELAY = "https://api.relay.link";
+/* KapiUzak (Arc): the same buy in Arc's pool, delivered to a 32-byte wallet (Solana). Ownerless; tested 27 Oct 2026: 0.5 USDC -> 33,190 FTHM on Solana. */
+const KAPI_UZAK = "0xa31Ea3F12b23ad5937c6F25EE9E3Fd82871A622b";
+const SOL_EID = 30168, SOLANA_RELAY = 792703809;
 const ARC_EID = 30417;
 /* LayerZero type-3 options: lzReceive 200k + lzCompose 500k on Arc, the
    same figures the Arc adapter enforces for send-and-call. */
@@ -155,6 +158,44 @@ export async function ciz() {
   kap.append(panel("Buy FTHM from any chain", el("div", { sinif: "yigin" }, [
     el("div", { sinif: "alan__ipucu", yazi: "Pay in your chain's USDC. The FTHM arrives on the same chain." }),
     el("div", { sinif: "girdi-grup" }, [alTutar, el("span", { sinif: "girdi-grup__son", yazi: "USDC" })]), alDugme, alDurum])));
+  /* ---- buy from a Solana wallet: relay brings SOL to Arc as USDC, KapiUzak buys in Arc's pool and LayerZero delivers to the wallet on Solana ---- */
+  const solTutar = el("input", { sinif: "girdi girdi--sayi", attr: { type: "number", min: "2", step: "1", value: "10" } });
+  const solIade = el("input", { sinif: "girdi", attr: { placeholder: "your Arc / EVM address 0x… (only for relay refunds)" } });
+  const solDurum = el("div", { sinif: "yazi yazi--kucuk yazi--sessiz" });
+  const solDugme = el("button", { sinif: "dugme dugme--marka", attr: { type: "button" }, yazi: "Buy FTHM with SOL" });
+  solDugme.addEventListener("click", async () => {
+    try {
+      const m = await import("../solana-ikiz.js");
+      const ben = await m.solanaCuzdan.baglan();
+      const iade = solIade.value.trim();
+      if (!/^0x[0-9a-fA-F]{40}$/.test(iade)) { solDurum.textContent = "Enter an EVM address for relay refunds (any of yours)."; return; }
+      const toplam = BigInt(Math.round(Number(solTutar.value) * 1e6));
+      if (toplam < 2_000_000n) { solDurum.textContent = "At least 2 USDC worth (the delivery to Solana costs about $1.50)."; return; }
+      const b = await m.adresBaytlari(ben);
+      const alici = "0x" + Array.from(b, (x) => x.toString(16).padStart(2, "0")).join("");
+      const [ucret] = await new Contract(ADAPTOR, OFT_ABI, arc).quoteSend([SOL_EID, alici, 10n ** 22n, 0n, "0x", "0x", "0x"], false);
+      const deger = (ucret * 12n) / 10n;
+      const girdi = toplam - (deger / 10n ** 12n + 1n);
+      if (girdi <= 0n) { solDurum.textContent = "The amount does not cover the delivery fee."; return; }
+      const e = new Interface(["function approve(address,uint256) returns (bool)"]);
+      const k = new Interface(["function alVeGonder(uint32,uint256,uint256,bytes32,bytes) payable returns (uint256)"]);
+      solDurum.textContent = "Asking relay.link for the route from Solana…";
+      const q = await fetch(RELAY + "/quote", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({
+        user: ben, recipient: iade, originChainId: SOLANA_RELAY, destinationChainId: 5042, originCurrency: "11111111111111111111111111111111",
+        destinationCurrency: "0x0000000000000000000000000000000000000000", amount: (toplam * 10n ** 12n).toString(), tradeType: "EXACT_OUTPUT", txsGasLimit: 1500000,
+        txs: [{ to: ARC_USDC, data: e.encodeFunctionData("approve", [KAPI_UZAK, girdi]), value: "0" },
+          { to: KAPI_UZAK, data: k.encodeFunctionData("alVeGonder", [SOL_EID, girdi, 1n, alici, "0x"]), value: deger.toString() }] }) }).then((x) => x.json());
+      if (!q.steps) { solDurum.textContent = "No route right now: " + (q.message || "try again"); return; }
+      const adim = q.steps.find((s) => s.items && s.items[0] && s.items[0].data && s.items[0].data.instructions);
+      if (!adim) { solDurum.textContent = "relay returned no Solana step."; return; }
+      solDurum.textContent = "Approve " + Number(q.details.currencyIn.amountFormatted).toPrecision(5) + " SOL in your Solana wallet…";
+      const imza = await m.relayAdimi(adim.items[0].data);
+      solDurum.textContent = "Paid on Solana (" + imza.slice(0, 12) + "…). relay buys on Arc and LayerZero delivers the FTHM to this wallet on Solana, usually within minutes.";
+    } catch (x) { solDurum.textContent = (x && x.message) || "Could not send."; }
+  });
+  kap.append(panel("Buy FTHM from Solana", el("div", { sinif: "yigin" }, [
+    el("div", { sinif: "alan__ipucu", yazi: "Pay in SOL from a Solana wallet. The FTHM is bought in the same Arc pool and arrives in this wallet on Solana (mint Cx3gUyxZY3JzQaJ2w1V54gpg8PNZRtXbEoYpuZNtaQBb)." }),
+    el("div", { sinif: "girdi-grup" }, [solTutar, el("span", { sinif: "girdi-grup__son", yazi: "USDC" })]), solIade, solDugme, solDurum])));
   kap.append(panel("Sell", el("div", { sinif: "yigin" }, [
     el("div", { sinif: "alan__ipucu", yazi: "Sell FTHM you hold on this chain. The USDC is paid on Arc, to your same address." }),
     el("div", { sinif: "girdi-grup" }, [satTutar, el("span", { sinif: "girdi-grup__son", yazi: "FTHM" })]), satDugme, satDurum])));
