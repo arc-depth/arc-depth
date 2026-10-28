@@ -196,6 +196,81 @@ export async function ciz() {
   kap.append(panel("Buy FTHM from Solana", el("div", { sinif: "yigin" }, [
     el("div", { sinif: "alan__ipucu", yazi: "Pay in SOL from a Solana wallet. The FTHM is bought in the same Arc pool and arrives in this wallet on Solana (mint Cx3gUyxZY3JzQaJ2w1V54gpg8PNZRtXbEoYpuZNtaQBb)." }),
     el("div", { sinif: "girdi-grup" }, [solTutar, el("span", { sinif: "girdi-grup__son", yazi: "USDC" })]), solIade, solDugme, solDurum])));
+  /* ---- sell from a Solana wallet: the wallet's own LayerZero send (Paxos's immutable OFT program) to the gate on Arc
+     with the sale instruction; the gate sells in Arc's pool and pays USDC to the seller's EVM address on Arc.
+     Then, optionally, relay.link carries that USDC back to the Solana wallet as SOL (signed by the EVM wallet on Arc). ---- */
+  const SOL_SAT_BEKLEYEN = "arcpulse-fthm-sol-sat";   // only the pending Solana signature, on this device
+  const ssTutar = el("input", { sinif: "girdi girdi--sayi", attr: { type: "number", min: "1", step: "1000", value: "10000" } });
+  const ssAlici = el("input", { sinif: "girdi", attr: { placeholder: "your Arc / EVM address 0x… (the USDC is paid there on Arc)" } });
+  const ssDurum = el("div", { sinif: "yazi yazi--kucuk yazi--sessiz" });
+  const ssIz = (imza) => { try { imza ? localStorage.setItem(SOL_SAT_BEKLEYEN, imza) : localStorage.removeItem(SOL_SAT_BEKLEYEN); } catch (e) { /* storage may be blocked */ } };
+  const ssBag = (imza) => el("a", { attr: { href: "https://layerzeroscan.com/tx/" + imza, target: "_blank", rel: "noopener" }, yazi: "follow it on LayerZero Scan" });
+  try { const b = localStorage.getItem(SOL_SAT_BEKLEYEN); if (b) ssDurum.append("Your last sale from Solana (" + b.slice(0, 12) + "…): ", ssBag(b), "."); } catch (e) { /* storage may be blocked */ }
+  const ssMax = el("button", { sinif: "dugme dugme--sade", attr: { type: "button" }, yazi: "Use my balance" });
+  ssMax.addEventListener("click", async () => {
+    try {
+      const m = await import("../solana-ikiz.js");
+      const b = await m.fthmBakiye(await m.solanaCuzdan.baglan());
+      ssTutar.value = String(Math.floor(Number(b) / 1e9));
+      ssDurum.textContent = "This wallet holds " + tok(Number(b) / 1e9) + " FTHM on Solana.";
+    } catch (x) { ssDurum.textContent = (x && x.message) || "Could not read the balance."; }
+  });
+  const ssDugme = el("button", { sinif: "dugme dugme--sessiz", attr: { type: "button" }, yazi: "Sell FTHM from Solana" });
+  ssDugme.addEventListener("click", async () => {
+    try {
+      const m = await import("../solana-ikiz.js");
+      const ben = await m.solanaCuzdan.baglan();
+      const alici = ssAlici.value.trim();
+      if (!/^0x[0-9a-fA-F]{40}$/.test(alici)) { ssDurum.textContent = "Enter your EVM address: the USDC is paid to it on Arc (any EVM wallet of yours, e.g. Phantom's)."; return; }
+      const miktar = BigInt(Math.round(Number(ssTutar.value))) * 10n ** 9n;
+      if (miktar <= 0n) { ssDurum.textContent = "Enter an amount of FTHM."; return; }
+      const varolan = await m.fthmBakiye(ben);
+      if (varolan < miktar) { ssDurum.textContent = "This wallet holds " + tok(Number(varolan) / 1e9) + " FTHM on Solana."; return; }
+      const imza = await m.fthmSat({ miktar, aliciEvm: alici, durum: (s) => { ssDurum.textContent = s; } });
+      ssIz(imza);
+      temizle(ssDurum);
+      ssDurum.append("Sent from Solana (" + imza.slice(0, 12) + "…). LayerZero carries it to Arc, the gate sells in the pool and pays the USDC to " +
+        alici.slice(0, 6) + "…" + alici.slice(-4) + " on Arc, usually within minutes: ", ssBag(imza), ". Then bring it to Solana below, or keep it on Arc.");
+    } catch (x) { ssDurum.textContent = (x && x.message) || "Could not send."; }
+  });
+  /* step 2: USDC on Arc -> SOL in the Solana wallet, through relay.link (Arc's gas is paid in that same USDC) */
+  const ssGeri = el("input", { sinif: "girdi girdi--sayi", attr: { type: "number", min: "1", step: "0.01", placeholder: "empty = all but 0.05" } });
+  const ssGeriDurum = el("div", { sinif: "yazi yazi--kucuk yazi--sessiz" });
+  const ssGeriDugme = el("button", { sinif: "dugme dugme--sade", attr: { type: "button" }, yazi: "Bring the USDC to Solana as SOL" });
+  ssGeriDugme.addEventListener("click", async () => {
+    try {
+      const arcAg = AGLAR.find((a) => a.anahtar === "arc");
+      const m = await import("../solana-ikiz.js");
+      const solBen = await m.solanaCuzdan.baglan();
+      const ben = cuzdan.hesap() || (await cuzdan.bagla());
+      if (!ben) { ssGeriDurum.textContent = "Connect the EVM wallet that received the USDC on Arc."; return; }
+      const bakiye = await new Contract(ARC_USDC, ["function balanceOf(address) view returns (uint256)"], arc).balanceOf(ben);
+      const tutar = ssGeri.value ? BigInt(Math.round(Number(ssGeri.value) * 1e6)) : bakiye - 50_000n;
+      if (tutar < 1_000_000n) { ssGeriDurum.textContent = "At least 1 USDC (this wallet has " + (Number(bakiye) / 1e6).toFixed(2) + " USDC on Arc; 0.05 stays for gas)."; return; }
+      if (tutar > bakiye) { ssGeriDurum.textContent = "This wallet has " + (Number(bakiye) / 1e6).toFixed(2) + " USDC on Arc."; return; }
+      ssGeriDurum.textContent = "Asking relay.link for the route to Solana…";
+      const q = await fetch(RELAY + "/quote", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({
+        user: ben, recipient: solBen, originChainId: 5042, destinationChainId: SOLANA_RELAY, originCurrency: ARC_USDC,
+        destinationCurrency: "11111111111111111111111111111111", amount: tutar.toString(), tradeType: "EXACT_INPUT", refundTo: ben }) }).then((x) => x.json());
+      if (!q.steps) { ssGeriDurum.textContent = "No route right now: " + (q.message || "try again"); return; }
+      const cikan = Number(q.details.currencyOut.amountFormatted).toPrecision(5) + " SOL";
+      for (const adim of q.steps) for (const it of adim.items || []) {
+        if (adim.kind !== "transaction") continue;
+        ssGeriDurum.textContent = (adim.id === "approve" ? "Approve " : "Send ") + (Number(tutar) / 1e6).toFixed(2) + " USDC on Arc in your EVM wallet (you receive about " + cikan + ")…";
+        const d = it.data;
+        const h = await cuzdan.agdaGonder(arcAg, { to: d.to, data: d.data, value: "0x" + BigInt(d.value || 0).toString(16) });
+        const r = await makbuz(arcAg, h);
+        if (r.status !== 1) throw new Error("Reverted: " + h);
+      }
+      ssIz(null);
+      ssGeriDurum.textContent = "Done on Arc. relay.link delivers about " + cikan + " to " + solBen.slice(0, 6) + "… on Solana, usually within a minute.";
+    } catch (x) { ssGeriDurum.textContent = (x && x.message) || "Could not send."; }
+  });
+  kap.append(panel("Sell FTHM from Solana", el("div", { sinif: "yigin" }, [
+    el("div", { sinif: "alan__ipucu", yazi: "Sell FTHM held in a Solana wallet in the same Arc pool. Your Solana wallet signs one LayerZero send (fee well under 0.01 SOL); the gate on Arc sells and pays USDC to your EVM address on Arc. If the pool cannot fill the sale, you receive the FTHM there instead — nothing is left in the gate." }),
+    el("div", { sinif: "girdi-grup" }, [ssTutar, el("span", { sinif: "girdi-grup__son", yazi: "FTHM" })]), ssMax, ssAlici, ssDugme, ssDurum,
+    el("div", { sinif: "alan__ipucu", yazi: "Then, to get SOL back in the Solana wallet: connect the EVM wallet that received the USDC (Arc's gas is paid in that USDC) and relay.link brings it to Solana." }),
+    el("div", { sinif: "girdi-grup" }, [ssGeri, el("span", { sinif: "girdi-grup__son", yazi: "USDC" })]), ssGeriDugme, ssGeriDurum])));
   kap.append(panel("Sell", el("div", { sinif: "yigin" }, [
     el("div", { sinif: "alan__ipucu", yazi: "Sell FTHM you hold on this chain. The USDC is paid on Arc, to your same address." }),
     el("div", { sinif: "girdi-grup" }, [satTutar, el("span", { sinif: "girdi-grup__son", yazi: "FTHM" })]), satDugme, satDurum])));
