@@ -203,7 +203,26 @@ async function relayIle(ag, ben, usdc6, yerel18, txs, durum, beklenenUsd) {
     const m = await makbuz(ag, h);
     if (m.status !== 1) throw new Error("Reverted: " + h);
   }
+  q._sonuc = await relaySonuc(q, durum);
   return q;
+}
+
+/* After paying on the origin chain: follow relay's request until it ran on Arc, so "done" is only
+   said once it is done. A failed or refunded request is said plainly; relay refunds to the payer
+   (refundTo). Gives up waiting after ~5 minutes and says where to follow it. */
+async function relaySonuc(q, durum) {
+  const id = (q.steps || []).map((s) => s.requestId).find(Boolean);
+  if (!id) return "bilinmiyor";
+  const izle = "relay.link/transaction/" + id;
+  for (let i = 0; i < 60; i++) {
+    durum("Paid on your chain. Waiting for relay to run it on Arc… (" + izle + ")");
+    const d = await fetch(RELAY + "/intents/status/v2?requestId=" + id).then((x) => x.json()).catch(() => ({}));
+    if (d.status === "success") return "tamam";
+    if (d.status === "failure" || d.status === "refund" || d.status === "refunded")
+      throw new Error("relay could not run it on Arc (" + d.status + "). " + (d.status === "failure" ? "relay refunds the payment to your address; " : "The payment was refunded to your address; ") + "details: " + izle);
+    await new Promise((r) => setTimeout(r, 5000));
+  }
+  return "bekliyor:" + izle;
 }
 
 /* ---- basket lines: the asset's id on its chain, and a starting quote ---- */
@@ -369,9 +388,11 @@ export async function ciz({ param } = {}) {
         const h = hazirOdeme;
         hazirOdeme = null;
         lDugme.textContent = "Launch";
-        await relayIle(ag, ben, h.toplam, h.deger, h.txs, durum, h.usd);
+        const rq = await relayIle(ag, ben, h.toplam, h.deger, h.txs, durum, h.usd);
+        const bek = rq && String(rq._sonuc || "").startsWith("bekliyor:") ? rq._sonuc.slice(9) : "";
         durum(ag.anahtar === "arc" ? "Paid. Launched on Arc: the token and its pool are open and your tokens are in your wallet. Any LayerZero fee not used came back to you."
-          : "Paid. relay launches on Arc within seconds; your tokens arrive on " + ag.ad + " in a few minutes. Any LayerZero fee not used comes back to your address on Arc.");
+          : bek ? "Paid. relay is still running it on Arc; do not pay again. Follow it at " + bek + "; your tokens arrive on " + ag.ad + " once it is done."
+          : "Launched on Arc. Your tokens arrive on " + ag.ad + " in a few minutes. Any LayerZero fee not used comes back to your address on Arc.");
         return;
       }
       if (!ad.value.trim() || !sembol.value.trim()) return durum("Give the token a name and a symbol.");

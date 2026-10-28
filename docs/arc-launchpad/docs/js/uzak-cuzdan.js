@@ -220,6 +220,31 @@ export function uzakCuzdanPaneli({ token, V2, kaymaOrani }) {
   const lD = el("button", { sinif: "dugme", attr: { type: "button" }, yazi: "Launch from this wallet" });
   const bitirD = el("button", { sinif: "dugme dugme--sessiz", attr: { type: "button", hidden: "" }, yazi: "Finish on Arc now (EVM wallet, cents of gas)" });
   let bekleyen = null;
+  /* A burn waiting for Arc survives a closed page: only the burn's source domain and transaction hash
+     are kept, on this device, and cleared once the launch is carried out. A hash from another device
+     can be pasted below. */
+  const BEKLEYEN = "arcpulse-launch-bekleyen";
+  const bekleyenYaz = (v) => { try { v ? localStorage.setItem(BEKLEYEN, JSON.stringify(v)) : localStorage.removeItem(BEKLEYEN); } catch (e) { /* storage may be blocked */ } };
+  const bekleyenOku = () => { try { return JSON.parse(localStorage.getItem(BEKLEYEN) || "null"); } catch (e) { return null; } };
+  const hashGir = el("input", { sinif: "girdi", attr: { placeholder: "burn transaction hash on Sui or Aptos (to finish a launch started elsewhere)" } });
+  const hashD = el("button", { sinif: "dugme dugme--sade", attr: { type: "button" }, yazi: "Find my launch" });
+  hashD.addEventListener("click", () => {
+    const h = hashGir.value.trim();
+    if (!h) return durum("Paste the burn transaction hash first.");
+    /* CCTP domains: Sui 8, Aptos 9 (0x-prefixed hashes are Aptos; Sui digests are base58) */
+    bekleyen = { kaynak: h.startsWith("0x") ? 9 : 8, hash: h, zincir: h.startsWith("0x") ? "Aptos" : "Sui" };
+    bekleyenYaz(bekleyen);
+    bitirD.hidden = false;
+    durum("Found. Press \"Finish on Arc\": it checks Circle's attestation first.");
+  });
+  {
+    const k = bekleyenOku();
+    if (k && k.hash && Date.now() - (k.t || 0) < 30 * 864e5) {
+      bekleyen = k;
+      bitirD.hidden = false;
+      setTimeout(() => durum("A launch you started from " + (k.zincir || "Sui/Aptos") + " (" + k.hash.slice(0, 14) + "…) is waiting for Arc. Press \"Finish on Arc\"."), 0);
+    }
+  }
   lD.addEventListener("click", async () => {
     try {
       await hazir();
@@ -258,6 +283,7 @@ export function uzakCuzdanPaneli({ token, V2, kaymaOrani }) {
         ". Your tokens, the founder's income and anything unused go to " + kurucu + " on Arc. Continue?")) return durum("Cancelled.");
       const r = z.anahtar === "sui" ? await z.u.suiLaunch({ emanet: V2.emanet, miktar6, kanca, durum }) : await z.u.aptosLaunch({ emanet: V2.emanet, miktar6, kanca, durum });
       bekleyen = r;
+      bekleyenYaz({ kaynak: r.kaynak, hash: r.hash, zincir: z.ad, t: Date.now() });
       durum("Burned on " + z.ad + " (" + r.hash.slice(0, 14) + "…). Circle attests it in a few minutes; then anyone runs it on Arc (LaunchEmaneti.isle). Waiting for the attestation…");
       for (let i = 0; i < 120; i++) {
         const o = await z.u.onay(r.kaynak, r.hash);
@@ -270,13 +296,20 @@ export function uzakCuzdanPaneli({ token, V2, kaymaOrani }) {
   });
   bitirD.addEventListener("click", async () => {
     try {
-      if (!bekleyen || !bekleyen.onay) return durum("Nothing waiting.");
+      if (!bekleyen) return durum("Nothing waiting.");
+      if (!bekleyen.onay) {
+        const o = await (await import("./uzak-ikiz.js")).onay(bekleyen.kaynak, bekleyen.hash);
+        if (!o) return durum("Circle has not attested this burn yet (" + bekleyen.hash.slice(0, 14) + "…). It usually takes a few minutes; press again later. Your dollars are safe meanwhile.");
+        bekleyen.onay = o;
+      }
       if (!cuzdan.hesap()) await cuzdan.bagla();
       const h = await cuzdan.agdaGonder(arcAg(), { to: V2.emanet, data: EMANET.encodeFunctionData("isle", [bekleyen.onay.message, bekleyen.onay.attestation]), value: "0x0" });
-      await makbuz(h);
+      const m = await makbuz(h);
+      if (m && m.status !== undefined && Number(m.status) !== 1) throw new Error("Reverted on Arc: " + h + ". If someone already carried this launch out, your token is on Arc; check Discover.");
       bitirD.hidden = true;
+      bekleyenYaz(null);
       durum("Launched on Arc: " + h);
-    } catch (x) { durum((x && x.message) || "Could not finish."); }
+    } catch (x) { const t = (x && x.message) || "Could not finish."; durum(/^Reverted/.test(t) ? t + " If someone already carried this launch out, your token is on Arc: check Discover." : t); }
   });
 
   return panel("From a Solana, Sui or Aptos wallet", el("div", { sinif: "yigin" }, [
@@ -290,5 +323,5 @@ export function uzakCuzdanPaneli({ token, V2, kaymaOrani }) {
     el("div", { sinif: "girdi-grup" }, [lAd, lSembol]),
     el("div", { sinif: "girdi-grup" }, [lAlim, el("span", { sinif: "girdi-grup__son", yazi: "$ first buy" })]),
     el("label", { sinif: "alan__ipucu" }, [lIkiz, el("span", { yazi: " twins on the 8 EVM chains now (their LayerZero fee is added)" })]),
-    lD, bitirD, durumYazi]));
+    lD, bitirD, el("div", { sinif: "girdi-grup" }, [hashGir, hashD]), durumYazi]));
 }
