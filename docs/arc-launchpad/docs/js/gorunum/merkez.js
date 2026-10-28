@@ -21,6 +21,7 @@
 import { el, sayfaUst, panel, not } from "../ui.js";
 import { AGLAR } from "../aglar.js";
 import { cuzdan } from "../cuzdan.js";
+import { rpcPost } from "../ag-okur.js";
 import * as egri from "../egri.js";
 import { JsonRpcProvider, Contract, Interface, AbiCoder, zeroPadValue, keccak256, toUtf8Bytes, solidityPacked, decodeBase58, toBeHex } from "../../vendor/ethers.min.js";
 
@@ -146,14 +147,19 @@ const KAPI_ABI = new Interface([
   "function vekilOf(address) view returns (address)"]);
 const E = new Interface(["function approve(address,uint256) returns (bool)", "function decimals() view returns (uint8)", "function symbol() view returns (string)"]);
 
+/* The receipt through rpcPost, which falls back to the chain's spare RPCs, so one slow or
+   rate-limited RPC cannot stall a payment; the chain's own provider stays as a last try. */
 async function makbuz(ag, hash) {
   const p = new JsonRpcProvider(ag.rpc, ag.id, { staticNetwork: true });
   for (let i = 0; i < 160; i++) {
+    const r = await rpcPost(ag, { jsonrpc: "2.0", id: 1, method: "eth_getTransactionReceipt", params: [hash] }).catch(() => null);
+    if (r && r.result) return { ...r.result, status: Number(r.result.status) };
     const m = await p.getTransactionReceipt(hash).catch(() => null);
     if (m) return m;
     await new Promise((r) => setTimeout(r, 2500));
   }
-  throw new Error("No receipt yet for " + hash);
+  /* the payment may still land: say so, so nobody pays a second time */
+  throw new Error("No receipt yet for " + hash + " on " + ag.ad + ". It may still go through: do NOT pay again. Check this transaction in an explorer first, then reload.");
 }
 
 /// relay: one signature on `ag`, `usdc6` dollars (plus `yerel18` of Arc native) on Arc, then `txs` there.
@@ -162,13 +168,14 @@ async function relayTeklif(ag, ben, usdc6, yerel18, txs) {
   if (ag.anahtar === "arc") return null;
   const govde = { user: ben, recipient: ben, originChainId: ag.id, destinationChainId: 5042,
     originCurrency: SIFIR, destinationCurrency: SIFIR, amount: (usdc6 * 10n ** 12n + yerel18).toString(),
-    tradeType: "EXACT_OUTPUT", txsGasLimit: 9_000_000, txs };
+    tradeType: "EXACT_OUTPUT", txsGasLimit: 9_000_000, txs, refundTo: ben };
   const q = await fetch(RELAY + "/quote", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(govde) }).then((x) => x.json());
   if (!q.steps) throw new Error("No route: " + (q.message || "try again") + (q.errorCode ? " (" + q.errorCode + ")" : ""));
   return q;
 }
 
-async function relayIle(ag, ben, usdc6, yerel18, txs, durum) {
+/// `beklenenUsd`: what the founder was shown; a fresh quote more than 3% above it is not paid.
+async function relayIle(ag, ben, usdc6, yerel18, txs, durum, beklenenUsd) {
   if (ag.anahtar === "arc") {
     /* on Arc the wallet already holds the dollars (native USDC is the same balance as the token): call the gate directly */
     for (const [i, t] of txs.entries()) {
@@ -181,10 +188,13 @@ async function relayIle(ag, ben, usdc6, yerel18, txs, durum) {
   }
   const govde = { user: ben, recipient: ben, originChainId: ag.id, destinationChainId: 5042,
     originCurrency: SIFIR, destinationCurrency: SIFIR, amount: (usdc6 * 10n ** 12n + yerel18).toString(),
-    tradeType: "EXACT_OUTPUT", txsGasLimit: 9_000_000, txs };
+    tradeType: "EXACT_OUTPUT", txsGasLimit: 9_000_000, txs, refundTo: ben };
   durum("Asking relay.link for the route (it simulates the Arc side first)…");
   const q = await fetch(RELAY + "/quote", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(govde) }).then((x) => x.json());
   if (!q.steps) throw new Error("No route: " + (q.message || "try again") + (q.errorCode ? " (" + q.errorCode + ")" : ""));
+  const yeniUsd = Number(q.details && q.details.currencyIn && q.details.currencyIn.amountUsd);
+  if (beklenenUsd && yeniUsd > beklenenUsd * 1.03)
+    throw new Error("The price moved since you checked it: now ≈ $" + yeniUsd.toFixed(2) + " instead of ≈ $" + beklenenUsd.toFixed(2) + ". Nothing was paid. Press Launch again to see the new total.");
   for (const adim of q.steps) for (const it of adim.items || []) {
     if (adim.kind !== "transaction") continue;
     durum("Pay " + Number(q.details.currencyIn.amountFormatted).toPrecision(5) + " " + q.details.currencyIn.currency.symbol + " (≈ $" + Number(q.details.currencyIn.amountUsd).toFixed(2) + ") in your wallet…");
@@ -346,8 +356,11 @@ export async function ciz({ param } = {}) {
   for (const g of [ad, sembol, alim, vergi, zincirSec]) g.addEventListener("change", odemeDurum);
   satirlar.addEventListener("change", odemeDurum);
   satirlar.addEventListener("input", odemeDurum);
+  let lMesgul = false;   // one payment at a time: a second press while one runs could pay twice
   lDugme.addEventListener("click", async () => {
     const durum = (s) => { lDurum.textContent = s; };
+    if (lMesgul) return durum("A payment is already in progress. Wait for it to finish; do not pay again.");
+    lMesgul = true; lDugme.disabled = true;
     try {
       const ben = cuzdan.hesap() || (await cuzdan.bagla());
       if (!ben) return durum("Connect a wallet first.");
@@ -356,7 +369,7 @@ export async function ciz({ param } = {}) {
         const h = hazirOdeme;
         hazirOdeme = null;
         lDugme.textContent = "Launch";
-        await relayIle(ag, ben, h.toplam, h.deger, h.txs, durum);
+        await relayIle(ag, ben, h.toplam, h.deger, h.txs, durum, h.usd);
         durum(ag.anahtar === "arc" ? "Paid. Launched on Arc: the token and its pool are open and your tokens are in your wallet. Any LayerZero fee not used came back to you."
           : "Paid. relay launches on Arc within seconds; your tokens arrive on " + ag.ad + " in a few minutes. Any LayerZero fee not used comes back to your address on Arc.");
         return;
@@ -458,7 +471,7 @@ export async function ciz({ param } = {}) {
             " (≈ $" + Number(q.details.currencyIn.amountUsd).toFixed(2) + "), of which relay's own fee ≈ $" + Math.max(0, Number(q.details.currencyIn.amountUsd) - net).toFixed(2)
             : "Paid directly on Arc: $" + net.toFixed(2) + " in total",
         ];
-        hazirOdeme = { toplam, deger: deger2, txs };
+        hazirOdeme = { toplam, deger: deger2, txs, usd: q ? Number(q.details.currencyIn.amountUsd) : 0 };
         lDugme.textContent = "Confirm and pay" + (q ? " ≈ $" + Number(q.details.currencyIn.amountUsd).toFixed(2) : " $" + net.toFixed(2));
         durum(satirlarOzet.join("  ·  ") + ".  Check it, then press the button again to pay.");
         return;
@@ -472,7 +485,7 @@ export async function ciz({ param } = {}) {
         await relayIle(ag, ben, toplam, deger, txs, durum);
       }
       durum("Paid. relay launches on Arc within seconds; your tokens arrive on " + ag.ad + " in a few minutes" + (v6mu() ? "; each basket line is bought from its chain's pool when it reaches $50." : ", the basket is bought by auction over the next hours."));
-    } catch (x) { durum((x && x.message) || "Could not launch."); }
+    } catch (x) { durum((x && x.message) || "Could not launch."); } finally { lMesgul = false; lDugme.disabled = false; }
   });
   kap.append(panel("Launch", el("div", { sinif: "yigin" }, [
     V2 ? el("div", { sinif: "alan__ipucu", yazi: "Paying from a Solana, Sui or Aptos wallet? Use the panel \"From a Solana, Sui or Aptos wallet\" at the bottom of this page." })

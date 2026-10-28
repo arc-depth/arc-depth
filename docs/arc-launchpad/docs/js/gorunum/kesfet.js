@@ -157,9 +157,11 @@ export async function ciz({ param }) {
   /* ---- facts that are true for every launch, plus the live count ---- */
   const izgara = el("div", { sinif: "izgara izgara--olcum" });
   const say = (s, f) => (s.status === "fulfilled" ? f(s.value) : null);
+  /* the first generation's launches, counted in the total and named apart so the list below can't seem to contradict it */
+  const eskiN = eskiS.status === "fulfilled" && eskiS.value ? eskiS.value.n : 0;
   const sayilar = [say(arcS, (v) => v.n + (eskiS.status === "fulfilled" && eskiS.value ? eskiS.value.n : 0)), say(suiS, (v) => v.length), say(aptosS, (v) => v.length)];
   izgara.append(olcum("Launches", sayilar.every((x) => x != null) ? String(sayilar.reduce((a, b) => a + b, 0)) : "—",
-    "Arc " + (sayilar[0] ?? "—") + " · Sui " + (sayilar[1] ?? "—") + " · Aptos " + (sayilar[2] ?? "—")));
+    "Arc " + (sayilar[0] ?? "—") + (eskiN ? " (" + eskiN + " in the first generation)" : "") + " · Sui " + (sayilar[1] ?? "—") + " · Aptos " + (sayilar[2] ?? "—")));
   izgara.append(olcum("Opening market cap", para(EKONOMI.acilisMcap, { kisalt: true }), "the same price for every launch"));
   izgara.append(olcum("Trading fee", "2.2%", "plus the token's collateral tax (1–5%)"));
   if (v2) izgara.append(olcum("Collateral chains", (cfg.kasa[5] ? 12 : 11) + " of 12", cfg.kasa[5] ? "every chain" : "Solana opens when its gate is wired"));
@@ -171,8 +173,9 @@ export async function ciz({ param }) {
   if (arcS.status !== "fulfilled") {
     kap.append(panel(BASLIK, bos("Could not read the registry", String(arcS.reason && arcS.reason.message || arcS.reason))));
   } else if (!arcS.value.liste.length) {
-    kap.append(panel(BASLIK, bos("No launches yet",
-      "The registry on Arc (PulseLaunchpad5) is deployed and empty. The first launch made from any chain appears here, with its collateral read from the vaults.")));
+    kap.append(panel(BASLIK, bos(eskiN ? "No launches in this generation yet" : "No launches yet",
+      "The registry on Arc (PulseLaunchpad5) is deployed and empty. The first launch made from any chain appears here, with its collateral read from the vaults." +
+      (eskiN ? " The " + (eskiN === 1 ? "launch" : eskiN + " launches") + " counted above " + (eskiN === 1 ? "is" : "are") + " in the first generation, listed further down this page." : ""))));
   } else {
     const v = arcS.value;
     const satirlar = v.liste.filter(uyar);
