@@ -57,6 +57,25 @@ const kSekme = document.getElementById("sekmebar");
 const kAra = document.getElementById("ust-ara");
 const kCuzdanDugme = document.getElementById("cuzdan-dugme");
 
+/* ---- phone layout, by choice --------------------------------------------
+   Phones open the full desktop layout (app.html's width=1280 viewport, 64b5635).
+   On a phone a button next to the wallet offers the phone layout as well (the
+   same page under the existing @media rules); the choice is kept on this device
+   and the button switches back. */
+const GORUNUM = "arcpulse-gorunum";
+const gorunumOku = () => { try { return localStorage.getItem(GORUNUM); } catch (e) { return null; } };
+if (gorunumOku() === "mobil") {
+  const m = document.querySelector('meta[name="viewport"]');
+  if (m) m.setAttribute("content", "width=device-width, initial-scale=1, viewport-fit=cover");
+}
+if (mobilMi() && kCuzdanDugme) {
+  const mobilde = gorunumOku() === "mobil";
+  kCuzdanDugme.before(el("button", { sinif: "dugme dugme--sade", attr: { type: "button", title: mobilde ? "Show the full desktop layout" : "Show the phone layout",
+    "aria-label": mobilde ? "Desktop layout" : "Phone layout", style: mobilde ? "flex:none;padding:6px 8px;min-width:0" : "flex:none" },
+    yazi: mobilde ? "\u{1F5A5}" : "Mobile view",
+    on: { click: () => { try { localStorage.setItem(GORUNUM, mobilde ? "masaustu" : "mobil"); } catch (e) { /* storage may be blocked */ } location.reload(); } } }));
+}
+
 /* ---- navigation ------------------------------------------------------ */
 
 function yolLinki(y, sinifEk = "") {

@@ -88,7 +88,7 @@ export async function ciz() {
       " · ", el("a", { attr: { href: "https://repo.sourcify.dev/5042/" + FTHM.yakici, target: "_blank", rel: "noopener" }, yazi: "FTHM burner" }),
       " · ", el("a", { attr: { href: "#/guvenlik" }, yazi: "every live contract" })]),
   ])));
-  kap.append(not("Buy from any chain below: you pay in your chain's USDC and receive FTHM on the same chain. Buying and selling both go through FTHM's pool on Arc, so the price is the same wherever you hold it.", "bilgi"));
+  kap.append(not("Buy from any EVM chain in the list below (from Solana, use the Solana panel): you pay in your chain's USDC and receive FTHM on the same chain. Buying and selling both go through FTHM's pool on Arc, so the price is the same wherever you hold it.", "bilgi"));
 
   let ag = evmler().find((a) => a.anahtar === "base") || evmler()[0];
   const zincirSec = el("select", { sinif: "girdi" }, evmler().map((a) => el("option", { attr: { value: a.anahtar }, yazi: a.ad })));

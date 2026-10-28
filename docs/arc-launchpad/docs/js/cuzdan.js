@@ -46,8 +46,10 @@ if (typeof window !== "undefined") {
 const WC_PROJE = "3732e09480d6f286889688c0f4a70918";
 /* The relay answers "Unauthorized: origin not allowed" (code 3000) for arcpulse.app until the
    domain is on this project's allowlist at dashboard.reown.com (measured 24 Oct 2026). Off until
-   then: the wallet apps' own links open the page inside them, no relay needed. */
-export const WC_ACIK = false;
+   then: the wallet apps' own links open the page inside them, no relay needed.
+   28 Oct 2026: the relay pairs from https://arcpulse.app (EthereumProvider.init emitted display_uri),
+   so WalletConnect is on, next to the wallet apps' own links. */
+export const WC_ACIK = true;
 /* HyperEVM (999) is left out on purpose: chainid.network lists 999 as
    "Wanchain Testnet", so wallets that check the registry flag it. */
 const WC_ZINCIRLER = [5042, 4663, 8453, 42161, 1, 56, 43114, 143];

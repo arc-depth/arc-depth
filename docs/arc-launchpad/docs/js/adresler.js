@@ -7,7 +7,9 @@
  *   changes.
  *
  * WHY null AND NOT A PLACEHOLDER
- *   The new launchpad is NOT deployed. Writing a zero address or a dummy
+ *   (Written before deployment. The launchpad is now on mainnet and its
+ *   addresses below come from the deploy records; the rule still holds.)
+ *   Writing a zero address or a dummy
  *   here would let every screen render as though it had something to talk
  *   to, and the brief is explicit: nothing that is not working may be shown
  *   as working. `null` propagates — `canli()` is false, the view renders
@@ -248,7 +250,7 @@ export const PULSE = {
   geriAlimRobotu: null
 };
 
-/* ---- THE MARKETPLACE, WRITTEN AND MEASURED BUT NOT DEPLOYED -----
+/* ---- THE MARKETPLACE (now on mainnet: PAZAR below is filled from dagitim-pazar.json) -----
  *
  * Pazar.sol is compiled and measured against Arc's real USDC inside an
  * eth_call (scripts/olc-pazar.js, 20 assertions: the 80/20 split to the
