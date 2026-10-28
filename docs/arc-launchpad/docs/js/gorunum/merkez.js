@@ -22,6 +22,7 @@ import { el, sayfaUst, panel, not } from "../ui.js";
 import { AGLAR } from "../aglar.js";
 import { cuzdan } from "../cuzdan.js";
 import { rpcPost } from "../ag-okur.js";
+import { YedekliOkur } from "../yedekli-okur.js";
 import * as egri from "../egri.js";
 import { JsonRpcProvider, Contract, Interface, AbiCoder, zeroPadValue, keccak256, toUtf8Bytes, solidityPacked, decodeBase58, toBeHex } from "../../vendor/ethers.min.js";
 
@@ -106,7 +107,8 @@ async function odemeYeri(ag, ben) {
   return { zincir: ARC_DOMAIN, alici: zeroPadValue(ben, 32), maxUcret: 0n, yer: "Arc (your same address)" };
 }
 
-const arc = new JsonRpcProvider("https://arc-rpc.publicnode.com", 5042, { staticNetwork: true });
+/* reads move to the next Arc RPC when one answers 429/403 */
+const arc = new YedekliOkur();
 /* every chain pays: Arc in its own USDC straight to the gate, the others through relay */
 const odemeAglari = () => AGLAR;
 /* where the gate delivers tokens for a wallet on `ag`: 0 means on Arc itself */

@@ -20,6 +20,7 @@
  * runs it in Node against the mainnet rehearsal basket.
  * =========================================================================== */
 
+import { YedekliOkur } from "./yedekli-okur.js";
 import { JsonRpcProvider, Contract, Interface, zeroPadValue, id as olayKimligi } from "../vendor/ethers.min.js";
 
 /* the live one-pool deployment (dagitim-sepet.json) */
@@ -96,7 +97,8 @@ const OFT_SENT = olayKimligi("OFTSent(bytes32,uint32,address,uint256,uint256)");
 const MERKEZ_LAUNCH = olayKimligi("MerkezLaunch(address,address,bytes32,uint32,uint256)");
 
 const saglayicilar = {};
-export const saglayici = (d) => (saglayicilar[d] ||= new JsonRpcProvider(ZINCIRLER[d].rpc, ZINCIRLER[d].id, { staticNetwork: true }));
+/* Arc (domain 26) reads move to the next Arc RPC on 429/403; other chains as before */
+export const saglayici = (d) => (saglayicilar[d] ||= (Number(d) === 26 ? new YedekliOkur() : new JsonRpcProvider(ZINCIRLER[d].rpc, ZINCIRLER[d].id, { staticNetwork: true })));
 const ham = (x, dec) => Number(x) / 10 ** dec;
 
 /* ---- market price: DexScreener, the deepest pair quoting this asset ---- */
