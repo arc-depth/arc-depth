@@ -18,6 +18,7 @@
  *   by an invented rank. An empty registry says it is empty.
  * =========================================================================== */
 
+import { YedekliOkur } from "../yedekli-okur.js";
 import { el, panel, sayfaUst, bos, olcum } from "../ui.js";
 import { ikon } from "../ikon.js";
 import { EKONOMI } from "../adresler.js";
@@ -30,7 +31,8 @@ const LP5_ABI = [
   "function launchCount() view returns (uint256)",
   "function launchAt(uint256) view returns ((address token, address acici, address kasa, uint256 teminat, address kurucu, uint256 kurucuToken, uint256 teklif, uint256 vergiPpm, uint64 zaman))",
 ];
-const arc = new JsonRpcProvider("https://arc-rpc.publicnode.com", 5042, { staticNetwork: true });
+/* reads move to the next Arc RPC when one answers 429/403 */
+const arc = new YedekliOkur();
 
 /* the chains with a live basket vault (dagitim-sepet.json); the other three are listed as not open */
 const SEPET_ACIK = ["Arc", "Base", "Arbitrum", "Avalanche", "Monad", "HyperEVM", "BNB", "Ethereum", "Sui", "Aptos"];

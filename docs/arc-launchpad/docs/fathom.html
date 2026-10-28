@@ -2,8 +2,9 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval' 'sha256-FGjUFukyqY3v/DFnTOBwl1gaCTDUUk4LB0zJJti+1YY='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://api.web3modal.org; font-src 'self' data:; connect-src 'self' https://rpc.mainnet.arc.io https://arc-rpc.publicnode.com https://rpc.drpc.mainnet.arc.io https://rpc.blockdaemon.mainnet.arc.io https://arc-mainnet.drpc.org https://mainnet.base.org https://base-rpc.publicnode.com https://base.drpc.org https://arb1.arbitrum.io https://arbitrum-one-rpc.publicnode.com https://arbitrum.drpc.org https://ethereum-rpc.publicnode.com https://eth.drpc.org https://api.avax.network https://avalanche-c-chain-rpc.publicnode.com https://avalanche.drpc.org https://rpc.monad.xyz https://monad.drpc.org https://monad-mainnet.drpc.org https://rpc.hyperliquid.xyz https://hyperliquid.drpc.org https://bsc-dataseed.bnbchain.org https://bsc-dataseed1.bnbchain.org https://bsc-rpc.publicnode.com https://rpc.mainnet.chain.robinhood.com https://robinhood-rpc.publicnode.com https://robinhood.drpc.org https://robinhood-mainnet.drpc.org https://optimism-rpc.publicnode.com https://polygon-bor-rpc.publicnode.com https://unichain-rpc.publicnode.com https://solana-rpc.publicnode.com https://graphql.mainnet.sui.io https://api.mainnet.aptoslabs.com https://api.relay.link https://iris-api.circle.com https://api.dexscreener.com wss://relay.walletconnect.org https://relay.walletconnect.org https://verify.walletconnect.org https://verify.walletconnect.com https://api.web3modal.org; frame-src 'self' https://verify.walletconnect.org https://verify.walletconnect.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval' 'sha256-7dgQYdvmcjRNgMYJ6W50GbsOmVrAwauIGpfRKrGn7Rk='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://api.web3modal.org; font-src 'self' data:; connect-src 'self' https://rpc.mainnet.arc.io https://arc-rpc.publicnode.com https://rpc.drpc.mainnet.arc.io https://rpc.blockdaemon.mainnet.arc.io https://arc-mainnet.drpc.org https://mainnet.base.org https://base-rpc.publicnode.com https://base.drpc.org https://arb1.arbitrum.io https://arbitrum-one-rpc.publicnode.com https://arbitrum.drpc.org https://ethereum-rpc.publicnode.com https://eth.drpc.org https://api.avax.network https://avalanche-c-chain-rpc.publicnode.com https://avalanche.drpc.org https://rpc.monad.xyz https://monad.drpc.org https://monad-mainnet.drpc.org https://rpc.hyperliquid.xyz https://hyperliquid.drpc.org https://bsc-dataseed.bnbchain.org https://bsc-dataseed1.bnbchain.org https://bsc-rpc.publicnode.com https://rpc.mainnet.chain.robinhood.com https://robinhood-rpc.publicnode.com https://robinhood.drpc.org https://robinhood-mainnet.drpc.org https://optimism-rpc.publicnode.com https://polygon-bor-rpc.publicnode.com https://unichain-rpc.publicnode.com https://solana-rpc.publicnode.com https://graphql.mainnet.sui.io https://api.mainnet.aptoslabs.com https://api.relay.link https://iris-api.circle.com https://api.dexscreener.com wss://relay.walletconnect.org https://relay.walletconnect.org https://verify.walletconnect.org https://verify.walletconnect.com https://api.web3modal.org; frame-src 'self' https://verify.walletconnect.org https://verify.walletconnect.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%237c5cff'/%3E%3Cpath d='M6 17h5l3-7 4 14 3-7h5' stroke='%23fff' stroke-width='2.4' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="dark">
 <title>FTHM — Buy, Stake and Govern | ARC PULSE platform token on 12 chains</title>
@@ -226,6 +227,7 @@ footer{border-top:1px solid var(--line);margin-top:44px;padding:26px 0 40px;
 <script type="module">
 import { BrowserProvider, Contract, JsonRpcProvider, parseUnits, MaxUint256 }
   from "./vendor/ethers.min.js";
+import { YedekliOkur } from "./js/yedekli-okur.js";
 
 const ARC = { chainId:5042, chainIdHex:"0x13b2", name:"Arc",
   rpc:"https://rpc.mainnet.arc.io", explorer:"https://explorer.arc.io",
@@ -282,8 +284,8 @@ const ABI = {
 };
 
 const $ = (i) => document.getElementById(i);
-const read = new JsonRpcProvider(ARC.rpc,{chainId:ARC.chainId,name:"arc"},
-  {staticNetwork:true,batchMaxCount:1});
+/* reads move to the next Arc RPC when one answers 429/403 (js/yedekli-okur.js) */
+const read = new YedekliOkur();
 const esc = (s) => String(s==null?"":s).replace(/[&<>"]/g,(c)=>
   ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const kisa = (a) => String(a).slice(0,6)+"…"+String(a).slice(-4);
