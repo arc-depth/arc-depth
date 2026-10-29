@@ -64,10 +64,18 @@ const IKIZ_EID = [30416, 30184, 30110, 30101, 30102, 30106, 30390, 30367];   // 
    contract is deployed AND wired; until then the file does not exist and
    this page keeps using the gate above. Nothing below is offered before. */
 let V2 = null;
+/* 29 Oct 2026: one failed fetch used to leave V2 false for the whole visit, and the page then paid
+   through the first-generation gate without showing a bill. Now it is tried three times; if it still
+   cannot be read, V2 stays null (tried again on the next visit) and the page refuses to pay. */
 async function v2Yukle() {
-  if (V2 === null) V2 = await fetch("veri/sepet-v2.json", { cache: "no-store" }).then((r) => (r.ok ? r.json() : false)).catch(() => false);
+  for (let i = 0; V2 === null && i < 3; i++) {
+    V2 = await fetch("veri/sepet-v2.json", { cache: "no-store", signal: AbortSignal.timeout(10_000) })
+      .then((r) => (r.ok ? r.json() : null)).catch(() => null);
+    if (V2 === null) await new Promise((r) => setTimeout(r, 1500 * (i + 1)));
+  }
   return V2;
 }
+const AYAR_YOK = "The launchpad settings (veri/sepet-v2.json) could not be loaded, so nothing is paid from this page now. Reload the page.";
 const S = () => (V2 ? { kapi: V2.kapi, lp: V2.launchpad, ucu: V2.ucu } : { kapi: KAPI, lp: LP, ucu: UCU });
 /* v2: Circle forwarding delivers sale and founder dollars on these chains by itself */
 const ILERI_DOMAIN = new Set([26, 6, 3, 0, 1, 15, 19, 5]);
@@ -185,6 +193,7 @@ async function relayIle(ag, ben, usdc6, yerel18, txs, durum, beklenenUsd) {
       const h = await cuzdan.agdaGonder(ag, { to: t.to, data: t.data, value: "0x" + BigInt(t.value || 0).toString(16) });
       const m = await makbuz(ag, h);
       if (m.status !== 1) throw new Error("Reverted: " + h);
+      if (i === txs.length - 1) return { _arcMakbuz: m };
     }
     return null;
   }
@@ -214,6 +223,7 @@ async function relayIle(ag, ben, usdc6, yerel18, txs, durum, beklenenUsd) {
    (refundTo). Gives up waiting after ~5 minutes and says where to follow it. */
 async function relaySonuc(q, durum) {
   const id = (q.steps || []).map((s) => s.requestId).find(Boolean);
+  q._id = id;
   if (!id) return "bilinmiyor";
   const izle = "relay.link/transaction/" + id;
   for (let i = 0; i < 60; i++) {
@@ -309,8 +319,23 @@ export async function havuzFiyati(token, lpAdres) {
   return tokenSifir ? ham * 1e12 : (1 / ham) * 1e12;
 }
 
+/* one payment at a time on every paying button: a second press while one runs could pay twice */
+const tekSefer = (dugme, fn) => async () => {
+  if (dugme._mesgul) return;
+  dugme._mesgul = true; dugme.disabled = true;
+  try { await fn(); } finally { dugme._mesgul = false; dugme.disabled = false; }
+};
+
 export async function ciz({ param } = {}) {
   await v2Yukle();
+  if (!V2) {
+    const k = el("div", { sinif: "yigin" });
+    k.append(sayfaUst("Launch on any chain", "One pool on Arc, every chain's door to it"));
+    const yenile = el("button", { sinif: "dugme dugme--marka", attr: { type: "button" }, yazi: "Reload" });
+    yenile.addEventListener("click", () => location.reload());
+    k.append(panel("Could not load", el("div", { sinif: "yigin" }, [not(AYAR_YOK, "uyari"), yenile])));
+    return k;
+  }
   if (V2) {
     /* v2 reaches every vault chain: Robinhood's dollar is USDG (what relay delivers there), Solana once its gate is wired */
     for (const z of SEPET_ZINCIR) {
@@ -377,6 +402,9 @@ export async function ciz({ param } = {}) {
   for (const g of [ad, sembol, alim, vergi, zincirSec]) g.addEventListener("change", odemeDurum);
   satirlar.addEventListener("change", odemeDurum);
   satirlar.addEventListener("input", odemeDurum);
+  /* the prepared order names the connected account: another account or chain must be priced again */
+  let sonHesap = cuzdan.hesap();
+  cuzdan.dinle(({ hesap }) => { if (hesap !== sonHesap) { sonHesap = hesap; odemeDurum(); } });
   let lMesgul = false;   // one payment at a time: a second press while one runs could pay twice
   lDugme.addEventListener("click", async () => {
     const durum = (s) => { lDurum.textContent = s; };
@@ -391,10 +419,19 @@ export async function ciz({ param } = {}) {
         hazirOdeme = null;
         lDugme.textContent = "Launch";
         const rq = await relayIle(ag, ben, h.toplam, h.deger, h.txs, durum, h.usd);
-        const bek = rq && String(rq._sonuc || "").startsWith("bekliyor:") ? rq._sonuc.slice(9) : "";
-        durum(ag.anahtar === "arc" ? "Paid. Launched on Arc: the token and its pool are open and your tokens are in your wallet. Any LayerZero fee not used came back to you."
-          : bek ? "Paid. relay is still running it on Arc; do not pay again. Follow it at " + bek + "; your tokens arrive on " + ag.ad + " once it is done."
-          : "Launched on Arc. Your tokens arrive on " + ag.ad + " in a few minutes. Any LayerZero fee not used comes back to your address on Arc.");
+        const sonuc = String((rq && rq._sonuc) || "");
+        const bek = sonuc.startsWith("bekliyor:") ? sonuc.slice(9) : "";
+        if (bek) return durum("Paid. relay is still running it on Arc; do not pay again. Follow it at " + bek + "; your tokens arrive on " + ag.ad + " once it is done.");
+        if (ag.anahtar !== "arc" && sonuc !== "tamam")
+          return durum("Paid, but relay's result on Arc could not be checked from here. Do not pay again: look for your token on Discover in a few minutes.");
+        /* the token the launch made, read from the Arc receipt (direct) or relay's Arc transaction */
+        durum("Launched. Reading your token's address on Arc…");
+        const { launchTokeni, relayLaunchTokeni, tokenBaglantilari } = await import("../arc-sonuc.js");
+        const yeni = ag.anahtar === "arc" ? launchTokeni(rq && rq._arcMakbuz) : await relayLaunchTokeni(rq._id).catch(() => null);
+        if (yeni) token.value = yeni;
+        durum((ag.anahtar === "arc" ? "Paid. Launched on Arc: the token and its pool are open and your tokens are in your wallet. Any LayerZero fee not used came back to you."
+          : "Launched on Arc. Your tokens arrive on " + ag.ad + " in a few minutes. Any LayerZero fee not used comes back to your address on Arc.") +
+          (yeni ? "  " + tokenBaglantilari(yeni) : "  (The token's address could not be read yet: find it on Discover.)"));
         return;
       }
       if (!ad.value.trim() || !sembol.value.trim()) return durum("Give the token a name and a symbol.");
@@ -433,8 +470,6 @@ export async function ciz({ param } = {}) {
       /* creating a twin measured 4.54–4.78M gas on 22 Oct (Monad the most); 3.5M ran out on every chain */
       const ikizSec = sec(6_300_000n);
       const yayici = new Contract(YAYICI, ["function ucret(address,uint32[],bytes) view returns (uint256)"], arc);
-      const ikizUcret = ((await yayici.ucret(FTHM_ARC, IKIZ_EID, ikizSec)) * 13n) / 10n;
-      const deger = ikizUcret + 2n * 10n ** 18n;      // + the founder's tokens to your chain; unused value refunded
       const toplam = alim6 + teminat;
       if (V2) {
         /* the founder's slice is paid where the founder is (Circle forwarding, or relay to BNB / Robinhood) */
@@ -499,6 +534,8 @@ export async function ciz({ param } = {}) {
         durum(satirlarOzet.join("  ·  ") + ".  Check it, then press the button again to pay.");
         return;
       } else {
+        const ikizUcret = ((await yayici.ucret(FTHM_ARC, IKIZ_EID, ikizSec)) * 13n) / 10n;
+        const deger = ikizUcret + 2n * 10n ** 18n;      // + the founder's tokens to your chain; unused value refunded
         const istek = [ad.value.trim(), sembol.value.trim().toUpperCase(), sepet, teklif, BigInt(Number(vergi.value) * 10_000), alim6,
           zeroPadValue(ben, 32), ODEME_DOMAIN.has(ag.domain) ? ag.domain : ARC_DOMAIN, teslimEid(ag), IKIZ_EID, ikizSec, ikizUcret, sec(100_000n), ben];
         const txs = [
@@ -552,7 +589,7 @@ export async function ciz({ param } = {}) {
   const alTutar = el("input", { sinif: "girdi girdi--sayi", attr: { id: "merkez-al", type: "number", min: "1", step: "1", value: "20" } });
   const alDurum = el("div", { sinif: "yazi yazi--kucuk yazi--sessiz" });
   const alDugme = el("button", { sinif: "dugme dugme--marka", attr: { type: "button" }, yazi: "Buy" });
-  alDugme.addEventListener("click", async () => {
+  alDugme.addEventListener("click", tekSefer(alDugme, async () => {
     const durum = (s) => { alDurum.textContent = s; };
     try {
       const ben = cuzdan.hesap() || (await cuzdan.bagla());
@@ -573,7 +610,15 @@ export async function ciz({ param } = {}) {
         /* at least 85% of what the pool price gives before fees and tax: the slippage limit */
         asgari = BigInt(Math.floor((Number(usdc6) / 1e6 / f) * 0.85 * 1e6)) * 10n ** 12n;
       }
-      const deger = teslimEid(ag) ? 2n * 10n ** 18n : 0n;      // LayerZero fee for the delivery; none on Arc
+      /* LayerZero fee for the delivery, read live (it was a flat $2 against a real $0.25–0.60); +30% margin,
+         the unused part comes back to your address on Arc. None when the tokens stay on Arc. */
+      let deger = 0n;
+      if (teslimEid(ag)) {
+        const ornekAdaptor = new Contract("0xe204C0762F749183530a945B161b54D8454d80Be", OFT_ABI, arc);
+        const [lz] = await ornekAdaptor.quoteSend([teslimEid(ag), zeroPadValue(ben, 32), 10n ** 24n, 10n ** 24n, sec(100_000n), "0x", "0x"], false);
+        deger = (lz * 13n) / 10n;
+        durum(alDurum.textContent + "  LayerZero delivery to " + ag.ad + ": $" + (Number(lz) / 1e18).toFixed(2) + " (+30% margin, the unused part comes back to your address on Arc).");
+      }
       const txs = [
         { to: ARC_USDC, data: E.encodeFunctionData("approve", [S().kapi, usdc6]), value: "0" },
         { to: S().kapi, data: KAPI_ABI.encodeFunctionData("al", [t, usdc6, asgari, teslimEid(ag), zeroPadValue(ben, 32), teslimEid(ag) ? sec(100_000n) : "0x", ben]), value: deger.toString() },
@@ -581,7 +626,7 @@ export async function ciz({ param } = {}) {
       await relayIle(ag, ben, usdc6, deger, txs, durum);
       durum(ag.anahtar === "arc" ? "Paid. Bought on Arc; the tokens are in your wallet." : "Paid. Bought on Arc; the tokens arrive on " + ag.ad + " in a few minutes.");
     } catch (x) { durum((x && x.message) || "Could not buy."); }
-  });
+  }));
 
   const satTutar = el("input", { sinif: "girdi girdi--sayi", attr: { id: "merkez-sat", type: "number", min: "1", step: "1000", value: "100000" } });
   const satDurum = el("div", { sinif: "yazi yazi--kucuk yazi--sessiz" });
@@ -680,7 +725,7 @@ export async function ciz({ param } = {}) {
   const tasTutar = el("input", { sinif: "girdi girdi--sayi", attr: { type: "number", min: "1", step: "1000", value: "100000" } });
   const tasDurum = el("div", { sinif: "yazi yazi--kucuk yazi--sessiz" });
   const tasDugme = el("button", { sinif: "dugme dugme--sessiz", attr: { type: "button" }, yazi: "Move from Arc" });
-  tasDugme.addEventListener("click", async () => {
+  tasDugme.addEventListener("click", tekSefer(tasDugme, async () => {
     const durum = (x) => { tasDurum.textContent = x; };
     try {
       if (!V2) return durum("Opens with the second generation.");
@@ -719,7 +764,7 @@ export async function ciz({ param } = {}) {
       if ((await makbuz(ag, h)).status !== 1) throw new Error("Reverted: " + h);
       durum("Sent. LayerZero delivers it on " + tasZincir.value + " in a few minutes" + (tasZincir.value === "sui" ? " (on Sui the coin type is registered once per token; until then the transfer waits there and anyone can deliver it)." : "."));
     } catch (x) { durum((x && x.message) || "Could not move."); }
-  });
+  }));
   /* Sui: the twin's coin type, published once per token by anyone (docs/js/sui-ikiz.js) */
   const suiDurum = el("div", { sinif: "yazi yazi--kucuk yazi--sessiz" });
   const suiDugme = el("button", { sinif: "dugme dugme--sessiz", attr: { type: "button" }, yazi: "Register this token's Sui coin (Sui wallet)" });
@@ -790,8 +835,8 @@ export async function ciz({ param } = {}) {
   });
   const satDugme = el("button", { sinif: "dugme dugme--sessiz", attr: { type: "button" }, yazi: "Sell" });
   const itfaDugme = el("button", { sinif: "dugme dugme--sessiz", attr: { type: "button" }, yazi: "Redeem from the basket" });
-  satDugme.addEventListener("click", () => gonder(0));
-  itfaDugme.addEventListener("click", () => gonder(1));
+  satDugme.addEventListener("click", tekSefer(satDugme, () => gonder(0)));
+  itfaDugme.addEventListener("click", tekSefer(itfaDugme, () => gonder(1)));
 
   kap.append(panel("Buy, sell, redeem", el("div", { sinif: "yigin" }, [
     token, fiyatYazi,
@@ -810,6 +855,6 @@ export async function ciz({ param } = {}) {
       ...(V2.surum >= 4 ? [el("div", { sinif: "alan__ipucu", yazi: "Every trade's collateral tax goes to the basket in the same transaction. When several lines cross $50 at once it may need more gas than a trade gives it; then it waits, safe, and anyone passes it on here." }),
         kovaDugme, kovaDurum] : [])] : [])])));
   /* Solana / Sui / Aptos wallets (docs/js/uzak-cuzdan.js) */
-  if (V2) import("../uzak-cuzdan.js").then((m) => kap.append(m.uzakCuzdanPaneli({ token, V2, kaymaOrani }))).catch(() => {});
+  if (V2) import("../uzak-cuzdan.js").then((m) => kap.append(m.uzakCuzdanPaneli({ token, V2, kaymaOrani }))).catch(() => kap.append(not("The Solana / Sui / Aptos wallet panel could not be loaded. Reload the page to use it.", "uyari")));
   return kap;
 }

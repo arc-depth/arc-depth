@@ -25,6 +25,7 @@ import { el, panel } from "./ui.js";
 import { AGLAR } from "./aglar.js";
 import { cuzdan } from "./cuzdan.js";
 import * as egri from "./egri.js";
+import { YedekliOkur } from "./yedekli-okur.js";
 import { JsonRpcProvider, Contract, Interface, AbiCoder, zeroPadValue, keccak256, getAddress, isAddress, solidityPacked } from "../vendor/ethers.min.js";
 
 const ARC_USDC = "0x3600000000000000000000000000000000000000";
@@ -43,7 +44,9 @@ const ERC20 = new Interface(["function approve(address,uint256) returns (bool)"]
 const EMANET = new Interface(["function isle(bytes,bytes) returns (address)"]);
 const sec = (gaz) => solidityPacked(["uint16", "uint8", "uint16", "uint8", "uint128"], [3, 1, 17, 1, gaz]);
 const arcAg = () => AGLAR.find((a) => a.anahtar === "arc");
-const arc = () => new JsonRpcProvider(arcAg().rpc, 5042, { staticNetwork: true });
+/* reads move to the next Arc RPC on 429/403 (yedekli-okur.js), as on the launch page */
+let arcOkur = null;
+const arc = () => (arcOkur ||= new YedekliOkur());
 const hexB = (h) => Uint8Array.from((String(h).replace(/^0x/, "").match(/../g) || []).map((x) => parseInt(x, 16)));
 
 /// The 192-byte order MerkezKapi.hubIstek reads: kind, payout chain, payee, minimum, fallback on Arc, Circle fee cap.
@@ -61,8 +64,10 @@ async function ileriUcret(domain) {
 }
 
 async function makbuz(hash) {
-  const m = await arc().waitForTransaction(hash, 1, 400_000);
-  if (!m || m.status !== 1) throw new Error("Reverted on Arc: " + hash);
+  const { arcMakbuz } = await import("./arc-sonuc.js");
+  const m = await arcMakbuz(hash, 400);
+  if (!m) throw new Error("No receipt yet for " + hash + " on Arc. It may still go through: do NOT pay again. Check it at https://explorer.arc.io/tx/" + hash + ", then reload.");
+  if (Number(m.status) !== 1) throw new Error("Reverted on Arc: " + hash);
   return m;
 }
 
@@ -164,14 +169,21 @@ export function uzakCuzdanPaneli({ token, V2, kaymaOrani }) {
   const satD = el("button", { sinif: "dugme dugme--sessiz", attr: { type: "button" }, yazi: "Sell" });
   const itfaD = el("button", { sinif: "dugme dugme--sessiz", attr: { type: "button" }, yazi: "Redeem" });
   const tasD = el("button", { sinif: "dugme dugme--sessiz", attr: { type: "button" }, yazi: "Send to Arc" });
-  satD.addEventListener("click", () => gonder(0));
-  itfaD.addEventListener("click", () => gonder(1));
-  tasD.addEventListener("click", () => gonder(null));
+  /* one payment at a time: a second press while one runs could pay twice */
+  const tekSefer = (dugme, fn) => async () => {
+    if (dugme._mesgul) return durum("A payment is already in progress. Wait for it to finish; do not pay again.");
+    dugme._mesgul = true; dugme.disabled = true;
+    try { await fn(); } finally { dugme._mesgul = false; dugme.disabled = false; }
+  };
+
+  satD.addEventListener("click", tekSefer(satD, () => gonder(0)));
+  itfaD.addEventListener("click", tekSefer(itfaD, () => gonder(1)));
+  tasD.addEventListener("click", tekSefer(tasD, () => gonder(null)));
 
   /* ---- buy from Solana (relay) ---- */
   const alTutar = el("input", { sinif: "girdi girdi--sayi", attr: { type: "number", min: "1", step: "1", value: "20" } });
   const alD = el("button", { sinif: "dugme dugme--sessiz", attr: { type: "button" }, yazi: "Buy with SOL" });
-  alD.addEventListener("click", async () => {
+  alD.addEventListener("click", tekSefer(alD, async () => {
     try {
       await hazir();
       if (z.anahtar !== "solana") return durum("Buying is paid from Solana here (relay.link); from Sui or Aptos, use the buy above with an EVM wallet.");
@@ -192,7 +204,7 @@ export function uzakCuzdanPaneli({ token, V2, kaymaOrani }) {
       await relaySolana(usdc6, deger, txs, yedek, "~" + e.token.toLocaleString("en-US", { maximumFractionDigits: 0 }) + " tokens" +
         (solVar ? ", delivered to this wallet on Solana" : " (this token has no Solana twin yet: delivered to " + yedek + " on Arc)"));
     } catch (x) { durum((x && x.message) || "Could not buy."); }
-  });
+  }));
 
   /* relay from Solana: quote (relay simulates the Arc side), show it, then the wallet signs relay's Solana instructions */
   async function relaySolana(usdc6, deger, txs, yedek, ne) {
@@ -208,13 +220,25 @@ export function uzakCuzdanPaneli({ token, V2, kaymaOrani }) {
     if (!adim) throw new Error("relay returned no Solana step.");
     durum("Approve in your Solana wallet (" + odenen + ")…");
     const imza = await z.m.relayAdimi(adim.items[0].data);
-    durum("Paid on Solana (" + imza.slice(0, 12) + "…). relay runs it on Arc within a minute; follow it at relay.link/transaction/" + (adim.requestId || ""));
+    /* follow the request until it ran on Arc (as the EVM path does), so "done" is only said once it is done */
+    const id = adim.requestId || (q.steps.map((s) => s.requestId).find(Boolean)) || "";
+    const izle = "relay.link/transaction/" + id;
+    if (!id) return durum("Paid on Solana (" + imza.slice(0, 12) + "…). relay runs it on Arc within a minute; do not pay again.");
+    for (let i = 0; i < 60; i++) {
+      durum("Paid on Solana (" + imza.slice(0, 12) + "…). Waiting for relay to run it on Arc… (" + izle + ")");
+      const d = await fetch(RELAY + "/intents/status/v2?requestId=" + id, { signal: AbortSignal.timeout(15_000) }).then((x) => x.json()).catch(() => ({}));
+      if (d.status === "success") { durum("Done on Arc: " + ne + " (" + izle + ")."); return { id }; }
+      if (d.status === "failure" || d.status === "refund" || d.status === "refunded")
+        throw new Error("relay could not run it on Arc (" + d.status + "); relay refunds the payment to your Solana wallet. Details: " + izle);
+      await new Promise((r) => setTimeout(r, 5000));
+    }
+    durum("Paid on Solana. relay is still running it on Arc; do not pay again. Follow it at " + izle + ".");
   }
 
   /* ---- launch ---- */
   const lAd = el("input", { sinif: "girdi", attr: { placeholder: "name" } });
   const lSembol = el("input", { sinif: "girdi", attr: { placeholder: "SYMBOL" } });
-  const lAlim = el("input", { sinif: "girdi girdi--sayi", attr: { type: "number", min: "10", step: "10", value: "100" } });
+  const lAlim = el("input", { sinif: "girdi girdi--sayi", attr: { type: "number", min: "100", max: "500", step: "10", value: "100" } });
   const lIkiz = el("input", { attr: { type: "checkbox" } });
   lIkiz.checked = true;
   const lD = el("button", { sinif: "dugme", attr: { type: "button" }, yazi: "Launch from this wallet" });
@@ -232,7 +256,7 @@ export function uzakCuzdanPaneli({ token, V2, kaymaOrani }) {
     const h = hashGir.value.trim();
     if (!h) return durum("Paste the burn transaction hash first.");
     /* CCTP domains: Sui 8, Aptos 9 (0x-prefixed hashes are Aptos; Sui digests are base58) */
-    bekleyen = { kaynak: h.startsWith("0x") ? 9 : 8, hash: h, zincir: h.startsWith("0x") ? "Aptos" : "Sui" };
+    bekleyen = { kaynak: h.startsWith("0x") ? 9 : 8, hash: h, zincir: h.startsWith("0x") ? "Aptos" : "Sui", t: Date.now() };
     bekleyenYaz(bekleyen);
     bitirD.hidden = false;
     durum("Found. Press \"Finish on Arc\": it checks Circle's attestation first.");
@@ -245,13 +269,16 @@ export function uzakCuzdanPaneli({ token, V2, kaymaOrani }) {
       setTimeout(() => durum("A launch you started from " + (k.zincir || "Sui/Aptos") + " (" + k.hash.slice(0, 14) + "…) is waiting for Arc. Press \"Finish on Arc\"."), 0);
     }
   }
-  lD.addEventListener("click", async () => {
+  lD.addEventListener("click", tekSefer(lD, async () => {
     try {
       await hazir();
       const kurucu = arcAdresi();
       const ad = lAd.value.trim(), sembol = lSembol.value.trim().toUpperCase();
       if (!ad || !sembol) return durum("Name and symbol.");
+      if (ad.length > 32 || sembol.length > 10) return durum("Name up to 32 characters, symbol up to 10.");
       const alim6 = BigInt(Math.round(Number(lAlim.value) * 1e6));
+      /* the gate refuses a first buy outside $100–$500: a burn for less would only come back as a refund on Arc */
+      if (alim6 < 100_000_000n || alim6 > 500_000_000n) return durum("The first buy is between $100 and $500.");
       const b = (a) => zeroPadValue(a, 32);
       /* the fixed basket: FTHM on Arc and WETH on Base, $10 each (the rough quotes only seed the vaults' auctions) */
       const sepet = [[26, b(FTHM), 10_000_000n], [6, b("0x4200000000000000000000000000000000000006"), 10_000_000n]];
@@ -267,8 +294,14 @@ export function uzakCuzdanPaneli({ token, V2, kaymaOrani }) {
         const txs = [
           { to: ARC_USDC, data: ERC20.encodeFunctionData("approve", [V2.kapi, toplam]), value: "0" },
           { to: V2.kapi, data: KAPI2.encodeFunctionData("launch", [istek(kurucu)]), value: ikizUcret.toString() }];
-        return relaySolana(toplam, ikizUcret, txs, kurucu, "launching " + sembol + " ($" + Number(alim6) / 1e6 + " first buy, $20 basket" +
+        const rs = await relaySolana(toplam, ikizUcret, txs, kurucu, "launching " + sembol + " ($" + Number(alim6) / 1e6 + " first buy, $20 basket" +
           (evm.length ? ", twins on 8 EVM chains" : "") + "); your tokens and the founder's income go to " + kurucu + " on Arc");
+        if (rs && rs.id) {
+          const { relayLaunchTokeni, tokenBaglantilari } = await import("./arc-sonuc.js");
+          const yeni = await relayLaunchTokeni(rs.id).catch(() => null);
+          if (yeni) durum("Launched on Arc.  " + tokenBaglantilari(yeni));
+        }
+        return;
       }
       if (!V2.emanet) return durum("Launching from " + z.ad + " opens when LaunchEmaneti is deployed on Arc (scripts/dagit-launch-emaneti.js).");
       /* paid by a CCTP burn: the dollars and the launch arrive together at LaunchEmaneti; the LayerZero value comes out of them */
@@ -293,8 +326,8 @@ export function uzakCuzdanPaneli({ token, V2, kaymaOrani }) {
       }
       durum("Still waiting for Circle's attestation; come back and press Launch's finish when it is ready (" + r.hash + ").");
     } catch (x) { durum((x && x.message) || "Could not launch."); }
-  });
-  bitirD.addEventListener("click", async () => {
+  }));
+  bitirD.addEventListener("click", tekSefer(bitirD, async () => {
     try {
       if (!bekleyen) return durum("Nothing waiting.");
       if (!bekleyen.onay) {
@@ -304,13 +337,19 @@ export function uzakCuzdanPaneli({ token, V2, kaymaOrani }) {
       }
       if (!cuzdan.hesap()) await cuzdan.bagla();
       const h = await cuzdan.agdaGonder(arcAg(), { to: V2.emanet, data: EMANET.encodeFunctionData("isle", [bekleyen.onay.message, bekleyen.onay.attestation]), value: "0x0" });
-      const m = await makbuz(h);
-      if (m && m.status !== undefined && Number(m.status) !== 1) throw new Error("Reverted on Arc: " + h + ". If someone already carried this launch out, your token is on Arc; check Discover.");
+      durum("Sent on Arc (" + h.slice(0, 14) + "…). Waiting for the receipt…");
+      const { arcMakbuz, emanetSonucu, tokenBaglantilari } = await import("./arc-sonuc.js");
+      const m = await arcMakbuz(h);
+      if (!m) return durum("No receipt yet for " + h + " on Arc. It may still go through: do NOT press again. Check it at https://explorer.arc.io/tx/" + h + ", then reload.");
+      if (Number(m.status) !== 1) throw new Error("Reverted on Arc: " + h + ". If someone already carried this launch out, your token is on Arc; check Discover.");
       bitirD.hidden = true;
       bekleyenYaz(null);
-      durum("Launched on Arc: " + h);
+      /* LaunchEmaneti refunds inside a successful transaction when the launch itself fails: say which one happened */
+      const r = emanetSonucu(m);
+      if (r && !r.token) return durum("The launch did not go through on Arc, so your dollars were refunded: $" + (Number(r.iade) / 1e6).toFixed(2) + " is at your address on Arc (" + h + ").");
+      durum("Launched on Arc: " + h + (r && r.token ? "  " + tokenBaglantilari(r.token) : ""));
     } catch (x) { const t = (x && x.message) || "Could not finish."; durum(/^Reverted/.test(t) ? t + " If someone already carried this launch out, your token is on Arc: check Discover." : t); }
-  });
+  }));
 
   return panel("From a Solana, Sui or Aptos wallet", el("div", { sinif: "yigin" }, [
     el("div", { sinif: "alan__ipucu", yazi: "Use the token above from a wallet on Solana, Sui or Aptos. Twins are sent to Arc by LayerZero (its fee shown before you sign); a sale from Solana pays USDC on Solana, from Sui or Aptos on your Arc address. Anything that cannot be done goes to your Arc address." }),

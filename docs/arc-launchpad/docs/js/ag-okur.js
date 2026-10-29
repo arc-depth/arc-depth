@@ -73,7 +73,7 @@ export async function rpcPost(ag, govde) {
   let son = null;
   for (const url of [ag.rpc, ...(YEDEK[ag.anahtar] || [])]) {
     try {
-      const r = await fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(govde) });
+      const r = await fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(govde), signal: AbortSignal.timeout(12_000) });
       if (!r.ok) { son = new Error(ag.ad + " RPC " + r.status); continue; }
       const j = await r.json();
       if (sinirli(j)) { son = new Error(ag.ad + " RPC rate limited"); continue; }
