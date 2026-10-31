@@ -1,5 +1,5 @@
 {
- "zaman": "2026-10-31T14:18:20.761Z",
+ "zaman": "2026-10-31T16:57:48.885Z",
  "kapi": "0x1f042E18E1C7899E87cec5CAC5C07c487163BBbF",
  "launchpad": "0x2D3a0DaBD48207528800bDA6aDbC1b84E8d1f98B",
  "ucu": "0x259CF82E6313EB7D1d768a7FE5971FE394c2bF5d",
@@ -9,6 +9,7 @@
  "hook": "0x7CBF813E4B1A45B03911E6af27Cc58a308f36ecc",
  "emanet": "0x1a30cb68ED4d2226710298A41E21F267da124306",
  "surum": 8,
+ "teshis": "0xa8bf7291d9c9E0bd358367eb5BCB55A24F3359De",
  "platformToken": {
   "sembol": "ARCP",
   "ad": "Arc Pulse",
@@ -38,6 +39,12 @@
    "kasa": "0xCd98ccC96325423752e655F0b23a76F92BDC00C3",
    "dolar": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831"
   },
+  "ethereum": {
+   "domain": 0,
+   "haberci": "0x0929aF000aC0de282dd965D6B853b74Ab0911F9D",
+   "kasa": "0x4094Eee7c46377C751F419E0E8f7dA6269Eb67D9",
+   "dolar": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"
+  },
   "avalanche": {
    "domain": 1,
    "haberci": "0x5ABCF3Dbe86F9ffC5e69E13686Ec2876b29124A6",
@@ -55,6 +62,12 @@
    "haberci": "0xCe5b0513C3D5fB830227C06a3BE80Cca1C6FE233",
    "kasa": "0xaC170EE5FF4c85E569644203E0b8d46be97fD47B",
    "dolar": "0xb88339CB7199b77E23DB6E890353E22632Ba630f"
+  },
+  "bsc": {
+   "domain": 17,
+   "haberci": "0x4d486FcA7468fb171351C1573F2e55fA417c73C1",
+   "kasa": "0x6D9Ba5791e07190B243F06dE35DF92fE89f6daAb",
+   "dolar": "0xb233F129F7255F86d67BDAEA4e8c4f8274Fa70d9"
   },
   "robinhood": {
    "domain": 35,
@@ -87,6 +100,5 @@
    "sepetProgram": "9VyBC6ygFQrEP6V212maFci9du6R32BbKHxKmF9Wecto",
    "kapiProgram": "G91zXh4LCEzY7UgE3JWic3Kt5ckBsnibkgdAXABatWJQ"
   }
- },
- "teshis": "0xa8bf7291d9c9E0bd358367eb5BCB55A24F3359De"
+ }
 }
