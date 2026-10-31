@@ -8,13 +8,13 @@
  *      goes straight to them, in the same transaction, with no balance
  *      held in between.
  *   2. THE DEVELOPER POOL — 0.30% of every trade accumulates in the
- *      DevPool, and money leaves it only through a proposal the FTHM DAO
+ *      DevPool, and money leaves it only through a proposal the ARCP DAO
  *      has passed.
  *
  * WHY THEY ARE DESCRIBED SEPARATELY
  *   The first runs by itself: sell the product, take the money. The
  *   second depends on a vote, and that vote CANNOT BE CAST TODAY —
- *   staked FTHM is zero, so nobody has voting power. The pool keeps
+ *   staked ARCP is zero, so nobody has voting power. The pool keeps
  *   filling and nobody can draw on it.
  *
  *   Putting both under one "developer earnings" heading would present an
@@ -78,7 +78,7 @@ export async function ciz({ kayit, cuzdan }) {
   /* ---- 2. the dev pool, with its real state ----------------------- */
   const havuzGovde = el("div", { sinif: "yigin yigin--sik" });
 
-  if (!canli(PULSE.devPool)) {
+  if (!canli(YONETISIM.devPool)) {
     havuzGovde.append(not("The developer pool is not on chain yet.", "uyari"));
   } else {
     /* The balance and the voting power that would be needed to spend it. */
@@ -86,7 +86,7 @@ export async function ciz({ kayit, cuzdan }) {
     try {
       const ham = await cokluCagri([
         { method: "eth_call", params: [{ to: EKONOMI.quote,
-          data: cagriVerisi(ABI.erc20, "balanceOf", [PULSE.devPool]) }, "latest"] },
+          data: cagriVerisi(ABI.erc20, "balanceOf", [YONETISIM.devPool]) }, "latest"] },
         { method: "eth_call", params: [{ to: YONETISIM.staking,
           data: cagriVerisi(ABI.staking, "totalStaked") }, "latest"] },
         { method: "eth_call", params: [{ to: YONETISIM.staking,
@@ -103,14 +103,14 @@ export async function ciz({ kayit, cuzdan }) {
     } catch (e) { /* reported below */ }
 
     havuzGovde.append(el("div", { sinif: "izgara izgara--olcum" }, [
-      olcum("Havuzda biriken",
+      olcum("Collected in the pool",
         tutulan == null ? "unreadable" : para(tamSayidanSayi(tutulan, 6)),
         "0.30% of every trade"),
-      olcum("FTHM staked",
+      olcum("ARCP staked",
         stakeli == null ? "unreadable" : jetonMiktar(tamSayidanSayi(stakeli, 18)),
         "all of the voting power"),
       olcum("Proposal floor",
-        taban == null ? "unreadable" : jetonMiktar(tamSayidanSayi(taban, 18)) + " FTHM",
+        taban == null ? "unreadable" : jetonMiktar(tamSayidanSayi(taban, 18)) + " ARCP",
         "the minimum needed to propose")
     ]));
 
@@ -122,12 +122,12 @@ export async function ciz({ kayit, cuzdan }) {
     const bos0 = stakeli != null && BigInt(stakeli) === 0n;
     havuzGovde.append(not(
       bos0
-        ? "Money leaves this pool only through a proposal the FTHM DAO has " +
-          "passed, and RIGHT NOW no FTHM is staked — so nobody has voting " +
+        ? "Money leaves this pool only through a proposal the ARCP DAO has " +
+          "passed, and RIGHT NOW no ARCP is staked — so nobody has voting " +
           "power and nobody can propose. The pool keeps filling and " +
           "neither the DAO nor we can take anything out of it. There is no " +
           "claim button here because there is nothing to press."
-        : "Money leaves this pool only through a proposal the FTHM DAO has " +
+        : "Money leaves this pool only through a proposal the ARCP DAO has " +
           "passed: a 1% proposal threshold, 10% quorum, five days of " +
           "voting, two days of timelock. You can record your contribution, " +
           "but payment depends on a vote.",
@@ -135,7 +135,7 @@ export async function ciz({ kayit, cuzdan }) {
     ));
 
     havuzGovde.append(not(
-      "The pool answers to the FTHM governor, and that address cannot be " +
+      "The pool answers to the ARCP governor, and that address cannot be " +
       "changed. The previous developer fund answered to the operations " +
       "wallet, and that could not be changed either — so the DAO could " +
       "never reach it. That is exactly why the pool was replaced.",
@@ -153,11 +153,11 @@ export async function ciz({ kayit, cuzdan }) {
        It is still worth having. When the DAO can vote, the proposal that
        pays somebody references a contribution id, and that id has to
        exist first. */
-  if (canli(PULSE.devPool)) {
+  if (canli(YONETISIM.devPool)) {
     const katkiGovde = el("div", { sinif: "yigin yigin--sik" });
     let sayi = null;
     try {
-      sayi = await oku(PULSE.devPool, ABI.devPool, "contributionCount");
+      sayi = await oku(YONETISIM.devPool, ABI.devPool, "contributionCount");
     } catch (e) { sayi = null; }
 
     katkiGovde.append(el("p", {
@@ -201,7 +201,7 @@ export async function ciz({ kayit, cuzdan }) {
         durumSatiri.className = "yazi yazi--kucuk yazi--sessiz";
         durumSatiri.textContent = "Sending…";
         const hash = await cuzdan.gonder({
-          to: PULSE.devPool,
+          to: YONETISIM.devPool,
           data: cagriVerisi(ABI.devPoolYaz, "register", [uri])
         });
         durumSatiri.className = "yazi yazi--kucuk";

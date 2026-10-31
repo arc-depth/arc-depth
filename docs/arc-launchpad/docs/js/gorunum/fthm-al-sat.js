@@ -1,54 +1,51 @@
 /* ===========================================================================
- * gorunum/fthm-al-sat.js — buy and sell FTHM from any chain
+ * gorunum/fthm-al-sat.js — buy and sell ARCP (Arc Pulse) from any chain
+ *   (the file keeps its name so the #/fthm route and every link stay valid)
  *
- * One market: FTHM's pool on Arc. From any other chain:
- *   BUY   one relay.link order on your chain, paid in its USDC. relay brings
- *         the dollars to Arc and, in the same order, calls the FTHM gate
- *         (KapiAg, one address on every chain): buy in Arc's pool, send the
- *         FTHM over LayerZero back to you on your chain.
- *   SELL  one LayerZero send from your chain to the gate on Arc, with the
- *         sale instruction attached: the gate sells in Arc's pool and pays
- *         USDC to your address on Arc. If the pool cannot meet your minimum,
- *         you get the FTHM on Arc instead — nothing is left in the gate.
- * Measured on mainnet 15 Oct 2026: Base 1.568 USDC -> 79,086 FTHM on Base;
- * Base 50,000 FTHM -> 0.746 USDC on Arc (rapor/fthm-her-zincir.json).
+ * One market: ARCP's Uniswap v4 pool on Arc. ARCP lives on Arc; its twins on
+ * other chains come later.
+ *   BUY   one relay.link order on your chain, paid in its USDC (on Solana in
+ *         SOL): relay buys ARCP in the Arc pool and delivers it to your
+ *         address on Arc. Quoted 31 Oct 2026 from all nine EVM chains (Arc,
+ *         Robinhood, Base, Arbitrum, Ethereum, BNB, Avalanche, Monad,
+ *         HyperEVM): $10 -> ~660,000 ARCP; from Solana 0.05 SOL -> ~314,000.
+ *   SELL  on Arc, through the SwapRouter (contracts/SwapRouter.sol) in the
+ *         same pool, with a minimum enforced on chain: USDC to your address
+ *         on Arc. The pool's USDC side is what buyers have put in.
  * =========================================================================== */
 import { el, sayfaUst, panel, not, temizle, olcum } from "../ui.js";
-import { FTHM, fthmDurum } from "../fthm-veri.js";
+import { FTHM as ARCP, fthmDurum as arcpDurum } from "../fthm-veri.js";
 import { AGLAR } from "../aglar.js";
 import { cuzdan } from "../cuzdan.js";
-import { JsonRpcProvider, Contract, Interface, AbiCoder, zeroPadValue } from "../../vendor/ethers.min.js";
+import { JsonRpcProvider, Contract, Interface } from "../../vendor/ethers.min.js";
 import { YedekliOkur } from "../yedekli-okur.js";
 import { rpcPost } from "../ag-okur.js";
 
-const KAPI = "0x060BD07354462eBa410164aBaB6965fe289d2e80";
-const ADAPTOR = "0x6e591AfAf47A0Ff6aB26a4F5c077De7715C34bf0";
-const IKIZ = "0x933F764D62ff7C0D86626972003f6c5138B9eBdd";
 const ARC_USDC = "0x3600000000000000000000000000000000000000";
 const RELAY = "https://api.relay.link";
-/* KapiUzak (Arc): the same buy in Arc's pool, delivered to a 32-byte wallet (Solana). Ownerless; tested 27 Oct 2026: 0.5 USDC -> 33,190 FTHM on Solana. */
-const KAPI_UZAK = "0xa31Ea3F12b23ad5937c6F25EE9E3Fd82871A622b";
-const SOL_EID = 30168, SOLANA_RELAY = 792703809;
-const ARC_EID = 30417;
-/* LayerZero type-3 options: lzReceive 200k + lzCompose 500k on Arc, the
-   same figures the Arc adapter enforces for send-and-call. */
-const SAT_SECENEK = "0x00030100110100000000000000000000000000030d400100130300000000000000000000000000000007a120";
-const OFT_ABI = ["function quoteSend((uint32,bytes32,uint256,uint256,bytes,bytes,bytes),bool) view returns ((uint256,uint256))",
-  "function send((uint32,bytes32,uint256,uint256,bytes,bytes,bytes),(uint256,uint256),address) payable"];
+const SOLANA_RELAY = 792703809;
+const arcAg = () => AGLAR.find((a) => a.anahtar === "arc");
+/* the audited SwapRouter on Arc (aglar.js takasRouter): pays the output to the caller */
+const ROUTER = () => arcAg().takasRouter;
+const ROUTER_ABI = ["function swap((address,address,uint24,int24,address),bool,uint256,uint256) payable returns (uint256)"];
+const ERC = ["function approve(address,uint256) returns (bool)", "function allowance(address,address) view returns (uint256)", "function balanceOf(address) view returns (uint256)"];
 
 /* reads move to the next Arc RPC on 429/403: the single RPC answered 3–4 of this page's 7 reads with 429 (29 Oct) */
 const arc = new YedekliOkur();
-/* Uniswap's V4Quoter on Arc runs the real swap through FTHM's pool (hook included) without sending anything */
+/* Uniswap's V4Quoter on Arc runs the real swap through ARCP's pool (hook included) without sending anything */
 const V4_QUOTER = "0x8Dc178eFB8111BB0973Dd9d722ebeFF267c98F94";
-const HAVUZ_ANAHTARI = [ARC_USDC, FTHM.token, 0, 60, FTHM.hook];
+const HAVUZ_ANAHTARI = [ARC_USDC, ARCP.token, 0, 60, ARCP.hook];
 const KAYMA = 0.03;   // the price may move 3% between the quote and the trade on Arc
-async function teklif(usdcdenFthm, miktar) {
+async function teklif(usdcden, miktar) {
   const q = new Contract(V4_QUOTER, ["function quoteExactInputSingle(((address,address,uint24,int24,address),bool,uint128,bytes)) returns (uint256,uint256)"], arc);
-  const [cikan] = await q.quoteExactInputSingle.staticCall([HAVUZ_ANAHTARI, usdcdenFthm, miktar, "0x"]);
+  const [cikan] = await q.quoteExactInputSingle.staticCall([HAVUZ_ANAHTARI, usdcden, miktar, "0x"]);
   return cikan;
 }
 const asgariOf = (x) => (x * BigInt(Math.round((1 - KAYMA) * 1000))) / 1000n;
-const evmler = () => AGLAR.filter((a) => a.anahtar !== "arc");
+/* every EVM chain, Arc included: relay routes each chain's dollar to ARCP on Arc */
+const evmler = () => AGLAR.slice();
+/* the chain's dollar in raw units: BNB's USDC has 18 decimals, the others 6 */
+const dolarHam = (ag, usd) => BigInt(Math.round(usd * 1e6)) * 10n ** BigInt(ag.anahtar === "bsc" ? 12 : 0);
 
 /* the receipt through the chain's spare RPCs; a timeout says plainly not to pay twice */
 async function makbuz(ag, hash) {
@@ -72,17 +69,17 @@ const tekSefer = (dugme, fn) => async () => {
 
 export async function ciz() {
   const kap = el("div", { sinif: "yigin" });
-  kap.append(sayfaUst("FTHM", "The token every ARC PULSE trade buys and burns — one market on Arc, reachable from every chain"));
+  kap.append(sayfaUst("ARCP", "Arc Pulse — the token every ARC PULSE trade buys and burns. One market on Arc, reachable from every chain"));
 
   /* ---- live tokenomics, read from Arc on every visit ---- */
   const tok = (x) => Math.round(x).toLocaleString("en-US");
   const usd = (x) => "$" + (x >= 1000 ? Math.round(x).toLocaleString("en-US") : x.toPrecision(4));
   const canli = el("div", { sinif: "izgara izgara--olcum" }, [olcum("Price", "reading…"), olcum("Supply", "reading…")]);
   const dagilim = el("div", { sinif: "yigin" });
-  fthmDurum(arc).then((d) => {
+  arcpDurum(arc).then((d) => {
     temizle(canli);
     canli.append(
-      olcum("Price", usd(d.fiyat), tok(d.fthmPerUsdc) + " FTHM per $1, from the Arc pool"),
+      olcum("Price", usd(d.fiyat), tok(d.fthmPerUsdc) + " ARCP per $1, from the Arc pool"),
       olcum("Fully diluted value", usd(d.fdv), "price × supply"),
       olcum("Market cap", usd(d.piyasaDegeri), "price × circulating"),
       olcum("Total supply", tok(d.arz), "fixed: the token has no mint function"),
@@ -92,9 +89,9 @@ export async function ciz() {
     dagilim.append(el("div", { sinif: "tablo-sarmal" }, [el("table", { sinif: "tablo tablo--kart" }, [
       el("thead", {}, [el("tr", {}, ["Allocation", "Now on chain", "Held by"].map((h) => el("th", { yazi: h })))]),
       el("tbody", {}, [
-        ["Staking rewards", tok(d.stake), FTHM.stake, "paid out to stakers over time"],
-        ["Founder vesting", tok(d.vesting), FTHM.vesting, "unlocks on schedule"],
-        ["Market", tok(d.arz - d.stake - d.vesting - d.yakilan), FTHM.poolManager, "the Arc pool and holders"],
+        ["Staking rewards", tok(d.stake), ARCP.stake, "paid out to stakers over time"],
+        ["Founder vesting", tok(d.vesting), ARCP.vesting, "unlocks over 12 months"],
+        ["Market", tok(d.arz - d.stake - d.vesting - d.yakilan), ARCP.poolManager, "the Arc pool and holders"],
         ["Burned", tok(d.yakilan), "0x000000000000000000000000000000000000dEaD", "gone for good"],
       ].map(([ad, mik, adr, alt]) => el("tr", {}, [
         el("td", { attr: { "data-et": "Allocation" } }, [el("div", { yazi: ad }), el("div", { sinif: "yazi yazi--kucuk yazi--sessiz", yazi: alt })]),
@@ -103,134 +100,122 @@ export async function ciz() {
       ]))),
     ])]));
   }).catch(() => { temizle(canli); canli.append(olcum("Live figures", "Arc RPC busy — reload in a moment")); });
-  kap.append(panel("FTHM live from Arc", el("div", { sinif: "yigin" }, [canli, dagilim])));
-  kap.append(panel("Why FTHM", el("div", { sinif: "yigin" }, [
-    el("p", { yazi: "Every trade on ARC PULSE sets aside 0.2% for FTHM. The trades themselves buy FTHM from its pool on Arc and burn it — no team wallet in between, nobody has to press a button. More launches and more trading on ARC PULSE mean more FTHM bought and burned." }),
-    el("p", { yazi: "One pool on Arc, the same price on every chain: FTHM moves to Base, Arbitrum, Ethereum, BNB, Avalanche, Monad, HyperEVM, Robinhood, Solana, Sui and Aptos over LayerZero." }),
-    el("p", {}, ["Contracts: ", el("a", { attr: { href: "https://repo.sourcify.dev/5042/" + FTHM.token, target: "_blank", rel: "noopener" }, yazi: "FTHM (source verified on Sourcify)" }),
-      " · ", el("a", { attr: { href: "https://repo.sourcify.dev/5042/" + FTHM.yakici, target: "_blank", rel: "noopener" }, yazi: "FTHM burner" }),
+  kap.append(panel("ARCP live from Arc", el("div", { sinif: "yigin" }, [canli, dagilim])));
+  const exp = (adr, yazi) => el("a", { attr: { href: "https://explorer.arc.io/address/" + adr, target: "_blank", rel: "noopener" }, yazi });
+  kap.append(panel("Why ARCP", el("div", { sinif: "yigin" }, [
+    el("p", { yazi: "Every trade on ARC PULSE sets aside 0.2% for ARCP. The trades themselves buy ARCP from its pool on Arc and burn it — no team wallet in between, nobody has to press a button. More launches and more trading on ARC PULSE mean more ARCP bought and burned." }),
+    el("p", { yazi: "1,000,000,000 ARCP, fixed: the token has no mint function. 500,000,000 sit in the Arc pool as a one-sided ladder whose liquidity is locked for good, 400,000,000 pay stakers over time, 50,000,000 vest to the founder over 12 months and 50,000,000 are the founder's own. ARCP is also the governance token: its stakers vote on paying developers out of the developer pool." }),
+    el("p", { yazi: "One pool on Arc, one price: pay from Arc, Base, Arbitrum, Ethereum, BNB, Avalanche, Monad, HyperEVM, Robinhood or Solana and relay.link delivers the ARCP to you on Arc. ARCP on other chains: coming." }),
+    el("p", {}, ["Contracts on Arc: ", exp(ARCP.token, "ARCP token"),
+      " · ", exp(ARCP.yakici, "ARCP burner"),
+      " · ", exp(ARCP.stake, "staking"),
+      " · ", exp(ARCP.governor, "governor"),
       " · ", el("a", { attr: { href: "#/guvenlik" }, yazi: "every live contract" })]),
   ])));
-  kap.append(not("Buy from any EVM chain in the list below (from Solana, use the Solana panel): you pay in your chain's USDC and receive FTHM on the same chain. Buying and selling both go through FTHM's pool on Arc, so the price is the same wherever you hold it.", "bilgi"));
+  kap.append(not("Buy from any EVM chain in the list below (from Solana, use the Solana panel): you pay in your chain's USDC and receive ARCP at your same address on Arc. Every buy and sell goes through ARCP's one pool on Arc, so there is one price.", "bilgi"));
 
   let ag = evmler().find((a) => a.anahtar === "base") || evmler()[0];
   const zincirSec = el("select", { sinif: "girdi" }, evmler().map((a) => el("option", { attr: { value: a.anahtar }, yazi: a.ad })));
   zincirSec.value = ag.anahtar;
   zincirSec.addEventListener("change", () => { ag = AGLAR.find((a) => a.anahtar === zincirSec.value); });
 
-  /* ---- buy ---- */
+  /* ---- buy: relay.link brings your chain's dollar to Arc, buys ARCP in its pool and delivers it to your address on Arc ---- */
   const alTutar = el("input", { sinif: "girdi girdi--sayi", attr: { type: "number", min: "1", step: "1", value: "10" } });
   const alDurum = el("div", { sinif: "yazi yazi--kucuk yazi--sessiz" });
-  const alDugme = el("button", { sinif: "dugme dugme--marka", attr: { type: "button" }, yazi: "Buy FTHM" });
+  const alDugme = el("button", { sinif: "dugme dugme--marka", attr: { type: "button" }, yazi: "Buy ARCP" });
   alDugme.addEventListener("click", tekSefer(alDugme, async () => {
     try {
       const ben = cuzdan.hesap() || (await cuzdan.bagla());
       if (!ben) { alDurum.textContent = "Connect a wallet first."; return; }
-      const toplam = BigInt(Math.round(Number(alTutar.value) * 1e6));
-      if (toplam < 1_000_000n) { alDurum.textContent = "At least 1 USDC."; return; }
-      alDurum.textContent = "Reading the LayerZero fee back to " + ag.ad + "…";
-      const [ucret] = await new Contract(ADAPTOR, OFT_ABI, arc).quoteSend([ag.eid, zeroPadValue(ben, 32), 10n ** 22n, 0n, "0x", "0x", "0x"], false);
-      const deger = (ucret * 12n) / 10n;
-      const girdi = toplam - (deger / 10n ** 12n + 1n);
-      if (girdi <= 0n) { alDurum.textContent = "The amount does not cover the delivery fee."; return; }
-      /* what the pool gives for it now; less than 97% of that on Arc and nothing is bought (relay refunds) */
-      const tahmin = await teklif(true, girdi);
-      const asgari = asgariOf(tahmin);
-      alDurum.textContent = "Estimate: ~" + tok(Number(tahmin) / 1e18) + " FTHM for $" + (Number(girdi) / 1e6).toFixed(2) + " (delivery fee $" + (Number(deger) / 1e18).toFixed(2) + "); at least " + tok(Number(asgari) / 1e18) + " or nothing is bought.";
-      const e = new Interface(["function approve(address,uint256) returns (bool)"]);
-      const k = new Interface(["function alVeGonder(uint32,uint256,uint256,address,bytes) payable returns (uint256)"]);
-      const govde = { user: ben, recipient: ben, originChainId: ag.id, destinationChainId: 5042,
-        originCurrency: ag.dolar, destinationCurrency: "0x0000000000000000000000000000000000000000",
-        amount: (toplam * 10n ** 12n).toString(), tradeType: "EXACT_OUTPUT", txsGasLimit: 1500000,
-        txs: [{ to: ARC_USDC, data: e.encodeFunctionData("approve", [KAPI, girdi]), value: "0" },
-          { to: KAPI, data: k.encodeFunctionData("alVeGonder", [ag.eid, girdi, asgari, ben, "0x"]), value: deger.toString() }] };
-      alDurum.textContent = "Asking relay.link for the route…";
-      const q = await fetch(RELAY + "/quote", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(govde) }).then((x) => x.json());
+      const usd = Number(alTutar.value);
+      if (!(usd >= 1)) { alDurum.textContent = "At least 1 USDC."; return; }
+      alDurum.textContent = "Asking relay.link for the route to ARCP on Arc…";
+      const q = await fetch(RELAY + "/quote", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({
+        user: ben, recipient: ben, originChainId: ag.id, destinationChainId: 5042, originCurrency: ag.dolar, destinationCurrency: ARCP.token,
+        amount: dolarHam(ag, usd).toString(), tradeType: "EXACT_INPUT", refundTo: ben }) }).then((x) => x.json());
       if (!q.steps) { alDurum.textContent = "No route right now: " + (q.message || "try again"); return; }
+      const cik = q.details.currencyOut;
+      const tahmin = "~" + tok(Number(cik.amountFormatted)) + " ARCP on Arc (at least " + tok(Number(cik.minimumAmount) / 1e18) + ")";
       for (const adim of q.steps) for (const it of adim.items || []) {
         if (adim.kind !== "transaction") continue;
-        alDurum.textContent = (adim.id === "approve" ? "Approve " : "Pay ") + q.details.currencyIn.amountFormatted + " " + q.details.currencyIn.currency.symbol + " in your wallet…";
+        alDurum.textContent = "Estimate: " + tahmin + ". " + (adim.id === "approve" ? "Approve " : "Pay ") + q.details.currencyIn.amountFormatted + " " + q.details.currencyIn.currency.symbol + " in your wallet…";
         const d = it.data;
         const h = await cuzdan.agdaGonder(ag, { to: d.to, data: d.data, value: "0x" + BigInt(d.value || 0).toString(16) });
         const m = await makbuz(ag, h);
         if (m.status !== 1) throw new Error("Reverted: " + h);
       }
-      alDurum.textContent = "Paid. relay buys on Arc and LayerZero delivers the FTHM to you on " + ag.ad + " — usually within a few minutes.";
+      alDurum.textContent = "Paid. relay buys " + tahmin + " in the Arc pool and delivers it to " + ben.slice(0, 6) + "…" + ben.slice(-4) + " on Arc — usually within a minute.";
     } catch (x) { alDurum.textContent = (x && x.message) || "Could not send."; }
   }));
 
-  /* ---- sell ---- */
+  /* ---- sell: on Arc, through the SwapRouter in ARCP's pool; USDC to your address on Arc ---- */
   const satTutar = el("input", { sinif: "girdi girdi--sayi", attr: { type: "number", min: "1", step: "1000", value: "10000" } });
   const satDurum = el("div", { sinif: "yazi yazi--kucuk yazi--sessiz" });
-  const satDugme = el("button", { sinif: "dugme dugme--sessiz", attr: { type: "button" }, yazi: "Sell FTHM" });
+  const satDugme = el("button", { sinif: "dugme dugme--sessiz", attr: { type: "button" }, yazi: "Sell ARCP" });
   satDugme.addEventListener("click", tekSefer(satDugme, async () => {
     try {
       const ben = cuzdan.hesap() || (await cuzdan.bagla());
       if (!ben) { satDurum.textContent = "Connect a wallet first."; return; }
       const miktar = BigInt(Math.round(Number(satTutar.value))) * 10n ** 18n;
-      const p = new JsonRpcProvider(ag.rpc, ag.id, { staticNetwork: true });
-      const t = new Contract(IKIZ, OFT_ABI, p);
-      const cikan = await teklif(false, miktar);
+      if (miktar <= 0n) { satDurum.textContent = "Enter an amount of ARCP."; return; }
+      const t = new Contract(ARCP.token, ERC, arc);
+      const varolan = await t.balanceOf(ben);
+      if (varolan < miktar) { satDurum.textContent = "This wallet holds " + tok(Number(varolan) / 1e18) + " ARCP on Arc."; return; }
+      let cikan;
+      try { cikan = await teklif(false, miktar); }
+      catch (e) { satDurum.textContent = "The pool cannot take that much ARCP right now (its USDC side is what buyers have put in). Try a smaller amount."; return; }
       const asgari = asgariOf(cikan);
-      satDurum.textContent = "Estimate: ~$" + (Number(cikan) / 1e6).toFixed(2) + "; at least $" + (Number(asgari) / 1e6).toFixed(2) + ", or the FTHM is delivered to your address on Arc instead.";
-      const compose = AbiCoder.defaultAbiCoder().encode(["address", "uint256"], [ben, asgari]);
-      const prm = [ARC_EID, zeroPadValue(KAPI, 32), miktar, (miktar * 99n) / 100n, SAT_SECENEK, compose, "0x"];
-      const [ucret] = await t.quoteSend(prm, false);
-      satDurum.textContent += "  Sending to the gate on Arc (fee " + (Number(ucret) / 1e18).toPrecision(3) + " " + ag.gaz + ")…";
-      const h = await cuzdan.agdaGonder(ag, { to: IKIZ, data: new Interface(OFT_ABI).encodeFunctionData("send", [prm, [ucret, 0], ben]), value: "0x" + ucret.toString(16) });
-      const m = await makbuz(ag, h);
+      satDurum.textContent = "Estimate: ~$" + (Number(cikan) / 1e6).toFixed(2) + "; at least $" + (Number(asgari) / 1e6).toFixed(2) + " or nothing is sold.";
+      const A = arcAg(), r = ROUTER();
+      if ((await t.allowance(ben, r)) < miktar) {
+        satDurum.textContent += "  Approve the router on Arc in your wallet…";
+        const h0 = await cuzdan.agdaGonder(A, { to: ARCP.token, data: new Interface(ERC).encodeFunctionData("approve", [r, miktar]), value: "0x0" });
+        if ((await makbuz(A, h0)).status !== 1) throw new Error("Reverted: " + h0);
+      }
+      satDurum.textContent = "Estimate: ~$" + (Number(cikan) / 1e6).toFixed(2) + ". Confirm the sale on Arc in your wallet…";
+      const h = await cuzdan.agdaGonder(A, { to: r, data: new Interface(ROUTER_ABI).encodeFunctionData("swap", [HAVUZ_ANAHTARI, false, miktar, asgari]), value: "0x0" });
+      const m = await makbuz(A, h);
       if (m.status !== 1) throw new Error("Reverted: " + h);
-      satDurum.textContent = "Sent. The gate sells on Arc and the USDC arrives at your address on Arc in a few minutes.";
+      satDurum.textContent = "Sold in the ARCP pool on Arc. The USDC is at your address on Arc.";
     } catch (x) { satDurum.textContent = (x && x.message) || "Could not send."; }
   }));
 
   kap.append(panel("Your chain", zincirSec));
-  kap.append(panel("Buy FTHM from any chain", el("div", { sinif: "yigin" }, [
-    el("div", { sinif: "alan__ipucu", yazi: "Pay in your chain's USDC. The FTHM arrives on the same chain." }),
+  kap.append(panel("Buy ARCP from any chain", el("div", { sinif: "yigin" }, [
+    el("div", { sinif: "alan__ipucu", yazi: "Pay in your chain's USDC. The ARCP arrives at your same address on Arc." }),
     el("div", { sinif: "girdi-grup" }, [alTutar, el("span", { sinif: "girdi-grup__son", yazi: "USDC" })]), alDugme, alDurum])));
-  /* ---- buy from a Solana wallet: relay brings SOL to Arc as USDC, KapiUzak buys in Arc's pool and LayerZero delivers to the wallet on Solana ---- */
-  const solTutar = el("input", { sinif: "girdi girdi--sayi", attr: { type: "number", min: "2", step: "1", value: "10" } });
-  const solIade = el("input", { sinif: "girdi", attr: { placeholder: "your Arc / EVM address 0x… (only for relay refunds)" } });
+  /* ---- buy from a Solana wallet: relay brings SOL to Arc, buys ARCP in the Arc pool and delivers it to your EVM address on Arc ---- */
+  const solTutar = el("input", { sinif: "girdi girdi--sayi", attr: { type: "number", min: "0.01", step: "0.01", value: "0.1" } });
+  const solIade = el("input", { sinif: "girdi", attr: { placeholder: "your Arc / EVM address 0x… (the ARCP is delivered there on Arc)" } });
   const solDurum = el("div", { sinif: "yazi yazi--kucuk yazi--sessiz" });
-  const solDugme = el("button", { sinif: "dugme dugme--marka", attr: { type: "button" }, yazi: "Buy FTHM with SOL" });
+  const solDugme = el("button", { sinif: "dugme dugme--marka", attr: { type: "button" }, yazi: "Buy ARCP with SOL" });
   solDugme.addEventListener("click", tekSefer(solDugme, async () => {
     try {
       const m = await import("../solana-ikiz.js");
       const ben = await m.solanaCuzdan.baglan();
-      const iade = solIade.value.trim();
-      if (!/^0x[0-9a-fA-F]{40}$/.test(iade)) { solDurum.textContent = "Enter an EVM address for relay refunds (any of yours)."; return; }
-      const toplam = BigInt(Math.round(Number(solTutar.value) * 1e6));
-      if (toplam < 2_000_000n) { solDurum.textContent = "At least 2 USDC worth (the delivery to Solana costs about $1.50)."; return; }
-      const b = await m.adresBaytlari(ben);
-      const alici = "0x" + Array.from(b, (x) => x.toString(16).padStart(2, "0")).join("");
-      const [ucret] = await new Contract(ADAPTOR, OFT_ABI, arc).quoteSend([SOL_EID, alici, 10n ** 22n, 0n, "0x", "0x", "0x"], false);
-      const deger = (ucret * 12n) / 10n;
-      const girdi = toplam - (deger / 10n ** 12n + 1n);
-      if (girdi <= 0n) { solDurum.textContent = "The amount does not cover the delivery fee."; return; }
-      const tahmin = await teklif(true, girdi);
-      const asgari = asgariOf(tahmin);
-      const e = new Interface(["function approve(address,uint256) returns (bool)"]);
-      const k = new Interface(["function alVeGonder(uint32,uint256,uint256,bytes32,bytes) payable returns (uint256)"]);
+      const alici = solIade.value.trim();
+      if (!/^0x[0-9a-fA-F]{40}$/.test(alici)) { solDurum.textContent = "Enter your EVM address: the ARCP is delivered to it on Arc (any EVM wallet of yours, e.g. Phantom's)."; return; }
+      const lamport = BigInt(Math.round(Number(solTutar.value) * 1e9));
+      if (lamport < 10_000_000n) { solDurum.textContent = "At least 0.01 SOL."; return; }
       solDurum.textContent = "Asking relay.link for the route from Solana…";
       const q = await fetch(RELAY + "/quote", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({
-        user: ben, recipient: iade, originChainId: SOLANA_RELAY, destinationChainId: 5042, originCurrency: "11111111111111111111111111111111",
-        destinationCurrency: "0x0000000000000000000000000000000000000000", amount: (toplam * 10n ** 12n).toString(), tradeType: "EXACT_OUTPUT", txsGasLimit: 1500000,
-        txs: [{ to: ARC_USDC, data: e.encodeFunctionData("approve", [KAPI_UZAK, girdi]), value: "0" },
-          { to: KAPI_UZAK, data: k.encodeFunctionData("alVeGonder", [SOL_EID, girdi, asgari, alici, "0x"]), value: deger.toString() }] }) }).then((x) => x.json());
+        user: ben, recipient: alici, originChainId: SOLANA_RELAY, destinationChainId: 5042, originCurrency: "11111111111111111111111111111111",
+        destinationCurrency: ARCP.token, amount: lamport.toString(), tradeType: "EXACT_INPUT", refundTo: ben }) }).then((x) => x.json());
       if (!q.steps) { solDurum.textContent = "No route right now: " + (q.message || "try again"); return; }
       const adim = q.steps.find((s) => s.items && s.items[0] && s.items[0].data && s.items[0].data.instructions);
       if (!adim) { solDurum.textContent = "relay returned no Solana step."; return; }
-      solDurum.textContent = "Estimate: ~" + tok(Number(tahmin) / 1e18) + " FTHM (at least " + tok(Number(asgari) / 1e18) + " or nothing is bought). Approve " + Number(q.details.currencyIn.amountFormatted).toPrecision(5) + " SOL in your Solana wallet…";
+      const cik = q.details.currencyOut;
+      const tahmin = "~" + tok(Number(cik.amountFormatted)) + " ARCP (at least " + tok(Number(cik.minimumAmount) / 1e18) + ")";
+      solDurum.textContent = "Estimate: " + tahmin + ". Approve " + Number(q.details.currencyIn.amountFormatted).toPrecision(5) + " SOL in your Solana wallet…";
       const imza = await m.relayAdimi(adim.items[0].data);
-      solDurum.textContent = "Paid on Solana (" + imza.slice(0, 12) + "…). relay buys on Arc and LayerZero delivers the FTHM to this wallet on Solana, usually within minutes.";
+      solDurum.textContent = "Paid on Solana (" + imza.slice(0, 12) + "…). relay buys " + tahmin + " in the Arc pool and delivers it to " + alici.slice(0, 6) + "…" + alici.slice(-4) + " on Arc, usually within minutes.";
     } catch (x) { solDurum.textContent = (x && x.message) || "Could not send."; }
   }));
-  kap.append(panel("Buy FTHM from Solana", el("div", { sinif: "yigin" }, [
-    el("div", { sinif: "alan__ipucu", yazi: "Pay in SOL from a Solana wallet. The FTHM is bought in the same Arc pool and arrives in this wallet on Solana (mint Cx3gUyxZY3JzQaJ2w1V54gpg8PNZRtXbEoYpuZNtaQBb)." }),
-    el("div", { sinif: "girdi-grup" }, [solTutar, el("span", { sinif: "girdi-grup__son", yazi: "USDC" })]), solIade, solDugme, solDurum])));
-  /* ---- sell from a Solana wallet: the wallet's own LayerZero send (Paxos's immutable OFT program) to the gate on Arc
-     with the sale instruction; the gate sells in Arc's pool and pays USDC to the seller's EVM address on Arc.
-     Then, optionally, relay.link carries that USDC back to the Solana wallet as SOL (signed by the EVM wallet on Arc). ---- */
+  kap.append(panel("Buy ARCP from Solana", el("div", { sinif: "yigin" }, [
+    el("div", { sinif: "alan__ipucu", yazi: "Pay in SOL from a Solana wallet. The ARCP is bought in the same Arc pool and delivered to your EVM address on Arc. ARCP on Solana: coming." }),
+    el("div", { sinif: "girdi-grup" }, [solTutar, el("span", { sinif: "girdi-grup__son", yazi: "SOL" })]), solIade, solDugme, solDurum])));
+  /* ---- sell from a Solana wallet: waits for ARCP's Solana twin (coming). What works today is the second step:
+     relay.link carries USDC on Arc (e.g. from selling ARCP there) to the Solana wallet as SOL, signed by the EVM wallet on Arc. ---- */
   const SOL_SAT_BEKLEYEN = "arcpulse-fthm-sol-sat";   // only the pending Solana signature, on this device
   const ssTutar = el("input", { sinif: "girdi girdi--sayi", attr: { type: "number", min: "1", step: "1000", value: "10000" } });
   const ssAlici = el("input", { sinif: "girdi", attr: { placeholder: "your Arc / EVM address 0x… (the USDC is paid there on Arc)" } });
@@ -238,33 +223,10 @@ export async function ciz() {
   const ssIz = (imza) => { try { imza ? localStorage.setItem(SOL_SAT_BEKLEYEN, imza) : localStorage.removeItem(SOL_SAT_BEKLEYEN); } catch (e) { /* storage may be blocked */ } };
   const ssBag = (imza) => el("a", { attr: { href: "https://layerzeroscan.com/tx/" + imza, target: "_blank", rel: "noopener" }, yazi: "follow it on LayerZero Scan" });
   try { const b = localStorage.getItem(SOL_SAT_BEKLEYEN); if (b) ssDurum.append("Your last sale from Solana (" + b.slice(0, 12) + "…): ", ssBag(b), "."); } catch (e) { /* storage may be blocked */ }
-  const ssMax = el("button", { sinif: "dugme dugme--sade", attr: { type: "button" }, yazi: "Use my balance" });
-  ssMax.addEventListener("click", async () => {
-    try {
-      const m = await import("../solana-ikiz.js");
-      const b = await m.fthmBakiye(await m.solanaCuzdan.baglan());
-      ssTutar.value = String(Math.floor(Number(b) / 1e9));
-      ssDurum.textContent = "This wallet holds " + tok(Number(b) / 1e9) + " FTHM on Solana.";
-    } catch (x) { ssDurum.textContent = (x && x.message) || "Could not read the balance."; }
-  });
-  const ssDugme = el("button", { sinif: "dugme dugme--sessiz", attr: { type: "button" }, yazi: "Sell FTHM from Solana" });
-  ssDugme.addEventListener("click", tekSefer(ssDugme, async () => {
-    try {
-      const m = await import("../solana-ikiz.js");
-      const ben = await m.solanaCuzdan.baglan();
-      const alici = ssAlici.value.trim();
-      if (!/^0x[0-9a-fA-F]{40}$/.test(alici)) { ssDurum.textContent = "Enter your EVM address: the USDC is paid to it on Arc (any EVM wallet of yours, e.g. Phantom's)."; return; }
-      const miktar = BigInt(Math.round(Number(ssTutar.value))) * 10n ** 9n;
-      if (miktar <= 0n) { ssDurum.textContent = "Enter an amount of FTHM."; return; }
-      const varolan = await m.fthmBakiye(ben);
-      if (varolan < miktar) { ssDurum.textContent = "This wallet holds " + tok(Number(varolan) / 1e9) + " FTHM on Solana."; return; }
-      const imza = await m.fthmSat({ miktar, aliciEvm: alici, durum: (s) => { ssDurum.textContent = s; } });
-      ssIz(imza);
-      temizle(ssDurum);
-      ssDurum.append("Sent from Solana (" + imza.slice(0, 12) + "…). LayerZero carries it to Arc, the gate sells in the pool and pays the USDC to " +
-        alici.slice(0, 6) + "…" + alici.slice(-4) + " on Arc, usually within minutes: ", ssBag(imza), ". Then bring it to Solana below, or keep it on Arc.");
-    } catch (x) { ssDurum.textContent = (x && x.message) || "Could not send."; }
-  }));
+  /* ARCP on Solana: coming. The two buttons stay, disabled and labelled, until ARCP's Solana twin exists. */
+  const yakinda = "ARCP on Solana: coming. For now ARCP lives on Arc — sell it in the Sell panel below, then bring the USDC here as SOL.";
+  const ssMax = el("button", { sinif: "dugme dugme--sade", attr: { type: "button", disabled: "", title: yakinda }, yazi: "Use my balance" });
+  const ssDugme = el("button", { sinif: "dugme dugme--sessiz", attr: { type: "button", disabled: "", title: yakinda }, yazi: "Sell ARCP from Solana (coming)" });
   /* step 2: USDC on Arc -> SOL in the Solana wallet, through relay.link (Arc's gas is paid in that same USDC) */
   const ssGeri = el("input", { sinif: "girdi girdi--sayi", attr: { type: "number", min: "1", step: "0.01", placeholder: "empty = all but 0.05" } });
   const ssGeriDurum = el("div", { sinif: "yazi yazi--kucuk yazi--sessiz" });
@@ -298,13 +260,13 @@ export async function ciz() {
       ssGeriDurum.textContent = "Done on Arc. relay.link delivers about " + cikan + " to " + solBen.slice(0, 6) + "… on Solana, usually within a minute.";
     } catch (x) { ssGeriDurum.textContent = (x && x.message) || "Could not send."; }
   }));
-  kap.append(panel("Sell FTHM from Solana", el("div", { sinif: "yigin" }, [
-    el("div", { sinif: "alan__ipucu", yazi: "Sell FTHM held in a Solana wallet in the same Arc pool. Your Solana wallet signs one LayerZero send (fee well under 0.01 SOL); the gate on Arc sells and pays USDC to your EVM address on Arc. If the pool cannot fill the sale, you receive the FTHM there instead — nothing is left in the gate." }),
-    el("div", { sinif: "girdi-grup" }, [ssTutar, el("span", { sinif: "girdi-grup__son", yazi: "FTHM" })]), ssMax, ssAlici, ssDugme, ssDurum,
-    el("div", { sinif: "alan__ipucu", yazi: "Then, to get SOL back in the Solana wallet: connect the EVM wallet that received the USDC (Arc's gas is paid in that USDC) and relay.link brings it to Solana." }),
+  kap.append(panel("Sell ARCP from Solana", el("div", { sinif: "yigin" }, [
+    el("div", { sinif: "alan__ipucu", yazi: yakinda }),
+    el("div", { sinif: "girdi-grup" }, [ssTutar, el("span", { sinif: "girdi-grup__son", yazi: "ARCP" })]), ssMax, ssAlici, ssDugme, ssDurum,
+    el("div", { sinif: "alan__ipucu", yazi: "To get SOL in the Solana wallet: connect the EVM wallet that holds the USDC on Arc (Arc's gas is paid in that USDC) and relay.link brings it to Solana." }),
     el("div", { sinif: "girdi-grup" }, [ssGeri, el("span", { sinif: "girdi-grup__son", yazi: "USDC" })]), ssGeriDugme, ssGeriDurum])));
   kap.append(panel("Sell", el("div", { sinif: "yigin" }, [
-    el("div", { sinif: "alan__ipucu", yazi: "Sell FTHM you hold on this chain. The USDC is paid on Arc, to your same address." }),
-    el("div", { sinif: "girdi-grup" }, [satTutar, el("span", { sinif: "girdi-grup__son", yazi: "FTHM" })]), satDugme, satDurum])));
+    el("div", { sinif: "alan__ipucu", yazi: "Sell ARCP you hold on Arc, in its pool there. The USDC is paid on Arc, to your same address. ARCP on other chains: coming." }),
+    el("div", { sinif: "girdi-grup" }, [satTutar, el("span", { sinif: "girdi-grup__son", yazi: "ARCP" })]), satDugme, satDurum])));
   return kap;
 }

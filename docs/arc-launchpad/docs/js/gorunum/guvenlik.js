@@ -21,7 +21,7 @@ const V7_KANITLAR = [
   { baslik: "A whole launch works end to end on the live contracts", betik: "CANLI_KAYIT=dagitim-v7.json node scripts/denetim-v4-canli.js",
     yazi: "Launch, snipe tax, a $40,000 buy, a whale-shield sale, redemption with its fee, a queued order sent by a stranger for the tip, the Base vault buying WETH from Uniswap v3 and selling a holder's share, a founder on Arc paid inside the trade and a founder on Base paid by ilet: 40 checks." },
   { baslik: "Nothing waits for anyone: every slice reaches its place inside trades", betik: "CANLI_KAYIT=dagitim-v7.json node scripts/denetim-v7-bakim.js",
-    yazi: "On the live gate: the depth slice and the liquidity vault became locked pool liquidity (the pool's real bid grew from $98 to $1,277 in the run), the FTHM slice was swapped in FTHM's pool and burned, the Arc founder was paid, and a wallet's least-gas estimate cannot skip the upkeep: 14 checks." },
+    yazi: "On the live gate: the depth slice and the liquidity vault became locked pool liquidity (the pool's real bid grew from $98 to $1,277 in the run), the burn slice was swapped in the platform token's pool and burned, the Arc founder was paid, and a wallet's least-gas estimate cannot skip the upkeep: 14 checks." },
   { baslik: "The basket never jams", betik: "node scripts/denetim-v5-kova.js",
     yazi: "Five lines crossing $50 in one trade, on every mix of chains: at most two go per trade, the rest with the next trades; the tax never stays in the bucket." },
   { baslik: "Any launch can be diagnosed from the chain and fixed by anyone", betik: "CANLI_KAYIT=dagitim-v7.json node scripts/denetim-teshis.js",

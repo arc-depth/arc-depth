@@ -110,7 +110,7 @@ async function parametreler() {
    place and cannot drift between the empty and the active case. */
 function gucVgovde(kap, kurucuPay, yuzde, toplam) {
   kap.append(el("div", { sinif: "izgara izgara--olcum" }, [
-    olcum("Kurucuda stake", jetonMiktar(kurucuPay) + " FTHM",
+    olcum("Staked by the founder", jetonMiktar(kurucuPay) + " ARCP",
       "the floor that made activation possible"),
     olcum("Share of voting power", yuzde.toFixed(1) + "%",
       "the part held by one address")
@@ -173,13 +173,13 @@ export async function ciz() {
     olcum("Proposal threshold", oran(p.PROPOSAL_THRESHOLD_BPS), "of the staked supply"),
     olcum("Quorum", oran(p.QUORUM_BPS), "against the stake when the proposal opened"),
     olcum("Voting period", sureYaz(p.VOTING_PERIOD), "seconds, not blocks"),
-    olcum("Timelock", sureYaz(p.TIMELOCK), "kabulden uygulamaya"),
+    olcum("Timelock", sureYaz(p.TIMELOCK), "from passing to execution"),
     olcum("Execution window", sureYaz(p.GRACE_PERIOD), "after which it expires"),
-    /* FTHM, not ALP. Governance moved; a screen still saying ALP would
+    /* ARCP, not ALP. Governance moved; a screen still saying ALP would
        be naming a token that no longer decides anything. */
     olcum("Minimum voting power", p.MIN_OY_GUCU == null
       ? "unreadable"
-      : jetonMiktar(tamSayidanSayi(p.MIN_OY_GUCU, 18)) + " FTHM",
+      : jetonMiktar(tamSayidanSayi(p.MIN_OY_GUCU, 18)) + " ARCP",
       "needed in order to propose")
   ]));
 
@@ -187,7 +187,7 @@ export async function ciz() {
     "This DAO is live on chain and has taken " + sayi + " proposals. " +
     (sayi === 0
       ? "Zero is not a fault: the mechanism is in place, nobody has " +
-        "teklif vermedi."
+        "proposed yet."
       : ""),
     sayi === 0 ? "bilgi" : ""
   ));
@@ -226,7 +226,7 @@ export async function ciz() {
   const gucGovde = el("div", { sinif: "yigin yigin--sik" });
   gucGovde.append(el("p", {
     sinif: "yazi yazi--sessiz",
-    yazi: "Voting power comes from STAKING FTHM, not from holding it, and " +
+    yazi: "Voting power comes from STAKING ARCP, not from holding it, and " +
       "the total is snapshotted when a proposal opens. So the quorum is " +
       "measured against the stake that existed at that moment — not " +
       "against a total that can be inflated mid-vote."
@@ -237,8 +237,9 @@ export async function ciz() {
        allocation can be looked up directly, and that is the share that
        decides whether this is a DAO or one address with a five day delay.
 
-       Activation is deliberately the floor — 50.000 FTHM of a 50.066.437
-       balance — so this number starts honest and falls as others stake.
+       The previous platform DAO was activated deliberately at the floor
+       (50.000 of a 50.066.437 balance), so this number starts honest and
+       falls as others stake; ARCP's DAO opens the same way.
        Printing the total without it would have been the comfortable
        version of the same data. */
   let kurucuStake = null;
@@ -259,11 +260,11 @@ export async function ciz() {
     const esik = asgari == null
       ? null : Math.max(t * Number(p.PROPOSAL_THRESHOLD_BPS) / 10_000, asgari);
     gucGovde.append(el("div", { sinif: "izgara izgara--olcum" }, [
-      olcum("Total staked", jetonMiktar(t) + " FTHM", "all of the voting power"),
+      olcum("Total staked", jetonMiktar(t) + " ARCP", "all of the voting power"),
       olcum("Quorum threshold",
-        jetonMiktar(t * Number(p.QUORUM_BPS) / 10_000) + " FTHM",
+        jetonMiktar(t * Number(p.QUORUM_BPS) / 10_000) + " ARCP",
         "the FOR votes a proposal needs to pass"),
-      olcum("Proposal threshold", esik == null ? "unreadable" : jetonMiktar(esik) + " FTHM",
+      olcum("Proposal threshold", esik == null ? "unreadable" : jetonMiktar(esik) + " ARCP",
         "the greater of the stake share and the floor")
     ]));
 
@@ -291,9 +292,9 @@ export async function ciz() {
 
     if (t === 0 && asgari != null) {
       gucGovde.append(not(
-        "No FTHM is staked, so nobody has voting power right now and " +
+        "No ARCP is staked, so nobody has voting power right now and " +
         "nobody can propose: the floor is " + jetonMiktar(asgari) +
-        " FTHM and everyone is at zero. The DAO is deployed and " +
+        " ARCP and everyone is at zero. The DAO is deployed and " +
         "answering; what is missing is stake.",
         "uyari"
       ));

@@ -35,11 +35,11 @@ export async function ciz() {
   const s0 = egri.durum({ fiyat: egri.ACILIS, kurucuToken: 28e6, teklif: 98, vergi: 0.02 });
   kap.append(panel("2 — Launching: what you pay", [
     tablo(["Item", "Amount"], [
-      ["First buy (your tokens, at the opening price)", "$100 – $500"],
+      ["First buy (your tokens, at the opening price)", "$20 – $500, you choose"],
       ["— launch fee", "2%: 30% developer fund, 50% the pool's depth, 20% the DAO-controlled fund"],
-      ["— at $100: your tokens", "28,000,000 (2.8% of supply)"],
+      ["— your tokens", "(first buy − 2%) × 1,000,000,000 ÷ $3,500: 0.56% of supply at $20, 2.8% at $100, 14% at $500"],
       ["— your net dollars become the pool's bid", "below the opening price, down to −60%"],
-      ["Collateral basket", "1 to 5 tokens on any of the 12 chains, at least $4 a line, $20 in total"],
+      ["Collateral basket", "1 to 5 tokens on any of the 12 chains, each line at least 5% of the first buy ($1 at least)"],
       ["Twins", "you choose the chains; each costs its real LayerZero fee"],
       ["Your tokens to your chain", "its real LayerZero fee"],
       ["Bridge (if you pay from another chain)", "relay.link's fee, shown in its quote"],
@@ -77,15 +77,15 @@ export async function ciz() {
   /* ---- 4. fees -------------------------------------------------------- */
   kap.append(panel("4 — Every trade", [
     tablo(["Goes to", "Share"], [
-      ["the token's founder", "0.30%"], ["developer fund", "0.30%"], ["protocol liquidity", "0.50%"], ["operations (to the DAO-controlled developer fund)", "0.20%"],
-      ["FTHM bought and burned", "0.20%"], ["back into the pool (depth)", "0.70%"], ["the token's basket (collateral tax)", "1% – 5%, set at launch (1% if not chosen)"],
+      ["the token's creator", "0.30%"], ["developer pool", "0.30%"], ["protocol liquidity", "0.50%"], ["back into the pool (depth)", "0.70%"],
+      ["ARCP bought and burned", "0.20%"], ["operations", "0.20%"], ["the token's basket (collateral tax)", "1% – 5%, set at launch (1% if not chosen)"],
     ]),
     el("div", { sinif: "ikincil", attr: { style: "margin-top:12px" }, yazi:
       "Anti-snipe: a buy in the launch's first second pays 99%, then a quarter of that each second, nothing from the fifth; it goes back " +
       "into the pool. Whale shield: sales in one block above 0.5% of the circulating supply pay the excess (at most 3% more), into the basket. The founder's slice collects on Arc and anyone can " +
       "send it on to the founder's chain (Buy, sell, redeem → founder's trading income)." }),
     not("Every trade through the gate also does the upkeep itself: the depth slice, the snipe tax and the 0.5% liquidity slice become " +
-      "locked liquidity in that token's own pool, the FTHM slice is auctioned and the auction filled from FTHM's pool (the FTHM burned), " +
+      "locked liquidity in that token's own pool, the ARCP slice is auctioned and the auction filled from ARCP's pool (the ARCP burned), " +
       "and a founder paid on Arc receives their slice — in the same transaction, nobody has to press anything. A founder on another chain " +
       "sends their income on with one click (Circle's delivery fee needs a fresh quote). There is no 'drawdown defence': an earlier hook " +
       "set a flag 60% below the peak that nothing used; v7 removed it.", "bilgi"),
@@ -156,7 +156,7 @@ export async function ciz() {
     el("div", { sinif: "ikincil" }, [
       el("p", { yazi: "In scope: the live v7 contracts on all twelve chains (the Security page lists every address with its Sourcify-verified source), the site at arcpulse.app and GENESIS's diagnosis code. " +
         "Out of scope: third parties we depend on (Circle CCTP, LayerZero, relay.link, Uniswap, Raydium, Cetus, Hyperion, wallets), the older sets v2–v6 except where they still hold funds, price movements, and anything that needs a stolen key." }),
-      el("p", { attr: { style: "margin-top:10px" }, yazi: "Report privately: GitHub → arc-depth/arc-depth → Security → Report a vulnerability (private advisory), or a direct message to @Arcdepthoock on X. " +
+      el("p", { attr: { style: "margin-top:10px" }, yazi: "Report privately: GitHub → arc-depth/arc-depth → Security → Report a vulnerability (private advisory), or a direct message to @ArcPulseApp on X. " +
         "Please do not open a public issue or exploit it on mainnet beyond what proves it. We answer within 72 hours and publish the fix and the report after it is safe." }),
       el("p", { attr: { style: "margin-top:10px" }, yazi: "Reward: there is no company and no treasury of ours. Bounties are paid from the DAO-controlled developer fund by a DAO proposal; the amount is decided by that vote, " +
         "guided by severity (funds at risk, how many launches, whether it can be undone). We will write the proposal for a valid report; we cannot promise its outcome." }),

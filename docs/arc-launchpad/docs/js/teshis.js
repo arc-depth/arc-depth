@@ -161,15 +161,16 @@ export async function teshisEt(V, token) {
   if (r.vekilDolar >= 1_000_000n) sorunlar.push({ tur: "vekil", metin: "Founder income of " + d6(r.vekilDolar) + " is waiting in the launch's KurucuVekili (it can only go to the founder).",
     duzelt: { ad: "Send it to the founder (KurucuVekili.ilet)", hedef: r.vekil, veri: new Interface(["function ilet(uint256)"]).encodeFunctionData("ilet", [r.vekilDolar / 20n]) } });
 
-  /* v7: the gate's upkeep (depth and liquidity into the pool, the FTHM burner, a founder paid on Arc).
+  /* v7+: the gate's upkeep (depth and liquidity into the pool, the platform token's burner — ARCP from v8 — a founder paid on Arc).
      Every trade through the gate does it; shown here only if something is due now, with the same
      call as a backup anyone can send. */
   if ((V.surum || 0) >= 7 && V.kapi) {
     try {
       const k = new Contract(V.kapi, ["function bakimGerek(address) view returns (bool,bool,bool,bool,bool,uint256)"], arc);
       const [besle, biriktir, ilan, doldur, kurucu, gaz] = await k.bakimGerek(token);
+      const pt = (V.platformToken && V.platformToken.sembol) || "platform token";
       const ne = [besle && "the liquidity vault's dollars into this pool", biriktir && "the pool opener's depth slices into the pool",
-        ilan && "open the FTHM burner's auction", doldur && "fill the FTHM auction from FTHM's pool (if the pool pays its ask)",
+        ilan && "open the " + pt + " burner's auction", doldur && "fill the " + pt + " auction from " + pt + "'s pool (if the pool pays its ask)",
         kurucu && "the founder's income on Arc"].filter(Boolean);
       if (ne.length) sorunlar.push({ tur: "bakim", metin: "Upkeep due (the next trade does it by itself): " + ne.join("; ") + ".",
         duzelt: { ad: "Run the upkeep now (MerkezKapi.bakim)", hedef: V.kapi, veri: new Interface(["function bakim(address)"]).encodeFunctionData("bakim", [token]),

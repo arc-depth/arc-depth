@@ -1,6 +1,6 @@
 # ARC PULSE — security contact
 Contact: https://github.com/arc-depth/arc-depth/security/advisories/new
-Contact: https://x.com/Arcdepthoock
+Contact: https://x.com/ArcPulseApp
 Expires: 2027-10-24T00:00:00.000Z
 Preferred-Languages: en, tr
 Canonical: https://arcpulse.app/.well-known/security.txt

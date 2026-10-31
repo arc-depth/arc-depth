@@ -110,13 +110,13 @@ export const YOLLAR = [
   },
   {
     yol: "fthm",
-    ad: "FTHM on any chain",
-    kisa: "FTHM",
+    ad: "ARCP from any chain",
+    kisa: "ARCP",
     grup: "piyasa",
     ikon: "pusula",
     durum: "canli",
-    ozet: "Buy FTHM with your chain's USDC or sell it, from any chain, through the one pool on Arc.",
-    kaynak: "relay.link + KapiAg + FTHM OFT",
+    ozet: "Buy ARCP with your chain's USDC or SOL from any chain, delivered on Arc; sell it in the same pool on Arc.",
+    kaynak: "relay.link + ARCP pool (Uniswap v4, Arc) + SwapRouter",
     sekme: true
   },
   {
@@ -197,7 +197,7 @@ export const YOLLAR = [
 
        The second and worse one: its summary said "0.30% of every trade is
        distributed to token holders." That slice now goes to the DEVELOPER
-       POOL, and only the FTHM DAO can draw out of DevPool. So the page was
+       POOL, and only the platform token's DAO (now ARCP) can draw out of DevPool. So the page was
        saying something false about where the money goes.
 
        The module was removed, and the view file deleted too, because a
@@ -224,11 +224,11 @@ export const YOLLAR = [
     grup: "varlik",
     ikon: "dis",
     /* Live: the developer-pool half reads the deployed DevPool and the
-       deployed FTHM stake today, and tells the truth about why that
+       deployed ARCP stake today, and tells the truth about why that
        money cannot move yet. Only the marketplace half is pending. */
     durum: "canli",
     ozet: "Two ways to earn: sell a product on the marketplace, or be paid from the developer pool by a DAO vote.",
-    kaynak: "DevPool bakiyesi + Stake.totalStaked() + Pazar defteri"
+    kaynak: "DevPool balance + Stake.totalStaked() + Pazar ledger"
   },
 
   /* ---- governance -------------------------------------------------- */

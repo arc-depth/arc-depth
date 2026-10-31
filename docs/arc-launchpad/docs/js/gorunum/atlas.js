@@ -11,8 +11,8 @@
  * ACCESS
  *   The live map is open to everyone. The advanced layer — history
  *   slider, GENESIS research on a node, the discovery layer — opens with
- *   an FTHM stake, at the staking contract's own first level (any amount
- *   staked; the only other level that exists is the 50,000 FTHM vote
+ *   an ARCP stake, at the staking contract's own first level (any amount
+ *   staked; the only other level that exists is the 50,000 ARCP vote
  *   threshold). No payment. This is a gate in the page; the API's gate is
  *   enforced by its server against AtlasAbonelik.
  * NAVIGATION
@@ -20,7 +20,7 @@
  *   issuer; fee read from Circle's public fee endpoint) and relay.link
  *   (solvers; quote from its open API). Compared on output, time and risk;
  *   the relay route executes with the user's signature through the same
- *   path the FTHM page uses. CCTP execution from this page is not built
+ *   path the ARCP page uses. CCTP execution from this page is not built
  *   yet, and the page says so.
  * =========================================================================== */
 import { el, panel, not } from "../ui.js";
@@ -30,7 +30,7 @@ import { cokluOku } from "../ag-okur.js";
 import { cuzdan } from "../cuzdan.js";
 import { Interface } from "../../vendor/ethers.min.js";
 
-const STAKE = "0xAbD31A537E089D8a12b928aF7837C148dE2Bd2de";        // dagitim-fathom.json "stake", Arc
+const STAKE = "0x7b5883Dc1744B3E793E64276F5e290F9FdB1B273";        // dagitim-arcp.json "stake", Arc (ARCP)
 const STAKE_ABI = ["function stakedOf(address) view returns (uint256)", "function MIN_OY_GUCU() view returns (uint256)"];
 const ABONE_ABI = ["function paketSayisi() view returns (uint256)",
   "function paketler(uint256) view returns (uint256 fiyat, uint32 gun, uint64 cagri, bool acik, string ad)",
@@ -327,7 +327,7 @@ async function apiPaneli() {
   const a = arc();
   const adres = GENESIS.atlasAbonelik;
   const govde = el("div", { sinif: "yigin" }, [
-    el("div", { sinif: "yazi yazi--kucuk", yazi: "Atlas data as an API: chain stats, CCTP and LayerZero flows, discoveries, history, and route quotes. Paid in USDC on Arc; no FTHM stake needed. Your wallet is your key: sign each request, nothing secret to leak." }),
+    el("div", { sinif: "yazi yazi--kucuk", yazi: "Atlas data as an API: chain stats, CCTP and LayerZero flows, discoveries, history, and route quotes. Paid in USDC on Arc; no ARCP stake needed. Your wallet is your key: sign each request, nothing secret to leak." }),
     el("pre", { sinif: "mono yazi yazi--kucuk", attr: { style: "white-space:pre-wrap;overflow-x:auto" },
       yazi: "GET /v1/map          latest snapshot (nodes, edges, discoveries)\nGET /v1/flows?chain=  CCTP + LayerZero edges for one chain\nGET /v1/history       compact history windows\nGET /v1/route?from=&to=&amount=   route comparison\n\nHeaders: X-Atlas-Address, X-Atlas-Time (unix s), X-Atlas-Signature =\n  personal_sign(\"ATLAS <METHOD> <PATH> <TIME>\") by the paying wallet" })
   ]);
@@ -358,7 +358,7 @@ async function apiPaneli() {
 /* ---- from the chat ------------------------------------------------- */
 
 /** Atlas lines for a chat question that names a chain; null if none is
- *  named, or a stake note if the asker has no FTHM stake. */
+ *  named, or a stake note if the asker has no ARCP stake. */
 export async function atlasSoru(soru) {
   const { atlas, gecmis } = await veriOku();
   if (!atlas) return null;
@@ -366,7 +366,7 @@ export async function atlasSoru(soru) {
   const d = atlas.dugumler.filter((x) => q.includes(x.ad.toLocaleLowerCase("tr"))).sort((a, b) => b.ad.length - a.ad.length)[0];
   if (!d) return null;
   const { stake } = await stakeDurumu();
-  if (!(stake != null && stake > 0n)) return { zincir: d.ad, satirlar: ["Atlas research on " + d.ad + " opens with an FTHM stake (any amount)."] };
+  if (!(stake != null && stake > 0n)) return { zincir: d.ad, satirlar: ["Atlas research on " + d.ad + " opens with an ARCP stake (any amount)."] };
   return { zincir: d.ad, satirlar: arastir(atlas, gecmis, d) };
 }
 
@@ -390,14 +390,14 @@ export async function atlasBolumu() {
       bilgi.append(el("strong", { yazi: d.ad }));
       if (!gelismis) {
         bilgi.append(el("div", { sinif: "yazi yazi--kucuk", yazi: d.bizim ? "Block " + d.blok + (d.usdcArz != null ? " · USDC " + dolar(d.usdcArz) : "") : "Seen in traffic from the indexed chains." }),
-          not(ben ? "GENESIS research on a chain opens with an FTHM stake (any amount, in the staking contract on Arc)." : "Connect a wallet with an FTHM stake to have GENESIS research this chain.", "bilgi"));
+          not(ben ? "GENESIS research on a chain opens with an ARCP stake (any amount, in the staking contract on Arc)." : "Connect a wallet with an ARCP stake to have GENESIS research this chain.", "bilgi"));
         return;
       }
       for (const s of arastir(atlas, gecmis, d)) bilgi.append(el("div", { sinif: "yazi yazi--kucuk", yazi: s }));
     }
   };
   kap.append(panel("GENESIS ATLAS — the map", el("div", { sinif: "yigin" }, [
-    gelismis ? null : not("Live map for everyone. History, research on a chain and the discovery list open with an FTHM stake — no payment.", "bilgi"),
+    gelismis ? null : not("Live map for everyone. History, research on a chain and the discovery list open with an ARCP stake — no payment.", "bilgi"),
     haritaCiz(atlas, gecmis, gelismis, secildi),
     el("div", { sinif: "panel" }, [el("div", { sinif: "panel__govde" }, [bilgi])])
   ].filter(Boolean))));

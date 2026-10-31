@@ -47,7 +47,7 @@ contract SepetDefteri is IHaberAlici {
     IHaberci public immutable haberci;
     IERC20S public immutable usdc;
 
-    uint256 public constant ASGARI_KALEM = 4e6;   // $4 per basket line
+    uint256 public constant ASGARI_KALEM = 1e6;   // $1 per basket line (5% of the $20 minimum buy)
     uint256 public constant AZAMI_KALEM = 5;
     /// each line's dollars waiting here, as USDC, until they reach ESIK
     mapping(uint64 => mapping(uint256 => uint256)) public biriken;

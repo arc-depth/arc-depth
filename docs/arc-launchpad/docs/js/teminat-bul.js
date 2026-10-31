@@ -31,12 +31,12 @@ export const UNISWAP = {
 };
 
 /* Pools of the platform's own tokens carry our hooks, so a hookless search
-   cannot see them: FTHM's pool on Arc, and every token launched by one of
+   cannot see them: ARCP's pool on Arc, and every token launched by one of
    our launchpads (its pool key is asked from the launchpad itself). */
 const BILINEN = {
-  arc: [{ token: "0x8c2016b8DbB9034c2Fe173000639A9a1380b26AE",
-    key: ["0x3600000000000000000000000000000000000000", "0x8c2016b8DbB9034c2Fe173000639A9a1380b26AE", 0, 60, "0x72fd3c2eE8A499E97D87e2a642B7DFd908D58A44"],
-    aciklama: "FTHM pool on Arc" }],
+  arc: [{ token: "0xbe98138311c2D89526eCD86B368A2B4B81cf840b",
+    key: ["0x3600000000000000000000000000000000000000", "0xbe98138311c2D89526eCD86B368A2B4B81cf840b", 0, 60, "0xC7aDe691ef2FDBF09E793226Db1c79c36b038a44"],
+    aciklama: "ARCP pool on Arc" }],
 };
 
 const V3_FEES = [100, 500, 3000, 10000];

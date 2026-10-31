@@ -31,7 +31,8 @@ const LP = "0x52e600c8259ca44D9837B7b9E6BA1faee4bC040d";
 const PM = "0x8366a39CC670B4001A1121B8F6A443A643e40951";
 const YAYICI = "0x24C644e7C29F6582B892cb5D89d7b23Bc34d1bD9";
 const ARC_USDC = "0x3600000000000000000000000000000000000000";
-const FTHM_ARC = "0x8c2016b8DbB9034c2Fe173000639A9a1380b26AE";
+/* an existing Arc token used only as the sample address in twin-fee quotes (the fee depends on the message size, not on the token): ARCP */
+const ORNEK_ARC = "0xbe98138311c2D89526eCD86B368A2B4B81cf840b";
 const RELAY = "https://api.relay.link";
 const ARC_EID = 30417, ARC_DOMAIN = 26;
 const UCU = "0x7B695AAd76507CB1080d38E03b743CbDd02F9d4e";   // SepetUcu on Arc (dagitim-sepet.json): burns a holder's own tokens for redemption
@@ -133,6 +134,10 @@ const DEFTER4_ABI = ["function idOf(uint32,bytes32) view returns (uint64)", "fun
 const v4mu = () => V2 && Number(V2.surum || 2) >= 4;
 /* v6: every basket chain's vault buys from a pool (Arc: Uniswap v4; BNB: PancakeSwap v3; the rest Uniswap v3) */
 const v6mu = () => V2 && Number(V2.surum || 2) >= 6;
+/* v8 (31 Oct 2026): first buy $20–$500, each basket line at least 5% of the buy, no separate $20 total */
+const v8mu = () => V2 && Number(V2.surum || 2) >= 8;
+const ASGARI_ALIM = () => (v8mu() ? 20 : 100);
+const kalemAsgari = (alimDolar, zincir) => (v8mu() ? Math.max(1, alimDolar * 0.05) : !V2 && zincir.domain === 0 ? 25 : 4);
 /// v6: can the vault on this EVM chain buy `varlik` from a pool? The same view the vault uses (havuzVar).
 async function evmHavuzVar(zincir, varlik) {
   const k = V2 && V2.zincir && V2.zincir[zincir.ds];
@@ -357,7 +362,7 @@ export async function ciz({ param } = {}) {
   /* ================= launch ================= */
   const ad = el("input", { sinif: "girdi", attr: { id: "merkez-ad", placeholder: "Name", maxlength: "32" } });
   const sembol = el("input", { sinif: "girdi", attr: { id: "merkez-sembol", placeholder: "SYMBOL", maxlength: "10" } });
-  const alim = el("input", { sinif: "girdi girdi--sayi", attr: { id: "merkez-alim", type: "number", min: "100", max: "500", step: "10", value: "100" } });
+  const alim = el("input", { sinif: "girdi girdi--sayi", attr: { id: "merkez-alim", type: "number", min: String(ASGARI_ALIM()), max: "500", step: "10", value: v8mu() ? "20" : "100" } });
   const vergi = el("select", { sinif: "girdi", attr: { id: "merkez-vergi" } }, [1, 2, 3, 4, 5].map((v) => el("option", { attr: { value: String(v) }, yazi: v + "% collateral tax" })));
   vergi.value = "2";
   /* five collateral slots, always on the page; a slot left without an address is not used */
@@ -367,7 +372,7 @@ export async function ciz({ param } = {}) {
     const z = el("select", { sinif: "girdi" }, SEPET_ZINCIR.map((s) => el("option", { attr: { value: String(s.domain), disabled: !!s.kapali }, yazi: s.ad + (s.kapali ? " — " + s.kapali : "") })));
     z.value = String(zd);
     const a = el("input", { sinif: "girdi", attr: { placeholder: i ? "token address (Sui: coin type) — empty: not used" : "token address (Sui: coin type)", value: adres } });
-    const d = el("input", { sinif: "girdi girdi--sayi", attr: { type: "number", min: "4", step: "1", value: String(dolar) } });
+    const d = el("input", { sinif: "girdi girdi--sayi", attr: { type: "number", min: v8mu() ? "1" : "4", step: "1", value: String(dolar) } });
     const satir = el("div", { sinif: "yigin" }, [
       el("div", { sinif: "alan__etiket", yazi: "Collateral " + (i + 1) + (i ? " (optional)" : "") }),
       el("div", { sinif: "girdi-grup" }, [z, a, d, el("span", { sinif: "girdi-grup__son", yazi: "$" })]),
@@ -436,14 +441,14 @@ export async function ciz({ param } = {}) {
       }
       if (!ad.value.trim() || !sembol.value.trim()) return durum("Give the token a name and a symbol.");
       const alim6 = BigInt(Math.round(Number(alim.value) * 1e6));
-      if (alim6 < 100_000_000n || alim6 > 500_000_000n) return durum("The first buy is between $100 and $500.");
+      if (alim6 < BigInt(ASGARI_ALIM()) * 1_000_000n || alim6 > 500_000_000n) return durum("The first buy is between $" + ASGARI_ALIM() + " and $500.");
       const ss = [...satirlar.children].map((s) => s._oku()).filter((s) => s.adres);
       if (!ss.length) return durum("Add at least one basket token.");
       const sepet = [], teklif = [];
       let teminat = 0n;
       for (const s of ss) {
-        const asgari = !V2 && s.zincir.domain === 0 ? 25 : 4;
-        if (!(s.dolar >= asgari)) return durum("Each basket line needs at least $" + asgari + ".");
+        const asgari = kalemAsgari(Number(alim.value), s.zincir);
+        if (!(s.dolar >= asgari)) return durum("Each basket line needs at least $" + asgari + (v8mu() ? " (5% of the first buy)." : "."));
         /* v4: a Solana / Sui / Aptos vault buys only an asset its own list names (written before the lock);
            any other line would wait as USDC forever, so it is refused here, before anything is signed */
         if (v4mu() && ["solana", "sui", "aptos"].includes(s.zincir.tur)) {
@@ -464,7 +469,7 @@ export async function ciz({ param } = {}) {
         teklif.push(await teklifBirimi(s.zincir, s.adres, s.dolar));
         teminat += dolar6;
       }
-      if (teminat < 20_000_000n) return durum("The basket must hold at least $20 in total.");
+      if (!v8mu() && teminat < 20_000_000n) return durum("The basket must hold at least $20 in total.");
       /* the twins' LayerZero fee, read with a live token of the same shape; the excess comes back */
       durum("Reading the LayerZero fee for the twins…");
       /* creating a twin measured 4.54–4.78M gas on 22 Oct (Monad the most); 3.5M ran out on every chain */
@@ -479,7 +484,7 @@ export async function ciz({ param } = {}) {
         /* the twins on Solana, Sui and Aptos, through the hub: the chains whose gate is wired, and LayerZero's fee for each */
         durum("Reading the LayerZero fee for the Solana / Sui / Aptos twins…");
         const hub = new Contract(V2.hub, HUB_ABI, arc);
-        const ornek = AbiCoder.defaultAbiCoder().encode(["uint8", "address", "string", "string"], [1, FTHM_ARC, ad.value.trim(), sembol.value.trim().toUpperCase()]);
+        const ornek = AbiCoder.defaultAbiCoder().encode(["uint8", "address", "string", "string"], [1, ORNEK_ARC, ad.value.trim(), sembol.value.trim().toUpperCase()]);
         const uzak = [];
         let uzakUcret = 0n;
         const atlanan = [];
@@ -499,7 +504,7 @@ export async function ciz({ param } = {}) {
         /* real fees, read now: the EVM twins (IkizYayici), the Solana / Sui / Aptos twins (IkizHub), and the
            founder's tokens to their chain (an existing launch's adapter: the same OFT, the same peers). A 10%
            margin covers gas moving before the order lands; what is not used comes back on Arc. */
-        const evmGercek = evmIkiz.length ? await yayici.ucret(FTHM_ARC, evmIkiz, ikizSec) : 0n;
+        const evmGercek = evmIkiz.length ? await yayici.ucret(ORNEK_ARC, evmIkiz, ikizSec) : 0n;
         const uzakGercek = uzakUcret;
         let teslimGercek = 0n;
         if (teslimEid(ag)) {
@@ -534,7 +539,7 @@ export async function ciz({ param } = {}) {
         durum(satirlarOzet.join("  ·  ") + ".  Check it, then press the button again to pay.");
         return;
       } else {
-        const ikizUcret = ((await yayici.ucret(FTHM_ARC, IKIZ_EID, ikizSec)) * 13n) / 10n;
+        const ikizUcret = ((await yayici.ucret(ORNEK_ARC, IKIZ_EID, ikizSec)) * 13n) / 10n;
         const deger = ikizUcret + 2n * 10n ** 18n;      // + the founder's tokens to your chain; unused value refunded
         const istek = [ad.value.trim(), sembol.value.trim().toUpperCase(), sepet, teklif, BigInt(Number(vergi.value) * 10_000), alim6,
           zeroPadValue(ben, 32), ODEME_DOMAIN.has(ag.domain) ? ag.domain : ARC_DOMAIN, teslimEid(ag), IKIZ_EID, ikizSec, ikizUcret, sec(100_000n), ben];
@@ -551,14 +556,14 @@ export async function ciz({ param } = {}) {
     V2 ? el("div", { sinif: "alan__ipucu", yazi: "Paying from a Solana, Sui or Aptos wallet? Use the panel \"From a Solana, Sui or Aptos wallet\" at the bottom of this page." })
       : el("a", { sinif: "alan__ipucu", attr: { href: "#olustur-move" }, yazi: "Paying from a Sui or Aptos wallet? Use the Sui / Aptos launch form →" }),
     el("div", { sinif: "girdi-grup" }, [ad, sembol]),
-    el("div", { sinif: "alan__ipucu", yazi: "First buy $100–$500 (2% launch fee; the rest becomes your tokens at the opening price: $3,500 for the whole supply of 1,000,000,000)." }),
+    el("div", { sinif: "alan__ipucu", yazi: "First buy $" + ASGARI_ALIM() + "–$500 (2% launch fee; the rest becomes your tokens at the opening price: $3,500 for the whole supply of 1,000,000,000)." }),
     el("div", { sinif: "girdi-grup" }, [alim, el("span", { sinif: "girdi-grup__son", yazi: "$ first buy" })]), vergi,
     el("div", { sinif: "alan__ipucu", yazi: v4mu()
-      ? "Collateral basket: up to 5 tokens, mixed as you like across the chains below, at least $4 a line, at least $20 in total. Each line waits as USDC on Arc until it reaches $50 (every trade's collateral tax adds to it); then its vault buys the token from that chain's pool" + (v6mu() ? " (Uniswap v3 / v4, PancakeSwap v3 on BNB, Raydium, Cetus, Hyperion), within ~3% of a protected price; a token with no pool on its chain is refused here before you sign." : " (by auction on Arc, BNB, Monad and Robinhood, which have no pool with an average price).") + " Until then the line is redeemable as USDC."
+      ? "Collateral basket: up to 5 tokens, mixed as you like across the chains below, " + (v8mu() ? "each line at least 5% of the first buy ($1 on a $20 launch, $25 on $500)." : "at least $4 a line, at least $20 in total.") + " Each line waits as USDC on Arc until it reaches $50 (every trade's collateral tax adds to it); then its vault buys the token from that chain's pool" + (v6mu() ? " (Uniswap v3 / v4, PancakeSwap v3 on BNB, Raydium, Cetus, Hyperion), within ~3% of a protected price; a token with no pool on its chain is refused here before you sign." : " (by auction on Arc, BNB, Monad and Robinhood, which have no pool with an average price).") + " Until then the line is redeemable as USDC."
       : "Collateral basket: up to 5 tokens, mixed as you like across the chains below, at least $4 a line ($25 on Ethereum), at least $20 in total. Bought into the vaults by auction; every trade's collateral tax re-buys it every $50." }),
     satirlar,
     V2 ? uzakEtiket : el("span"),
-    el("div", { sinif: "alan__ipucu", yazi: "Every trade: 2.2% (0.3% you, 0.3% developers, 0.5% liquidity, 0.2% operations, 0.2% FTHM bought and burned, 0.7% back into the pool) plus your collateral tax." }),
+    el("div", { sinif: "alan__ipucu", yazi: "Every trade: 2.2% (0.30% you, the creator · 0.30% developer pool · 0.50% protocol liquidity · 0.70% back into the pool · 0.20% ARCP bought and burned · 0.20% operations) plus your 1–5% collateral tax." }),
     lDugme, lDurum])));
 
   /* ================= trade ================= */

@@ -20,7 +20,8 @@ interface IYakilabilirS {
 ///            (Defter.itfaUcreti), what is not needed comes back to `iade`
 ///   vergi    the tax dollars are pulled here before they are sent
 /// The founder's choice of assets is theirs; the only checks are the
-/// basket's shape (1 to 5 lines, $4 each), made again by the Defter.
+/// basket's shape (1 to 5 lines, $1 each at least — the launchpad holds
+/// each line to 5% of the founder's buy), made again by the Defter.
 contract SepetUcu {
     IHaberci public immutable haberci;
     IERC20S public immutable usdc;
@@ -67,7 +68,7 @@ contract SepetUcu {
         kayitli[token] = true;
         uint256 toplam;
         for (uint256 i = 0; i < k.length; i++) {
-            if (k[i].dolar < 4e6 || ref[i] == 0) revert KotuSepet();
+            if (k[i].dolar < 1e6 || ref[i] == 0) revert KotuSepet();
             toplam += k[i].dolar;
         }
         if (!usdc.transferFrom(msg.sender, address(this), toplam)) revert TransferOlmadi();

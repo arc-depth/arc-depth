@@ -19,7 +19,8 @@
  *       through CCTP to LaunchEmaneti on Arc, the launch carried in the burn.
  *       The founder's income and tokens go to an Arc address (Circle pays
  *       neither Sui nor Aptos by itself); the tokens can be moved later.
- *       The basket is fixed here: FTHM on Arc and WETH on Base, $10 each.
+ *       The basket is fixed here: ARCP (the platform token, sepet-v2.json
+ *       platformToken) on Arc and WETH on Base, each 5% of the first buy (v8).
  * =========================================================================== */
 import { el, panel } from "./ui.js";
 import { AGLAR } from "./aglar.js";
@@ -29,7 +30,7 @@ import { YedekliOkur } from "./yedekli-okur.js";
 import { JsonRpcProvider, Contract, Interface, AbiCoder, zeroPadValue, keccak256, getAddress, isAddress, solidityPacked } from "../vendor/ethers.min.js";
 
 const ARC_USDC = "0x3600000000000000000000000000000000000000";
-const FTHM = "0x8c2016b8DbB9034c2Fe173000639A9a1380b26AE";
+const ARCP_TOKEN = "0xbe98138311c2D89526eCD86B368A2B4B81cf840b";   // the platform token, ARCP (fallback when sepet-v2.json has no platformToken)
 const YAYICI = "0x24C644e7C29F6582B892cb5D89d7b23Bc34d1bD9";
 const PM = "0x8366a39CC670B4001A1121B8F6A443A643e40951";
 const RELAY = "https://api.relay.link";
@@ -238,7 +239,10 @@ export function uzakCuzdanPaneli({ token, V2, kaymaOrani }) {
   /* ---- launch ---- */
   const lAd = el("input", { sinif: "girdi", attr: { placeholder: "name" } });
   const lSembol = el("input", { sinif: "girdi", attr: { placeholder: "SYMBOL" } });
-  const lAlim = el("input", { sinif: "girdi girdi--sayi", attr: { type: "number", min: "100", max: "500", step: "10", value: "100" } });
+  /* v8 (31 Oct 2026): first buy $20–$500, each basket line at least 5% of it */
+  const v8 = Number((V2 && V2.surum) || 2) >= 8;
+  const ASGARI_ALIM = v8 ? 20 : 100;
+  const lAlim = el("input", { sinif: "girdi girdi--sayi", attr: { type: "number", min: String(ASGARI_ALIM), max: "500", step: "10", value: String(ASGARI_ALIM) } });
   const lIkiz = el("input", { attr: { type: "checkbox" } });
   lIkiz.checked = true;
   const lD = el("button", { sinif: "dugme", attr: { type: "button" }, yazi: "Launch from this wallet" });
@@ -277,24 +281,28 @@ export function uzakCuzdanPaneli({ token, V2, kaymaOrani }) {
       if (!ad || !sembol) return durum("Name and symbol.");
       if (ad.length > 32 || sembol.length > 10) return durum("Name up to 32 characters, symbol up to 10.");
       const alim6 = BigInt(Math.round(Number(lAlim.value) * 1e6));
-      /* the gate refuses a first buy outside $100–$500: a burn for less would only come back as a refund on Arc */
-      if (alim6 < 100_000_000n || alim6 > 500_000_000n) return durum("The first buy is between $100 and $500.");
+      /* the gate refuses a first buy outside the set's range: a burn for less would only come back as a refund on Arc */
+      if (alim6 < BigInt(ASGARI_ALIM) * 1_000_000n || alim6 > 500_000_000n) return durum("The first buy is between $" + ASGARI_ALIM + " and $500.");
       const b = (a) => zeroPadValue(a, 32);
-      /* the fixed basket: FTHM on Arc and WETH on Base, $10 each (the rough quotes only seed the vaults' auctions) */
-      const sepet = [[26, b(FTHM), 10_000_000n], [6, b("0x4200000000000000000000000000000000000006"), 10_000_000n]];
-      const teklif = [650_000n * 10n ** 18n, 3n * 10n ** 15n];
-      const toplam = alim6 + 20_000_000n;
+      /* the fixed basket: the platform token on Arc and WETH on Base (the rough quotes only seed the vaults' auctions).
+         $10 a line before v8; from v8 each line is 5% of the first buy ($1 at least), as the launchpad requires */
+      const kalem6 = v8 ? (alim6 * 5n / 100n > 1_000_000n ? alim6 * 5n / 100n : 1_000_000n) : 10_000_000n;
+      const platform = v8 && V2.platformToken && V2.platformToken.token ? V2.platformToken.token : ARCP_TOKEN;
+      const sepet = [[26, b(platform), kalem6], [6, b("0x4200000000000000000000000000000000000006"), kalem6]];
+      const teklif = [65_000n * 10n ** 18n * kalem6 / 1_000_000n, 3n * 10n ** 14n * kalem6 / 1_000_000n];
+      const toplam = alim6 + 2n * kalem6;
+      const sepetYazi = "$" + (Number(2n * kalem6) / 1e6).toFixed(2).replace(/\.00$/, "");
       /* creating a twin measured 4.54–4.78M gas on 22 Oct (Monad the most); 3.5M ran out on every chain */
       const ikizSec = sec(6_300_000n);
       const evm = lIkiz.checked ? EVM_EID : [];
-      const ikizGercek = evm.length ? await new Contract(YAYICI, ["function ucret(address,uint32[],bytes) view returns (uint256)"], arc()).ucret(FTHM, evm, ikizSec) : 0n;
+      const ikizGercek = evm.length ? await new Contract(YAYICI, ["function ucret(address,uint32[],bytes) view returns (uint256)"], arc()).ucret(ARCP_TOKEN, evm, ikizSec) : 0n;
       const ikizUcret = (ikizGercek * 11n) / 10n;
       const istek = (iade) => [ad, sembol, sepet, teklif, 20_000n, alim6, b(kurucu), 26, 0, evm, ikizSec, ikizUcret, sec(100_000n), iade, ["", ""], [], 0n];
       if (z.anahtar === "solana") {
         const txs = [
           { to: ARC_USDC, data: ERC20.encodeFunctionData("approve", [V2.kapi, toplam]), value: "0" },
           { to: V2.kapi, data: KAPI2.encodeFunctionData("launch", [istek(kurucu)]), value: ikizUcret.toString() }];
-        const rs = await relaySolana(toplam, ikizUcret, txs, kurucu, "launching " + sembol + " ($" + Number(alim6) / 1e6 + " first buy, $20 basket" +
+        const rs = await relaySolana(toplam, ikizUcret, txs, kurucu, "launching " + sembol + " ($" + Number(alim6) / 1e6 + " first buy, " + sepetYazi + " basket" +
           (evm.length ? ", twins on 8 EVM chains" : "") + "); your tokens and the founder's income go to " + kurucu + " on Arc");
         if (rs && rs.id) {
           const { relayLaunchTokeni, tokenBaglantilari } = await import("./arc-sonuc.js");
@@ -312,7 +320,7 @@ export function uzakCuzdanPaneli({ token, V2, kaymaOrani }) {
       const miktar6 = toplam + deger6 + bahsis6;
       const kanca = z.u.launchKancasi(AbiCoder, istek(V2.emanet), kurucu);
       if (!confirm("Burn $" + (Number(miktar6) / 1e6).toFixed(2) + " USDC on " + z.ad + " for " + sembol + ": first buy $" + Number(alim6) / 1e6 +
-        ", basket $20" + (evm.length ? ", twins on 8 EVM chains ≈ $" + (Number(ikizGercek) / 1e18).toFixed(2) + " (+10%)" : "") +
+        ", basket " + sepetYazi + (evm.length ? ", twins on 8 EVM chains ≈ $" + (Number(ikizGercek) / 1e18).toFixed(2) + " (+10%)" : "") +
         ". Your tokens, the founder's income and anything unused go to " + kurucu + " on Arc. Continue?")) return durum("Cancelled.");
       const r = z.anahtar === "sui" ? await z.u.suiLaunch({ emanet: V2.emanet, miktar6, kanca, durum }) : await z.u.aptosLaunch({ emanet: V2.emanet, miktar6, kanca, durum });
       bekleyen = r;
@@ -358,7 +366,7 @@ export function uzakCuzdanPaneli({ token, V2, kaymaOrani }) {
     el("div", { sinif: "girdi-grup" }, [satD, itfaD, tasD]),
     el("div", { sinif: "alan__ipucu", yazi: "Buy with SOL (relay.link): bought in the Arc pool, delivered to this wallet on Solana." }),
     el("div", { sinif: "girdi-grup" }, [alTutar, el("span", { sinif: "girdi-grup__son", yazi: "$" }), alD]),
-    el("div", { sinif: "alan__ipucu", yazi: "Launch from this wallet: Solana pays through relay.link; Sui and Aptos burn USDC through Circle to LaunchEmaneti on Arc, which launches with it. Basket: FTHM on Arc + WETH on Base, $10 each. The founder's tokens and income go to the Arc address above." }),
+    el("div", { sinif: "alan__ipucu", yazi: "Launch from this wallet: Solana pays through relay.link; Sui and Aptos burn USDC through Circle to LaunchEmaneti on Arc, which launches with it. Basket: " + (v8 && V2.platformToken ? V2.platformToken.sembol : "ARCP") + " on Arc + WETH on Base, " + (v8 ? "each 5% of the first buy ($1 at least)" : "$10 each") + ". The founder's tokens and income go to the Arc address above." }),
     el("div", { sinif: "girdi-grup" }, [lAd, lSembol]),
     el("div", { sinif: "girdi-grup" }, [lAlim, el("span", { sinif: "girdi-grup__son", yazi: "$ first buy" })]),
     el("label", { sinif: "alan__ipucu" }, [lIkiz, el("span", { yazi: " twins on the 8 EVM chains now (their LayerZero fee is added)" })]),

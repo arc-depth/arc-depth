@@ -62,9 +62,16 @@ export const DIS = {
   usdc: "0x3600000000000000000000000000000000000000"
 };
 
-/* ---- GOVERNANCE: FTHM, AND IT IS LIVE ---------------------------
+/* ---- GOVERNANCE: ARCP ------------------------------------------
  *
- * Governance is FTHM now. This block pointed at the ALP stack, and
+ * 31 Oct 2026: governance points at ARCP (Arc Pulse) — token, stake,
+ * governor and vesting from dagitim-arcp.json, the developer fund from
+ * dagitim-v8.json (DevPool, governed by the ARCP governor). Same
+ * contracts (DepthGovernor / Stake) as the previous platform token, so
+ * the ABI notes below still hold. The figures in the table were read
+ * from the previous governor and are kept as the history of that read.
+ *
+ * Governance moved off ALP earlier. This block pointed at the ALP stack, and
  * repointing it was not a one-line change: the two governors are
  * different contracts with different shapes, measured before anything
  * moved.
@@ -77,7 +84,7 @@ export const DIS = {
  *                    every index after description moved by one and
  *                    pr[4] became a BLOCK NUMBER where a deadline was.
  *
- * Read from the FTHM governor on chain, same block:
+ * Read from the previous platform token's governor on chain, same block:
  *
  *   proposalCount()           0          never used, not broken
  *   PROPOSAL_THRESHOLD_BPS  100          1.00% of staked supply
@@ -87,28 +94,28 @@ export const DIS = {
  *   GRACE_PERIOD        1209600 s        14.00 days
  *   ANLIK_GERI                1          snapshot taken one block back
  *   guardianExpiry()  1822925564         2027-10-07, can only CANCEL
- *   totalStaked()        50.000 FTHM     activated with the floor
+ *   totalStaked()        50.000 tokens   activated with the floor
  *
  * The periods are SECONDS, not blocks: state() compares against
  * block.timestamp. Reading them as blocks and converting at Arc's
  * measured 0.507 s/block gave 2.54 days and 1.01 days, both wrong, and
  * that wrong pair was still printed by the DAO access audit. */
 export const YONETISIM = {
-  governor: "0x1084AD3162afC8A62736D604598377D8e6Be8D95",
-  govToken: "0x8c2016b8DbB9034c2Fe173000639A9a1380b26AE",                 // FTHM
-  staking: "0xAbD31A537E089D8a12b928aF7837C148dE2Bd2de",                  // voting power
-  devPool: "0xA110b71c3f0748536f10C9e71A6E9F96999F6CD0",            // the 0.30% developer slice
-  vesting: "0x386968f036cbc0d0965C81bf1fCEd0b40EE11E14",
-  acici: "0x0EEE2d24a18ad48960935D08862059Ac07171281",
+  governor: "0x846E0e9997ee900BcaFFAA79ad0B377FC907712c",
+  govToken: "0xbe98138311c2D89526eCD86B368A2B4B81cf840b",                 // ARCP
+  staking: "0x7b5883Dc1744B3E793E64276F5e290F9FdB1B273",                  // voting power
+  devPool: "0x0C6Fe02146f46b6df581905A24dB4Bc8c9B48FF4",            // the 0.30% developer slice (v8)
+  vesting: "0xD5b95DFf257A30188b8ff64450d6fB158f2De8b6",
+  acici: "0x97cCfedBfb6338291bc3Ea29344C37E10B757007",
   /* The address that holds the founder allocation. Named so the DAO
      screen can report how much of the voting power sits in one place
      instead of only reporting the total. */
   kurucu: "0x89189C84DC95d0520AEeC9c8cF3BA5B9d42611D0",
-  hook: "0x72fd3c2eE8A499E97D87e2a642B7DFd908D58A44"
+  hook: "0xC7aDe691ef2FDBF09E793226Db1c79c36b038a44"
 };
 
 /* The ALP-era governance stack. Still on chain, no longer governing:
-   FTHM is the only governance token. Named rather than deleted because
+   ARCP is the only governance token. Named rather than deleted because
    the contracts below still answer to it and a reader who finds one of
    these addresses needs to know why it is not the DAO. */
 export const ESKI_YONETISIM = {
@@ -120,15 +127,16 @@ export const ESKI_YONETISIM = {
   vesting: "0xe62fe875aaaC73f33ac809200Ab883d004A13B17"
 };
 
-/* What a passing FTHM proposal can and cannot reach.
+/* What a passing ARCP proposal can and cannot reach.
  *
  * Not a policy statement — a measurement, and the measurement moved
  * three of these from CAN to CANNOT.
  *
- * Every target's authority was read on chain against the FTHM governor
- * 0x1084AD31:
+ * Every target's authority was read on chain against the previous
+ * platform governor 0x1084AD31 (the v8 DevPool 0x0C6Fe021 was deployed
+ * with the ARCP governor as its governor()):
  *
- *   DevPool (new)      governor()   FTHM GOVERNOR     -> can
+ *   DevPool (v8)       governor()   ARCP GOVERNOR     -> can
  *   DevPool (ALP era)  governor()   ALP GOVERNOR      -> cannot
  *   GelistiriciFonu    tahsisci()   ISLETME CUZDANI   -> cannot
  *   Hazine             governor()   ALP GOVERNOR      -> cannot
@@ -136,12 +144,12 @@ export const ESKI_YONETISIM = {
  *   AlpLocker          governor()   reverts, no such getter
  *
  * This block previously listed the treasury, the launch menu and the
- * ALP lock as DAO powers. Under FTHM they are not: those authorities
+ * ALP lock as DAO powers. Under the platform token they are not: those authorities
  * are `address public immutable governor` set to the ALP governor, so
  * they can never be handed over, and the launch menu curated the share
  * queue that was cancelled anyway.
  *
- * Which leaves the FTHM DAO with exactly ONE power today — paying
+ * Which leaves the ARCP DAO with exactly ONE power today — paying
  * developers out of the slice every trade feeds. That is a small list,
  * and listing the other three would have been inventing authority the
  * chain refuses. */
@@ -157,14 +165,14 @@ export const DAO_YETKI = {
     { ne: "The fee table and the hook", neden: "PulseHook: the constants cannot be changed" },
     { ne: "Locked liquidity", neden: "PulseAcici / PulseLikiditeKasasi: no owner, no setter" },
     { ne: "The opening price and the supply", neden: "PulseLaunchpad: the constants cannot be changed" },
-    { ne: "The treasury", neden: "Hazine.governor is the ALP governor and immutable — FTHM cannot reach it" },
+    { ne: "The treasury", neden: "Hazine.governor is the ALP governor and immutable — ARCP cannot reach it" },
     { ne: "The launch menu (the share queue)", neden: "LaunchQueue.governor is the ALP governor, and the queue was cancelled" },
     { ne: "The old developer fund", neden: "GelistiriciFonu.tahsisci is the operations wallet, and immutable" }
   ],
   /* The honest residual, measured the same way. */
   /* THIS TEXT CHANGED BECAUSE THE SITUATION CHANGED
-       Its previous form said "no FTHM is staked, nobody can propose", and
-       that was true. The DAO was opened with the floor (50,000 FTHM);
+       Its previous form said "no token is staked, nobody can propose", and
+       that was true. The DAO was opened with the floor (50,000 tokens);
        propose() is now accepted for a real DevPool payment — verified by
        simulation.
 
@@ -172,21 +180,21 @@ export const DAO_YETKI = {
        no longer "nobody can decide" but "one address can decide". Fixing
        the first without writing down the second would be swapping bad news
        for good. */
-  artikRisk: "The DAO's only power is paying out of the DevPool. The " +
-    "floor has been staked, so proposals are possible — but the only " +
-    "address staking is the founder's, so all of the voting power sits " +
-    "there: that one address clears both the proposal threshold and the " +
-    "quorum. What slows this down is not the spread of votes but five " +
-    "days of voting, a two-day timelock, and a guardian that can only " +
-    "CANCEL until 2027. The share erodes as third parties stake, and " +
-    "the DAO screen shows it as it is."
+  artikRisk: "The DAO's only power is paying out of the DevPool. " +
+    "Proposals need 50,000 ARCP staked, and while few addresses stake, a " +
+    "single one can clear both the proposal threshold and the quorum. " +
+    "What slows this down is not the spread of votes but five days of " +
+    "voting, a two-day timelock, and a guardian that can only CANCEL " +
+    "until October 2027. The share erodes as more holders stake, and the " +
+    "DAO screen shows it as it is."
 };
 
 /* Ours, and deployed. The previous generation of this product — kept
    because the pages that read it are still true. */
 export const ESKI = {
-  teminatKarnesi: "0x633c266aA9dB7df2f2aC63eB8711bF9dA76846Da",
-  fthm: "0x8c2016b8DbB9034c2Fe173000639A9a1380b26AE"
+  teminatKarnesi: "0x633c266aA9dB7df2f2aC63eB8711bF9dA76846Da"
+  /* The previous platform token (0x8c2016b8…26AE) is no longer listed
+     here: the platform token is ARCP, in YONETISIM.govToken. */
 };
 
 /* ---- THE SECOND GENERATION: DEPLOYED AND VERIFIED ---------------
@@ -228,7 +236,7 @@ export const PULSE = {
   fabrika: "0x065B318A624275bFF6833d0408DC572482BBF227",
   likiditeKasasi: "0x0a35cfe06Ead3858375690993280Aff1f9aFbF69",
 
-  /* The 0.30% developer slice, under the FTHM DAO. Both the launchpad
+  /* The 0.30% developer slice, under the previous platform DAO (v2 set). Both the launchpad
      and the hook point here — verified from both ends, because a hook
      still pointing at the old fund would have piled the slice up
      somewhere the DAO cannot reach, with nothing reverting. */
@@ -470,11 +478,11 @@ export const EKONOMI = {
    *   was checked against a contract that no longer prices anything.
    *
    *   That made two numbers false at once, and the direction matters:
-   *   the site told FTHM stakers they earn 0,30% of every trade while
+   *   the site told token stakers they earn 0,30% of every trade while
    *   the live hook sends them nothing, and understated the locked
    *   depth slice by 0,30%. The audit now reads PulseHook.sol.
    *
-   *   What stakers DO earn is the FTHM emission (SALIM_PPM per 7-day
+   *   What stakers DO earn is the ARCP emission (SALIM_PPM per 7-day
    *   period from the stake contract's own budget) — not a cut of
    *   trades. Those are different things and only one of them exists. */
   dilimler: {

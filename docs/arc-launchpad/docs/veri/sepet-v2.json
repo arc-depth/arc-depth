@@ -1,73 +1,71 @@
 {
- "zaman": "2026-10-24T11:03:20.887Z",
- "kapi": "0x117DDe216A2Dc4eef06d387354AB74EfcaC2221d",
- "launchpad": "0xEBA302E280E4178A6dae35dd7Dc04eC02fdcC2Ae",
- "ucu": "0xD6F895E43Fd33717429d1a0fb30345043D5e9423",
- "defter": "0x18eD33F0494F20ee2a664E85fFF013fdb3eB19C3",
- "hub": "0xa0Be1bBcE487557fd0B5ad1f86AbE2c920741c6d",
- "aktarma": "0x2C85e294F3D0a3500714D1D96d451A052426df53",
- "hook": "0x573741fe3330b6A8Aa9b781757892F366A502eCC",
- "emanet": "0x65140318936a357F580A4952af270137C21671EC",
- "surum": 7,
+ "zaman": "2026-10-31T14:18:20.761Z",
+ "kapi": "0x1f042E18E1C7899E87cec5CAC5C07c487163BBbF",
+ "launchpad": "0x2D3a0DaBD48207528800bDA6aDbC1b84E8d1f98B",
+ "ucu": "0x259CF82E6313EB7D1d768a7FE5971FE394c2bF5d",
+ "defter": "0x64306Ac4ED453B41159d664Fa7F90DC489fcf5fc",
+ "hub": "0x74C715b1bE6c950480127F27093bB4A2F0E065Da",
+ "aktarma": "0xA98a04c893b6cdb983F93E764A9332667D73aC08",
+ "hook": "0x7CBF813E4B1A45B03911E6af27Cc58a308f36ecc",
+ "emanet": "0x1a30cb68ED4d2226710298A41E21F267da124306",
+ "surum": 8,
+ "platformToken": {
+  "sembol": "ARCP",
+  "ad": "Arc Pulse",
+  "token": "0xbe98138311c2D89526eCD86B368A2B4B81cf840b",
+  "havuzId": "0x1c3f13f2da0b7dca5378ea0f2d2f5e846898577994896f23225ddcae529c8337",
+  "hook": "0xC7aDe691ef2FDBF09E793226Db1c79c36b038a44",
+  "yakici": "0x32d96E618142aaAB3100C26183b60940D00D1644",
+  "gelistiriciFonu": "0x0C6Fe02146f46b6df581905A24dB4Bc8c9B48FF4",
+  "governor": "0x846E0e9997ee900BcaFFAA79ad0B377FC907712c"
+ },
  "zincir": {
   "arc": {
    "domain": 26,
    "haberci": "0x994534bA2023c1B3831765B141BA41EA8c57FAC1",
-   "kasa": "0x6f84644671BC3d9d110c1B12D1094351176759CC",
+   "kasa": "0x7F2e0fB8F648b6b822ad2aA84D1ECC95a36ee5a6",
    "dolar": "0x3600000000000000000000000000000000000000"
   },
   "base": {
    "domain": 6,
    "haberci": "0x611F9C36D91B474E8C4Fa95f67e315A76BCFc32c",
-   "kasa": "0xd8da0bb581cd3c9373d7d58B6d431D3603A72253",
+   "kasa": "0x5adE7C354Eda7AC5Dc1Ac2385E7d3277B42CDb5C",
    "dolar": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
   },
   "arbitrum": {
    "domain": 3,
    "haberci": "0x4A500118Be1b5Ea77d4883FC94b9e678fE4008Ff",
-   "kasa": "0xf1Fe8aF7e3325D2601B5Df9691ebBAE1C574b1b9",
+   "kasa": "0xCd98ccC96325423752e655F0b23a76F92BDC00C3",
    "dolar": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831"
-  },
-  "ethereum": {
-   "domain": 0,
-   "haberci": "0x0929aF000aC0de282dd965D6B853b74Ab0911F9D",
-   "kasa": "0x804Bfc3Fc851c40C25b26D1f707525670C4D516F",
-   "dolar": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"
   },
   "avalanche": {
    "domain": 1,
    "haberci": "0x5ABCF3Dbe86F9ffC5e69E13686Ec2876b29124A6",
-   "kasa": "0xDC695D19469429E474752A635cD105C4a04d4741",
+   "kasa": "0xAD0261f4d501d331fb334226fcEec3b51c6d178e",
    "dolar": "0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E"
   },
   "monad": {
    "domain": 15,
    "haberci": "0x5ABCF3Dbe86F9ffC5e69E13686Ec2876b29124A6",
-   "kasa": "0xDC695D19469429E474752A635cD105C4a04d4741",
+   "kasa": "0xAD0261f4d501d331fb334226fcEec3b51c6d178e",
    "dolar": "0x754704Bc059F8C67012fEd69BC8A327a5aafb603"
   },
   "hyperevm": {
    "domain": 19,
    "haberci": "0xCe5b0513C3D5fB830227C06a3BE80Cca1C6FE233",
-   "kasa": "0x2FCEFAda006eC85994ebF67Cbea32BFB36b766D5",
+   "kasa": "0xaC170EE5FF4c85E569644203E0b8d46be97fD47B",
    "dolar": "0xb88339CB7199b77E23DB6E890353E22632Ba630f"
-  },
-  "bsc": {
-   "domain": 17,
-   "haberci": "0x4d486FcA7468fb171351C1573F2e55fA417c73C1",
-   "kasa": "0xE9085f91D684B1f7e85C746EaA529f80B46E8Ca8",
-   "dolar": "0xb233F129F7255F86d67BDAEA4e8c4f8274Fa70d9"
   },
   "robinhood": {
    "domain": 35,
    "haberci": "0x386968f036cbc0d0965C81bf1fCEd0b40EE11E14",
-   "kasa": "0xc1A4720aB4E1779a2D6CfBB46b9a8e721d06AAf0",
+   "kasa": "0xEcB57eDDf0830aa76ee8E5eCeFcf4A3F6ACE5a95",
    "dolar": "0x5fc5360d0400a0fd4f2af552add042d716f1d168"
   }
  },
  "uzak": {
   "sui": {
-   "kasa": "0x2dd10d9dc359b9e50c0ac5c2c7ebc9995b2eb6498d13dda83f03fe3942e4c962",
+   "kasa": "0x55d4d555b92e706a2929a975ad6d5bbda9bbab0c3446b33a21f15f94b4be0b40",
    "ikizKapi": "0xe397f5cf0c1382cfff29068d73a60aa186436bcdfe3b0fdd8d46ba02a4446bfb",
    "karsi": "0xfbfde49212ee06b71eec38c023b2b57e0eb3fb77ad8ebf206ba83a87857078ba",
    "paket": "0x7c0a195af1e87cd0ef263fa4e5753c5fa35c630537557977d16e6ac94c044ea4",
@@ -75,7 +73,7 @@
    "kapiNesne": "0x05611ea5fa7f6b91d3cf9e934bd198d29c8898683b23995a6578706af5183dad",
    "oapp": "0xfddd7363e4a8fc4fee42c47952beece8fdae712b4d3ff231b7cdb6588ba5fe46",
    "v4Paket": "0x604481c6caa8d99f0f092e4bdf3b6bbf1171924d384426a736a978b5c4a6dbd3",
-   "v4Haberci": "0x30d9eec882a90754d1c5fd317e4c7f3b03c8ff735b2ae2df4e709bef78e28bf6"
+   "v4Haberci": "0x59d15718e5d1c2aab592ccc19114301f87c69561771ae31468a6ef36263c36c7"
   },
   "aptos": {
    "kasa": "0x7953f9d5bd4ea9f687a555fe67cfb24e403a5c92ab452854c8c2ac5bc8623098",
@@ -90,5 +88,5 @@
    "kapiProgram": "G91zXh4LCEzY7UgE3JWic3Kt5ckBsnibkgdAXABatWJQ"
   }
  },
- "teshis": "0xd5179bCFaBe4647E473976530eE14764dfe4ceC6"
+ "teshis": "0xa8bf7291d9c9E0bd358367eb5BCB55A24F3359De"
 }

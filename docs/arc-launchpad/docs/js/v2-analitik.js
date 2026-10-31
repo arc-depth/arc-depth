@@ -8,7 +8,7 @@
  *   founders   the launch's KurucuVekili: founder (bytes32) and their chain
  *   24 hours   PulseHook5 `Ucret` events: the 2% split (founder, developers,
  *              liquidity, operations, depth) and the collateral tax; volume
- *              is that 2% divided back (the FTHM 0.2% is outside the event)
+ *              is that 2% divided back (the ARCP 0.2% is outside the event)
  * Windows of 5,000 blocks (the Arc RPC refuses wider); Arc runs ~2 blocks a
  * second, so a day is ~35 requests.
  * =========================================================================== */

@@ -225,9 +225,9 @@ export const ABI = {
      against block.timestamp, and `end` is block.timestamp +
      VOTING_PERIOD. Reading them as blocks is how 5 days became
      2.54 days in a report. */
-  /* FTHM'S GOVERNOR, NOT ALP'S — AND THEY ARE NOT THE SAME SHAPE
+  /* ARCP'S GOVERNOR (DepthGovernor), NOT ALP'S — AND THEY ARE NOT THE SAME SHAPE
    *
-   * Governance moved to FTHM, so these tables now describe
+   * Governance moved off ALP (now ARCP), so these tables describe
    * DepthGovernor + Stake. Four entries here did not exist on that
    * stack and were measured against the compiled artifacts before
    * anything was repointed:
@@ -332,7 +332,7 @@ export const ABI = {
   ],
   /* pay() IS HERE ONLY TO BE ENCODED — the page never SENDS it.
    *
-   * DevPool.pay is accepted only from the FTHM Governor, so called from a
+   * DevPool.pay is accepted only from the ARCP Governor, so called from a
    * wallet it reverts with NotGovernor (measured). The only reason it is
    * here is to produce the calldata that goes INSIDE A PROPOSAL: the
    * proposal passes, the timelock runs out, and execute() calls it on the

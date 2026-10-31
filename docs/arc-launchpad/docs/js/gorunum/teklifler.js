@@ -194,7 +194,7 @@ function odemeTeklifi(cuzdan, havuzBakiye) {
        degil. Teklifin kendisi burada kuruluyor: propose(aciklama, hedef,
        cagriVerisi). */
     gonder(
-      cagriVerisi(ABI.governor, "propose", [n, PULSE.devPool, veri]),
+      cagriVerisi(ABI.governor, "propose", [n, YONETISIM.devPool, veri]),
       "Propose a payment");
   });
 
@@ -208,9 +208,9 @@ function odemeTeklifi(cuzdan, havuzBakiye) {
   }));
   if (havuzBakiye != null) {
     kap.append(el("div", { sinif: "izgara izgara--olcum" }, [
-      olcum("Havuzda", para(tamSayidanSayi(havuzBakiye, 6)),
-        "DevPool'un USDC bakiyesi"),
-      olcum("Hedef", "DevPool", PULSE.devPool)
+      olcum("In the pool", para(tamSayidanSayi(havuzBakiye, 6)),
+        "the DevPool's USDC balance"),
+      olcum("Target", "DevPool", YONETISIM.devPool)
     ]));
   }
   for (const [etiket, girdi] of [
@@ -311,7 +311,7 @@ function teklifFormu(cuzdan) {
 function teklifKarti(id, pr, durumNo, hesap, oyVerdi, gucu, cuzdan, oy) {
   const d = durumNo == null ? null : DURUM[Number(durumNo)];
   /* EVERY INDEX HERE MOVED BY ONE — AND ONE CHANGED UNITS
-       The ALP governor's Proposal had five uints; FTHM's DepthGovernor
+       The ALP governor's Proposal had five uints; ARCP's DepthGovernor
        has six, because anBlok (the block weights are read at) comes
        first. So on the new governor:
 
@@ -343,11 +343,11 @@ function teklifKarti(id, pr, durumNo, hesap, oyVerdi, gucu, cuzdan, oy) {
     /* A failed read is not zero votes. Printing 0 would tell someone
        deciding how to vote that a proposal has no support when the
        truth is that the count did not arrive. */
-    olcum("For", lehte == null ? "unreadable" : jetonMiktar(lehte) + " FTHM",
+    olcum("For", lehte == null ? "unreadable" : jetonMiktar(lehte) + " ARCP",
       lehte != null && toplamAnlik > 0
         ? (lehte / toplamAnlik * 100).toFixed(2) + "% of the snapshot" : null),
-    olcum("Against", aleyhte == null ? "unreadable" : jetonMiktar(aleyhte) + " FTHM", null),
-    olcum("Snapshot total", jetonMiktar(toplamAnlik) + " FTHM", "stake when the proposal opened"),
+    olcum("Against", aleyhte == null ? "unreadable" : jetonMiktar(aleyhte) + " ARCP", null),
+    olcum("Snapshot total", jetonMiktar(toplamAnlik) + " ARCP", "stake when the proposal opened"),
     olcum("Voting ends", new Date(bitis).toISOString().slice(0, 16).replace("T", " "),
       bitis > Date.now() ? gecenSure(bitis - Date.now()) + " left" : "over"),
     eta > 0
@@ -359,7 +359,7 @@ function teklifKarti(id, pr, durumNo, hesap, oyVerdi, gucu, cuzdan, oy) {
 
   govde.append(el("div", { sinif: "satir satir--arali" }, [
     pr[1] && pr[1] !== SIFIR_ADRES
-      ? el("span", { sinif: "yazi yazi--kucuk" }, ["Hedef: ", adres(pr[1])])
+      ? el("span", { sinif: "yazi yazi--kucuk" }, ["Target: ", adres(pr[1])])
       : el("span", {
         sinif: "yazi yazi--kucuk yazi--sessiz",
         yazi: "Signal proposal — no call; executing it only marks it"
@@ -385,7 +385,7 @@ function teklifKarti(id, pr, durumNo, hesap, oyVerdi, gucu, cuzdan, oy) {
     } else if (!gucu || gucu === 0) {
       eylemler.append(el("span", {
         sinif: "yazi yazi--kucuk yazi--sessiz",
-        yazi: "Your voting power is zero — it comes from staking FTHM."
+        yazi: "Your voting power is zero — it comes from staking ARCP."
       }));
     } else {
       for (const [yazi, lehteMi, sinif] of [
@@ -401,7 +401,7 @@ function teklifKarti(id, pr, durumNo, hesap, oyVerdi, gucu, cuzdan, oy) {
       }
       eylemler.append(el("span", {
         sinif: "yazi yazi--kucuk yazi--sessiz",
-        yazi: "Your weight: " + jetonMiktar(gucu) + " FTHM"
+        yazi: "Your weight: " + jetonMiktar(gucu) + " ARCP"
       }));
     }
   } else if (durumNo != null && Number(durumNo) === KABUL) {
@@ -496,11 +496,11 @@ export async function ciz({ cuzdan }) {
 
   kap.append(el("div", { sinif: "izgara izgara--olcum" }, [
     olcum("Proposals", String(Number(P.proposalCount)), "to date"),
-    olcum("Proposal threshold", esik == null ? "—" : jetonMiktar(esik) + " FTHM",
+    olcum("Proposal threshold", esik == null ? "—" : jetonMiktar(esik) + " ARCP",
       "the greater of the stake share and the floor"),
     olcum("Your voting power",
-      hesap ? (gucu == null ? "—" : jetonMiktar(gucu) + " FTHM") : "no wallet connected",
-      hesap ? "FTHM staked" : null)
+      hesap ? (gucu == null ? "—" : jetonMiktar(gucu) + " ARCP") : "no wallet connected",
+      hesap ? "ARCP staked" : null)
   ]));
 
   /* ---- the form, and only if it can succeed --------------------- */
@@ -535,13 +535,13 @@ export async function ciz({ cuzdan }) {
   } else if (gucu < esik) {
     /* The measured state today: nothing is staked, so this is everyone. */
     kap.append(panel("Teklif ver", not(
-      "Your voting power is " + jetonMiktar(gucu) + " FTHM and the " +
-      "threshold is " + jetonMiktar(esik) + " FTHM. The form is not " +
+      "Your voting power is " + jetonMiktar(gucu) + " ARCP and the " +
+      "threshold is " + jetonMiktar(esik) + " ARCP. The form is not " +
       "rendered because the transaction would be refused on chain — " +
       "showing the button and charging gas for it is not information, " +
       "maliyet olurdu." +
       (toplam === 0
-        ? " Right now NO FTHM is staked, so this holds for everyone: the " +
+        ? " Right now NO ARCP is staked, so this holds for everyone: the " +
           "DAO is deployed and answering; what is missing is stake."
         : ""),
       "uyari"
@@ -553,15 +553,15 @@ export async function ciz({ cuzdan }) {
          form first would invite every one of them to ABI-encode a pay()
          call by hand: the mechanism would exist and be unusable. */
     let havuzBakiye = null;
-    if (canli(PULSE.devPool)) {
+    if (canli(YONETISIM.devPool)) {
       try {
         havuzBakiye = await oku(EKONOMI.quote, ABI.erc20, "balanceOf",
-          [PULSE.devPool]);
+          [YONETISIM.devPool]);
       } catch (e) { havuzBakiye = null; }
     }
     kap.append(panel("Propose a developer payment",
       odemeTeklifi(cuzdan, havuzBakiye)));
-    kap.append(panel("Serbest teklif — ileri seviye", teklifFormu(cuzdan)));
+    kap.append(panel("Free-form proposal — advanced", teklifFormu(cuzdan)));
   }
 
   /* ---- what a proposal may ask for ----------------------------- */

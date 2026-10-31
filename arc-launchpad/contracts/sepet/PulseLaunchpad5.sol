@@ -25,7 +25,8 @@ interface IQuoteP5 {
 ///
 /// The token, the pool, the hook (PulseHook4), the founder's buy and the fee
 /// split are nesil 4's, unchanged. What backs the token is not a local vault:
-/// it is a basket of one to five assets on any chains, $4 a line at least,
+/// it is a basket of one to five assets on any chains, each line at least 5%
+/// of the founder's buy,
 /// held by the SepetKasasi of each line's chain and recorded by the
 /// SepetDefteri on Arc. The collateral dollars go to this chain's SepetUcu
 /// in the launch transaction; the hook pays every trade's collateral tax into
@@ -122,13 +123,20 @@ contract PulseLaunchpad5 {
     /// CEILING because the buy is the founder's share of supply: at the
     /// maximum it is 14,00% and above that the limit would stop funding a
     /// bid and start handing the market to one wallet.
-    uint256 public constant ASGARI_ALIM = 100e6;
+    /// Owner, 31 Oct 2026: $20 rather than $100, so trying a launch costs
+    /// about what it costs elsewhere; the maths does not depend on the
+    /// size (one opening price), only the bid gets thinner.
+    uint256 public constant ASGARI_ALIM = 20e6;
     uint256 public constant AZAMI_ALIM = 500e6;
 
     /// Separate from the buy, and the token holders' money rather than the
     /// founder's. No ceiling: more collateral is only ever better for
     /// holders, and the founder cannot take it back.
-    uint256 public constant ASGARI_TEMINAT = 20e6;
+    /// Each line is at least KALEM_PPM of the buy (5%: $1 on a $20 launch,
+    /// $25 on $500), so the basket scales with the launch. ASGARI_TEMINAT
+    /// stays as a getter and is the smallest basket that rule allows.
+    uint256 public constant KALEM_PPM = 50_000;             // 5,00% of the buy, per line
+    uint256 public constant ASGARI_TEMINAT = (ASGARI_ALIM * KALEM_PPM) / 1_000_000;
 
     uint256 public constant LAUNCH_UCRET_PPM = 20_000;      // 2,00%
 
@@ -297,7 +305,7 @@ contract PulseLaunchpad5 {
     /// @param alim         the founder's payment, ASGARI_ALIM..AZAMI_ALIM.
     ///                     The fee comes off it and ALL the rest becomes
     ///                     tokens in the founder's wallet.
-    /// @param sepet        1 to 5 lines (chain, asset, dollars >= $4) on any
+    /// @param sepet        1 to 5 lines (chain, asset, dollars >= 5% of alim) on any
     ///                     chains; their sum is the collateral, paid with the
     ///                     buy and sent to the basket. The assets are the
     ///                     founder's choice.
@@ -321,7 +329,10 @@ contract PulseLaunchpad5 {
         if (alim > AZAMI_ALIM) revert AlimCok();
         if (vergiPpm < VERGI_ASGARI_PPM || vergiPpm > VERGI_AZAMI_PPM) revert KotuVergi();
         uint256 teminat;
-        for (uint256 i = 0; i < sepet.length; i++) teminat += sepet[i].dolar;
+        for (uint256 i = 0; i < sepet.length; i++) {
+            if (sepet[i].dolar * 1_000_000 < alim * KALEM_PPM) revert TeminatAz();
+            teminat += sepet[i].dolar;
+        }
         if (teminat < ASGARI_TEMINAT) revert TeminatAz();
 
         uint256 ucret = (alim * LAUNCH_UCRET_PPM) / 1_000_000;

@@ -14,7 +14,7 @@ async function loadFthm(){
   document.querySelector('#fthm-supply').textContent=(d.arz/1e9).toLocaleString('en-US',{maximumFractionDigits:3})+'B';
   const burned=document.querySelector('#fthm-burned');if(burned)burned.textContent=Math.round(d.yakilan).toLocaleString('en-US');
   status.textContent='Read directly from Arc · '+new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',timeZone:'UTC'})+' UTC';
- }catch{status.textContent='Live figures unavailable. Open FTHM to retry.';document.querySelectorAll('.fthm-metrics b').forEach(x=>x.textContent='Unavailable');}
+ }catch{status.textContent='Live figures unavailable. Open ARCP to retry.';document.querySelectorAll('.fthm-metrics b').forEach(x=>x.textContent='Unavailable');}
 }
 if('IntersectionObserver'in window){
  const observer=new IntersectionObserver(entries=>{if(entries.some(e=>e.isIntersecting)){loadFthm();observer.disconnect();}},{rootMargin:'250px'});
