@@ -209,12 +209,18 @@ export const YOLLAR = [
     kaynak: "TurKaydi type 7 (TurYazildi events) + basket vaults"
   },
   {
-    /* NOT BUILT. The owner wants the NFT section behind its own button, so
-       it is on the rail and in the top nav (ana.js BIRINCIL); the router
-       shows this honest description and no control. */
-    yol: "designs", ad: "Designer NFTs", kisa: "NFT designs", grup: "urunler", ikon: "hediye", durum: "yapim",
+    /* LIVE (1 Nov 2026): TasarimNFT is deployed on Arc (0x2D6b9920…,
+       dagitim-designs.json) and gorunum/designs.js reads and writes it:
+       feed, explore, profiles, design pages, publish. Behind its own button
+       in the top nav (ana.js BIRINCIL). Buying needs a TWAP for the designer
+       token's pool on the price source (PulseHook6, set 1 Nov 2026; tokens in
+       older pools have none) and the page says so per token; publishing works now.
+       (Was "yapim" with the description below while the contract was not
+       deployed; `eksik` is kept for the record and shown only in that state.) */
+    yol: "designs", ad: "Designer NFTs", kisa: "NFT designs", grup: "urunler", ikon: "hediye", durum: "canli",
+    kaynak: "TasarimNFT (Arc) + TurKaydi type 8 + Irys storage paid by the designer's wallet",
     ozet: "Designers launch their own token through the same launch engine, with a collateral basket like every launch. They publish files and images as 1-of-1 NFTs priced in USDC and paid for with the designer's own token. Full usage rights belong to whoever holds the NFT and move with it on resale; duplicates are blocked.",
-    gerekli: "The NFT marketplace contract is not written or deployed yet. A designer can already launch a token and save its type as Designer; the NFT part opens when the marketplace is built.",
+    gerekli: "Buying needs a time-weighted price for the designer token's pool on PulseHook6 (the price source); publishing, listing and challenges work now.",
     eksik: [
       "A 1-of-1 NFT contract with duplicate blocking",
       "A marketplace that prices in USDC and takes payment in the designer's token",

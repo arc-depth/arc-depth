@@ -188,10 +188,14 @@ function etkinIsaretle(aktif) {
 
 function hashiCoz() {
   const h = (location.hash || "").replace(/^#\/?/, "");
-  const [yol, sorgu] = h.split("?");
+  let [yol, sorgu] = h.split("?");
+  const param = new URLSearchParams(sorgu || "");
+  /* #/designs/<sub> (the on-chain license URI is #/designs/license): the
+     "designs" route with the rest in param "alt" */
+  if (yol && yol.startsWith("designs/")) { param.set("alt", yol.slice(8)); yol = "designs"; }
   return {
     yol: yol || VARSAYILAN,
-    param: new URLSearchParams(sorgu || "")
+    param
   };
 }
 
@@ -222,14 +226,15 @@ const GORUNUMLER = {
   dokuman: () => import("./gorunum/dokuman.js"),
   daha: () => import("./gorunum/daha.js"),
   /* products (1 Nov 2026): one page per TurKaydi type, shared code in urun.js.
-     "designs" is "yapim" in yol.js, so the router shows its description only. */
+     "designs" (TasarimNFT, live 1 Nov 2026) has its own view, below. */
   communities: () => import("./gorunum/communities.js"),
   creators: () => import("./gorunum/creators.js"),
   agents: () => import("./gorunum/agents.js"),
   projects: () => import("./gorunum/projects.js"),
   daos: () => import("./gorunum/daos.js"),
   games: () => import("./gorunum/games.js"),
-  baskets: () => import("./gorunum/baskets.js")
+  baskets: () => import("./gorunum/baskets.js"),
+  designs: () => import("./gorunum/designs.js")
 };
 
 let sonCizim = 0;

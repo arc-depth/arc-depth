@@ -42,6 +42,29 @@ export async function ciz({ cuzdan }) {
      this part does not care which network the wallet is on. */
   kap.append(await zincirLaunchPaneli("Launch tokens on every chain", hesap));
 
+  /* 1 Nov 2026: tokens this wallet founded (TurKaydi.kurucuOf), with "Set product type"
+     for each one. Read from Arc directly, whatever network the wallet is on. */
+  const kurucuKap = el("div", { sinif: "yigin" }, [el("div", { sinif: "yazi yazi--kucuk yazi--sessiz", yazi: "Reading the launch registry on Arc…" })]);
+  kap.append(panel("Tokens you founded", kurucuKap));
+  import("../urun.js").then(async (urun) => {
+    const liste = await urun.kurucuTokenlari(hesap);
+    if (!liste.length) {
+      kurucuKap.replaceChildren(el("div", { sinif: "yazi yazi--kucuk yazi--sessiz",
+        yazi: "No token launched through the one-pool gate has this wallet as its founder." }));
+      return;
+    }
+    kurucuKap.replaceChildren(...liste.map((t) => el("div", { sinif: "yigin" }, [
+      el("a", { sinif: "jeton", attr: { href: "#/merkez?t=" + t.token } }, [
+        el("div", { sinif: "jeton__logo jeton__logo--bos", yazi: (t.sembol || "?").slice(0, 3).toUpperCase() }),
+        el("div", { sinif: "jeton__yazi" }, [el("div", { sinif: "jeton__sembol", yazi: t.sembol || "?" }), el("div", { sinif: "jeton__ad", yazi: t.ad || "" })])
+      ]),
+      el("div", { sinif: "yazi yazi--kucuk yazi--sessiz mono", yazi: t.token }),
+      urun.turAyarKutusu({ token: t.token, cuzdan })
+    ])));
+  }).catch((e) => {
+    kurucuKap.replaceChildren(el("div", { sinif: "yazi yazi--kucuk yazi--sessiz", yazi: "Could not read the registry: " + ((e && e.message) || e) }));
+  });
+
   if (!cuzdan.zincirdeMi()) {
     kap.append(bos(
       "Wallet is not on the Arc network",

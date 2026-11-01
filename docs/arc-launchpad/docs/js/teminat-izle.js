@@ -201,7 +201,9 @@ export async function teminatDurumu(token, cfg = SEPET) {
   const id = await defter.idOf(26, zeroPadValue(token, 32));
   if (id === 0n) return null;
   const [sepet, l] = await Promise.all([defter.sepet(id), defter.launchlar(id)]);
-  const satirlar = sepet.map((k) => ({ zincir: Number(k.zincir), varlik: k.varlik, ilk: ham(k.dolar, 6) }));
+  const satirlar = sepet.map((k, i) => ({ zincir: Number(k.zincir), varlik: k.varlik, ilk: ham(k.dolar, 6), sira: i }));
+  /* dollars still waiting on Arc on each line account (not yet bought or sent) */
+  const biriken = await Promise.all(sepet.map((_, i) => defter.biriken(id, i)));
   const gruplar = {};
   for (const s of satirlar) (gruplar[s.zincir] ||= []).push(s);
   const sonuc = await Promise.all(Object.entries(gruplar).map(([d, ss]) => {
@@ -215,10 +217,15 @@ export async function teminatDurumu(token, cfg = SEPET) {
      CCTP delivery: the line's dollars left Arc and are on their way, so they count at what was sent. */
   for (const x of sonuc) {
     if (x.hata || (x.bekleyen || 0) > 0 || x.kalemler.some((k) => k.miktar && k.miktar > 0n)) continue;
-    for (const k of x.kalemler) { k.deger = k.ilk; k.kaynak = "on its way"; }
+    /* A line whose dollars still sit on its Arc account is not on its way: those dollars are counted
+       once, in `bekleyen` below, so the line itself counts 0 here (counting both showed $2 for a $1 basket). */
+    for (const k of x.kalemler) {
+      if (biriken[k.sira] > 0n) { k.deger = 0; k.kaynak = "waiting to be bought on Arc"; }
+      else { k.deger = k.ilk; k.kaynak = "on its way"; }
+    }
   }
   const kalemler = sonuc.flatMap((x) => x.kalemler.map((k) => ({ ...k, zincirAd: ZINCIRLER[x.d].ad })));
-  const defterde = (await Promise.all(sepet.map((_, i) => defter.biriken(id, i)))).reduce((a, b) => a + b, 0n);
+  const defterde = biriken.reduce((a, b) => a + b, 0n);
   /* waiting in the vaults' auctions + waiting on Arc on the line accounts + tax not yet split (v1) */
   const bekleyen = sonuc.reduce((a, x) => a + (x.bekleyen || 0), 0) + ham(l.vergi, 6) + ham(defterde, 6);
   const eksik = kalemler.filter((k) => k.deger == null).length;

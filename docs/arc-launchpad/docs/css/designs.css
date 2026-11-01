@@ -1,0 +1,65 @@
+/* designs.css — the Designs section (feed, explore, profiles, detail, publish).
+   Loaded by docs/js/gorunum/designs.js; uses the tokens in temel.css. */
+.ds-ust { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--bosluk-3); margin-bottom: var(--bosluk-4); }
+.ds-ust h1 { font-size: var(--boy-3xl); margin: 0; letter-spacing: -0.01em; }
+.ds-ust__alt { color: var(--yazi-2); font-size: var(--boy-m); margin-top: 4px; }
+.ds-sekmeler { display: flex; gap: 4px; flex-wrap: wrap; border-bottom: 1px solid var(--cizgi); margin-bottom: var(--bosluk-4); }
+.ds-sekmeler a { padding: 10px 14px; color: var(--yazi-2); text-decoration: none; border-bottom: 2px solid transparent; font-weight: var(--kalin-orta); }
+.ds-sekmeler a[aria-current="page"] { color: var(--yazi-1); border-bottom-color: var(--marka); }
+.ds-sekmeler a:hover { color: var(--yazi-1); }
+
+.ds-izgara { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: var(--bosluk-3); }
+.ds-kart { position: relative; display: block; border: 1px solid var(--cizgi); border-radius: 12px; overflow: hidden; background: var(--yuzey-1); color: inherit; text-decoration: none; transition: transform .12s ease, border-color .12s ease; }
+.ds-kart:hover { transform: translateY(-2px); border-color: var(--marka-cizgi); }
+.ds-kart__resim { aspect-ratio: 1 / 1; width: 100%; background: var(--yuzey-2); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.ds-kart__resim img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.ds-kart__yer { color: var(--yazi-3); font-size: var(--boy-s); text-align: center; padding: 12px; }
+.ds-kart__alt { padding: 10px 12px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.ds-kart__ad { font-weight: var(--kalin-yari); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ds-kart__kim { color: var(--yazi-3); font-size: var(--boy-s); }
+.ds-fiyat { font-family: var(--yazi-tipi-mono); font-size: var(--boy-s); color: var(--yazi-1); white-space: nowrap; }
+.ds-fiyat--yok { color: var(--yazi-3); }
+
+.ds-akis { display: grid; gap: var(--bosluk-5); max-width: 560px; margin: 0 auto; }
+.ds-gonderi { border: 1px solid var(--cizgi); border-radius: 12px; background: var(--yuzey-1); overflow: hidden; }
+.ds-gonderi__ust { display: flex; align-items: center; gap: 10px; padding: 10px 12px; }
+.ds-gonderi__ust a { color: var(--yazi-1); text-decoration: none; font-weight: var(--kalin-yari); }
+.ds-gonderi__alt { padding: 10px 12px; display: grid; gap: 6px; }
+.ds-gonderi__eylem { display: flex; gap: 8px; align-items: center; }
+
+.ds-avatar { width: 34px; height: 34px; border-radius: 50%; flex: none; border: 1px solid var(--cizgi-guclu); }
+.ds-avatar--buyuk { width: 88px; height: 88px; }
+.ds-profil { display: flex; gap: var(--bosluk-5); align-items: center; flex-wrap: wrap; padding: var(--bosluk-4) 0 var(--bosluk-5); }
+.ds-profil__bilgi { display: grid; gap: 6px; min-width: 0; }
+.ds-profil__ad { font-size: var(--boy-2xl); font-weight: var(--kalin-yari); font-family: var(--yazi-tipi-mono); word-break: break-all; }
+.ds-sayilar { display: flex; gap: var(--bosluk-5); color: var(--yazi-2); }
+.ds-sayilar b { color: var(--yazi-1); }
+
+.ds-detay { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: var(--bosluk-6); align-items: start; }
+@media (max-width: 860px) { .ds-detay { grid-template-columns: 1fr; } }
+.ds-detay__resim { border: 1px solid var(--cizgi); border-radius: 14px; overflow: hidden; background: var(--yuzey-2); aspect-ratio: 1 / 1; display: flex; align-items: center; justify-content: center; }
+.ds-detay__resim img { width: 100%; height: 100%; object-fit: contain; }
+.ds-detay__yan { display: grid; gap: var(--bosluk-4); }
+.ds-kutu { border: 1px solid var(--cizgi); border-radius: 12px; background: var(--yuzey-1); padding: var(--bosluk-4); display: grid; gap: var(--bosluk-3); }
+.ds-kutu h3 { margin: 0; font-size: var(--boy-l); }
+.ds-satir { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.ds-satir > span:first-child { color: var(--yazi-3); }
+.ds-buyuk-fiyat { font-size: var(--boy-3xl); font-weight: var(--kalin-kalin); font-family: var(--yazi-tipi-mono); }
+.ds-dugmeler { display: flex; gap: 8px; flex-wrap: wrap; }
+.ds-lisans { font-size: var(--boy-s); color: var(--yazi-2); line-height: 1.55; }
+.ds-gecmis { display: grid; gap: 6px; font-size: var(--boy-s); }
+.ds-gecmis__oge { display: flex; justify-content: space-between; gap: 10px; border-bottom: 1px dashed var(--cizgi); padding-bottom: 6px; flex-wrap: wrap; }
+.ds-durum { font-size: var(--boy-s); color: var(--yazi-2); min-height: 1.2em; word-break: break-word; }
+.ds-durum--hata { color: var(--satis); }
+.ds-durum--ok { color: var(--alis); }
+.ds-rozet { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: var(--boy-xs); border: 1px solid var(--cizgi-guclu); color: var(--yazi-2); }
+.ds-rozet--uyari { border-color: var(--uyari); color: var(--uyari); background: var(--uyari-zemin); }
+.ds-rozet--ok { border-color: var(--alis-cizgi); color: var(--alis); background: var(--alis-zemin); }
+.ds-form { display: grid; gap: var(--bosluk-3); }
+.ds-form label { display: grid; gap: 4px; font-size: var(--boy-s); color: var(--yazi-2); }
+.ds-form textarea { min-height: 80px; }
+.ds-adim { border-left: 2px solid var(--cizgi-guclu); padding-left: var(--bosluk-4); display: grid; gap: var(--bosluk-3); }
+.ds-adim--etkin { border-left-color: var(--marka); }
+.ds-mono { font-family: var(--yazi-tipi-mono); font-size: var(--boy-s); word-break: break-all; }
+.ds-cihaz { font-size: var(--boy-xs); color: var(--yazi-3); }
+.ds-begeni[aria-pressed="true"] { color: var(--satis); border-color: var(--satis-cizgi); }

@@ -25,6 +25,7 @@ import { EKONOMI } from "../adresler.js";
 import { para } from "../bicim.js";
 import { JsonRpcProvider, Contract } from "../../vendor/ethers.min.js";
 import { teminatDurumu, islemZincirleri, cikisZinciri, sepetV2, SEPET } from "../teminat-izle.js";
+import { turRozeti } from "../urun.js";
 
 const LP5 = "0x52e600c8259ca44D9837B7b9E6BA1faee4bC040d";   // PulseLaunchpad5, the one pool's registry (dagitim-sepet.json)
 const LP5_ABI = [
@@ -86,7 +87,7 @@ function teminatKarti(s, cfg) {
     el("div", { sinif: "tk__ust" }, [
       el("div", { sinif: "jeton" }, [
         el("div", { sinif: "jeton__logo jeton__logo--bos", yazi: (s.sembol || "?").slice(0, 3).toUpperCase() }),
-        el("div", { sinif: "jeton__yazi" }, [el("div", { sinif: "jeton__sembol", yazi: s.sembol || "?" }), el("div", { sinif: "jeton__ad", yazi: (s.ad || "") + "  · #" + s.no })]),
+        el("div", { sinif: "jeton__yazi" }, [el("div", { sinif: "jeton__sembol", yazi: s.sembol || "?" }), el("div", { sinif: "jeton__ad", yazi: (s.ad || "") + "  · #" + s.no }), turRozeti(s.token)]),
       ]),
       yeni ? el("span", { sinif: "tk__yeni", yazi: "NEW" }) : el("span"),
     ]),

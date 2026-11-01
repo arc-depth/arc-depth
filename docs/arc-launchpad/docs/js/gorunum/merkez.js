@@ -629,6 +629,11 @@ export async function ciz({ param } = {}) {
     } catch (x) { fiyatYazi.textContent = "Could not read the pool: " + ((x && x.message) || ""); }
   };
   token.addEventListener("change", fiyatOku);
+  /* 1 Nov 2026: a launched token's founder saves or changes its product type here (urun.js, TurKaydi.yaz) */
+  const turAyar = urun.turAyarKutusu({ token: token.value.trim(), cuzdan });
+  token.addEventListener("change", () => turAyar._yenile(token.value));
+  const turRozet = urun.turRozeti(token.value.trim());
+  token.addEventListener("change", () => turRozet._yenile(token.value.trim()));
 
   const kayma = el("input", { sinif: "girdi girdi--sayi", attr: { id: "merkez-kayma", type: "number", min: "0.5", max: "50", step: "0.5", value: "3" } });
   const kaymaOrani = () => Math.min(Math.max(Number(kayma.value) || 3, 0.5), 50) / 100;
@@ -885,7 +890,7 @@ export async function ciz({ param } = {}) {
   itfaDugme.addEventListener("click", tekSefer(itfaDugme, () => gonder(1)));
 
   kap.append(panel("Buy, sell, redeem", el("div", { sinif: "yigin" }, [
-    token, fiyatYazi,
+    token, fiyatYazi, el("div", {}, [turRozet]), turAyar,
     el("div", { sinif: "girdi-grup" }, [kayma, el("span", { sinif: "girdi-grup__son", yazi: "% slippage limit" })]),
     el("div", { sinif: "alan__ipucu", yazi: "Buy: pay on your chain in its gas token; the tokens arrive on your chain." }),
     el("div", { sinif: "girdi-grup" }, [alTutar, el("span", { sinif: "girdi-grup__son", yazi: "$" })]), alDugme, alDurum,
