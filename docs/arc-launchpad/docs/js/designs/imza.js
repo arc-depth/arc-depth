@@ -7,9 +7,11 @@
  * (EIP-6963 announcements, MetaMask first, then window.ethereum) instead of
  * changing cuzdan.js.
  *
- * LIMIT: a WalletConnect session lives inside cuzdan.js and is not reachable
- * from here; with WalletConnect the pages say that signing needs the browser
- * wallet for now. (Future: a `cuzdan.imzala()` in cuzdan.js would lift this.)
+ * WalletConnect: cuzdan.js now has `cuzdan.imzala(mesaj)`, which signs over
+ * the same provider its transactions use (the browser wallet or the
+ * WalletConnect session). `imzala` below goes through it, so a phone wallet
+ * paired by WalletConnect can sign; the browser-wallet lookup here stays as
+ * the fallback for a cuzdan object without it.
  * =========================================================================== */
 import { hexlify, toUtf8Bytes, verifyMessage, getBytes } from "../../vendor/ethers.min.js";
 
@@ -29,10 +31,12 @@ export function saglayici(cuzdan) {
   return _duyurulan.length ? _duyurulan[0].provider : null;
 }
 
-export function imzaVarMi(cuzdan) { return !!saglayici(cuzdan); }
+export function imzaVarMi(cuzdan) { return !!(cuzdan && typeof cuzdan.imzala === "function" && cuzdan.varMi && cuzdan.varMi()) || !!saglayici(cuzdan); }
 
 /** personal_sign of a text (string) or raw bytes (Uint8Array); checks the signer is the connected account. */
 export async function imzala(cuzdan, mesaj) {
+  /* the connected wallet itself (browser wallet or WalletConnect session) */
+  if (cuzdan && typeof cuzdan.imzala === "function") return cuzdan.imzala(mesaj);
   const ben = cuzdan.hesap() || (await cuzdan.bagla());
   if (!ben) throw new Error("Connect a wallet first.");
   const p = saglayici(cuzdan);

@@ -18,7 +18,7 @@
  * device only (designs/yerel.js). Nothing about the visitor goes anywhere.
  * =========================================================================== */
 import { el, temizle, bos, not, hata, iskelet } from "../ui.js";
-import { formatUnits, parseUnits } from "../../vendor/ethers.min.js";
+import { formatUnits, parseUnits, zeroPadValue } from "../../vendor/ethers.min.js";
 import * as S from "../designs/sozlesme.js";
 import { metaOku, cozUrl, baytAl, uriGecerli, metaYap } from "../designs/meta.js";
 import * as Y from "../designs/yerel.js";
@@ -599,6 +599,36 @@ function dosyaKutusu({ cuzdan, t, meta }) {
 }
 
 /* ================================================================ publish */
+/* Commit-reveal (TasarimNFT2): the pending commitment's salt lives only in this module and in this tab's
+   sessionStorage (so a reload in the same tab can still reveal it), keyed by wallet + file hash. Nothing
+   else is kept, and it is removed as soon as the reveal lands or the commitment expires. */
+const TAAHHUT_ANAHTAR = "arcpulse-designs-taahhut:";
+const _taahhutler = new Map();
+const taahhutKey = (ben, dosyaHash) => String(ben).toLowerCase() + ":" + String(dosyaHash).toLowerCase();
+function taahhutAl(ben, dosyaHash) {
+  const k = taahhutKey(ben, dosyaHash);
+  if (_taahhutler.has(k)) return _taahhutler.get(k);
+  try { const j = sessionStorage.getItem(TAAHHUT_ANAHTAR + k); if (j) { const o = JSON.parse(j); _taahhutler.set(k, o); return o; } } catch (e) { /* storage may be blocked */ }
+  return null;
+}
+function taahhutKoy(ben, dosyaHash, o) {
+  const k = taahhutKey(ben, dosyaHash);
+  if (o) _taahhutler.set(k, o); else _taahhutler.delete(k);
+  try { if (o) sessionStorage.setItem(TAAHHUT_ANAHTAR + k, JSON.stringify(o)); else sessionStorage.removeItem(TAAHHUT_ANAHTAR + k); } catch (e) { /* storage may be blocked: memory only */ }
+}
+/** The pending commitment for this wallet + file if Arc still holds it and it can still be revealed: {tuz, taahhut, blok, son}. */
+async function gecerliTaahhut(ben, parmak) {
+  const o = taahhutAl(ben, parmak.dosyaHash);
+  if (!o || !o.tuz) return null;
+  try {
+    const c = await S.nft();
+    const taahhut = S.taahhutHesapla(ben, parmak.dosyaHash, parmak.algiHash, o.tuz);
+    const [blok, pencere, simdi] = await Promise.all([c.taahhutOf(ben, taahhut), c.taahhutBlok(), (await S.arc()).getBlockNumber()]);
+    if (blok === 0n || BigInt(simdi) > blok + pencere) { taahhutKoy(ben, parmak.dosyaHash, null); return null; }
+    return { tuz: o.tuz, taahhut, blok: Number(blok), son: Number(blok + pencere) };
+  } catch (e) { return null; }
+}
+
 async function yayinlaSayfasi({ cuzdan }) {
   const kap = el("div", { sinif: "yigin" });
   kap.append(ust("Publish a design", "One file, one NFT: a 1-of-1 with full usage rights for whoever holds it", "publish"));
@@ -695,7 +725,11 @@ async function yayinlaSayfasi({ cuzdan }) {
       const parmak = await P.parmakIzi(f);
       durumYaz(parmakYazi, "Exact hash " + parmak.dosyaHash.slice(0, 18) + "… · " + parmak.aciklama + ". Checking Arc…");
       const k = await S.kayitliMi(parmak.dosyaHash, parmak.algiHash);
-      if (k.dosya || k.algi) { durumYaz(parmakYazi, "This design is already published (design #" + (k.dosya || k.algi) + (k.dosya ? ", the same file" : ", the same fingerprint") + ").", "hata"); return; }
+      /* a commitment made from this tab for this file: say so (a design published after it is a copier's and is burned on reveal) */
+      const bekleyenT = S.TAAHHUT_VAR && cuzdan.hesap() ? await gecerliTaahhut(cuzdan.hesap(), parmak) : null;
+      if (bekleyenT) durumYaz(d, "Step 1 of 2 is already done for this file (commitment in Arc block " + bekleyenT.blok + ", valid until block " + bekleyenT.son + "). Press Publish to finish with step 2.", "ok");
+      else if (S.TAAHHUT_VAR && cuzdan.hesap()) kayipTaahhutBak(cuzdan.hesap(), parmak.dosyaHash);
+      if ((k.dosya || k.algi) && !bekleyenT) { durumYaz(parmakYazi, "This design is already published (design #" + (k.dosya || k.algi) + (k.dosya ? ", the same file" : ", the same fingerprint") + ").", "hata"); return; }
       let onizBlob = null;
       if (parmak.img) onizBlob = await P.onizlemeYap(parmak.img);
       onizEtiket.style.display = parmak.img ? "none" : "";
@@ -757,6 +791,28 @@ async function yayinlaSayfasi({ cuzdan }) {
     });
   }
 
+  /* a commitment this wallet made recently whose salt is gone (the page was closed between the steps): say what happens */
+  async function kayipTaahhutBak(adres, dosyaHash) {
+    try {
+      const c = await S.nft(), p = await S.arc();
+      const [son, pencere] = await Promise.all([p.getBlockNumber(), c.taahhutBlok()]);
+      const loglar = await p.getLogs({ address: S.TASARIM.adres, topics: [S.ifc.getEvent("Taahhut").topicHash, zeroPadValue(adres, 32)],
+        fromBlock: Math.max(0, son - Number(pencere)), toBlock: son });
+      /* still on chain (a revealed commitment is deleted), and not one this tab can finish */
+      const acik = await Promise.all(loglar.map((l) => c.taahhutOf(adres, S.ifc.parseLog(l).args.taahhut).then((b) => b !== 0n).catch(() => false)));
+      if (acik.some(Boolean) && !taahhutAl(adres, dosyaHash))
+        durumYaz(d, "An earlier step 1 from this wallet was not finished, and its secret was kept only in the page that was closed. Nothing is lost: pressing Publish simply does step 1 again (a few cents of gas), then step 2.");
+    } catch (e) { /* a hint only */ }
+  }
+
+  /* how to publish: two steps (default) or one */
+  const ikiAdim = el("input", { attr: { type: "radio", name: "ds-yayin", value: "iki", checked: "" } });
+  const hizli = el("input", { attr: { type: "radio", name: "ds-yayin", value: "hizli" } });
+  const yolSecim = S.TAAHHUT_VAR ? el("div", { sinif: "yigin" }, [
+    el("label", { attr: { style: "display:flex;gap:8px;align-items:flex-start" } }, [ikiAdim, el("span", { yazi: "Protected publish (two transactions): the first commits to your file without showing its fingerprints, the second, a few seconds later, publishes it. This keeps the design from being copied while the transaction is pending." })]),
+    el("label", { attr: { style: "display:flex;gap:8px;align-items:flex-start" } }, [hizli, el("span", { yazi: "Fast publish (one transaction): the file's fingerprints are visible in the pending transaction until it confirms." })]),
+  ]) : el("span");
+
   const gonderDugme = eylem("Publish", async (yaz) => {
     if (!hazir) throw new Error("Choose the design file first (and wait for the fingerprint check).");
     if (!hazir.onizBlob && !yolKendi.checked) throw new Error("Choose a preview image for this file type.");
@@ -767,8 +823,22 @@ async function yayinlaSayfasi({ cuzdan }) {
     const ben2 = await bagliHesap(cuzdan);
     const c = await S.nft();
     if (!(await c.yayinlayabilir(ben2, token))) throw new Error(S.hataAcikla({ revert: { name: "TasarimciDegil" } }));
+    const korumali = S.TAAHHUT_VAR && ikiAdim.checked;
+    let t = korumali ? await gecerliTaahhut(ben2, hazir.parmak) : null;
     const k = await S.kayitliMi(hazir.parmak.dosyaHash, hazir.parmak.algiHash);
-    if (k.dosya || k.algi) throw new Error("This design is already published (design #" + (k.dosya || k.algi) + ").");
+    /* with a commitment pending, a copy published after it is burned on reveal: the contract decides (simulated before sending) */
+    if ((k.dosya || k.algi) && !t) throw new Error("This design is already published (design #" + (k.dosya || k.algi) + ").");
+
+    /* step 1 of 2: commit before anything is uploaded (the uploads then fill the wait for a later block) */
+    if (korumali && !t) {
+      const tuz = S.tuzUret();
+      const taahhut = S.taahhutHesapla(ben2, hazir.parmak.dosyaHash, hazir.parmak.algiHash, tuz);
+      taahhutKoy(ben2, hazir.parmak.dosyaHash, { tuz });
+      const { m: mt } = await S.gonder({ cuzdan, data: S.veri.taahhutEt(taahhut), durum: yaz, aciklama: "Step 1 of 2: confirm the commitment (it hides the file's fingerprints; no fee)" });
+      const pencere = await c.taahhutBlok();
+      t = { tuz, taahhut, blok: Number(mt.blockNumber), son: Number(BigInt(mt.blockNumber) + pencere) };
+      yaz("Step 1 of 2 done (Arc block " + t.blok + "). Step 2 must follow by block " + t.son + "; if this page closes before it, step 1 is simply done again.", "ok");
+    }
 
     let uri;
     if (yolKendi.checked) {
@@ -792,7 +862,21 @@ async function yayinlaSayfasi({ cuzdan }) {
     }
     const gerek = ay ? ay.ucret + ay.teminat : 200_000n;
     await S.onayGerekirse({ cuzdan, token: S.TASARIM.usdc, miktar: gerek, durum: yaz, etiket: usd(gerek) + " USDC (publishing fee)" });
-    const { m } = await S.gonder({ cuzdan, data: S.veri.yayinla(token, hazir.parmak.dosyaHash, hazir.parmak.algiHash, uri, fiyat, (await import("../designs/sifre.js")).anahtarTaahhudu(hazir.anahtar)), durum: yaz, aciklama: "Confirm publishing (" + usd(gerek) + " USDC fee)" });
+    const anahtarT = (await import("../designs/sifre.js")).anahtarTaahhudu(hazir.anahtar);
+    let m;
+    if (korumali) {
+      /* step 2 of 2: in a block after the commitment and within taahhutBlok blocks of it */
+      const p = await S.arc();
+      for (let i = 0; i < 40 && (await p.getBlockNumber()) <= t.blok; i++) { yaz("Waiting for the next Arc block before step 2…"); await new Promise((r) => setTimeout(r, 1000)); }
+      if ((await p.getBlockNumber()) > t.son) {
+        taahhutKoy(ben2, hazir.parmak.dosyaHash, null);
+        throw new Error("The step 1 commitment expired (step 2 must follow within " + (t.son - t.blok) + " blocks). Press Publish again: step 1 is redone, then step 2.");
+      }
+      ({ m } = await S.gonder({ cuzdan, data: S.veri.yayinlaAcik(token, hazir.parmak.dosyaHash, hazir.parmak.algiHash, uri, fiyat, anahtarT, t.tuz), durum: yaz, aciklama: "Step 2 of 2: confirm publishing (" + usd(gerek) + " USDC fee)" }));
+      taahhutKoy(ben2, hazir.parmak.dosyaHash, null);
+    } else {
+      ({ m } = await S.gonder({ cuzdan, data: S.veri.yayinla(token, hazir.parmak.dosyaHash, hazir.parmak.algiHash, uri, fiyat, anahtarT), durum: yaz, aciklama: "Confirm publishing (" + usd(gerek) + " USDC fee)" }));
+    }
     let id = null;
     for (const l of m.logs || []) { try { const p = S.ifc.parseLog(l); if (p && p.name === "Yayinlandi") id = Number(p.args.id); } catch (e) { /* other contract */ } }
     yaz("Published" + (id ? " as design #" + id : "") + ".", "ok");
@@ -801,6 +885,8 @@ async function yayinlaSayfasi({ cuzdan }) {
 
   kap.append(el("div", { sinif: "ds-adim" }, [el("h3", { yazi: "5. Publish" }),
     el("p", { sinif: "ds-lisans", yazi: "Your wallet will ask you to: sign to read your public key and sign each upload (Irys), sign once to derive your unlock key, approve the USDC fee, and send the publish transaction on Arc. You can check every step in the wallet before approving." }),
+    yolSecim,
+    S.TAAHHUT_VAR ? el("p", { sinif: "ds-lisans", yazi: "The two-step publish protects the design from being copied while the transaction is pending: anyone who copies it after step 1 loses the copy to you." }) : el("span"),
     gonderDugme, d,
     el("div", { sinif: "ds-cihaz", yazi: "By publishing you confirm you own this design. Copies can be challenged for " + (ay ? Math.round(ay.itirazSuresi / 86400) : 3) + " days and taken down." })]));
   return kap;

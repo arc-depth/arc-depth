@@ -17,6 +17,42 @@ import { DIS } from "../adresler.js";
 import { para, jetonMiktar, tamSayidanSayi } from "../bicim.js";
 import { zincirLaunchPaneli } from "./tum-zincirler.js";
 
+/* the newest `kac` launches of each one-pool registry (v8, v9) that `hesap` holds on Arc, priced */
+async function tekHavuzTutulan(hesap, kac = 200) {
+  const { sepetV2, sepetV9, SEPET } = await import("../teminat-izle.js");
+  const { YedekliOkur } = await import("../yedekli-okur.js");
+  const { Contract } = await import("../../vendor/ethers.min.js");
+  const arc = new YedekliOkur();
+  const [v8, v9] = await Promise.all([sepetV2(), sepetV9()]);
+  const LP = ["function launchCount() view returns (uint256)",
+    "function launchAt(uint256) view returns ((address token, address acici, address kasa, uint256 teminat, address kurucu, uint256 kurucuToken, uint256 teklif, uint256 vergiPpm, uint64 zaman))"];
+  const T = ["function balanceOf(address) view returns (uint256)", "function name() view returns (string)", "function symbol() view returns (string)"];
+  const sonuc = [];
+  for (const [cfg, v9mu] of [[v8 || SEPET, false], [v9, true]]) {
+    if (!cfg) continue;
+    const lp = new Contract(cfg.lp5, LP, arc);
+    const n = Number(await lp.launchCount());
+    const sira = [];
+    for (let i = n - 1; i >= Math.max(0, n - kac); i--) sira.push(i);
+    for (let i = 0; i < sira.length; i += 10) {   // ten at a time: kind to the public RPCs
+      const parca = await Promise.all(sira.slice(i, i + 10).map(async (j) => {
+        const t = (await lp.launchAt(j)).token;
+        const b = await new Contract(t, T, arc).balanceOf(hesap).catch(() => 0n);
+        return b > 0n ? { token: t, ham: b, lp: cfg.lp5, v9: v9mu } : null;
+      }));
+      sonuc.push(...parca.filter(Boolean));
+    }
+  }
+  const { havuzFiyati } = await import("./merkez.js");
+  return Promise.all(sonuc.map(async (x) => {
+    const c = new Contract(x.token, T, arc);
+    const [ad, sembol, fiyat] = await Promise.all([c.name().catch(() => null), c.symbol().catch(() => null), havuzFiyati(x.token, x.lp).catch(() => null)]);
+    const miktar = Number(x.ham) / 1e18;
+    const f = Number.isFinite(fiyat) && fiyat > 0 ? fiyat : null;
+    return { ...x, ad, sembol, miktar, fiyat: f, deger: f == null ? null : miktar * f };
+  }));
+}
+
 export async function ciz({ cuzdan }) {
   const kap = el("div", { sinif: "yigin" });
   const hesap = cuzdan.hesap();
@@ -63,6 +99,35 @@ export async function ciz({ cuzdan }) {
     ])));
   }).catch((e) => {
     kurucuKap.replaceChildren(el("div", { sinif: "yazi yazi--kucuk yazi--sessiz", yazi: "Could not read the registry: " + ((e && e.message) || e) }));
+  });
+
+  /* one-pool tokens this wallet holds on Arc, from both registries: v8 (PulseHook5) and v9 (PulseHook6,
+     designer tokens). Each is priced from its own launchpad's pool key, so the right hook's pool. */
+  const tutKap = el("div", { sinif: "yigin" }, [el("div", { sinif: "yazi yazi--kucuk yazi--sessiz", yazi: "Reading the v8 and v9 registries on Arc…" })]);
+  kap.append(panel("One-pool tokens you hold on Arc", tutKap));
+  tekHavuzTutulan(hesap).then((liste) => {
+    if (!liste.length) {
+      tutKap.replaceChildren(el("div", { sinif: "yazi yazi--kucuk yazi--sessiz", yazi: "This wallet holds none of the newest one-pool launches on Arc (v8 and v9 sets). Tokens held on another chain are its twins there." }));
+      return;
+    }
+    const top = liste.reduce((t, x) => t + (x.deger || 0), 0);
+    const tablo = el("table", { sinif: "tablo tablo--kart" });
+    tablo.append(el("thead", {}, [el("tr", {}, ["Token", "Balance", "Price", "Value", ""].map((b) => el("th", { yazi: b })))]));
+    tablo.append(el("tbody", {}, liste.map((x) => el("tr", {}, [
+      el("td", { attr: { "data-et": "Token" } }, [el("a", { sinif: "jeton", attr: { href: "#/merkez?t=" + x.token } }, [
+        el("div", { sinif: "jeton__logo jeton__logo--bos", yazi: (x.sembol || "?").slice(0, 3).toUpperCase() }),
+        el("div", { sinif: "jeton__yazi" }, [el("div", { sinif: "jeton__sembol", yazi: x.sembol || "?" }), el("div", { sinif: "jeton__ad", yazi: (x.ad || "") + (x.v9 ? " · v9" : "") })])])]),
+      el("td", { sinif: "sayi", attr: { "data-et": "Balance" }, yazi: jetonMiktar(x.miktar) }),
+      el("td", { sinif: "sayi", attr: { "data-et": "Price" }, yazi: x.fiyat == null ? "—" : (x.fiyat >= 0.01 ? para(x.fiyat) : "$" + x.fiyat.toPrecision(3)) }),
+      el("td", { sinif: "sayi", attr: { "data-et": "Value" }, yazi: x.deger == null ? "—" : para(x.deger) }),
+      el("td", { attr: { "data-et": "" } }, [el("a", { sinif: "dugme dugme--kucuk", attr: { href: "#/merkez?t=" + x.token }, yazi: "Trade" })]),
+    ]))));
+    tutKap.replaceChildren(
+      el("div", { sinif: "izgara izgara--olcum" }, [olcum("Value at pool price", para(top), liste.length + " token" + (liste.length === 1 ? "" : "s") + " on Arc")]),
+      el("div", { sinif: "tablo-sarmal" }, [tablo]),
+      el("div", { sinif: "yazi yazi--kucuk yazi--sessiz", yazi: "Price is the token's Arc pool price now (the same pool every chain trades through); value is balance × price, before fees." }));
+  }).catch((e) => {
+    tutKap.replaceChildren(el("div", { sinif: "yazi yazi--kucuk yazi--sessiz", yazi: "Could not read the registries: " + ((e && e.message) || e) }));
   });
 
   if (!cuzdan.zincirdeMi()) {

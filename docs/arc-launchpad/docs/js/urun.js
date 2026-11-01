@@ -57,13 +57,13 @@ export const TURLER = [
   { tur: 4, ad: "Project", cogul: "project", yol: "projects",
     metin: [
       "A token for a small team gathering support for something it is building.",
-      "An optional founder lock is planned for later. A project token is not a share and promises no profit; holders support the work and hold collateral-backed tokens.",
+      "An optional founder lock is live: choose it before launching and your founder tokens and trading income vest in a lock contract on Arc instead of arriving unlocked. A project token is not a share and promises no profit; holders support the work and hold collateral-backed tokens.",
       "For early teams that want a community behind them from day one."
     ] },
   { tur: 5, ad: "DAO", cogul: "DAO", yol: "daos",
     metin: [
       "A token for a group that decides together: holders vote and run a shared treasury.",
-      "Per-token governance contracts (Token DAOs) are coming; today a DAO token launches with the same rules and its holders organise around it.",
+      "Per-token governance contracts (Token DAOs) are live: choose one before launching and the founder tokens and trading income go to the token's own DAO treasury on Arc, spent only by holder vote. A DAO token launches with the same rules as every other.",
       "For collectives, clubs and groups that want their decisions on chain."
     ] },
   { tur: 6, ad: "Game", cogul: "game", yol: "games",
@@ -145,17 +145,20 @@ async function sonKayitlar() {
     }
     return [...son.values()];
   } catch (e) {
-    const { sepetV2, SEPET } = await import("./teminat-izle.js");
+    const { sepetV2, sepetV9, SEPET } = await import("./teminat-izle.js");
     const cfg = (await sepetV2()) || SEPET;
-    const lp = new Contract(cfg.lp5, LP_ABI, arc);
-    const n = Number(await lp.launchCount());
     const k = kayit();
     const sonuc = [];
-    for (let i = n - 1; i >= Math.max(0, n - 300); i--) {
-      const t = (await lp.launchAt(i)).token;
-      if (!(await k.yazildi(t))) continue;
-      const [tur, bilgi] = await Promise.all([k.turOf(t), k.bilgiOf(t)]);
-      sonuc.push({ token: t, tur: Number(tur), bilgi });
+    /* the v8 registry and the v9 one (designer tokens launch on v9) */
+    for (const lpAdres of [cfg.lp5, ((await sepetV9()) || {}).lp5].filter(Boolean)) {
+      const lp = new Contract(lpAdres, LP_ABI, arc);
+      const n = Number(await lp.launchCount());
+      for (let i = n - 1; i >= Math.max(0, n - 300); i--) {
+        const t = (await lp.launchAt(i)).token;
+        if (!(await k.yazildi(t))) continue;
+        const [tur, bilgi] = await Promise.all([k.turOf(t), k.bilgiOf(t)]);
+        sonuc.push({ token: t, tur: Number(tur), bilgi });
+      }
     }
     return sonuc;
   }
@@ -254,20 +257,23 @@ export function turRozeti(token) {
 
 /** The launches in the one-pool registry (newest `kac`) whose founder in TurKaydi is `hesap`. */
 export async function kurucuTokenlari(hesap, kac = 150) {
-  const { sepetV2, SEPET } = await import("./teminat-izle.js");
+  const { sepetV2, sepetV9, SEPET } = await import("./teminat-izle.js");
   const cfg = (await sepetV2()) || SEPET;
-  const lp = new Contract(cfg.lp5, LP_ABI, arc);
-  const n = Number(await lp.launchCount());
-  const sira = [];
-  for (let i = n - 1; i >= Math.max(0, n - kac); i--) sira.push(i);
   const benim = [];
-  for (let i = 0; i < sira.length; i += 10) {   // ten at a time: kind to the public RPCs
-    const parca = await Promise.all(sira.slice(i, i + 10).map(async (j) => {
-      const t = (await lp.launchAt(j)).token;
-      const k = await kurucuOku(t).catch(() => null);
-      return k && k.toLowerCase() === hesap.toLowerCase() ? t : null;
-    }));
-    benim.push(...parca.filter(Boolean));
+  /* the v8 registry, then the v9 one (designer tokens launch on v9); TurKaydi2 knows the founders of both */
+  for (const lpAdres of [cfg.lp5, ((await sepetV9()) || {}).lp5].filter(Boolean)) {
+    const lp = new Contract(lpAdres, LP_ABI, arc);
+    const n = Number(await lp.launchCount());
+    const sira = [];
+    for (let i = n - 1; i >= Math.max(0, n - kac); i--) sira.push(i);
+    for (let i = 0; i < sira.length; i += 10) {   // ten at a time: kind to the public RPCs
+      const parca = await Promise.all(sira.slice(i, i + 10).map(async (j) => {
+        const t = (await lp.launchAt(j)).token;
+        const k = await kurucuOku(t).catch(() => null);
+        return k && k.toLowerCase() === hesap.toLowerCase() ? t : null;
+      }));
+      benim.push(...parca.filter(Boolean));
+    }
   }
   return Promise.all(benim.map(async (t) => {
     const c = new Contract(t, ["function name() view returns (string)", "function symbol() view returns (string)"], arc);
@@ -294,7 +300,7 @@ export function turAyarKutusu({ token, cuzdan }) {
 
     const b = r.bilgi || {};
     const turSecim = el("select", { sinif: "girdi", attr: { "aria-label": "Product type" } },
-      TURLER.map((t) => el("option", { attr: { value: String(t.tur) }, yazi: t.ad + (t.tur === 8 ? " (NFT marketplace not built yet)" : "") })));
+      TURLER.map((t) => el("option", { attr: { value: String(t.tur) }, yazi: t.ad + (t.tur === 8 ? " (Designs marketplace)" : "") })));
     turSecim.value = String(r.yazildi ? r.tur : 0);
     const metin = el("textarea", { sinif: "girdi", attr: { rows: "3", maxlength: "1000",
       placeholder: "Optional. Public description and links (https://...), e.g. your Discord, X or website. Written on chain, visible to everyone." } });
@@ -386,7 +392,12 @@ export function canliAyar() {
 export async function kurucuBekleyen(token) {
   const a = await canliAyar();
   if (!a || !a.kapi) return null;
-  const v = await new Contract(a.kapi, ["function vekilOf(address) view returns (address)"], arc).vekilOf(token);
+  let v = await new Contract(a.kapi, ["function vekilOf(address) view returns (address)"], arc).vekilOf(token);
+  /* not a v8 launch: the v9 gate (designer tokens) */
+  if (/^0x0{40}$/i.test(v)) {
+    const v9 = await (await import("./teminat-izle.js")).sepetV9();
+    if (v9 && v9.kapi) v = await new Contract(v9.kapi, ["function vekilOf(address) view returns (address)"], arc).vekilOf(token).catch(() => v);
+  }
   if (/^0x0{40}$/i.test(v)) return null;
   return { vekil: v, dolar: await arcUsdc(v) };
 }

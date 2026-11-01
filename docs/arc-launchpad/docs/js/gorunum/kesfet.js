@@ -24,7 +24,7 @@ import { ikon } from "../ikon.js";
 import { EKONOMI } from "../adresler.js";
 import { para } from "../bicim.js";
 import { JsonRpcProvider, Contract } from "../../vendor/ethers.min.js";
-import { teminatDurumu, islemZincirleri, cikisZinciri, sepetV2, SEPET } from "../teminat-izle.js";
+import { teminatDurumu, islemZincirleri, cikisZinciri, sepetV2, sepetV9, SEPET } from "../teminat-izle.js";
 import { turRozeti } from "../urun.js";
 
 const LP5 = "0x52e600c8259ca44D9837B7b9E6BA1faee4bC040d";   // PulseLaunchpad5, the one pool's registry (dagitim-sepet.json)
@@ -132,10 +132,10 @@ function teminatKarti(s, cfg) {
   return kart;
 }
 
-function sayfalayici(gecerli, toplam) {
+function sayfalayici(gecerli, toplam, anahtar = "s") {
   const ser = el("div", { attr: { style: "display:flex;gap:4px;overflow-x:auto;padding-bottom:4px" } });
   for (let i = 1; i <= toplam; i++) {
-    ser.append(el("a", { sinif: "dugme dugme--kucuk" + (i === gecerli ? " dugme--marka" : ""), attr: { href: "#/kesfet?s=" + i, "aria-current": i === gecerli ? "page" : null }, yazi: String(i) }));
+    ser.append(el("a", { sinif: "dugme dugme--kucuk" + (i === gecerli ? " dugme--marka" : ""), attr: { href: "#/kesfet?" + anahtar + "=" + i, "aria-current": i === gecerli ? "page" : null }, yazi: String(i) }));
   }
   return ser;
 }
@@ -152,19 +152,23 @@ export async function ciz({ param }) {
 
   const sayfa = Number((param && param.get("s")) || 1) || 1;
   /* the second generation, once wired, is the main list; the first stays readable below it */
-  const v2 = await sepetV2();
+  const [v2, v9] = await Promise.all([sepetV2(), sepetV9()]);
   const cfg = v2 || SEPET;
-  const [arcS, suiS, aptosS, eskiS] = await Promise.allSettled([arcListesi(sayfa, cfg.lp5),
-    import("../sui.js").then((m) => m.launchListesi()), import("../aptos.js").then((m) => m.launchListesi()), v2 ? arcListesi(1, SEPET.lp5) : Promise.resolve(null)]);   // loaded here so a Move library failing never blanks the page
+  /* the v9 set (PulseHook6, designer tokens since 1 Nov 2026): its own registry, its own pages (?s9=) */
+  const sayfa9 = Number((param && param.get("s9")) || 1) || 1;
+  const [arcS, suiS, aptosS, eskiS, v9S] = await Promise.allSettled([arcListesi(sayfa, cfg.lp5),
+    import("../sui.js").then((m) => m.launchListesi()), import("../aptos.js").then((m) => m.launchListesi()), v2 ? arcListesi(1, SEPET.lp5) : Promise.resolve(null),
+    v9 ? arcListesi(sayfa9, v9.lp5) : Promise.resolve(null)]);   // loaded here so a Move library failing never blanks the page
+  const v9N = v9S.status === "fulfilled" && v9S.value ? v9S.value.n : 0;
 
   /* ---- facts that are true for every launch, plus the live count ---- */
   const izgara = el("div", { sinif: "izgara izgara--olcum" });
   const say = (s, f) => (s.status === "fulfilled" ? f(s.value) : null);
   /* the first generation's launches, counted in the total and named apart so the list below can't seem to contradict it */
   const eskiN = eskiS.status === "fulfilled" && eskiS.value ? eskiS.value.n : 0;
-  const sayilar = [say(arcS, (v) => v.n + (eskiS.status === "fulfilled" && eskiS.value ? eskiS.value.n : 0)), say(suiS, (v) => v.length), say(aptosS, (v) => v.length)];
+  const sayilar = [say(arcS, (v) => v.n + v9N + (eskiS.status === "fulfilled" && eskiS.value ? eskiS.value.n : 0)), say(suiS, (v) => v.length), say(aptosS, (v) => v.length)];
   izgara.append(olcum("Launches", sayilar.every((x) => x != null) ? String(sayilar.reduce((a, b) => a + b, 0)) : "—",
-    "Arc " + (sayilar[0] ?? "—") + (eskiN ? " (" + eskiN + " in the first generation)" : "") + " · Sui " + (sayilar[1] ?? "—") + " · Aptos " + (sayilar[2] ?? "—")));
+    "Arc " + (sayilar[0] ?? "—") + (eskiN || v9N ? " (" + [eskiN ? eskiN + " in the first generation" : "", v9N ? v9N + " on the v9 set" : ""].filter(Boolean).join(", ") + ")" : "") + " · Sui " + (sayilar[1] ?? "—") + " · Aptos " + (sayilar[2] ?? "—")));
   izgara.append(olcum("Opening market cap", para(EKONOMI.acilisMcap, { kisalt: true }), "the same price for every launch"));
   izgara.append(olcum("Trading fee", "2.2%", "plus the token's collateral tax (1–5%)"));
   if (v2) izgara.append(olcum("Collateral chains", (cfg.kasa[5] ? 12 : 11) + " of 12", cfg.kasa[5] ? "every chain" : "Solana opens when its gate is wired"));
@@ -194,8 +198,28 @@ export async function ciz({ param }) {
       const zamanlayici = setInterval(async () => {
         if (!document.body.contains(kap)) return clearInterval(zamanlayici);
         const n = Number(await new Contract(cfg.lp5, LP5_ABI, arc).launchCount().catch(() => v.n));
-        if (n !== v.n) { clearInterval(zamanlayici); window.dispatchEvent(new HashChangeEvent("hashchange")); }
+        const n9 = v9 && v9S.status === "fulfilled" && v9S.value ? Number(await new Contract(v9.lp5, LP5_ABI, arc).launchCount().catch(() => v9N)) : v9N;
+        if (n !== v.n || n9 !== v9N) { clearInterval(zamanlayici); window.dispatchEvent(new HashChangeEvent("hashchange")); }
       }, 30_000);
+    }
+  }
+
+  /* ---- the v9 set (PulseHook6 with its time-weighted price): designer tokens launch here. Each card
+     prices from the v9 launchpad's pool key (the PulseHook6 pool) and reads its collateral from the
+     v9 Defter and the vaults bound to it (sepet-v9.json). ---- */
+  if (v9) {
+    const B9 = "Collateral of every launch on the v9 set (PulseHook6)";
+    if (v9S.status !== "fulfilled") kap.append(panel(B9, bos("Could not read the v9 registry", String(v9S.reason && v9S.reason.message || v9S.reason))));
+    else if (v9S.value && v9S.value.liste.length) {
+      const v = v9S.value, satirlar = v.liste.filter(uyar);
+      kap.append(panel(B9, el("div", { sinif: "yigin" }, [
+        el("div", { sinif: "yazi yazi--kucuk yazi--sessiz", yazi: "Designer tokens launch on the v9 set: the same one pool on Arc and the same 2.2% fee, with a time-weighted price that lets buyers pay for designs in the designer's token. Its basket vaults are on Arc and the eight EVM chains bound to the v9 Defter." }),
+        satirlar.length ? el("div", { sinif: "izgara izgara--kart" }, satirlar.map((x) => teminatKarti(x, v9))) : bos("No matches", 'Nothing on this page for "' + arama + '".'),
+        v.sayfaSayisi > 1 ? sayfalayici(v.sayfa, v.sayfaSayisi, "s9") : el("span"),
+      ]), el("span", { sinif: "tk__canli", yazi: "live · " + v.n + " token · page " + v.sayfa + " of " + v.sayfaSayisi })));
+    } else {
+      kap.append(panel(B9, bos("No launches on the v9 set yet", "Designer tokens launch on the v9 set (PulseHook6). The first one appears here with its price and its collateral read from the v9 Defter and vaults.",
+        el("a", { sinif: "dugme dugme--marka", attr: { href: "#/olustur" }, yazi: "Create a token" }))));
     }
   }
 

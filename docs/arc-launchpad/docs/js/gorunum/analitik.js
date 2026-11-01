@@ -14,25 +14,34 @@ import * as v2a from "../v2-analitik.js";
 
 /* the second generation, read live from Arc (no snapshot file) */
 async function v2Paneli(kap) {
-  const V2 = await v2a.v2Ayar();
+  const [V2, V9] = await Promise.all([v2a.v2Ayar(), v2a.v9Ayar()]);
   if (!V2) return;
   const yer = el("div", { sinif: "yigin" }, [el("div", { sinif: "yazi yazi--kucuk yazi--sessiz", yazi: "Reading the second generation from Arc…" })]);
   kap.append(panel("One pool on Arc (second generation, live)", yer));
   try {
-    const L = await v2a.launchlar(V2);
+    /* v8 and v9 (designer tokens, PulseHook6): each read from its own launchpad, Defter and hook */
+    const [L8, L9] = await Promise.all([v2a.launchlar(V2), V9 ? v2a.launchlar(V9).catch(() => null) : Promise.resolve([])]);
+    const L = [...L8, ...(L9 || [])];
     const top = (f) => L.reduce((t, x) => t + (f(x) || 0), 0);
     yer.replaceChildren(el("div", { sinif: "izgara izgara--olcum" }, [
-      olcum("Launches", String(L.length), "the v2 registry on Arc"),
+      olcum("Launches", String(L.length), "the v2 registry on Arc" + (V9 ? " · v8 " + L8.length + " + v9 " + (L9 ? L9.length : "unreadable") : "")),
       olcum("Real dollars in pools", para(top((x) => x.gercekDolar)), "what sellers can be paid from"),
       olcum("Market cap, all tokens", para(top((x) => x.piyasaDegeri)), "price × supply"),
       olcum("Basket dollars waiting", para(top((x) => x.bekleyen)), "in the Defter until a line reaches $50"),
     ]));
     const gun = el("div", { sinif: "yazi yazi--kucuk yazi--sessiz", yazi: "Last 24 hours: reading the hook's fee events…" });
     yer.append(gun);
-    const s = await v2a.sonSaatler(V2, 24, (o) => { gun.textContent = "Last 24 hours: reading the hook's fee events… " + Math.round(o * 100) + "%"; });
-    const t = s.toplam;
+    const s = await v2a.sonSaatler(V2, 24, (o) => { gun.textContent = "Last 24 hours: reading the hook's fee events… " + Math.round(o * 100) + "%" + (V9 ? " (PulseHook5)" : ""); });
+    const t = { ...s.toplam };
+    /* the v9 hook (PulseHook6) emits the same Ucret event: its trades are added in */
+    let hook6 = "";
+    if (V9 && V9.hook) {
+      const s9 = await v2a.sonSaatler(V9, 24, (o) => { gun.textContent = "Last 24 hours: reading the hook's fee events… " + Math.round(o * 100) + "% (PulseHook6)"; }).catch(() => null);
+      if (s9) for (const k of Object.keys(t)) t[k] += s9.toplam[k] || 0;
+      else hook6 = " (PulseHook6 unreadable now)";
+    }
     gun.replaceWith(el("div", { sinif: "izgara izgara--olcum" }, [
-      olcum("Trades, 24h", String(t.islem), "hook fee events"),
+      olcum("Trades, 24h", String(t.islem), "hook fee events" + (V9 ? ", PulseHook5 + PulseHook6" + hook6 : "")),
       olcum("Volume, 24h", para(t.hacim), "the 2% divided back"),
       olcum("Founders, 24h", para(t.kurucu), "0.30%"),
       olcum("Pool depth, 24h", para(t.derinlik), "0.70% back into pools"),

@@ -14,10 +14,10 @@ function gelecekBolumu() {
   sozlesmeler().then((c) => {
     if (c.kilit) durumNotu.replaceChildren(not("The founder lock is live: choose it in \"Lock my founder share\" above before launching. A project token launched without it has its founder tokens in the founder's wallet, unlocked.", "bilgi"));
   }).catch(() => {});
-  return panel("Coming: founder lock", el("div", { sinif: "yigin" }, [
+  return panel("Founder lock", el("div", { sinif: "yigin" }, [
     durumNotu,
     el("p", { yazi: "What works today: the token launches through the same gate as every other, with one pool on Arc whose liquidity is locked from the first block, a collateral basket holders can redeem their share of, and a fixed supply with no mint function. The founder's tokens from the first buy arrive in the founder's wallet unlocked, and the founder's address is public on chain, so anyone can follow what it holds." }),
-    el("p", { yazi: "A team that wants to show commitment before the lock exists can say so in the token's public description and keep its tokens in a wallet it names there." }),
+    el("p", { yazi: "A team that launched before choosing a lock can still show commitment: say so in the token's public description and keep its tokens in a wallet it names there." }),
   ]));
 }
 

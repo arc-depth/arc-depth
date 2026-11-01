@@ -48,14 +48,52 @@ export const SEPET = {
 /// docs/veri/sepet-v2.json only then. Before that (or outside a browser) null.
 /// Its vaults all hold a 6-decimal dollar (Dolar6 on BNB, USDG on Robinhood).
 export async function sepetV2() {
-  const j = await fetch("veri/sepet-v2.json", { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+  return sepetAyari("veri/sepet-v2.json");
+}
+
+/* one site config (sepet-v2.json for v8, sepet-v9.json for v9) in the shape every reader here takes */
+async function sepetAyari(yol) {
+  const j = await fetch(yol, { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
   if (!j) return null;
   const kasa = {}, dolar = {};
   for (const z of Object.values(j.zincir)) { kasa[z.domain] = z.kasa; dolar[z.domain] = z.dolar; }
   const u = j.uzak || {};
-  return { kapi: j.kapi, defter: j.defter, lp5: j.launchpad, yayici: SEPET.yayici, kasa, dolar,
+  return { kapi: j.kapi, defter: j.defter, lp5: j.launchpad, hook: j.hook || null, surum: Number(j.surum || 2), yayici: SEPET.yayici, kasa, dolar,
     sui: u.sui && u.sui.kasa ? { paket: u.sui.paket, kasa: u.sui.kasa } : null,
     aptos: u.aptos && u.aptos.kasa ? { paket: u.aptos.hesap, kasa: u.aptos.kasa } : null, v2: true };
+}
+
+/// The v9 set (1 Nov 2026: PulseHook6 with TWAP; designer tokens launch on it): its own MerkezKapi,
+/// launchpad, Defter and vaults (docs/veri/sepet-v9.json, from dagitim-v9.json). Null if unreadable.
+let _v9 = null;
+export function sepetV9() {
+  _v9 ||= sepetAyari("veri/sepet-v9.json").then((c) => { if (!c) _v9 = null; return c; });
+  return _v9;
+}
+
+/// The config of the set that launched `token`: v9 when the v9 Defter or the v9 MerkezKapi knows it,
+/// else v8 (sepet-v2.json), else the first one-pool set. Pricing, the pool key (PulseHook5 vs
+/// PulseHook6) and the collateral all follow from the launchpad and Defter in that config.
+const _tokenAyar = new Map();
+export function tokenAyari(token) {
+  const k = String(token || "").toLowerCase();
+  if (!_tokenAyar.has(k)) {
+    const p = (async () => {
+      const [v9, v8] = await Promise.all([sepetV9(), sepetV2()]);
+      if (v9 && /^0x[0-9a-f]{40}$/.test(k)) {
+        const arc = saglayici(26);
+        const [id, vekil] = await Promise.all([
+          new Contract(v9.defter, DEFTER_ABI, arc).idOf(26, zeroPadValue(token, 32)).catch(() => null),
+          new Contract(v9.kapi, ["function vekilOf(address) view returns (address)"], arc).vekilOf(token).catch(() => null)]);
+        if ((id != null && id !== 0n) || (vekil && !/^0x0{40}$/i.test(vekil))) return v9;
+        if (id == null && vekil == null) _tokenAyar.delete(k);   // neither read answered: asked again next time
+      }
+      return v8 || SEPET;
+    })();
+    p.catch(() => _tokenAyar.delete(k));
+    _tokenAyar.set(k, p);
+  }
+  return _tokenAyar.get(k);
 }
 
 /* CCTP domain → chain; usdcDec is the vault's dollar on that chain */

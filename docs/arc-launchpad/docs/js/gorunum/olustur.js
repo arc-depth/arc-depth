@@ -143,12 +143,14 @@ export async function ciz({ kayit, param }) {
       attr: { type: "button" }, yazi: "Sui",
       on: { click: () => { durum.ag = SUI; durum.teminatToken = null; durum.rota = null; agiCiz(); teminatiCiz(); } }
     }));
+    /* product types (TurKaydi2) are written from an EVM wallet on Arc; a Move founder has none, so the platform records them on request */
+    const moveTurNotu = () => not("Product type (Community, Creator, Designer…): it is saved in the TurKaydi2 record on Arc by the token's founder, and a founder paying from a Sui or Aptos wallet cannot sign on Arc. For Move launches the platform sets the type on request: TurKaydi2's owner can write it. Ask after launching, with your token's address and the type you want.", "bilgi");
     if (durum.ag.anahtar === "sui") {
-      temizle(agNotu).append(not("Sui: pay in native USDC with a Sui wallet (Slush, Suiet, Phantom…). Two approvals: first your coin is created (its own package, made immutable at once), then the launch. Back the token with any coin that has a PulseSwap pool on Sui at least 24 hours old, or leave the field empty to keep dollars.", "bilgi"));
+      temizle(agNotu).append(not("Sui: pay in native USDC with a Sui wallet (Slush, Suiet, Phantom…). Two approvals: first your coin is created (its own package, made immutable at once), then the launch. Back the token with any coin that has a PulseSwap pool on Sui at least 24 hours old, or leave the field empty to keep dollars.", "bilgi"), moveTurNotu());
       return;
     }
     if (durum.ag.anahtar === "aptos") {
-      temizle(agNotu).append(not("Aptos: pay in native USDC with an Aptos wallet (Petra, Nightly, OKX…). Back the token with any token that has a PulseSwap pool on Aptos at least 24 hours old, or leave the field empty to keep dollars. The token lives on Aptos.", "bilgi"));
+      temizle(agNotu).append(not("Aptos: pay in native USDC with an Aptos wallet (Petra, Nightly, OKX…). Back the token with any token that has a PulseSwap pool on Aptos at least 24 hours old, or leave the field empty to keep dollars. The token lives on Aptos.", "bilgi"), moveTurNotu());
       return;
     }
     temizle(agNotu).append(LAUNCH_YOK[durum.ag.anahtar] ? not(LAUNCH_YOK[durum.ag.anahtar], "uyari")

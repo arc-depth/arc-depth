@@ -190,12 +190,12 @@ export const YOLLAR = [
   },
   {
     yol: "projects", ad: "Projects", kisa: "Projects", grup: "urunler", ikon: "arti", durum: "canli",
-    ozet: "Small teams gather support for what they build. No profit promises; an optional founder lock comes later.",
+    ozet: "Small teams gather support for what they build. No profit promises; an optional founder lock is live.",
     kaynak: "TurKaydi type 4 (TurYazildi events) + MerkezKapi"
   },
   {
     yol: "daos", ad: "DAOs", kisa: "DAOs", grup: "urunler", ikon: "meclis", durum: "canli",
-    ozet: "Holders vote and run a shared treasury. Per-token governance contracts are coming.",
+    ozet: "Holders vote and run a shared treasury. Per-token governance contracts (Token DAOs) are live.",
     kaynak: "TurKaydi type 5 (TurYazildi events) + MerkezKapi"
   },
   {
@@ -218,6 +218,9 @@ export const YOLLAR = [
        (Was "yapim" with the description below while the contract was not
        deployed; `eksik` is kept for the record and shown only in that state.) */
     yol: "designs", ad: "Designer NFTs", kisa: "NFT designs", grup: "urunler", ikon: "hediye", durum: "canli",
+    /* 1 Nov 2026: the top button and the rail open ARC PULSE Designs, its own site (docs/designs/);
+       #/designs keeps working here for old links and the on-chain license URI */
+    site: "designs/",
     kaynak: "TasarimNFT (Arc) + TurKaydi type 8 + Irys storage paid by the designer's wallet",
     ozet: "Designers launch their own token through the same launch engine, with a collateral basket like every launch. They publish files and images as 1-of-1 NFTs priced in USDC and paid for with the designer's own token. Full usage rights belong to whoever holds the NFT and move with it on resale; duplicates are blocked.",
     gerekli: "Buying needs a time-weighted price for the designer token's pool on PulseHook6 (the price source); publishing, listing and challenges work now.",

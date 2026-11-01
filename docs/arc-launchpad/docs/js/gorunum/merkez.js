@@ -518,7 +518,7 @@ export async function ciz({ param } = {}) {
         const rq = await relayIle(ag, ben, h.toplam, h.deger, h.txs, durum, h.usd);
         const sonuc = String((rq && rq._sonuc) || "");
         const bek = sonuc.startsWith("bekliyor:") ? sonuc.slice(9) : "";
-        if (bek) return durum("Paid. relay is still running it on Arc; do not pay again. Follow it at " + bek + "; your tokens arrive on " + ag.ad + " once it is done.");
+        if (bek) return durum("Paid. relay is still running it on Arc; do not pay again. Follow it at " + bek + "; your tokens arrive on " + (urunKurucu.secim() ? "the founder lock or DAO treasury on Arc" : ag.ad) + " once it is done.");
         if (ag.anahtar !== "arc" && sonuc !== "tamam")
           return durum("Paid, but relay's result on Arc could not be checked from here. Do not pay again: look for your token on Discover in a few minutes.");
         /* the token the launch made, read from the Arc receipt (direct) or relay's Arc transaction */
@@ -604,8 +604,12 @@ export async function ciz({ param } = {}) {
            margin covers gas moving before the order lands; what is not used comes back on Arc. */
         const evmGercek = evmIkiz.length ? await yayici.ucret(ORNEK_ARC, evmIkiz, ikizSec) : 0n;
         const uzakGercek = uzakUcret;
+        /* the founder slot: the wallet (tokens delivered to its chain) or a founder lock / DAO treasury on Arc
+           (urun-kurucu.js kurucuUc: Arc, no delivery), read before the fees so no LayerZero delivery is billed for it */
+        const kurucuSlot = await urunKurucu.kurucuUc(ben, sembol.value.trim().toUpperCase(), [ko.alici, ko.zincir, teslimEid(ag)]);
+        const kurucuArcta = !!urunKurucu.secim() && Number(kurucuSlot[1]) === ARC_DOMAIN && !Number(kurucuSlot[2]);
         let teslimGercek = 0n;
-        if (teslimEid(ag)) {
+        if (teslimEid(ag) && !kurucuArcta) {
           const ornekAdaptor = new Contract("0xe204C0762F749183530a945B161b54D8454d80Be", OFT_ABI, arc);
           [teslimGercek] = await ornekAdaptor.quoteSend([teslimEid(ag), zeroPadValue(ben, 32), 10n ** 24n, 10n ** 24n, sec(100_000n), "0x", "0x"], false);
         }
@@ -613,7 +617,7 @@ export async function ciz({ param } = {}) {
         const ikizDeger = pay(evmGercek), uzakDeger = pay(uzakGercek), teslimDeger = pay(teslimGercek);
         const deger2 = ikizDeger + uzakDeger + teslimDeger;
         const istek = [ad.value.trim(), sembol.value.trim().toUpperCase(), sepet, teklif, BigInt(Number(vergi.value) * 10_000), alim6,
-          ...(await urunKurucu.kurucuUc(ben, sembol.value.trim().toUpperCase(), [ko.alici, ko.zincir, teslimEid(ag)])), evmIkiz, ikizSec, ikizDeger, sec(100_000n), ben, tipler, uzak, uzakDeger];
+          ...kurucuSlot, evmIkiz, ikizSec, ikizDeger, sec(100_000n), ben, tipler, uzak, uzakDeger];
         const txs = [
           { to: ARC_USDC, data: E.encodeFunctionData("approve", [C().kapi, toplam]), value: "0" },
           { to: C().kapi, data: KAPI2_ABI.encodeFunctionData("launch", [istek]), value: deger2.toString() },
@@ -627,7 +631,8 @@ export async function ciz({ param } = {}) {
           ...(tasarimciMi() ? ["Designer token: launched on the v9 set (PulseHook6)"] : []),
           "First buy " + d6(alim6) + " · collateral " + d6(teminat) + " (" + ss.length + " line" + (ss.length > 1 ? "s" : "") + ")",
           "Twins on " + evmIkiz.length + " EVM chain(s): LayerZero " + usd(evmGercek) + (uzak.length ? " · on " + uzak.length + " of Solana/Sui/Aptos: " + usd(uzakGercek) : ""),
-          teslimGercek ? "Your tokens to " + ag.ad + ": LayerZero " + usd(teslimGercek) : "Your tokens stay on Arc",
+          kurucuArcta ? (urunKurucu.secim().tur === "kilit" ? "Your founder tokens go to your founder lock on Arc (no LayerZero delivery)" : "Your founder tokens go to the token's DAO treasury on Arc (no LayerZero delivery)")
+            : teslimGercek ? "Your tokens to " + ag.ad + ": LayerZero " + usd(teslimGercek) : "Your tokens stay on Arc",
           "+10% margin on those fees (" + usd(deger2 - evmGercek - uzakGercek - teslimGercek) + "), returned to you on Arc if unused",
           q ? "relay bridge: you pay " + Number(q.details.currencyIn.amountFormatted).toPrecision(5) + " " + q.details.currencyIn.currency.symbol +
             " (≈ $" + Number(q.details.currencyIn.amountUsd).toFixed(2) + "), of which relay's own fee ≈ $" + Math.max(0, Number(q.details.currencyIn.amountUsd) - net).toFixed(2)
@@ -648,7 +653,7 @@ export async function ciz({ param } = {}) {
         ];
         await relayIle(ag, ben, toplam, deger, txs, durum);
       }
-      durum("Paid. relay launches on Arc within seconds; your tokens arrive on " + ag.ad + " in a few minutes" + (v6mu() ? "; each basket line is bought from its chain's pool when it reaches $50." : ", the basket is bought by auction over the next hours."));
+      durum("Paid. relay launches on Arc within seconds; your tokens arrive on " + (urunKurucu.secim() ? "the founder lock or DAO treasury on Arc" : ag.ad) + " in a few minutes" + (v6mu() ? "; each basket line is bought from its chain's pool when it reaches $50." : ", the basket is bought by auction over the next hours."));
     } catch (x) { durum((x && x.message) || "Could not launch."); } finally { lMesgul = false; lDugme.disabled = false; }
   });
   kap.append(panel("Launch", el("div", { sinif: "yigin" }, [
@@ -681,7 +686,8 @@ export async function ciz({ param } = {}) {
         const usd = (x) => "$" + (x >= 1000 ? Math.round(x).toLocaleString("en-US") : x.toFixed(2));
         fiyatYazi.textContent = "Price $" + o.fiyat.toPrecision(4) + " per token · market cap " + usd(o.piyasaDegeri) +
           " · real USDC in the pool " + usd(o.gercekDolar) + " · pool liquidity " + usd(o.likidite) +
-          " (one pool on Arc, the same from every chain) · collateral tax " + (st.vergi * 100).toFixed(0) + "%";
+          " (one pool on Arc, the same from every chain) · collateral tax " + (st.vergi * 100).toFixed(0) + "%" +
+          (TV && TV === V9 ? " · v9 set (PulseHook6)" : "");
         return;
       }
       const f = await havuzFiyati(token.value.trim());
@@ -689,6 +695,30 @@ export async function ciz({ param } = {}) {
     } catch (x) { fiyatYazi.textContent = "Could not read the pool: " + ((x && x.message) || ""); }
   };
   token.addEventListener("change", fiyatOku);
+  /* the token's collateral now, from the Defter and vaults of the set that launched it (v8, or v9 for
+     designer tokens: teminat-izle.js tokenAyari picks the config, teminatDurumu reads it) */
+  const teminatYazi = el("div", { sinif: "yazi yazi--kucuk yazi--sessiz" });
+  const teminatOku = async () => {
+    const t = token.value.trim();
+    teminatYazi.textContent = "";
+    if (!/^0x[0-9a-fA-F]{40}$/.test(t)) return;
+    teminatYazi.textContent = "Reading the collateral basket…";
+    try {
+      const m = await import("../teminat-izle.js");
+      const cfg = await m.tokenAyari(t);
+      const d = await m.teminatDurumu(t, cfg);
+      if (token.value.trim() !== t) return;   // the address changed while reading
+      if (!d) { teminatYazi.textContent = "No collateral basket recorded for this token."; return; }
+      const p = (x) => "$" + x.toFixed(2);
+      teminatYazi.textContent = "Collateral now " + p(d.simdi) + (d.eksik ? "+" : "") + " (started with " + p(d.ilk) + ", " +
+        (d.degisim >= 0 ? "+" : "") + (d.degisim * 100).toFixed(2) + "%)" + (d.arz > 0 ? " · backing " + "$" + (d.simdi / d.arz).toPrecision(3) + " per token" : "") +
+        " · " + d.kalemler.length + " line" + (d.kalemler.length === 1 ? "" : "s") + (cfg.surum >= 9 ? " · read from the v9 Defter and its vaults" : "") +
+        (d.hatalar.length ? " · unreadable: " + d.hatalar.join("; ") : "");
+    } catch (x) { if (token.value.trim() === t) teminatYazi.textContent = "The collateral could not be read now: " + ((x && x.message) || ""); }
+  };
+  token.addEventListener("change", teminatOku);
+  /* a token page opened with ?t= shows its price and collateral at once */
+  if (/^0x[0-9a-fA-F]{40}$/.test(token.value.trim())) { fiyatOku(); teminatOku(); }
   /* 1 Nov 2026: a launched token's founder saves or changes its product type here (urun.js, TurKaydi.yaz) */
   const turAyar = urun.turAyarKutusu({ token: token.value.trim(), cuzdan });
   token.addEventListener("change", () => turAyar._yenile(token.value));
@@ -955,7 +985,7 @@ export async function ciz({ param } = {}) {
   itfaDugme.addEventListener("click", tekSefer(itfaDugme, () => gonder(1)));
 
   kap.append(panel("Buy, sell, redeem", el("div", { sinif: "yigin" }, [
-    token, fiyatYazi, el("div", {}, [turRozet]), turAyar,
+    token, fiyatYazi, teminatYazi, el("div", {}, [turRozet]), turAyar,
     el("div", { sinif: "girdi-grup" }, [kayma, el("span", { sinif: "girdi-grup__son", yazi: "% slippage limit" })]),
     el("div", { sinif: "alan__ipucu", yazi: "Buy: pay on your chain in its gas token; the tokens arrive on your chain." }),
     el("div", { sinif: "girdi-grup" }, [alTutar, el("span", { sinif: "girdi-grup__son", yazi: "$" })]), alDugme, alDurum,

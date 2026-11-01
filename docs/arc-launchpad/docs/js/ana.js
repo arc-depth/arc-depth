@@ -83,7 +83,8 @@ if (mobilMi() && kCuzdanDugme) {
 function yolLinki(y, sinifEk = "") {
   return el("a", {
     sinif: "yol-oge" + (y.durum === "yapim" ? " yol-oge--yapim" : "") + sinifEk,
-    attr: { href: "#/" + y.yol, title: y.ozet || y.ad },
+    /* a route with its own site (y.site, e.g. Designs -> designs/) opens it; its #/ route stays */
+    attr: { href: y.site || "#/" + y.yol, title: y.ozet || y.ad },
     veri: { yol: y.yol }
   }, [
     el("span", { sinif: "yol-oge__ikon", html: ikon(y.ikon, "yol-oge__ikon") }),
@@ -118,7 +119,7 @@ function ustYoluCiz() {
     if (!y) continue;
     kUstYol.append(el("a", {
       sinif: "yol-oge",
-      attr: { href: "#/" + y.yol },
+      attr: { href: y.site || "#/" + y.yol },
       veri: { yol: y.yol },
       yazi: y.kisa || y.ad
     }));

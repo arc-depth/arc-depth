@@ -368,6 +368,27 @@ export const cuzdan = {
     return p.request({ method: "eth_sendTransaction", params: [{ from: _hesap, ...islem }] });
   },
 
+  /**
+   * personal_sign of `mesaj` (a text string, or raw bytes as a Uint8Array) from the connected wallet:
+   * the browser wallet or the WalletConnect session, the same provider transactions go through, so a
+   * phone wallet paired by WalletConnect can sign too. Signs nothing on chain and costs nothing. The
+   * signer is checked against the connected account before the signature is returned.
+   */
+  async imzala(mesaj) {
+    const p = saglayici();
+    if (!p) throw new Error("No wallet");
+    if (!_hesap) await this.bagla();
+    if (!_hesap) throw new Error("Wallet not connected");
+    const ben = _hesap;
+    const { hexlify, toUtf8Bytes, verifyMessage, getBytes } = await import("../vendor/ethers.min.js");
+    const metin = typeof mesaj === "string";
+    const veri = metin ? hexlify(toUtf8Bytes(mesaj)) : hexlify(mesaj);
+    const sig = await p.request({ method: "personal_sign", params: [veri, ben] });
+    const kim = verifyMessage(metin ? mesaj : getBytes(mesaj), sig);
+    if (kim.toLowerCase() !== ben.toLowerCase()) throw new Error("The wallet signed with " + kim + ", not the connected account " + ben + ".");
+    return sig;
+  },
+
   dinle(f) {
     _dinleyiciler.add(f);
     return () => _dinleyiciler.delete(f);

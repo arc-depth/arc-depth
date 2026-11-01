@@ -16,7 +16,7 @@
  * scripts/designs-site-sim.mjs can run exactly what the page would send
  * through eth_simulateV1 on Arc state without sending anything.
  * =========================================================================== */
-import { Interface, Contract } from "../../vendor/ethers.min.js";
+import { Interface, Contract, AbiCoder, keccak256, hexlify } from "../../vendor/ethers.min.js";
 
 /* ---- the switch: Designs v2 (TasarimNFT2). OFF until deployed; the coordinator turns it on. ---- */
 /* LIVE 1 Nov 2026: TasarimNFT2 deployed (dagitim-designs2.json, block 29038512); v1 had no designs. */
@@ -230,8 +230,21 @@ export const veri = {
   ilanKaldir: (id) => ifc.encodeFunctionData("ilanKaldir", [id]),
   itirazEt: (id, oncekiId, kanitUri) => ifc.encodeFunctionData("itirazEt", [id, oncekiId, kanitUri]),
   emanetIsle: (id, adet) => ifc.encodeFunctionData("emanetIsle", [id, adet]),
-  teminatGeriAl: (id) => ifc.encodeFunctionData("teminatGeriAl", [id])
+  teminatGeriAl: (id) => ifc.encodeFunctionData("teminatGeriAl", [id]),
+  /* v2 commit-reveal: taahhutEt(keccak256(abi.encode(sender, dosyaHash, algiHash, tuz))) first, then
+     yayinlaAcik in a later block (within taahhutBlok blocks) shows the hashes and publishes */
+  taahhutEt: (taahhut) => ifc.encodeFunctionData("taahhutEt", [taahhut]),
+  yayinlaAcik: (token, dosyaHash, algiHash, uri, fiyat, anahtarTaahhut, tuz) =>
+    ifc.encodeFunctionData("yayinlaAcik", [token, dosyaHash, algiHash, anahtarTaahhut, uri, fiyat, tuz])
 };
+
+/** The commitment TasarimNFT2 checks in yayinlaAcik: keccak256(abi.encode(sender, dosyaHash, algiHash, tuz)). */
+export const taahhutHesapla = (gonderen, dosyaHash, algiHash, tuz) =>
+  keccak256(AbiCoder.defaultAbiCoder().encode(["address", "bytes32", "bytes32", "bytes32"], [gonderen, dosyaHash, algiHash, tuz]));
+/** A fresh random 32-byte salt (crypto.getRandomValues). */
+export const tuzUret = () => hexlify(globalThis.crypto.getRandomValues(new Uint8Array(32)));
+/** Commit-reveal is on TasarimNFT2 only. */
+export const TAAHHUT_VAR = SURUM === 2;
 
 /** A revert in plain English (custom errors of TasarimNFT). */
 export function hataAcikla(e) {

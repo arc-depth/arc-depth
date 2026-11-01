@@ -29,6 +29,13 @@ export async function v2Ayar() {
   return fetch("veri/sepet-v2.json", { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
 }
 
+/// The v9 set (PulseHook6, designer tokens): its launchpad, Defter and hook (sepet-v9.json). The same
+/// readers below take it: the pool key comes from its launchpad, so prices use the PulseHook6 pool,
+/// and its hook emits the same Ucret event.
+export async function v9Ayar() {
+  return fetch("veri/sepet-v9.json", { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+}
+
 /// Every v2 launch with its pool's numbers now.
 export async function launchlar(V2) {
   const lp = new Contract(V2.launchpad, LP_ABI, arc());

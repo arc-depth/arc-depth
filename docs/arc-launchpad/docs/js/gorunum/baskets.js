@@ -14,7 +14,7 @@ const kisa = (s) => (s && s.length > 20 ? s.slice(0, 10) + "…" + s.slice(-6) :
 export function kartEk(x) {
   const kutu = el("div", { sinif: "yazi yazi--kucuk yazi--sessiz", yazi: "Reading the basket…" });
   import("../teminat-izle.js").then(async (m) => {
-    const cfg = (await m.sepetV2()) || m.SEPET;
+    const cfg = await m.tokenAyari(x.token);   // v8, or the v9 Defter and vaults for a v9 launch
     const t = await m.teminatDurumu(x.token, cfg);
     if (!t) { kutu.textContent = "No basket recorded for this token."; return; }
     const tablo = el("table", { sinif: "tablo" });
