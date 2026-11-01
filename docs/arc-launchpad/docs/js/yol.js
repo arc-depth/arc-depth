@@ -27,6 +27,8 @@
 
 export const GRUPLAR = [
   { anahtar: "piyasa", ad: "Market" },
+  /* 1 Nov 2026: nine products on one launch engine, told apart by TurKaydi */
+  { anahtar: "urunler", ad: "Products" },
   { anahtar: "varlik", ad: "My assets" },
   { anahtar: "yonetisim", ad: "Governance" },
   { anahtar: "guven", ad: "Trust" }
@@ -163,6 +165,61 @@ export const YOLLAR = [
     durum: "canli",
     ozet: "Launches, volume, fees by slice and reserves, on Arc and Robinhood Chain.",
     kaynak: "veri/analitik.json - Launched, Swap and Ucret events, balanceOf"
+  },
+
+  /* ---- products (1 Nov 2026) ----------------------------------------
+     Every product launches through the same MerkezKapi with the same
+     rules; the type its founder writes into TurKaydi (adresler.js →
+     TUR_KAYDI) is the only difference. Each page lists the tokens whose
+     latest TurKaydi entry has its type, read from Arc (an honest empty
+     list until the first one is saved). Shared code: docs/js/urun.js. */
+  {
+    yol: "communities", ad: "Communities", kisa: "Communities", grup: "urunler", ikon: "insanlar", durum: "canli",
+    ozet: "Tokens for groups (Discord, Telegram, X) that build shared value together, with token-holder-only channels.",
+    kaynak: "TurKaydi type 1 (TurYazildi events) + MerkezKapi"
+  },
+  {
+    yol: "creators", ad: "Creators", kisa: "Creators", grup: "urunler", ikon: "kupa", durum: "canli",
+    ozet: "Fans support creators by holding their token; the creator earns 0.30% of every trade in USDC.",
+    kaynak: "TurKaydi type 2 (TurYazildi events) + MerkezKapi"
+  },
+  {
+    yol: "agents", ad: "AI agents", kisa: "Agents", grup: "urunler", ikon: "dis", durum: "canli",
+    ozet: "An AI agent's own token; with the agent's wallet as founder, its trading share pays the agent's own costs.",
+    kaynak: "TurKaydi type 3 (TurYazildi events) + MerkezKapi"
+  },
+  {
+    yol: "projects", ad: "Projects", kisa: "Projects", grup: "urunler", ikon: "arti", durum: "canli",
+    ozet: "Small teams gather support for what they build. No profit promises; an optional founder lock comes later.",
+    kaynak: "TurKaydi type 4 (TurYazildi events) + MerkezKapi"
+  },
+  {
+    yol: "daos", ad: "DAOs", kisa: "DAOs", grup: "urunler", ikon: "meclis", durum: "canli",
+    ozet: "Holders vote and run a shared treasury. Per-token governance contracts are coming.",
+    kaynak: "TurKaydi type 5 (TurYazildi events) + MerkezKapi"
+  },
+  {
+    yol: "games", ad: "Games", kisa: "Games", grup: "urunler", ikon: "mum", durum: "canli",
+    ozet: "In-game currencies and rewards. A developer guide is coming.",
+    kaynak: "TurKaydi type 6 (TurYazildi events) + MerkezKapi"
+  },
+  {
+    yol: "baskets", ad: "Baskets", kisa: "Baskets", grup: "urunler", ikon: "kasa", durum: "canli",
+    ozet: "The collateral basket holds up to five assets from twelve chains; holders can redeem their share without selling.",
+    kaynak: "TurKaydi type 7 (TurYazildi events) + basket vaults"
+  },
+  {
+    /* NOT BUILT. The owner wants the NFT section behind its own button, so
+       it is on the rail and in the top nav (ana.js BIRINCIL); the router
+       shows this honest description and no control. */
+    yol: "designs", ad: "Designer NFTs", kisa: "NFT designs", grup: "urunler", ikon: "hediye", durum: "yapim",
+    ozet: "Designers launch their own token through the same launch engine, with a collateral basket like every launch. They publish files and images as 1-of-1 NFTs priced in USDC and paid for with the designer's own token. Full usage rights belong to whoever holds the NFT and move with it on resale; duplicates are blocked.",
+    gerekli: "The NFT marketplace contract is not written or deployed yet. A designer can already launch a token and save its type as Designer; the NFT part opens when the marketplace is built.",
+    eksik: [
+      "A 1-of-1 NFT contract with duplicate blocking",
+      "A marketplace that prices in USDC and takes payment in the designer's token",
+      "File and image storage, and the usage-rights terms that move with each NFT"
+    ]
   },
 
   /* ---- holdings --------------------------------------------------- */

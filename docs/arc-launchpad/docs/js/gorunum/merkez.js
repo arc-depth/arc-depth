@@ -382,6 +382,45 @@ export async function ciz({ param } = {}) {
   });
   const lDurum = el("div", { sinif: "yazi yazi--kucuk yazi--sessiz" });
   const lDugme = el("button", { sinif: "dugme dugme--marka", attr: { type: "button" }, yazi: "Launch" });
+  /* 1 Nov 2026 — product type (docs/js/urun.js). The launch itself is the same
+     for every type; after it, a second, optional transaction from the founder's
+     wallet writes the type and the public description into TurKaydi on Arc.
+     Meme (0) needs no record. A product page's "Create a ... token" opens
+     this page with its type preselected. */
+  const urun = await import("../urun.js");
+  const turSecim = el("select", { sinif: "girdi", attr: { id: "merkez-tur", "aria-label": "Product type" } },
+    urun.TURLER.map((t) => el("option", { attr: { value: String(t.tur) }, yazi: t.ad + (t.tur === 8 ? " (NFT marketplace not built yet)" : "") })));
+  turSecim.value = String(urun.secilenTuruAl());
+  const turBilgi = el("textarea", { sinif: "girdi", attr: { id: "merkez-tur-bilgi", rows: "3", maxlength: "1000",
+    placeholder: "Optional. Public description and links (https://...), e.g. your Discord, X or website. Written on chain, visible to everyone." } });
+  const ajanCuzdan = el("input", { sinif: "girdi", attr: { id: "merkez-ajan", placeholder: "Agent wallet 0x... (optional, public)" } });
+  const turIpucu = el("div", { sinif: "alan__ipucu" });
+  const turTazele = () => {
+    const n = Number(turSecim.value);
+    ajanCuzdan.style.display = n === 3 ? "" : "none";
+    const b = urun.baytBoyu(urun.bilgiYap(turBilgi.value, n === 3 ? ajanCuzdan.value : ""));
+    turIpucu.textContent = n === 0
+      ? "Meme: nothing more to save after the launch."
+      : "After the launch, one more confirmation from your wallet on Arc saves this type" + (b ? " and the description (" + b + " of 1024 bytes)" : "") + ", so the token shows on the " + urun.turBul(n).ad + " page. Optional; it does not change the launch or its fees.";
+  };
+  for (const g of [turSecim, turBilgi, ajanCuzdan]) { g.addEventListener("input", turTazele); g.addEventListener("change", turTazele); }
+  turTazele();
+  const turKutu = el("div", { sinif: "yigin" });
+  const turAdimi = (yeniToken) => {
+    const n = Number(turSecim.value);
+    if (!n) return;
+    const bilgi = urun.bilgiYap(turBilgi.value, n === 3 ? ajanCuzdan.value : "");
+    const tDurum = el("div", { sinif: "yazi yazi--kucuk yazi--sessiz" });
+    const tDugme = el("button", { sinif: "dugme dugme--marka", attr: { type: "button" }, yazi: "Save product type: " + urun.turBul(n).ad });
+    tDugme.addEventListener("click", tekSefer(tDugme, async () => {
+      try {
+        await urun.turYaz({ token: yeniToken, tur: n, bilgi, cuzdan, durum: (s) => { tDurum.textContent = s; } });
+        tDurum.textContent = "Saved on Arc. Your token is listed on the " + urun.turBul(n).ad + " page.";
+        tDugme.remove();
+      } catch (x) { tDurum.textContent = (x && x.code === 4001) ? "Cancelled. You can save it any time from this button." : ((x && x.message) || "Could not save."); }
+    }));
+    turKutu.replaceChildren(el("div", { sinif: "alan__ipucu", yazi: "Step 2 (optional): save the product type for " + yeniToken + ". One transaction on Arc from the founder's wallet, a few cents of gas." }), tDugme, tDurum);
+  };
   /* v2: the twins on Solana, Sui and Aptos cost far more to create than the EVM ones (measured 20 Oct:
      Solana ~9, Sui ~4.8, Aptos ~1.7 USDC against ~4 for all eight EVM twins), so by default they are
      created on demand: the first holder who moves the token there creates it (IkizHub.yarat, open to all) */
@@ -437,6 +476,7 @@ export async function ciz({ param } = {}) {
         durum((ag.anahtar === "arc" ? "Paid. Launched on Arc: the token and its pool are open and your tokens are in your wallet. Any LayerZero fee not used came back to you."
           : "Launched on Arc. Your tokens arrive on " + ag.ad + " in a few minutes. Any LayerZero fee not used comes back to your address on Arc.") +
           (yeni ? "  " + tokenBaglantilari(yeni) : "  (The token's address could not be read yet: find it on Discover.)"));
+        if (yeni) turAdimi(yeni);
         return;
       }
       if (!ad.value.trim() || !sembol.value.trim()) return durum("Give the token a name and a symbol.");
@@ -556,6 +596,7 @@ export async function ciz({ param } = {}) {
     V2 ? el("div", { sinif: "alan__ipucu", yazi: "Paying from a Solana, Sui or Aptos wallet? Use the panel \"From a Solana, Sui or Aptos wallet\" at the bottom of this page." })
       : el("a", { sinif: "alan__ipucu", attr: { href: "#olustur-move" }, yazi: "Paying from a Sui or Aptos wallet? Use the Sui / Aptos launch form →" }),
     el("div", { sinif: "girdi-grup" }, [ad, sembol]),
+    el("div", { sinif: "alan__etiket", yazi: "Product type" }), turSecim, turBilgi, ajanCuzdan, turIpucu,
     el("div", { sinif: "alan__ipucu", yazi: "First buy $" + ASGARI_ALIM() + "–$500 (2% launch fee; the rest becomes your tokens at the opening price: $3,500 for the whole supply of 1,000,000,000)." }),
     el("div", { sinif: "girdi-grup" }, [alim, el("span", { sinif: "girdi-grup__son", yazi: "$ first buy" })]), vergi,
     el("div", { sinif: "alan__ipucu", yazi: v4mu()
@@ -564,7 +605,7 @@ export async function ciz({ param } = {}) {
     satirlar,
     V2 ? uzakEtiket : el("span"),
     el("div", { sinif: "alan__ipucu", yazi: "Every trade: 2.2% (0.30% you, the creator · 0.30% developer pool · 0.50% protocol liquidity · 0.70% back into the pool · 0.20% ARCP bought and burned · 0.20% operations) plus your 1–5% collateral tax." }),
-    lDugme, lDurum])));
+    lDugme, lDurum, turKutu])));
 
   /* ================= trade ================= */
   const token = el("input", { sinif: "girdi", attr: { id: "merkez-token", placeholder: "token address on Arc", value: (param && param.get("t")) || "" } });

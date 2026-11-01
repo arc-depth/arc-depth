@@ -287,6 +287,21 @@ export const PAZAR_KURAL = {
   gelistiriciPpm: 800000
 };
 
+/* ---- THE PRODUCT TYPE RECORD (1 Nov 2026) -------------------------------
+ * TurKaydi on Arc (contracts/urun/TurKaydi.sol, ABI in build/TurKaydi.json).
+ * Every launch goes through the same MerkezKapi; this record is the only
+ * thing that tells the nine products apart: a type number and a short
+ * public description per token, written by the token's founder (or the
+ * owner, to correct an entry). The product pages read it; Create writes it.
+ *   0 meme, 1 community, 2 creator, 3 AI agent, 4 project, 5 DAO, 6 game,
+ *   7 basket, 8 designer */
+export const TUR_KAYDI = {
+  adres: "0xc9d5ca394c62362eDcDe6E62cC4c9E72B94e35C9",
+  zincirId: 5042,
+  baslangicBloku: 29026674,
+  bilgiAzami: 1024
+};
+
 /* Superseded, and named so a reader who finds one of these on chain
    knows why it is idle rather than assuming the site is stale.
 

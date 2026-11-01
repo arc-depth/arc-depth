@@ -48,7 +48,9 @@ const VARSAYILAN = "kesfet";
      silently truncated, because a tab that exists on one screen size and
      not the other is the kind of thing nobody notices until somebody
      cannot find it. */
-const BIRINCIL = ["kesfet", "olustur", "terminal", "portfoy", "dao"];
+/* "designs" (1 Nov 2026): the owner wants the designer NFT section behind its
+   own button. It is the sixth entry, so the phone bar (first four) is unchanged. */
+const BIRINCIL = ["kesfet", "olustur", "terminal", "portfoy", "dao", "designs"];
 
 const kIcerik = document.getElementById("icerik");
 const kRay = document.getElementById("ray");
@@ -218,7 +220,16 @@ const GORUNUMLER = {
   gelistirici: () => import("./gorunum/gelistirici.js"),
   teklifler: () => import("./gorunum/teklifler.js"),
   dokuman: () => import("./gorunum/dokuman.js"),
-  daha: () => import("./gorunum/daha.js")
+  daha: () => import("./gorunum/daha.js"),
+  /* products (1 Nov 2026): one page per TurKaydi type, shared code in urun.js.
+     "designs" is "yapim" in yol.js, so the router shows its description only. */
+  communities: () => import("./gorunum/communities.js"),
+  creators: () => import("./gorunum/creators.js"),
+  agents: () => import("./gorunum/agents.js"),
+  projects: () => import("./gorunum/projects.js"),
+  daos: () => import("./gorunum/daos.js"),
+  games: () => import("./gorunum/games.js"),
+  baskets: () => import("./gorunum/baskets.js")
 };
 
 let sonCizim = 0;
