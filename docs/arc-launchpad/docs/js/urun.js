@@ -20,7 +20,7 @@
  * =========================================================================== */
 import { el, sayfaUst, panel, bos, not } from "./ui.js";
 import { ikon } from "./ikon.js";
-import { TUR_KAYDI } from "./adresler.js";
+import { TUR_KAYDI, TUR_KAYDI_ESKI } from "./adresler.js";
 import { YedekliOkur } from "./yedekli-okur.js";
 import { Contract, Interface } from "../vendor/ethers.min.js";
 
@@ -120,6 +120,8 @@ function bilgiCoz(s) {
 /* ---- reading the record ---- */
 const arc = new YedekliOkur();
 const kayit = () => new Contract(TUR_KAYDI.adres, TUR_ABI, arc);
+/* the first record (v8 gate only): read too, so an entry written there before TurKaydi2 is not lost */
+const eskiKayit = () => new Contract(TUR_KAYDI_ESKI.adres, TUR_ABI, arc);
 const LP_ABI = [
   "function launchCount() view returns (uint256)",
   "function launchAt(uint256) view returns ((address token, address acici, address kasa, uint256 teminat, address kurucu, uint256 kurucuToken, uint256 teklif, uint256 vergiPpm, uint64 zaman))"
@@ -132,8 +134,10 @@ const LP_ABI = [
 async function sonKayitlar() {
   const ifc = new Interface(TUR_ABI);
   try {
-    const loglar = await arc.getLogs({ address: TUR_KAYDI.adres, topics: [ifc.getEvent("TurYazildi").topicHash],
-      fromBlock: TUR_KAYDI.baslangicBloku, toBlock: "latest" });
+    /* both records, oldest first: TurKaydi2's later entry for a token wins */
+    const loglar = (await arc.getLogs({ address: [TUR_KAYDI_ESKI.adres, TUR_KAYDI.adres], topics: [ifc.getEvent("TurYazildi").topicHash],
+      fromBlock: TUR_KAYDI_ESKI.baslangicBloku, toBlock: "latest" }))
+      .sort((a, b) => a.blockNumber - b.blockNumber || (a.index ?? a.logIndex ?? 0) - (b.index ?? b.logIndex ?? 0));
     const son = new Map();
     for (const l of loglar) {
       const p = ifc.parseLog(l);
@@ -196,9 +200,10 @@ const adresMi = (s) => /^0x[0-9a-fA-F]{40}$/.test(String(s || "").trim());
 export function turOku(token) {
   const k = String(token).toLowerCase();
   if (!_turOnbellek.has(k)) {
-    const c = kayit();
-    const p = Promise.all([c.turOf(token), c.yazildi(token), c.bilgiOf(token)])
+    const oku = (c) => Promise.all([c.turOf(token), c.yazildi(token), c.bilgiOf(token)])
       .then(([tur, yazildi, bilgi]) => ({ tur: Number(tur), yazildi: !!yazildi, bilgi: bilgiCoz(bilgi) }));
+    /* TurKaydi2 first; a token written only in the first record keeps that entry */
+    const p = oku(kayit()).then((y) => (y.yazildi ? y : oku(eskiKayit()).catch(() => y)));
     p.catch(() => _turOnbellek.delete(k));   // a failed read is tried again next time
     _turOnbellek.set(k, p);
   }
@@ -221,7 +226,7 @@ const _rozetOnbellek = new Map();
 function turOfOku(token) {
   const k = String(token).toLowerCase();
   if (!_rozetOnbellek.has(k)) {
-    const p = kayit().turOf(token).then(Number);
+    const p = kayit().turOf(token).then(Number).then((n) => (n > 0 ? n : eskiKayit().turOf(token).then(Number).catch(() => n)));
     p.catch(() => _rozetOnbellek.delete(k));
     _rozetOnbellek.set(k, p);
   }

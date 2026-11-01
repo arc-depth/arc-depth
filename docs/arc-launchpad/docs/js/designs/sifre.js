@@ -62,6 +62,9 @@ export async function acmaAnahtari(cuzdan) {
   return sk;
 }
 
+/** The unlock key already derived on this page load, without asking the wallet (null if not yet). */
+export const bellektekiAnahtar = (adres) => _anahtarlar.get(String(adres || "").toLowerCase()) || null;
+
 /** A key card: unlock public key + the wallet's signature over it. One signature. */
 export async function kartYap(cuzdan) {
   const sk = await acmaAnahtari(cuzdan);
@@ -134,3 +137,18 @@ export const zarfCoz = (metin) => JSON.parse(atob(String(metin || "").trim().rep
 
 /* used by the Node simulation test */
 export const _ic = { keccak256, concat, toUtf8Bytes, computeAddress };
+
+/* ---- v2: the envelope on chain (TasarimNFT2.teslimEt, at most 200 bytes) ----
+   0x01 || ephemeral public key (33, compressed) || iv (12) || AES-256-GCM(file key 32 + tag 16)
+   = 94 bytes. Same ECIES and the same HKDF context (file hash + recipient) as the JSON envelope. */
+export async function sarIkili(dosyaAnahtari, aliciPub, alici, dosyaHash) {
+  const z = await sar(dosyaAnahtari, aliciPub, alici, dosyaHash);
+  return hexlify(concat([new Uint8Array([1]), getBytes(z.epk), b64Coz(z.iv), b64Coz(z.ct)]));
+}
+export async function acIkili(zarfHex, sk, alici, dosyaHash) {
+  const b = getBytes(zarfHex);
+  if (b.length !== 94 || b[0] !== 1) throw new Error("Not an ARC PULSE key envelope (v2).");
+  return ac({ epk: hexlify(b.slice(1, 34)), iv: b64(b.slice(34, 46)), ct: b64(b.slice(46)), to: String(alici).toLowerCase() }, sk, dosyaHash);
+}
+/** keccak256 of the file key: TasarimNFT2's anahtarTaahhut, so a buyer can check a delivered key before confirming. */
+export const anahtarTaahhudu = (dosyaAnahtari) => keccak256(dosyaAnahtari);

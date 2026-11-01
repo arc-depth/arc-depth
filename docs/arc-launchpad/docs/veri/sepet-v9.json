@@ -1,0 +1,80 @@
+{
+ "zaman": "2026-11-01T19:40:54.916Z",
+ "not": "v9 set on Arc (PulseHook6, TWAP price feed). Designer launches use it. Basket lines: Arc + the 8 EVM chains whose vaults are bound to the v9 Defter (dagitim-v9.json); not Solana/Sui/Aptos yet. Solana/Sui/Aptos twins: IkizHub v9 not wired yet.",
+ "kapi": "0xA64AC16a5469561080bd8657fD852E346Bf8bF49",
+ "launchpad": "0x87045C17BD5fCf3495abC30898803E39E25Be0dD",
+ "ucu": "0x49b4afb882A198eAeE717581029b077fDEC4E5AD",
+ "defter": "0x82877BB860127242A887ffBB7aAD454b7a4a4f14",
+ "hub": "0x4334C0b728D01d94d0054CC0Fc88aC9974CB33BF",
+ "hook": "0x84144495479E6Ba4aEED060C07C818e572C8AECC",
+ "emanet": "0x67Ea96f6187552DA4127B1D1dC15b6e72e19D329",
+ "likiditeKasasi": "0x52975E8d83678070b7e5a1B0d9414E39f1B0082E",
+ "surum": 9,
+ "platformToken": {
+  "sembol": "ARCP",
+  "ad": "Arc Pulse",
+  "token": "0xbe98138311c2D89526eCD86B368A2B4B81cf840b",
+  "havuzId": "0x1c3f13f2da0b7dca5378ea0f2d2f5e846898577994896f23225ddcae529c8337",
+  "hook": "0xC7aDe691ef2FDBF09E793226Db1c79c36b038a44",
+  "yakici": "0x32d96E618142aaAB3100C26183b60940D00D1644",
+  "gelistiriciFonu": "0x0C6Fe02146f46b6df581905A24dB4Bc8c9B48FF4",
+  "governor": "0x846E0e9997ee900BcaFFAA79ad0B377FC907712c"
+ },
+ "zincir": {
+  "arc": {
+   "domain": 26,
+   "haberci": "0x994534bA2023c1B3831765B141BA41EA8c57FAC1",
+   "kasa": "0x92319E41D12aB3Ae626693BF96bec0077058EcAE",
+   "dolar": "0x3600000000000000000000000000000000000000"
+  },
+  "base": {
+   "domain": 6,
+   "haberci": "0x611F9C36D91B474E8C4Fa95f67e315A76BCFc32c",
+   "kasa": "0x559AeCBF74842B46E5F788BE9362Edbb0A4541FB",
+   "dolar": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
+  },
+  "arbitrum": {
+   "domain": 3,
+   "haberci": "0x4A500118Be1b5Ea77d4883FC94b9e678fE4008Ff",
+   "kasa": "0x0B2CD07c9c52687aFb59C2a721197704945ca037",
+   "dolar": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831"
+  },
+  "ethereum": {
+   "domain": 0,
+   "haberci": "0x0929aF000aC0de282dd965D6B853b74Ab0911F9D",
+   "kasa": "0xA33f201C4428dd0d4Bb4ac25fFee9DE83024991e",
+   "dolar": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"
+  },
+  "avalanche": {
+   "domain": 1,
+   "haberci": "0x5ABCF3Dbe86F9ffC5e69E13686Ec2876b29124A6",
+   "kasa": "0x51012D6c500235320aC9E2404551252342C4f7C0",
+   "dolar": "0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E"
+  },
+  "monad": {
+   "domain": 15,
+   "haberci": "0x5ABCF3Dbe86F9ffC5e69E13686Ec2876b29124A6",
+   "kasa": "0x51012D6c500235320aC9E2404551252342C4f7C0",
+   "dolar": "0x754704Bc059F8C67012fEd69BC8A327a5aafb603"
+  },
+  "hyperevm": {
+   "domain": 19,
+   "haberci": "0xCe5b0513C3D5fB830227C06a3BE80Cca1C6FE233",
+   "kasa": "0xE556db8FA8908782020a3129c5Aa71a8AC08d8Bc",
+   "dolar": "0xb88339CB7199b77E23DB6E890353E22632Ba630f"
+  },
+  "robinhood": {
+   "domain": 35,
+   "haberci": "0x386968f036cbc0d0965C81bf1fCEd0b40EE11E14",
+   "kasa": "0x66a3ab2AC43445B91c61B98631Be14886ab45F40",
+   "dolar": "0x5fc5360d0400a0fd4f2af552add042d716f1d168"
+  },
+  "bsc": {
+   "domain": 17,
+   "haberci": "0x4d486FcA7468fb171351C1573F2e55fA417c73C1",
+   "kasa": "0x8ddddB96CAb12c999896dE7b25F31Bb8474701a3",
+   "dolar": "0xb233F129F7255F86d67BDAEA4e8c4f8274Fa70d9"
+  }
+ },
+ "uzak": {}
+}

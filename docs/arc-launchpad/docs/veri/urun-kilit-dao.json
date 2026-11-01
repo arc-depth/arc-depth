@@ -1,0 +1,6 @@
+{
+  "KilitFabrikasi": "0xD299317959eC4908DeEBBcEfC31cF8F03D69919c",
+  "TokenDAOFabrikasi": "0xB9330D7D7613Ed8Bf1293568e89F7aE15d927a6A",
+  "turKaydi": "0xbC0639f73e6485e479aCeE3bd5a427154CDe7402",
+  "not": "Empty until deployed. scripts/urun-kilit-dagit.js and scripts/urun-dao-dagit.js fill these on deploy (records: dagitim-urun-kilit.json, dagitim-urun-dao.json)."
+}

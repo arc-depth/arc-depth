@@ -77,7 +77,31 @@ async function v2Yukle() {
   return V2;
 }
 const AYAR_YOK = "The launchpad settings (veri/sepet-v2.json) could not be loaded, so nothing is paid from this page now. Reload the page.";
-const S = () => (V2 ? { kapi: V2.kapi, lp: V2.launchpad, ucu: V2.ucu } : { kapi: KAPI, lp: LP, ucu: UCU });
+/* ---- v9 (1 Nov 2026): the set on PulseHook6, whose time-weighted price Designs needs to let buyers
+   pay in a designer's token. Designer launches (product type 8) go through the v9 MerkezKapi
+   (docs/veri/sepet-v9.json, from dagitim-v9.json). Its basket may use Arc and the EVM chains whose
+   vaults are bound to the v9 Defter (sepet-v9.json zincir: Base, Arbitrum, Ethereum, Avalanche, Monad,
+   HyperEVM, Robinhood, BNB); Solana, Sui and Aptos are not bound to it yet. Every other launch stays on v8. A token's trades go through the
+   gate that launched it (TV, set by ayarSec from the gates' vekilOf). */
+let V9 = null;
+async function v9Yukle() {
+  if (V9 === null) V9 = await fetch("veri/sepet-v9.json", { cache: "no-store", signal: AbortSignal.timeout(10_000) })
+    .then((r) => (r.ok ? r.json() : null)).catch(() => null);
+  return V9;
+}
+let TV = null;   // the config of the token in the trade panel (V2 or V9)
+const VT = () => TV || V2;
+/** Which gate launched `t`: V9 when the v9 MerkezKapi knows it, else V2. */
+async function ayarSec(t) {
+  TV = null;
+  if (!V9 || !/^0x[0-9a-fA-F]{40}$/.test(String(t || "").trim())) return VT();
+  try {
+    const v = await new Contract(V9.kapi, ["function vekilOf(address) view returns (address)"], arc).vekilOf(String(t).trim());
+    if (v !== SIFIR) TV = V9;
+  } catch (e) { /* unreadable: v8 */ }
+  return VT();
+}
+const S = () => (VT() ? { kapi: VT().kapi, lp: VT().launchpad, ucu: VT().ucu } : { kapi: KAPI, lp: LP, ucu: UCU });
 /* v2: Circle forwarding delivers sale and founder dollars on these chains by itself */
 const ILERI_DOMAIN = new Set([26, 6, 3, 0, 1, 15, 19, 5]);
 /* v2: where relay delivers dollars on the two chains Circle does not reach (an open deposit address on Arc) */
@@ -139,8 +163,8 @@ const v8mu = () => V2 && Number(V2.surum || 2) >= 8;
 const ASGARI_ALIM = () => (v8mu() ? 20 : 100);
 const kalemAsgari = (alimDolar, zincir) => (v8mu() ? Math.max(1, alimDolar * 0.05) : !V2 && zincir.domain === 0 ? 25 : 4);
 /// v6: can the vault on this EVM chain buy `varlik` from a pool? The same view the vault uses (havuzVar).
-async function evmHavuzVar(zincir, varlik) {
-  const k = V2 && V2.zincir && V2.zincir[zincir.ds];
+async function evmHavuzVar(zincir, varlik, cfg = V2) {
+  const k = cfg && cfg.zincir && cfg.zincir[zincir.ds];
   if (!k || !k.kasa) return { yol: false, neden: "no vault on " + zincir.ad };
   const p = new JsonRpcProvider(zincir.rpc, zincir.id, { staticNetwork: true });
   const [yol, ikiAdim, simdi] = await new Contract(k.kasa, ["function havuzVar(address) view returns (bool,bool,bool)"], p).havuzVar(varlik);
@@ -148,7 +172,7 @@ async function evmHavuzVar(zincir, varlik) {
 }
 /// The fee (6-decimal dollars) a redemption of `miktar` of `t`, paid to `alici` on `hz`, sends along: the Defter's quote + 10%.
 async function itfaUcreti(t, miktar, hz, alici) {
-  const d = new Contract(V2.defter, DEFTER4_ABI, arc);
+  const d = new Contract(VT().defter, DEFTER4_ABI, arc);
   const id = await d.idOf(ARC_DOMAIN, zeroPadValue(t, 32));
   const u = await d.itfaUcreti(id, miktar, hz, alici);
   return u === 0n ? 0n : (u * 11n) / 10n + 1n;
@@ -333,6 +357,7 @@ const tekSefer = (dugme, fn) => async () => {
 
 export async function ciz({ param } = {}) {
   await v2Yukle();
+  await v9Yukle();
   if (!V2) {
     const k = el("div", { sinif: "yigin" });
     k.append(sayfaUst("Launch on any chain", "One pool on Arc, every chain's door to it"));
@@ -378,6 +403,7 @@ export async function ciz({ param } = {}) {
       el("div", { sinif: "girdi-grup" }, [z, a, d, el("span", { sinif: "girdi-grup__son", yazi: "$" })]),
     ]);
     satir._oku = () => ({ zincir: SEPET_ZINCIR.find((s) => s.domain === Number(z.value)), adres: a.value.trim(), dolar: Number(d.value) });
+    satir._z = z;
     satirlar.append(satir);
   });
   const lDurum = el("div", { sinif: "yazi yazi--kucuk yazi--sessiz" });
@@ -388,8 +414,11 @@ export async function ciz({ param } = {}) {
      Meme (0) needs no record. A product page's "Create a ... token" opens
      this page with its type preselected. */
   const urun = await import("../urun.js");
+  /* founder lock (Projects) / DAO treasury (DAOs) as the founder slot: urun-kurucu.js */
+  const urunKurucu = await import("../urun-kurucu.js");
+  const kurucuSecimKutusu = urunKurucu.secimKutusu();
   const turSecim = el("select", { sinif: "girdi", attr: { id: "merkez-tur", "aria-label": "Product type" } },
-    urun.TURLER.map((t) => el("option", { attr: { value: String(t.tur) }, yazi: t.ad + (t.tur === 8 ? " (NFT marketplace not built yet)" : "") })));
+    urun.TURLER.map((t) => el("option", { attr: { value: String(t.tur) }, yazi: t.ad + (t.tur === 8 ? " (launches on the v9 set, PulseHook6)" : "") })));
   turSecim.value = String(urun.secilenTuruAl());
   const turBilgi = el("textarea", { sinif: "girdi", attr: { id: "merkez-tur-bilgi", rows: "3", maxlength: "1000",
     placeholder: "Optional. Public description and links (https://...), e.g. your Discord, X or website. Written on chain, visible to everyone." } });
@@ -405,6 +434,30 @@ export async function ciz({ param } = {}) {
   };
   for (const g of [turSecim, turBilgi, ajanCuzdan]) { g.addEventListener("input", turTazele); g.addEventListener("change", turTazele); }
   turTazele();
+  /* designer (8): the v9 gate, and its basket lines on the chains bound to the v9 Defter */
+  const tasarimciMi = () => Number(turSecim.value) === 8;
+  const C = () => (tasarimciMi() ? V9 : V2);
+  const v9Domainler = () => new Set(Object.values((V9 && V9.zincir) || {}).map((z) => String(z.domain)));
+  const tasarimNotu = el("div", { sinif: "not not--bilgi", attr: { style: "display:none" } }, [el("span", { yazi:
+    "Designer tokens launch on the v9 set (PulseHook6), whose time-weighted price lets buyers pay for your designs in your token. " +
+    "Its basket can use Arc, Base, Arbitrum, Ethereum, Avalanche, Monad, HyperEVM, Robinhood and BNB; Solana, Sui and Aptos are not connected to the v9 set yet, so they are switched off below. " +
+    "Everything else is the same: the rules, the fees, and buying from all twelve chains." })]);
+  const sepetKisitla = () => {
+    const t = tasarimciMi();
+    tasarimNotu.style.display = t ? "" : "none";
+    for (const sat of satirlar.children) {
+      const z = sat._z;
+      if (!z) continue;
+      const izinli = v9Domainler();
+      for (const o of z.options) {
+        const zz = SEPET_ZINCIR.find((x) => String(x.domain) === o.value);
+        o.disabled = (t && !izinli.has(o.value)) || !!(zz && zz.kapali);
+      }
+      if (t && !izinli.has(z.value)) z.value = "26";
+    }
+  };
+  turSecim.addEventListener("change", sepetKisitla);
+  sepetKisitla();
   const turKutu = el("div", { sinif: "yigin" });
   const turAdimi = (yeniToken) => {
     const n = Number(turSecim.value);
@@ -443,7 +496,7 @@ export async function ciz({ param } = {}) {
   let hazirOdeme = null;   // the order shown to the founder, paid on the second click
   const odemeDurum = () => { hazirOdeme = null; lDugme.textContent = "Launch"; };
   ikizKutular.forEach((l) => l.firstChild.addEventListener("change", odemeDurum));
-  for (const g of [ad, sembol, alim, vergi, zincirSec]) g.addEventListener("change", odemeDurum);
+  for (const g of [ad, sembol, alim, vergi, zincirSec, turSecim]) g.addEventListener("change", odemeDurum);
   satirlar.addEventListener("change", odemeDurum);
   satirlar.addEventListener("input", odemeDurum);
   /* the prepared order names the connected account: another account or chain must be priced again */
@@ -476,7 +529,7 @@ export async function ciz({ param } = {}) {
         durum((ag.anahtar === "arc" ? "Paid. Launched on Arc: the token and its pool are open and your tokens are in your wallet. Any LayerZero fee not used came back to you."
           : "Launched on Arc. Your tokens arrive on " + ag.ad + " in a few minutes. Any LayerZero fee not used comes back to your address on Arc.") +
           (yeni ? "  " + tokenBaglantilari(yeni) : "  (The token's address could not be read yet: find it on Discover.)"));
-        if (yeni) turAdimi(yeni);
+        if (yeni && !urunKurucu.launchSonrasi({ token: yeni, kap: turKutu, cuzdan, bilgi: urun.bilgiYap(turBilgi.value, "") })) turAdimi(yeni);
         return;
       }
       if (!ad.value.trim() || !sembol.value.trim()) return durum("Give the token a name and a symbol.");
@@ -484,6 +537,11 @@ export async function ciz({ param } = {}) {
       if (alim6 < BigInt(ASGARI_ALIM()) * 1_000_000n || alim6 > 500_000_000n) return durum("The first buy is between $" + ASGARI_ALIM() + " and $500.");
       const ss = [...satirlar.children].map((s) => s._oku()).filter((s) => s.adres);
       if (!ss.length) return durum("Add at least one basket token.");
+      if (tasarimciMi()) {
+        if (!V9) return durum("The v9 settings (veri/sepet-v9.json) could not be loaded, so a designer token cannot be launched from this page now. Reload the page.");
+        const disari = ss.find((s) => !v9Domainler().has(String(s.zincir.domain)));
+        if (disari) return durum("Designer tokens launch on the v9 set, which is not connected to " + disari.zincir.ad + " yet: move that line to Arc or another EVM chain.");
+      }
       const sepet = [], teklif = [];
       let teminat = 0n;
       for (const s of ss) {
@@ -500,7 +558,7 @@ export async function ciz({ param } = {}) {
         /* v6: an EVM line's vault must find a pool for the asset, or the line is refused before anything is signed */
         if (v6mu() && s.zincir.tur === "evm") {
           durum("Checking that the " + s.zincir.ad + " vault can buy " + s.adres.slice(0, 14) + " from a pool…");
-          const h = await evmHavuzVar(s.zincir, s.adres).catch((e) => ({ yol: false, neden: "could not read the vault (" + (e.shortMessage || e.message || "").slice(0, 60) + ")" }));
+          const h = await evmHavuzVar(s.zincir, s.adres, C()).catch((e) => ({ yol: false, neden: "could not read the vault (" + (e.shortMessage || e.message || "").slice(0, 60) + ")" }));
           if (!h.yol) return durum(s.zincir.ad + " line refused: " + (h.neden || "no pool on " + s.zincir.ad + " holds this asset against the dollar, so its vault could not buy it. Pick an asset with a pool there."));
         }
         durum("Pricing " + s.zincir.ad + " " + s.adres.slice(0, 10) + "… (DexScreener)…");
@@ -523,7 +581,7 @@ export async function ciz({ param } = {}) {
         const tipler = ss.map((x) => (x.zincir.tur === "sui" ? suiTipi(x.adres) : ""));
         /* the twins on Solana, Sui and Aptos, through the hub: the chains whose gate is wired, and LayerZero's fee for each */
         durum("Reading the LayerZero fee for the Solana / Sui / Aptos twins…");
-        const hub = new Contract(V2.hub, HUB_ABI, arc);
+        const hub = new Contract(C().hub, HUB_ABI, arc);
         const ornek = AbiCoder.defaultAbiCoder().encode(["uint8", "address", "string", "string"], [1, ORNEK_ARC, ad.value.trim(), sembol.value.trim().toUpperCase()]);
         const uzak = [];
         let uzakUcret = 0n;
@@ -555,10 +613,10 @@ export async function ciz({ param } = {}) {
         const ikizDeger = pay(evmGercek), uzakDeger = pay(uzakGercek), teslimDeger = pay(teslimGercek);
         const deger2 = ikizDeger + uzakDeger + teslimDeger;
         const istek = [ad.value.trim(), sembol.value.trim().toUpperCase(), sepet, teklif, BigInt(Number(vergi.value) * 10_000), alim6,
-          ko.alici, ko.zincir, teslimEid(ag), evmIkiz, ikizSec, ikizDeger, sec(100_000n), ben, tipler, uzak, uzakDeger];
+          ...(await urunKurucu.kurucuUc(ben, sembol.value.trim().toUpperCase(), [ko.alici, ko.zincir, teslimEid(ag)])), evmIkiz, ikizSec, ikizDeger, sec(100_000n), ben, tipler, uzak, uzakDeger];
         const txs = [
-          { to: ARC_USDC, data: E.encodeFunctionData("approve", [V2.kapi, toplam]), value: "0" },
-          { to: V2.kapi, data: KAPI2_ABI.encodeFunctionData("launch", [istek]), value: deger2.toString() },
+          { to: ARC_USDC, data: E.encodeFunctionData("approve", [C().kapi, toplam]), value: "0" },
+          { to: C().kapi, data: KAPI2_ABI.encodeFunctionData("launch", [istek]), value: deger2.toString() },
         ];
         durum("Asking relay.link for the route (it simulates the Arc side first)…");
         const q = await relayTeklif(ag, ben, toplam, deger2, txs);
@@ -566,6 +624,7 @@ export async function ciz({ param } = {}) {
         const d6 = (x) => "$" + (Number(x) / 1e6).toFixed(2);
         const net = Number(toplam) / 1e6 + Number(deger2) / 1e18;
         const satirlarOzet = [
+          ...(tasarimciMi() ? ["Designer token: launched on the v9 set (PulseHook6)"] : []),
           "First buy " + d6(alim6) + " · collateral " + d6(teminat) + " (" + ss.length + " line" + (ss.length > 1 ? "s" : "") + ")",
           "Twins on " + evmIkiz.length + " EVM chain(s): LayerZero " + usd(evmGercek) + (uzak.length ? " · on " + uzak.length + " of Solana/Sui/Aptos: " + usd(uzakGercek) : ""),
           teslimGercek ? "Your tokens to " + ag.ad + ": LayerZero " + usd(teslimGercek) : "Your tokens stay on Arc",
@@ -596,7 +655,7 @@ export async function ciz({ param } = {}) {
     V2 ? el("div", { sinif: "alan__ipucu", yazi: "Paying from a Solana, Sui or Aptos wallet? Use the panel \"From a Solana, Sui or Aptos wallet\" at the bottom of this page." })
       : el("a", { sinif: "alan__ipucu", attr: { href: "#olustur-move" }, yazi: "Paying from a Sui or Aptos wallet? Use the Sui / Aptos launch form →" }),
     el("div", { sinif: "girdi-grup" }, [ad, sembol]),
-    el("div", { sinif: "alan__etiket", yazi: "Product type" }), turSecim, turBilgi, ajanCuzdan, turIpucu,
+    el("div", { sinif: "alan__etiket", yazi: "Product type" }), turSecim, turBilgi, ajanCuzdan, turIpucu, tasarimNotu, kurucuSecimKutusu,
     el("div", { sinif: "alan__ipucu", yazi: "First buy $" + ASGARI_ALIM() + "–$500 (2% launch fee; the rest becomes your tokens at the opening price: $3,500 for the whole supply of 1,000,000,000)." }),
     el("div", { sinif: "girdi-grup" }, [alim, el("span", { sinif: "girdi-grup__son", yazi: "$ first buy" })]), vergi,
     el("div", { sinif: "alan__ipucu", yazi: v4mu()
@@ -613,10 +672,11 @@ export async function ciz({ param } = {}) {
   const fiyatOku = async () => {
     try {
       if (!/^0x[0-9a-fA-F]{40}$/.test(token.value.trim())) return;
+      await ayarSec(token.value.trim());   // v8 or v9 gate, by who launched it
       const v = await new Contract(S().kapi, KAPI_ABI.fragments, arc).vekilOf(token.value.trim());
       if (v === SIFIR) { fiyatYazi.textContent = "This token was not launched through this door."; return; }
       if (V2) {
-        const st = await egri.zincirdenDurum({ Contract, AbiCoder, keccak256 }, arc, V2.launchpad, PM, token.value.trim());
+        const st = await egri.zincirdenDurum({ Contract, AbiCoder, keccak256 }, arc, VT().launchpad, PM, token.value.trim());
         const o = egri.ozet(st);
         const usd = (x) => "$" + (x >= 1000 ? Math.round(x).toLocaleString("en-US") : x.toFixed(2));
         fiyatYazi.textContent = "Price $" + o.fiyat.toPrecision(4) + " per token · market cap " + usd(o.piyasaDegeri) +
@@ -643,6 +703,7 @@ export async function ciz({ param } = {}) {
   alDugme.addEventListener("click", tekSefer(alDugme, async () => {
     const durum = (s) => { alDurum.textContent = s; };
     try {
+      await ayarSec(token.value.trim());
       const ben = cuzdan.hesap() || (await cuzdan.bagla());
       if (!ben) return durum("Connect a wallet first.");
       const t = token.value.trim();
@@ -650,7 +711,7 @@ export async function ciz({ param } = {}) {
       if (usdc6 < 1_000_000n) return durum("At least $1.");
       let asgari;
       if (V2) {
-        const st = await egri.zincirdenDurum({ Contract, AbiCoder, keccak256 }, arc, V2.launchpad, PM, t);
+        const st = await egri.zincirdenDurum({ Contract, AbiCoder, keccak256 }, arc, VT().launchpad, PM, t);
         const e = egri.alim(st, Number(usdc6) / 1e6);
         asgari = BigInt(Math.floor(e.token * (1 - kaymaOrani()) * 1e6)) * 10n ** 12n;
         durum("Estimate: ~" + Math.floor(e.token).toLocaleString("en-US") + " tokens, price impact +" + (e.etki * 100).toFixed(2) +
@@ -684,6 +745,7 @@ export async function ciz({ param } = {}) {
   const gonder = async (tur) => {
     const durum = (s) => { satDurum.textContent = s; };
     try {
+      await ayarSec(token.value.trim());
       const ben = cuzdan.hesap() || (await cuzdan.bagla());
       if (!ben) return durum("Connect a wallet first.");
       /* the deployed gate sells and redeems only what arrives from another chain; an Arc-side door comes with its next version */
@@ -696,15 +758,15 @@ export async function ciz({ param } = {}) {
         if (tur === 0) {
           if (!V2) return durum("Selling tokens held on Arc from this page opens with the gate's next version. Redeeming from the basket works now.");
           /* v2: the gate sells in one call and pays here; what a price limit leaves unsold comes back */
-          const st = await egri.zincirdenDurum({ Contract, AbiCoder, keccak256 }, arc, V2.launchpad, PM, t);
+          const st = await egri.zincirdenDurum({ Contract, AbiCoder, keccak256 }, arc, VT().launchpad, PM, t);
           const e = egri.satim(st, Number(miktar / 10n ** 12n) / 1e6);
           if (e.bitti) return durum("The pool cannot buy all of that: only ~$" + e.dolar.toFixed(2) + " is there for it. Sell less, or redeem from the basket.");
           const asgari = BigInt(Math.floor(e.dolar * (1 - kaymaOrani()) * 1e6));
           durum("Estimate: ~$" + e.dolar.toFixed(2) + " after fees ($" + e.ucret.toFixed(2) + "), price impact " + (e.etki * 100).toFixed(2) + "%. Approve the sale (1/2)…");
-          let h = await cuzdan.agdaGonder(ag, { to: t, data: tk.interface.encodeFunctionData("approve", [V2.kapi, miktar]), value: "0x0" });
+          let h = await cuzdan.agdaGonder(ag, { to: t, data: tk.interface.encodeFunctionData("approve", [VT().kapi, miktar]), value: "0x0" });
           if ((await makbuz(ag, h)).status !== 1) throw new Error("Reverted: " + h);
           durum("Sell (2/2)…");
-          h = await cuzdan.agdaGonder(ag, { to: V2.kapi, data: KAPI2_ABI.encodeFunctionData("satArc", [t, miktar, asgari, ARC_DOMAIN, zeroPadValue(ben, 32), 0n]), value: "0x0" });
+          h = await cuzdan.agdaGonder(ag, { to: VT().kapi, data: KAPI2_ABI.encodeFunctionData("satArc", [t, miktar, asgari, ARC_DOMAIN, zeroPadValue(ben, 32), 0n]), value: "0x0" });
           if ((await makbuz(ag, h)).status !== 1) throw new Error("Reverted: " + h);
           return durum("Sold in the Arc pool; the USDC is in your wallet on Arc.");
         }
@@ -735,7 +797,7 @@ export async function ciz({ param } = {}) {
       if ((await oft.balanceOf(ben)) < miktar) return durum("You hold less than that on " + ag.ad + ".");
       let asgari = 0n;
       if (tur === 0 && V2) {
-        const st = await egri.zincirdenDurum({ Contract, AbiCoder, keccak256 }, arc, V2.launchpad, PM, t);
+        const st = await egri.zincirdenDurum({ Contract, AbiCoder, keccak256 }, arc, VT().launchpad, PM, t);
         const e = egri.satim(st, Number(miktar / 10n ** 12n) / 1e6);
         if (e.bitti) return durum("The pool cannot buy all of that: only ~$" + e.dolar.toFixed(2) + " is there for it. Sell less, or redeem from the basket.");
         asgari = BigInt(Math.floor(e.dolar * (1 - kaymaOrani()) * 1e6));
@@ -779,6 +841,7 @@ export async function ciz({ param } = {}) {
   tasDugme.addEventListener("click", tekSefer(tasDugme, async () => {
     const durum = (x) => { tasDurum.textContent = x; };
     try {
+      await ayarSec(token.value.trim());
       if (!V2) return durum("Opens with the second generation.");
       if (ag.anahtar !== "arc") return durum("Choose Arc as your chain: this moves tokens you hold on Arc.");
       const ben = cuzdan.hesap() || (await cuzdan.bagla());
@@ -789,7 +852,7 @@ export async function ciz({ param } = {}) {
       const miktar = BigInt(Math.round(Number(tasTutar.value))) * 10n ** 18n;
       const HUB = new Interface(["function yarat(address,uint32[],address) payable", "function gonder(address,uint32,bytes32,uint256,address) payable returns (uint256)",
         "function ucret(uint32,bytes) view returns (uint256)", "function yaratildi(address,uint32) view returns (bool)", "function kapi(uint32) view returns (bytes32)"]);
-      const hub = new Contract(V2.hub, HUB.fragments, arc);
+      const hub = new Contract(VT().hub, HUB.fragments, arc);
       if ((await hub.kapi(eid)) === zeroPadValue("0x00", 32)) return durum("That chain's twin gate is not wired.");
       const tk = new Contract(t, ["function balanceOf(address) view returns (uint256)", "function approve(address,uint256) returns (bool)",
         "function name() view returns (string)", "function symbol() view returns (string)"], arc);
@@ -804,14 +867,14 @@ export async function ciz({ param } = {}) {
       let adim = 1; const toplam = var_ ? 2 : 3;
       if (!var_) {
         durum("Create the twin (" + adim++ + "/" + toplam + ")…");
-        const h = await cuzdan.agdaGonder(ag, { to: V2.hub, data: HUB.encodeFunctionData("yarat", [t, [eid], ben]), value: "0x" + yaratUcret.toString(16) });
+        const h = await cuzdan.agdaGonder(ag, { to: VT().hub, data: HUB.encodeFunctionData("yarat", [t, [eid], ben]), value: "0x" + yaratUcret.toString(16) });
         if ((await makbuz(ag, h)).status !== 1) throw new Error("Reverted: " + h);
       }
       durum("Approve (" + adim++ + "/" + toplam + ")…");
-      let h = await cuzdan.agdaGonder(ag, { to: t, data: tk.interface.encodeFunctionData("approve", [V2.hub, miktar]), value: "0x0" });
+      let h = await cuzdan.agdaGonder(ag, { to: t, data: tk.interface.encodeFunctionData("approve", [VT().hub, miktar]), value: "0x0" });
       if ((await makbuz(ag, h)).status !== 1) throw new Error("Reverted: " + h);
       durum("Move (" + adim++ + "/" + toplam + ")…");
-      h = await cuzdan.agdaGonder(ag, { to: V2.hub, data: HUB.encodeFunctionData("gonder", [t, eid, alici, miktar, ben]), value: "0x" + tasiUcret.toString(16) });
+      h = await cuzdan.agdaGonder(ag, { to: VT().hub, data: HUB.encodeFunctionData("gonder", [t, eid, alici, miktar, ben]), value: "0x" + tasiUcret.toString(16) });
       if ((await makbuz(ag, h)).status !== 1) throw new Error("Reverted: " + h);
       durum("Sent. LayerZero delivers it on " + tasZincir.value + " in a few minutes" + (tasZincir.value === "sui" ? " (on Sui the coin type is registered once per token; until then the transfer waits there and anyone can deliver it)." : "."));
     } catch (x) { durum((x && x.message) || "Could not move."); }
@@ -833,6 +896,7 @@ export async function ciz({ param } = {}) {
   const kpDugme = el("button", { sinif: "dugme dugme--sessiz", attr: { type: "button" }, yazi: "Send the founder's trading income" });
   const VEKIL = ["function ilet(uint256)", "function kurucuZincir() view returns (uint32)", "function kurucu() view returns (bytes32)"];
   const kpOku = async () => {
+    await ayarSec(token.value.trim());
     const v = await new Contract(S().kapi, KAPI_ABI.fragments, arc).vekilOf(token.value.trim());
     if (v === SIFIR) throw new Error("This token was not launched through this door.");
     const b = await new Contract(ARC_USDC, ["function balanceOf(address) view returns (uint256)"], arc).balanceOf(v);
@@ -865,8 +929,9 @@ export async function ciz({ param } = {}) {
   kovaDugme.addEventListener("click", async () => {
     const durum = (x) => { kovaDurum.textContent = x; };
     try {
+      await ayarSec(token.value.trim());
       if (!V2 || !(V2.surum >= 4)) return durum("Opens with basket v4.");
-      const lp = new Contract(V2.launchpad, ["function havuzAnahtari(address) view returns ((address,address,uint24,int24,address))",
+      const lp = new Contract(VT().launchpad, ["function havuzAnahtari(address) view returns ((address,address,uint24,int24,address))",
         "function launchIdOfPool(bytes32) view returns (uint256)",
         "function launchAt(uint256) view returns ((address token,address acici,address kasa,uint256 teminat,address kurucu,uint256 kurucuToken,uint256 teklif,uint256 vergiPpm,uint64 zaman))"], arc);
       const k = await lp.havuzAnahtari(token.value.trim());

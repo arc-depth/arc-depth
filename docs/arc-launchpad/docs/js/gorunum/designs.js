@@ -238,7 +238,7 @@ async function profil({ cuzdan }, adres) {
     esit(adres, ben) ? null : el("div", { sinif: "ds-cihaz", yazi: "Follows are wallet-signed and saved on this device only." })
   ])]));
 
-  if (esit(adres, ben)) kap.append(acmaKartiKutusu(cuzdan));
+  if (esit(adres, ben)) kap.append(S.SURUM === 2 ? (await import("../designs/teslim.js")).anahtarKutusu(cuzdan) : acmaKartiKutusu(cuzdan));
 
   const sekme = el("div");
   const goster = (hangi) => {
@@ -307,14 +307,21 @@ async function irysYukle(cuzdan, veri, etiketler, yaz) {
   yaz("Sign the upload in your wallet…");
   return I.yukle(veri, etiketler, imzaci);
 }
-async function irysFonla(cuzdan, bayt, yaz) {
+/** What storing `bayt` on Irys needs now: {gereken, var_, yatir} in wei (yatir 0 when the balance covers it). */
+async function irysIhtiyac(ben, bayt) {
+  const I = await import("../designs/irys.js");
+  const [gereken, var_] = await Promise.all([I.fiyat(bayt), I.bakiye(ben)]);
+  return { gereken, var_, yatir: var_ >= gereken ? 0n : (gereken - var_) * 12n / 10n + 1n };   // 20% headroom: the price moves with ETH
+}
+/* odeme: "usdc" (default: Arc USDC through relay.link, no ETH needed) or "eth" (ETH the wallet has on Base) */
+async function irysFonla(cuzdan, bayt, yaz, odeme = "usdc", beklenenUsdc) {
   const I = await import("../designs/irys.js");
   const ben = cuzdan.hesap();
-  const [gereken, var_] = await Promise.all([I.fiyat(bayt), I.bakiye(ben)]);
-  if (var_ >= gereken) return;
-  const yatir = (gereken - var_) * 12n / 10n + 1n;   // 20% headroom: the price moves with ETH
+  const { gereken, var_, yatir } = await irysIhtiyac(ben, bayt);
+  if (!yatir) return;
   yaz("Irys storage costs " + formatUnits(gereken, 18) + " ETH for " + Math.ceil(bayt / 1024) + " KB; your Irys balance is " + formatUnits(var_, 18) + " ETH.");
-  await I.fonla(cuzdan, yatir, yaz);
+  if (odeme === "eth") await I.fonla(cuzdan, yatir, yaz);
+  else await I.fonlaArcUsdc(cuzdan, yatir, yaz, beklenenUsdc);
   for (let i = 0; i < 40; i++) {
     if ((await I.bakiye(ben).catch(() => 0n)) >= gereken) return;
     yaz("Waiting for Irys to credit the deposit…");
@@ -363,15 +370,17 @@ async function detay({ cuzdan }, id) {
   ]));
 
   if (t.sahip) yan.append(await satisKutusu({ cuzdan, t, ay, j, sym }));
-  if (t.sahip && esit(t.sahip, ben)) yan.append(ilanKutusu({ cuzdan, t, ay }));
-  yan.append(await emanetKutusu({ cuzdan, t, j, sym }));
+  /* v2: a design in an open sale is frozen (Kilitli) until the key is confirmed or refunded */
+  if (t.sahip && esit(t.sahip, ben) && !(S.SURUM === 2 && t.satis)) yan.append(ilanKutusu({ cuzdan, t, ay }));
+  if (S.SURUM === 2) yan.append(await (await import("../designs/teslim.js")).satisDurumu({ cuzdan, t, meta, ay }));
+  else yan.append(await emanetKutusu({ cuzdan, t, j, sym }));
   if (t.sahip && pencereAcik && !t.itiraz) yan.append(itirazKutusu({ cuzdan, t, ay }));
   if (esit(t.tasarimci, ben) && t.teminat > 0n && !pencereAcik && !t.itiraz) {
     const d = durumSatiri();
     yan.append(el("div", { sinif: "ds-kutu" }, [el("h3", { yazi: "Your stake" }), el("div", { yazi: usd(t.teminat) + " USDC held since publishing; the window is over." }),
       eylem("Take the stake back", async (yaz) => { await S.gonder({ cuzdan, data: S.veri.teminatGeriAl(id), durum: yaz }); yaz("Stake returned.", "ok"); }, "dugme", d), d]));
   }
-  if (t.sahip && meta) yan.append(dosyaKutusu({ cuzdan, t, meta }));
+  if (t.sahip && meta && !(S.SURUM === 2 && t.satis)) yan.append(dosyaKutusu({ cuzdan, t, meta }));
 
   /* license */
   yan.append(el("div", { sinif: "ds-kutu" }, [el("h3", { yazi: "License" }), el("p", { sinif: "ds-lisans", yazi: (ay && ay.lisans) || S.LISANS_YEDEK }),
@@ -402,6 +411,11 @@ function gecmisSatiri(o, j) {
     Emanete: () => "Payment held in escrow (" + jetonYaz(a.miktar, j.ondalik || 18) + " " + (j.sembol || "") + ")",
     EmanetOdendi: () => (a.iade ? "Escrow refunded to " : "Escrow paid to ") + kisa(a.kime),
     TeminatIade: () => "Stake returned to " + kisa(a.kime),
+    TeslimEdildi: () => "File key delivered to " + kisa(a.alici),
+    TeslimAlindi: () => "Buyer confirmed the file",
+    AnahtarItirazi: () => "Buyer said the key does not work",
+    SatisKapandi: () => (a.saticiyaOdendi ? "Payment released to " : "Refunded to ") + kisa(a.kime),
+    OnuAlindi: () => "Front-run: design #" + a.eskiId + " burned for #" + a.yeniId,
     Transfer: () => a.from === Z ? "Minted to " + kisa(a.to) : a.to === Z ? "Burned" : "Transferred " + kisa(a.from) + " → " + kisa(a.to)
   }[o.ad];
   return el("div", { sinif: "ds-gecmis__oge" }, [el("span", { yazi: y ? y() : o.ad }),
@@ -433,8 +447,9 @@ async function satisKutusu({ cuzdan, t, ay, j, sym }) {
       if (miktar == null) throw new Error("Buying opens when the price feed is live.");
       const azami = miktar * 10200n / 10000n;   // 2% room for the TWAP to move before it lands
       await S.onayGerekirse({ cuzdan, token: t.token, miktar: azami, durum: yaz, etiket: "$" + sym });
-      await S.gonder({ cuzdan, data: S.veri.al(t.id, azami), durum: yaz, aciklama: "Confirm the purchase (at most " + jetonYaz(azami, j.ondalik) + " " + sym + ")" });
-      yaz("Bought. The NFT and its usage rights are yours. Ask the seller to deliver the file key (your profile → key card).", "ok");
+      const anahtar = S.SURUM === 2 ? await (await import("../designs/teslim.js")).alimAnahtari(cuzdan, yaz) : undefined;
+      await S.gonder({ cuzdan, data: S.veri.al(t.id, azami, anahtar), durum: yaz, aciklama: "Confirm the purchase (at most " + jetonYaz(azami, j.ondalik) + " " + sym + ")" });
+      yaz(S.SURUM === 2 ? "Bought. Your payment waits until the seller delivers the file key to you; this page then opens the file." : "Bought. The NFT and its usage rights are yours. Ask the seller to deliver the file key (your profile → key card).", "ok");
     }, "dugme dugme--marka", d),
     eylem("Buy with USDC", async (yaz) => {
       await bagliHesap(cuzdan);
@@ -444,11 +459,13 @@ async function satisKutusu({ cuzdan, t, ay, j, sym }) {
       const miktar = await S.tokenKarsiligi(t.token, t.ilan.fiyat);
       const asgari = miktar * 9700n / 10000n;
       await S.onayGerekirse({ cuzdan, token: S.TASARIM.usdc, miktar: t.ilan.fiyat, durum: yaz, etiket: "USDC" });
-      await S.gonder({ cuzdan, data: S.veri.alUsdc(t.id, kanca, asgari), durum: yaz, aciklama: "Confirm the purchase (" + usd(t.ilan.fiyat) + " USDC swapped into $" + sym + " for the seller)" });
+      const anahtarU = S.SURUM === 2 ? await (await import("../designs/teslim.js")).alimAnahtari(cuzdan, yaz) : undefined;
+      await S.gonder({ cuzdan, data: S.veri.alUsdc(t.id, kanca, asgari, anahtarU), durum: yaz, aciklama: "Confirm the purchase (" + usd(t.ilan.fiyat) + " USDC swapped into $" + sym + " for the seller)" });
       yaz("Bought. The NFT and its usage rights are yours.", "ok");
     }, "dugme", d)
   ]), d);
-  if (ay.emanetAcik && Date.now() <= t.itirazBitis) kutu.append(el("div", { sinif: "ds-cihaz", yazi: "Buyer protection: during the challenge window your payment is held by the contract and goes back to you if the design is burned." }));
+  if (S.SURUM === 2) kutu.append(el("div", { sinif: "ds-cihaz", yazi: "Buyer protection: your payment is held by the contract until the seller delivers the file key to you" + (ay.teslimSuresi ? " (within " + Math.round(ay.teslimSuresi / 86400) + " days, or you are refunded)" : "") + "; you can say the key does not work before it is released." }));
+  else if (ay.emanetAcik && Date.now() <= t.itirazBitis) kutu.append(el("div", { sinif: "ds-cihaz", yazi: "Buyer protection: during the challenge window your payment is held by the contract and goes back to you if the design is burned." }));
   return kutu;
 }
 
@@ -513,6 +530,7 @@ function dosyaKutusu({ cuzdan, t, meta }) {
 
   /** the file key, from the metadata (designer), Irys envelopes, or a pasted envelope */
   async function dosyaAnahtari(yaz) {
+    if (S.SURUM === 2) return (await import("../designs/teslim.js")).dosyaAnahtariBul(cuzdan, t, meta, yaz);
     const Sf = await import("../designs/sifre.js");
     yaz("Sign to derive your unlock key (nothing is sent)…");
     const sk = await Sf.acmaAnahtari(cuzdan);
@@ -533,7 +551,7 @@ function dosyaKutusu({ cuzdan, t, meta }) {
 
   return el("div", { sinif: "ds-kutu" }, [el("h3", { yazi: "File" }),
     el("p", { sinif: "ds-lisans", yazi: "The full file is encrypted; only the holder can open it, after the designer (or the seller on a resale) delivers the file key to the holder's unlock key. The opened file is checked against the exact hash on chain." }),
-    esit(t.sahip, ben) ? zarfGir : null,
+    esit(t.sahip, ben) && S.SURUM !== 2 ? zarfGir : null,
     el("div", { sinif: "ds-dugmeler" }, [
       esit(t.sahip, ben) ? eylem("Unlock and download", async (yaz) => {
         const Sf = await import("../designs/sifre.js");
@@ -550,7 +568,7 @@ function dosyaKutusu({ cuzdan, t, meta }) {
         yaz("Opened and verified against the on-chain hash.", "ok");
       }, "dugme dugme--marka", d) : null
     ]),
-    esit(t.sahip, ben) ? null : el("details", {}, [el("summary", { yazi: "Deliver the file key to the holder (designer or previous holder)" }),
+    esit(t.sahip, ben) || S.SURUM === 2 ? null : el("details", {}, [el("summary", { yazi: "Deliver the file key to the holder (designer or previous holder)" }),
       el("div", { sinif: "ds-form" }, [kartGir,
         el("div", { sinif: "ds-dugmeler" }, [
           eylem("Make envelope", async (yaz) => { zarfCikti.value = await teslimZarfi(yaz, false); zarfCikti.style.display = ""; yaz("Envelope ready below: send it to the holder, or publish it.", "ok"); }, "dugme", d),
@@ -586,7 +604,7 @@ async function yayinlaSayfasi({ cuzdan }) {
   kap.append(ust("Publish a design", "One file, one NFT: a 1-of-1 with full usage rights for whoever holds it", "publish"));
   const ay = await S.ayarlar().catch(() => null);
   if (ay && ay.durduruldu) { kap.append(not("Designs is paused by the admin right now; publishing is closed.", "uyari")); return kap; }
-  kap.append(not("Cost: " + (ay ? usd(ay.ucret) : "$0.20") + " USDC publishing fee" + (ay && ay.teminat > 0n ? " + " + usd(ay.teminat) + " refundable stake" : "") + " on Arc, plus storage on Irys paid from your own wallet (ETH on Base, a fraction of a cent per MB) unless you upload the files yourself. ARC PULSE keeps no cut and stores nothing.", "bilgi"));
+  kap.append(not("Cost: " + (ay ? usd(ay.ucret) : "$0.20") + " USDC publishing fee" + (ay && ay.teminat > 0n ? " + " + usd(ay.teminat) + " refundable stake" : "") + " on Arc, plus storage on Irys paid from your own wallet in Arc USDC (shown before you pay) unless you upload the files yourself. ARC PULSE keeps no cut and stores nothing.", "bilgi"));
 
   const ben = cuzdan.hesap();
   if (!ben) {
@@ -640,6 +658,9 @@ async function yayinlaSayfasi({ cuzdan }) {
 
   /* step 4: storage */
   const yolIrys = el("input", { attr: { type: "radio", name: "ds-depo", value: "irys", checked: "" } });
+  const yolEth = el("input", { attr: { type: "radio", name: "ds-depo", value: "irys-eth" } });
+  const depoMaliyet = el("div", { sinif: "ds-durum" });
+  let depoUsdc = null;   // the storage cost shown, in USDC
   const yolKendi = el("input", { attr: { type: "radio", name: "ds-depo", value: "kendi" } });
   const uriGir = el("input", { sinif: "girdi", attr: { type: "text", placeholder: "Metadata URI (ipfs://…, ar://… or https://gateway.irys.xyz/…)", "aria-label": "Metadata URI" } });
   const kendiKutu = el("div", { sinif: "ds-form", attr: { style: "display:none" } });
@@ -650,9 +671,11 @@ async function yayinlaSayfasi({ cuzdan }) {
   kendiKutu.append(el("p", { sinif: "ds-lisans", yazi: "Upload with any permanent storage you use (IPFS pinning, Arweave). 1) Download the encrypted file and the preview and upload both. 2) Paste their URIs and download the metadata JSON. 3) Upload it and paste its URI. The full file is never uploaded unencrypted." }),
     sifreliIndir, dosyaUriGir, onizUriGir, metaIndir, uriGir);
   const depoDegisti = () => { kendiKutu.style.display = yolKendi.checked ? "" : "none"; };
-  yolIrys.addEventListener("change", depoDegisti); yolKendi.addEventListener("change", depoDegisti);
+  yolIrys.addEventListener("change", depoDegisti); yolKendi.addEventListener("change", depoDegisti); yolEth.addEventListener("change", depoDegisti);
   kap.append(el("div", { sinif: "ds-adim" }, [el("h3", { yazi: "4. Storage" }),
-    el("label", { attr: { style: "display:flex;gap:8px;align-items:flex-start" } }, [yolIrys, el("span", { yazi: "Upload to Irys from this page, paid by your wallet in ETH on Base (no account, no API key; price shown before you pay)." })]),
+    el("label", { attr: { style: "display:flex;gap:8px;align-items:flex-start" } }, [yolIrys, el("span", { yazi: "Upload to Irys from this page, paid from your Arc USDC (relay.link turns it into the storage fee; no ETH, no account, no API key)." })]),
+    depoMaliyet,
+    el("label", { attr: { style: "display:flex;gap:8px;align-items:flex-start" } }, [yolEth, el("span", { yazi: "Upload to Irys, paid with ETH I already have on Base." })]),
     el("label", { attr: { style: "display:flex;gap:8px;align-items:flex-start" } }, [yolKendi, el("span", { yazi: "I upload the files myself and paste the URIs." })]),
     kendiKutu]));
 
@@ -683,6 +706,7 @@ async function yayinlaSayfasi({ cuzdan }) {
       const Sf = await import("../designs/sifre.js");
       const { blob: sifreli, anahtar } = await Sf.dosyaSifrele(await f.arrayBuffer());
       hazir = { dosya: f, parmak, onizBlob, sifreli, anahtar };
+      depoTahmin();
       durumYaz(parmakYazi, "Exact hash " + parmak.dosyaHash.slice(0, 18) + "… · " + parmak.aciklama + " · not published yet ✓ · encrypted in your browser (" + Math.ceil(sifreli.size / 1024) + " KB).", "ok");
       const indir = (blob, ad) => { const a = el("a", { attr: { href: URL.createObjectURL(blob), download: ad } }); document.body.append(a); a.click(); a.remove(); };
       sifreliIndir.append(dugme("Download encrypted file", () => indir(sifreli, f.name + ".apd")), onizBlob ? dugme("Download preview", () => indir(onizBlob, "preview.jpg")) : null);
@@ -693,6 +717,21 @@ async function yayinlaSayfasi({ cuzdan }) {
       }, "dugme");
       metaIndir.append(metaDugme, metaDugme._durum);
     } catch (e) { durumYaz(parmakYazi, "Could not read the file: " + ((e && e.message) || e), "hata"); }
+  }
+  async function depoTahmin() {
+    depoUsdc = null;
+    if (!hazir) return;
+    const bayt = hazir.sifreli.size + (hazir.onizBlob ? hazir.onizBlob.size : 0) + 16384;
+    durumYaz(depoMaliyet, "Pricing the storage…");
+    try {
+      const I = await import("../designs/irys.js");
+      const { yatir } = await irysIhtiyac(ben, bayt);
+      if (!yatir) { depoUsdc = 0; durumYaz(depoMaliyet, "Storage: your Irys balance already covers these " + Math.ceil(bayt / 1024) + " KB.", "ok"); return; }
+      const t = await I.usdcTeklifi(ben, yatir);
+      depoUsdc = t ? t.usdc : 0;
+      durumYaz(depoMaliyet, t ? "Storage for " + Math.ceil(bayt / 1024) + " KB: ≈ " + t.usdc.toFixed(4) + " USDC from your Arc balance (relay.link fee included), then one small transfer on Base that this pays for."
+        : "Storage: the ETH already on your Base address covers it; one transfer on Base.", "ok");
+    } catch (e) { durumYaz(depoMaliyet, "Could not price the storage now: " + ((e && e.message) || e), "hata"); }
   }
   dosyaGir.addEventListener("change", hazirla);
   onizGir.addEventListener("change", hazirla);
@@ -720,7 +759,7 @@ async function yayinlaSayfasi({ cuzdan }) {
 
   const gonderDugme = eylem("Publish", async (yaz) => {
     if (!hazir) throw new Error("Choose the design file first (and wait for the fingerprint check).");
-    if (!hazir.onizBlob && yolIrys.checked) throw new Error("Choose a preview image for this file type.");
+    if (!hazir.onizBlob && !yolKendi.checked) throw new Error("Choose a preview image for this file type.");
     const fiyatStr = String(fiyatGir.value || "0").trim();
     if (!(Number(fiyatStr) >= 0)) throw new Error("The price must be a number of USDC (0 = not listed).");
     const fiyat = parseUnits(fiyatStr || "0", 6);
@@ -741,7 +780,7 @@ async function yayinlaSayfasi({ cuzdan }) {
       const toplam = hazir.sifreli.size + hazir.onizBlob.size + 16384;
       yaz("Sign once so Irys can read your wallet's public key (sends nothing)…");
       const imzaci = await I.cuzdanImzacisi(cuzdan, (m) => imzala(cuzdan, m));
-      await irysFonla(cuzdan, toplam, yaz);
+      await irysFonla(cuzdan, toplam, yaz, yolEth.checked ? "eth" : "usdc", depoUsdc || undefined);
       yaz("Uploading the preview (sign in your wallet)…");
       const on = await I.yukle(new Uint8Array(await hazir.onizBlob.arrayBuffer()), [{ name: "Content-Type", value: "image/jpeg" }, { name: "Type", value: "preview" }, { name: "File-Hash", value: hazir.parmak.dosyaHash }], imzaci);
       yaz("Uploading the encrypted file (sign in your wallet)…");
@@ -753,7 +792,7 @@ async function yayinlaSayfasi({ cuzdan }) {
     }
     const gerek = ay ? ay.ucret + ay.teminat : 200_000n;
     await S.onayGerekirse({ cuzdan, token: S.TASARIM.usdc, miktar: gerek, durum: yaz, etiket: usd(gerek) + " USDC (publishing fee)" });
-    const { m } = await S.gonder({ cuzdan, data: S.veri.yayinla(token, hazir.parmak.dosyaHash, hazir.parmak.algiHash, uri, fiyat), durum: yaz, aciklama: "Confirm publishing (" + usd(gerek) + " USDC fee)" });
+    const { m } = await S.gonder({ cuzdan, data: S.veri.yayinla(token, hazir.parmak.dosyaHash, hazir.parmak.algiHash, uri, fiyat, (await import("../designs/sifre.js")).anahtarTaahhudu(hazir.anahtar)), durum: yaz, aciklama: "Confirm publishing (" + usd(gerek) + " USDC fee)" });
     let id = null;
     for (const l of m.logs || []) { try { const p = S.ifc.parseLog(l); if (p && p.name === "Yayinlandi") id = Number(p.args.id); } catch (e) { /* other contract */ } }
     yaz("Published" + (id ? " as design #" + id : "") + ".", "ok");
@@ -786,6 +825,16 @@ async function lisans() {
 export async function ciz(ctx) {
   stilYukle();
   const alt = (ctx.param.get("alt") || "").replace(/\/+$/, "");
+  if (S.SURUM === 2 && ctx.cuzdan.hesap()) {
+    const sayfa = await sayfaCiz(ctx, alt);
+    const bant = await (await import("../designs/teslim.js")).teslimBandi(ctx.cuzdan).catch(() => null);
+    if (bant) sayfa.prepend(bant);
+    return sayfa;
+  }
+  return sayfaCiz(ctx, alt);
+}
+
+async function sayfaCiz(ctx, alt) {
   try {
     if (alt === "" || alt === "feed") return await akis(ctx);
     if (alt === "explore") return await kesfet(ctx);

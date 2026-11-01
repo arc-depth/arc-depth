@@ -6,18 +6,32 @@
  * YedekliOkur) or the calldata of a transaction the visitor's own wallet
  * sends. Nothing is stored anywhere by the platform.
  *
+ * v2 (TasarimNFT2, contracts/urun/designs/TasarimNFT2.sol): delivering the
+ * file key is the condition of payment (buyer keys on chain, every sale in
+ * escrow, teslimEt / teslimAldim / anahtarItiraz / iadeEt / serbestBirak).
+ * It is behind DESIGNS_V2 below (on since its deployment, 1 Nov 2026);
+ * acik: false goes back to v1 and every page follows (SURUM).
+ *
  * The calldata builders (`veri.*`) are pure functions so that
  * scripts/designs-site-sim.mjs can run exactly what the page would send
  * through eth_simulateV1 on Arc state without sending anything.
  * =========================================================================== */
 import { Interface, Contract } from "../../vendor/ethers.min.js";
 
+/* ---- the switch: Designs v2 (TasarimNFT2). OFF until deployed; the coordinator turns it on. ---- */
+/* LIVE 1 Nov 2026: TasarimNFT2 deployed (dagitim-designs2.json, block 29038512); v1 had no designs. */
+export const DESIGNS_V2 = { acik: true, adres: "0xFbE8F98e76bfbD2Acfe80c36d4c475041Fd8FEaa", baslangicBloku: 29038512 };
+export const SURUM = DESIGNS_V2.acik && /^0x[0-9a-fA-F]{40}$/.test(DESIGNS_V2.adres || "") && DESIGNS_V2.baslangicBloku > 0 ? 2 : 1;
+
 export const TASARIM = {
-  adres: "0x2D6b99205Dd31A780A5Fe0f7e258aF857a12C728",
-  baslangicBloku: 29031971,
+  adres: SURUM === 2 ? DESIGNS_V2.adres : "0x2D6b99205Dd31A780A5Fe0f7e258aF857a12C728",
+  baslangicBloku: SURUM === 2 ? DESIGNS_V2.baslangicBloku : 29031971,
+  /* v1, named for the record after the switch */
+  v1: "0x2D6b99205Dd31A780A5Fe0f7e258aF857a12C728",
   zincirId: 5042,
   usdc: "0x3600000000000000000000000000000000000000",
-  turKaydi: "0xc9d5ca394c62362eDcDe6E62cC4c9E72B94e35C9",
+  /* TurKaydi2 (v8 + v9 gates): TasarimNFT reads it since 1 Nov 2026 (turKaydiAyarla) */
+  turKaydi: "0xbC0639f73e6485e479aCeE3bd5a427154CDe7402",
   /* PulseHook6 (v9): the price source (30-min TWAP) and the hook allowed for
      alUsdc (dagitim-designs.json fiyatKaynagi / kanca6). A designer token
      whose pool is on an older hook has no TWAP there, so it cannot be priced
@@ -92,7 +106,102 @@ export const ERC20_ABI = [
   "function name() view returns (string)"
 ];
 
-export const ifc = new Interface(TASARIM_ABI);
+/* TasarimNFT2's ABI (build/TasarimNFT2.json, admin functions left out) */
+export const TASARIM_ABI2 = [
+  "error AnahtarYok()",
+  "error AzCikti(uint256 gelen, uint256 asgari)",
+  "error Durduruldu()",
+  "error ERC721NonexistentToken(uint256 tokenId)",
+  "error FazlaYok(uint256 serbest)",
+  "error FiyatYok()",
+  "error IlanYok()",
+  "error ItirazAcik()",
+  "error ItirazYok()",
+  "error KancaIzinsiz()",
+  "error KaymaAsildi(uint256 gereken, uint256 azami)",
+  "error Kilitli()",
+  "error KopyaAlgi(uint256 mevcutId)",
+  "error KopyaDosya(uint256 mevcutId)",
+  "error KotuDeger()",
+  "error KotuDurum(uint8 durum)",
+  "error SafeERC20FailedOperation(address token)",
+  "error SifirAdres()",
+  "error SureBitmedi()",
+  "error SureBitti()",
+  "error TaahhutYok()",
+  "error TasarimciDegil()",
+  "error YetkiYok()",
+  "event AnahtarItirazi(uint256 indexed id, address alici)",
+  "event AnahtarKaydedildi(address indexed cuzdan, bytes anahtar)",
+  "event IlanKalkti(uint256 indexed id)",
+  "event IlanVerildi(uint256 indexed id, address indexed satici, uint256 fiyat)",
+  "event ItirazCozuldu(uint256 indexed id, bool kabul, address itirazci, uint256 odenen, address alan)",
+  "event ItirazEdildi(uint256 indexed id, address indexed itirazci, uint256 oncekiId, string kanitUri, uint256 teminat)",
+  "event Kaldirildi(uint256 indexed id, string sebep)",
+  "event OnuAlindi(uint256 indexed yeniId, uint256 indexed eskiId)",
+  "event Satildi(uint256 indexed id, address indexed satici, address indexed alici, uint256 fiyat, address token, uint256 tokenMiktari, uint256 telif, bool usdcIle)",
+  "event SatisKapandi(uint256 indexed id, bool saticiyaOdendi, address kime, uint256 miktar)",
+  "event Taahhut(address indexed kim, bytes32 taahhut, uint256 blok)",
+  "event TeminatIade(uint256 indexed id, address kime, uint256 miktar)",
+  "event TeslimAlindi(uint256 indexed id)",
+  "event TeslimEdildi(uint256 indexed id, address indexed alici, bytes zarf)",
+  "event Transfer(address indexed from, address indexed to, uint256 indexed tokenId)",
+  "event Yayinlandi(uint256 indexed id, address indexed tasarimci, address indexed token, bytes32 dosyaHash, bytes32 algiHash, bytes32 anahtarTaahhut, string uri, uint256 ucret, uint256 teminat)",
+  "function ANAHTAR_AZAMI() view returns (uint256)",
+  "function LISANS() view returns (string)",
+  "function LISANS_URI() view returns (string)",
+  "function URI_AZAMI() view returns (uint256)",
+  "function ZARF_AZAMI() view returns (uint256)",
+  "function al(uint256 id, uint256 maxToken, bytes anahtar) returns (uint256 miktar)",
+  "function alUsdc(uint256 id, address kanca, uint256 minToken, bytes anahtar) returns (uint256 miktar)",
+  "function alUsdcToleransBps() view returns (uint16)",
+  "function algiKaydi(bytes32) view returns (uint256)",
+  "function anahtarItiraz(uint256 id)",
+  "function anahtarItirazSuresi() view returns (uint64)",
+  "function anahtarKaydet(bytes anahtar)",
+  "function anahtarOf(address) view returns (bytes)",
+  "function dosyaKaydi(bytes32) view returns (uint256)",
+  "function durduruldu() view returns (bool)",
+  "function elleBagliToken(address) view returns (address)",
+  "function fiyatBirimi() view returns (uint256)",
+  "function fiyatKaynagi() view returns (address)",
+  "function iadeEt(uint256 id)",
+  "function ilanKaldir(uint256 id)",
+  "function ilanOf(uint256) view returns (address satici, uint256 fiyat)",
+  "function ilanVer(uint256 id, uint256 fiyat)",
+  "function itirazEt(uint256 id, uint256 oncekiId, string kanitUri)",
+  "function itirazOf(uint256) view returns (address itirazci, uint256 teminat, uint256 oncekiId)",
+  "function itirazSuresi() view returns (uint64)",
+  "function itirazTeminati() view returns (uint256)",
+  "function kancaAyar(address) view returns (bool izinli, uint24 fee, int24 tickSpacing)",
+  "function kopyaPenceresiBekle() view returns (bool)",
+  "function ownerOf(uint256 tokenId) view returns (address)",
+  "function satisOf(uint256) view returns (address alici, uint8 durum, address satici, uint64 teslimSonu, uint64 itirazSonu, uint64 itirazPenceresi, uint256 miktar, uint256 telif, bytes32 aliciAnahtarHash, bytes32 zarfHash)",
+  "function serbestBirak(uint256 id)",
+  "function sonId() view returns (uint256)",
+  "function taahhutBlok() view returns (uint64)",
+  "function taahhutEt(bytes32 taahhut)",
+  "function taahhutOf(address, bytes32) view returns (uint256)",
+  "function tasarimOf(uint256) view returns (address token, address tasarimci, uint64 itirazBitis, uint64 yayinBlok, bytes32 dosyaHash, bytes32 algiHash, bytes32 anahtarTaahhut, uint256 teminat)",
+  "function tasarimciTeminati() view returns (uint256)",
+  "function telifBps() view returns (uint16)",
+  "function teminatGeriAl(uint256 id)",
+  "function teslimAldim(uint256 id)",
+  "function teslimEt(uint256 id, bytes zarf)",
+  "function teslimSuresi() view returns (uint64)",
+  "function tokenKarsiligi(address token, uint256 fiyat) view returns (uint256)",
+  "function tokenURI(uint256 id) view returns (string)",
+  "function turKaydi() view returns (address)",
+  "function twapSaniye() view returns (uint32)",
+  "function ucret1() view returns (uint256)",
+  "function ucret2() view returns (uint256)",
+  "function yayinla(address token, bytes32 dosyaHash, bytes32 algiHash, bytes32 anahtarTaahhut, string uri, uint256 fiyat) returns (uint256)",
+  "function yayinlaAcik(address token, bytes32 dosyaHash, bytes32 algiHash, bytes32 anahtarTaahhut, string uri, uint256 fiyat, bytes32 tuz) returns (uint256 id)",
+  "function yayinlayabilir(address tasarimci, address token) view returns (bool)"
+];
+
+export const ABI_AKTIF = SURUM === 2 ? TASARIM_ABI2 : TASARIM_ABI;
+export const ifc = new Interface(ABI_AKTIF);
 export const ifc20 = new Interface(ERC20_ABI);
 
 /* The on-chain license, word for word (TasarimNFT.LISANS). The page reads the
@@ -104,9 +213,19 @@ export const LISANS_YEDEK =
 /* ---- calldata: what the page asks the wallet to send ---- */
 export const veri = {
   onay: (harcayan, miktar) => ifc20.encodeFunctionData("approve", [harcayan, miktar]),
-  yayinla: (token, dosyaHash, algiHash, uri, fiyat) => ifc.encodeFunctionData("yayinla", [token, dosyaHash, algiHash, uri, fiyat]),
-  al: (id, maxToken) => ifc.encodeFunctionData("al", [id, maxToken]),
-  alUsdc: (id, kanca, minToken) => ifc.encodeFunctionData("alUsdc", [id, kanca, minToken]),
+  /* v2 adds anahtarTaahhut (keccak256 of the file key) to yayinla and the buyer's key (bytes, "0x" = the registered one) to al / alUsdc */
+  yayinla: (token, dosyaHash, algiHash, uri, fiyat, anahtarTaahhut) => SURUM === 2
+    ? ifc.encodeFunctionData("yayinla", [token, dosyaHash, algiHash, anahtarTaahhut, uri, fiyat])
+    : ifc.encodeFunctionData("yayinla", [token, dosyaHash, algiHash, uri, fiyat]),
+  al: (id, maxToken, anahtar = "0x") => SURUM === 2 ? ifc.encodeFunctionData("al", [id, maxToken, anahtar]) : ifc.encodeFunctionData("al", [id, maxToken]),
+  alUsdc: (id, kanca, minToken, anahtar = "0x") => SURUM === 2 ? ifc.encodeFunctionData("alUsdc", [id, kanca, minToken, anahtar]) : ifc.encodeFunctionData("alUsdc", [id, kanca, minToken]),
+  /* v2 only */
+  anahtarKaydet: (anahtar) => ifc.encodeFunctionData("anahtarKaydet", [anahtar]),
+  teslimEt: (id, zarf) => ifc.encodeFunctionData("teslimEt", [id, zarf]),
+  teslimAldim: (id) => ifc.encodeFunctionData("teslimAldim", [id]),
+  anahtarItiraz: (id) => ifc.encodeFunctionData("anahtarItiraz", [id]),
+  serbestBirak: (id) => ifc.encodeFunctionData("serbestBirak", [id]),
+  iadeEt: (id) => ifc.encodeFunctionData("iadeEt", [id]),
   ilanVer: (id, fiyat) => ifc.encodeFunctionData("ilanVer", [id, fiyat]),
   ilanKaldir: (id) => ifc.encodeFunctionData("ilanKaldir", [id]),
   itirazEt: (id, oncekiId, kanitUri) => ifc.encodeFunctionData("itirazEt", [id, oncekiId, kanitUri]),
@@ -139,7 +258,11 @@ export function hataAcikla(e) {
     AzCikti: "The pool would return too few designer tokens for the seller (the pool price is far from the time-weighted price).",
     EmanetYok: "Nothing is waiting in escrow for this design.",
     YetkiYok: "Only the holder (or the designer, for the stake) can do this.",
-    ERC721NonexistentToken: "This design does not exist (or was taken down)."
+    ERC721NonexistentToken: "This design does not exist (or was taken down).",
+    AnahtarYok: "Register your unlock key first (My profile), or buy from this page: it registers it in the same transaction.",
+    KotuDurum: "The sale is not in the state this needs (it may have moved on: reload the page).",
+    Kilitli: "This design is in an open sale (waiting for the key or the buyer's confirmation) and cannot be moved now.",
+    TaahhutYok: "No matching publish commitment from an earlier block."
   };
   if (ad && M[ad]) return M[ad];
   const m = (e && (e.shortMessage || e.message)) || String(e);
@@ -153,19 +276,21 @@ export async function arc() {
   if (!_arc) { const { YedekliOkur } = await import("../yedekli-okur.js"); _arc = new YedekliOkur(); }
   return _arc;
 }
-export async function nft() { return new Contract(TASARIM.adres, TASARIM_ABI, await arc()); }
+export async function nft() { return new Contract(TASARIM.adres, ABI_AKTIF, await arc()); }
 export async function erc20(adres) { return new Contract(adres, ERC20_ABI, await arc()); }
 
 /** The contract's settings the pages show. */
 export async function ayarlar() {
   const c = await nft();
-  const [u1, u2, teminat, itirazTeminati, itirazSuresi, fiyatKaynagi, durduruldu, emanetAcik, telifBps, sonId, lisans] = await Promise.all([
+  const [u1, u2, teminat, itirazTeminati, itirazSuresi, fiyatKaynagi, durduruldu, emanetAcik, telifBps, sonId, lisans, teslimSuresi, anahtarItirazSuresi] = await Promise.all([
     c.ucret1(), c.ucret2(), c.tasarimciTeminati(), c.itirazTeminati(), c.itirazSuresi(), c.fiyatKaynagi(), c.durduruldu(),
-    c.emanetAcik(), c.telifBps(), c.sonId(), c.LISANS().catch(() => LISANS_YEDEK)]);
+    /* v2 escrows every sale until the key is delivered (no switch) */
+    SURUM === 2 ? true : c.emanetAcik(), c.telifBps(), c.sonId(), c.LISANS().catch(() => LISANS_YEDEK),
+    SURUM === 2 ? c.teslimSuresi() : 0n, SURUM === 2 ? c.anahtarItirazSuresi() : 0n]);
   return {
     ucret: u1 + u2, ucret1: u1, ucret2: u2, teminat, itirazTeminati, itirazSuresi: Number(itirazSuresi),
     fiyatKaynagi, fiyatCanli: !/^0x0{40}$/i.test(fiyatKaynagi), durduruldu, emanetAcik, telifBps: Number(telifBps),
-    sonId: Number(sonId), lisans
+    sonId: Number(sonId), lisans, teslimSuresi: Number(teslimSuresi), anahtarItirazSuresi: Number(anahtarItirazSuresi)
   };
 }
 
@@ -187,7 +312,7 @@ export async function yayinlar() {
     const n = Number(await c.sonId());
     liste = [];
     for (let id = Math.max(1, n - 200); id <= n; id++) {
-      const [t, uri] = await c.tasarim(id);
+      const [t, uri] = SURUM === 2 ? [await c.tasarimOf(id), await c.tokenURI(id).catch(() => "")] : await c.tasarim(id);
       liste.push({ id, tasarimci: t.tasarimci, token: t.token, dosyaHash: t.dosyaHash, algiHash: t.algiHash, uri, blok: null, tx: null });
     }
   }
@@ -201,15 +326,79 @@ export function yayinlariUnut() { _yayinlar = null; }
 export async function tasarimOku(id) {
   const c = await nft();
   const [[t, uri, ilan, itiraz], sahip, iptal] = await Promise.all([
-    c.tasarim(id), c.ownerOf(id).catch(() => null), c.iptalOf(id).catch(() => false)]);
+    SURUM === 2 ? Promise.all([c.tasarimOf(id), c.tokenURI(id).catch(() => yayinUri(id)), c.ilanOf(id), c.itirazOf(id)]) : c.tasarim(id),
+    c.ownerOf(id).catch(() => null), SURUM === 2 ? false : c.iptalOf(id).catch(() => false)]);
   if (/^0x0{40}$/i.test(t.tasarimci)) return null;
   return {
     id: Number(id), token: t.token, tasarimci: t.tasarimci, itirazBitis: Number(t.itirazBitis) * 1000,
     dosyaHash: t.dosyaHash, algiHash: t.algiHash, teminat: t.teminat, uri,
     ilan: ilan.fiyat > 0n ? { satici: ilan.satici, fiyat: ilan.fiyat } : null,
     itiraz: /^0x0{40}$/i.test(itiraz.itirazci) ? null : { itirazci: itiraz.itirazci, teminat: itiraz.teminat, oncekiId: Number(itiraz.oncekiId) },
-    sahip, iptal: !!iptal
+    sahip, iptal: !!iptal || (SURUM === 2 && !sahip),
+    anahtarTaahhut: t.anahtarTaahhut || null,
+    satis: SURUM === 2 ? await satisOku(id) : null
   };
+}
+
+/* v2: tokenURI reverts once a design is burned; the URI is still in its Yayinlandi event */
+async function yayinUri(id) {
+  const l = (await yayinlar()).find((x) => x.id === Number(id));
+  return l ? l.uri : "";
+}
+const konu = (a) => "0x" + String(a).slice(2).toLowerCase().padStart(64, "0");
+const idKonusu = (id) => "0x" + BigInt(id).toString(16).padStart(64, "0");
+
+/** v2: the open sale of a design (null when none). durum 1 awaiting delivery, 2 delivered, 3 key disputed, 4 confirmed. */
+export async function satisOku(id) {
+  if (SURUM !== 2) return null;
+  const s = await (await nft()).satisOf(id);
+  if (Number(s.durum) === 0) return null;
+  return { alici: s.alici, durum: Number(s.durum), satici: s.satici, teslimSonu: Number(s.teslimSonu) * 1000, itirazSonu: Number(s.itirazSonu) * 1000,
+    miktar: s.miktar, telif: s.telif, aliciAnahtarHash: s.aliciAnahtarHash, zarfHash: s.zarfHash };
+}
+
+/** v2: a wallet's registered encryption key (hex bytes, "0x" when none). */
+export async function anahtarOku(adres) {
+  if (SURUM !== 2) return "0x";
+  return (await nft()).anahtarOf(adres);
+}
+
+/** v2: every key a wallet has registered (AnahtarKaydedildi), newest first: a sale is bound to the key it was made with. */
+export async function anahtarGecmisi(adres) {
+  const p = await arc();
+  const l = await p.getLogs({ address: TASARIM.adres, topics: [ifc.getEvent("AnahtarKaydedildi").topicHash, konu(adres)], fromBlock: TASARIM.baslangicBloku, toBlock: "latest" });
+  return l.map((x) => ifc.parseLog(x).args.anahtar).reverse();
+}
+
+/** v2: the newest key envelope posted for design `id` (TeslimEdildi), or null. */
+export async function sonZarf(id) {
+  const p = await arc();
+  const l = await p.getLogs({ address: TASARIM.adres, topics: [ifc.getEvent("TeslimEdildi").topicHash, idKonusu(id)], fromBlock: TASARIM.baslangicBloku, toBlock: "latest" });
+  if (!l.length) return null;
+  const a = ifc.parseLog(l[l.length - 1]).args;
+  return { alici: a.alici, zarf: a.zarf, tx: l[l.length - 1].transactionHash };
+}
+
+/** v2: every key envelope posted for design `id`, oldest first ({alici, zarf, tx}). */
+export async function zarflar(id) {
+  if (SURUM !== 2) return [];
+  const p = await arc();
+  const l = await p.getLogs({ address: TASARIM.adres, topics: [ifc.getEvent("TeslimEdildi").topicHash, idKonusu(id)], fromBlock: TASARIM.baslangicBloku, toBlock: "latest" });
+  return l.map((x) => { const a = ifc.parseLog(x).args; return { alici: a.alici, zarf: a.zarf, tx: x.transactionHash }; });
+}
+
+/** v2: designs this wallet sold that still wait for its key delivery (durum 1). */
+export async function bekleyenTeslimler(satici) {
+  if (SURUM !== 2 || !satici) return [];
+  const p = await arc();
+  const l = await p.getLogs({ address: TASARIM.adres, topics: [ifc.getEvent("Satildi").topicHash, null, konu(satici)], fromBlock: TASARIM.baslangicBloku, toBlock: "latest" });
+  const idler = [...new Set(l.map((x) => Number(ifc.parseLog(x).args.id)))];
+  const out = [];
+  for (const id of idler) {
+    const s = await satisOku(id).catch(() => null);
+    if (s && s.durum === 1 && s.satici.toLowerCase() === satici.toLowerCase()) out.push({ id, ...s });
+  }
+  return out;
 }
 
 /** Many designs' listing + owner at once (for grids). */
@@ -225,8 +414,9 @@ export async function durumlar(idler) {
 export async function gecmis(id) {
   const p = await arc();
   const idKonu = "0x" + BigInt(id).toString(16).padStart(64, "0");
-  const olaylar = ["Yayinlandi", "IlanVerildi", "IlanKalkti", "Satildi", "ItirazEdildi", "ItirazCozuldu", "Kaldirildi", "Emanete", "EmanetOdendi", "TeminatIade"];
-  const konular = olaylar.map((o) => ifc.getEvent(o).topicHash);
+  const olaylar = ["Yayinlandi", "IlanVerildi", "IlanKalkti", "Satildi", "ItirazEdildi", "ItirazCozuldu", "Kaldirildi", "Emanete", "EmanetOdendi", "TeminatIade",
+    "TeslimEdildi", "TeslimAlindi", "AnahtarItirazi", "SatisKapandi", "OnuAlindi"];
+  const konular = olaylar.filter((o) => { try { return !!ifc.getEvent(o); } catch (e) { return false; } }).map((o) => ifc.getEvent(o).topicHash);
   const transfer = ifc.getEvent("Transfer").topicHash;
   const [a, b] = await Promise.all([
     p.getLogs({ address: TASARIM.adres, topics: [konular, idKonu], fromBlock: TASARIM.baslangicBloku, toBlock: "latest" }),

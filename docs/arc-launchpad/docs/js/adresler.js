@@ -295,7 +295,17 @@ export const PAZAR_KURAL = {
  * owner, to correct an entry). The product pages read it; Create writes it.
  *   0 meme, 1 community, 2 creator, 3 AI agent, 4 project, 5 DAO, 6 game,
  *   7 basket, 8 designer */
+/* 1 Nov 2026: TurKaydi2 (contracts/urun/TurKaydi2.sol, dagitim-urun.json) reads the founder
+   from the v8 AND the v9 MerkezKapi (designer tokens launch on v9), so it is the record the
+   site writes. The first TurKaydi (v8 gate only) stays readable as TUR_KAYDI_ESKI: the product
+   pages read both, the newer entry winning, so nothing written there is lost. */
 export const TUR_KAYDI = {
+  adres: "0xbC0639f73e6485e479aCeE3bd5a427154CDe7402",
+  zincirId: 5042,
+  baslangicBloku: 29037297,
+  bilgiAzami: 1024
+};
+export const TUR_KAYDI_ESKI = {
   adres: "0xc9d5ca394c62362eDcDe6E62cC4c9E72B94e35C9",
   zincirId: 5042,
   baslangicBloku: 29026674,
