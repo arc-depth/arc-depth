@@ -29,6 +29,7 @@ window.fetch = (girdi, ayar) => _fetch(typeof girdi === "string" && /^veri\//.te
 
 const { el, temizle, cuzdan, S, kisa, ikon, avatar, isim, cuzdanSec, ANA, yukleniyor } = await import("./ortak.js");
 const SO = await import("./sosyal.js");
+const { geriDugmesi } = await import("../../js/geri.js");
 
 const icerik = document.getElementById("dz-icerik");
 const SEKMELER = [
@@ -124,10 +125,12 @@ async function git() {
   }
   if (sira !== _sira) return;   // a newer navigation won
   temizle(icerik);
+  /* every page but the feed opens with a Back button (back within the site, else the feed) */
+  if (yol !== "") icerik.append(el("div", { sinif: "geri-satir" }, [geriDugmesi("#/", "geri-dugme dz-geri-dugme")]));
   icerik.append(sayfa);
   /* a seller with sales waiting for the file key sees them on every page */
   if (cuzdan.hesap() && S.SURUM === 2) {
-    import("../../js/designs/teslim.js").then((T) => T.teslimBandi(cuzdan)).then((b) => { if (b && sira === _sira) icerik.prepend(b); }).catch(() => {});
+    import("../../js/designs/teslim.js").then((T) => T.teslimBandi(cuzdan)).then((b) => { if (b && sira === _sira) { const g = icerik.querySelector(":scope > .geri-satir"); if (g) g.after(b); else icerik.prepend(b); } }).catch(() => {});
   }
 }
 

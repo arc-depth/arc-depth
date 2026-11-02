@@ -621,3 +621,9 @@ textarea.girdi { height: auto; min-height: 84px; padding: var(--bosluk-3); resiz
 @keyframes tk-nabiz { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.55; transform: scale(0.88); } }
 @keyframes tk-parla { from { background: var(--marka-zemin); } to { background: transparent; } }
 @media (prefers-reduced-motion: reduce) { .tk__yeni, .tk__canli::before, .tk__parla { animation: none; } .tk__cubuk > i { transition: none; } }
+
+/* ---- Back button (js/geri.js), on every page but the home ---- */
+.geri-satir { margin: 0 0 12px; }
+.geri-dugme { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px 0 8px; border-radius: 10px; border: 1px solid var(--cizgi-guclu); background: var(--yuzey-1); color: var(--yazi-2); font: inherit; font-size: var(--boy-s); font-weight: var(--kalin-yari); cursor: pointer; }
+.geri-dugme:hover { color: var(--yazi-1); border-color: var(--marka-cizgi); }
+.geri-dugme:focus-visible { outline: 2px solid var(--marka-parlak); outline-offset: 2px; }

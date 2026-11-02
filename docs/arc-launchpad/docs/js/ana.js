@@ -27,6 +27,7 @@
 import { YOLLAR, GRUPLAR, yolBul, grubunYollari } from "./yol.js";
 import { ikon } from "./ikon.js";
 import { el, temizle, dagitimBekliyor, yapimda, hata, iskelet } from "./ui.js";
+import { geriDugmesi } from "./geri.js";
 import { cuzdan, cuzdanUygulamalari, mobilMi, tarayiciCuzdani, WC_ACIK } from "./cuzdan.js";
 
 const VARSAYILAN = "kesfet";
@@ -248,9 +249,11 @@ async function ciz() {
 
   etkinIsaretle(yol);
   document.body.classList.toggle("terminal-acik", yol === "terminal");
+  /* every page but the home and the full-screen terminal opens with a Back button */
+  const geri = () => yol === "kesfet" || yol === "terminal" ? [] : [el("div", { sinif: "geri-satir" }, [geriDugmesi("#/kesfet")])];
 
   if (!kayit) {
-    temizle(kIcerik).append(hata("No such page", "You asked for: /" + yol));
+    temizle(kIcerik).append(...geri(), hata("No such page", "You asked for: /" + yol));
     kIcerik.dataset.cizildi = "1";
     return;
   }
@@ -259,7 +262,7 @@ async function ciz() {
 
   /* The router, not the view, decides whether a module may render. */
   if (kayit.durum === "yapim") {
-    temizle(kIcerik).append(yapimda(kayit));
+    temizle(kIcerik).append(...geri(), yapimda(kayit));
     kIcerik.dataset.cizildi = "1";
     kIcerik.focus({ preventScroll: true });
     return;
@@ -267,7 +270,7 @@ async function ciz() {
 
   const yukle = GORUNUMLER[yol];
   if (!yukle) {
-    temizle(kIcerik).append(yapimda(kayit));
+    temizle(kIcerik).append(...geri(), yapimda(kayit));
     kIcerik.dataset.cizildi = "1";
     return;
   }
@@ -282,10 +285,10 @@ async function ciz() {
     if (bu !== sonCizim) return;
     const parca = await mod.ciz({ kayit, param, cuzdan });
     if (bu !== sonCizim) return;
-    temizle(kIcerik).append(parca);
+    temizle(kIcerik).append(...geri(), parca);
   } catch (e) {
     if (bu !== sonCizim) return;
-    temizle(kIcerik).append(
+    temizle(kIcerik).append(...geri(),
       hata("This section failed to load", (e && e.message) || String(e))
     );
   }
