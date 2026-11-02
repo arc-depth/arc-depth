@@ -429,7 +429,7 @@ export async function daoSayfasi({ dao, cuzdan }) {
   } else kap.append(not("Connect a wallet to deposit, vote or propose.", "bilgi"));
 
   /* proposals: their calls come from the OneriYapildi events */
-  const loglar = await arc.getLogs({ address: dao, topics: [ifc.getEvent("OneriYapildi").topicHash], fromBlock: 0, toBlock: "latest" }).catch(() => []);
+  const loglar = await arc.getLogs({ address: dao, topics: [ifc.getEvent("OneriYapildi").topicHash], fromBlock: 29039545, toBlock: "latest" })   /* no token DAO is older than its factory (TokenDAOFabrikasi deploy block) */.catch(() => []);
   const eylem = new Map(loglar.map((l) => { const p = ifc.parseLog(l); return [Number(p.args.id), p.args]; }));
   const liste = el("div", { sinif: "yigin" });
   for (let i = Number(n); i >= 1 && i > Number(n) - 30; i--) {
