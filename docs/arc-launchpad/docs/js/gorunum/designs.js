@@ -20,7 +20,7 @@
 import { el, temizle, bos, not, hata, iskelet } from "../ui.js";
 import { formatUnits, parseUnits, zeroPadValue } from "../../vendor/ethers.min.js";
 import * as S from "../designs/sozlesme.js";
-import { metaOku, cozUrl, baytAl, uriGecerli, metaYap } from "../designs/meta.js";
+import { metaOku, cozUrl, baytAl, uriGecerli, metaYap, KATEGORILER, EK_GORSEL_AZAMI } from "../designs/meta.js";
 import * as Y from "../designs/yerel.js";
 
 /* ---- page plumbing ---- */
@@ -440,6 +440,19 @@ async function satisKutusu({ cuzdan, t, ay, j, sym }) {
   if (esit(t.ilan.satici, ben)) { kutu.append(el("div", { sinif: "ds-cihaz", yazi: "This is your listing." })); return kutu; }
   if (t.itiraz) { kutu.append(not("A challenge is open on this design; buying waits for it to be resolved.", "uyari")); return kutu; }
   const d = durumSatiri();
+  /* the Arc purchase with USDC; also the last step of a payment from another chain (uzak-alim.js) */
+  const usdcIleAl = async (yaz) => {
+    await bagliHesap(cuzdan);
+    const kanca = await S.havuzKancasi(t.token);
+    const ka = await (await S.nft()).kancaAyar(kanca);
+    if (!ka.izinli) throw new Error("This designer token's pool hook is not allowed for USDC purchases yet; buy with $" + sym + ".");
+    const miktar = await S.tokenKarsiligi(t.token, t.ilan.fiyat);
+    const asgari = miktar * 9700n / 10000n;
+    await S.onayGerekirse({ cuzdan, token: S.TASARIM.usdc, miktar: t.ilan.fiyat, durum: yaz, etiket: "USDC" });
+    const anahtarU = S.SURUM === 2 ? await (await import("../designs/teslim.js")).alimAnahtari(cuzdan, yaz) : undefined;
+    await S.gonder({ cuzdan, data: S.veri.alUsdc(t.id, kanca, asgari, anahtarU), durum: yaz, aciklama: "Confirm the purchase (" + usd(t.ilan.fiyat) + " USDC swapped into $" + sym + " for the seller)" });
+    yaz("Bought. The NFT and its usage rights are yours.", "ok");
+  };
   kutu.append(el("div", { sinif: "ds-dugmeler" }, [
     eylem("Buy with $" + sym, async (yaz) => {
       await bagliHesap(cuzdan);
@@ -451,19 +464,12 @@ async function satisKutusu({ cuzdan, t, ay, j, sym }) {
       await S.gonder({ cuzdan, data: S.veri.al(t.id, azami, anahtar), durum: yaz, aciklama: "Confirm the purchase (at most " + jetonYaz(azami, j.ondalik) + " " + sym + ")" });
       yaz(S.SURUM === 2 ? "Bought. Your payment waits until the seller delivers the file key to you; this page then opens the file." : "Bought. The NFT and its usage rights are yours. Ask the seller to deliver the file key (your profile → key card).", "ok");
     }, "dugme dugme--marka", d),
-    eylem("Buy with USDC", async (yaz) => {
-      await bagliHesap(cuzdan);
-      const kanca = await S.havuzKancasi(t.token);
-      const ka = await (await S.nft()).kancaAyar(kanca);
-      if (!ka.izinli) throw new Error("This designer token's pool hook is not allowed for USDC purchases yet; buy with $" + sym + ".");
-      const miktar = await S.tokenKarsiligi(t.token, t.ilan.fiyat);
-      const asgari = miktar * 9700n / 10000n;
-      await S.onayGerekirse({ cuzdan, token: S.TASARIM.usdc, miktar: t.ilan.fiyat, durum: yaz, etiket: "USDC" });
-      const anahtarU = S.SURUM === 2 ? await (await import("../designs/teslim.js")).alimAnahtari(cuzdan, yaz) : undefined;
-      await S.gonder({ cuzdan, data: S.veri.alUsdc(t.id, kanca, asgari, anahtarU), durum: yaz, aciklama: "Confirm the purchase (" + usd(t.ilan.fiyat) + " USDC swapped into $" + sym + " for the seller)" });
-      yaz("Bought. The NFT and its usage rights are yours.", "ok");
-    }, "dugme", d)
+    eylem("Buy with USDC", usdcIleAl, "dugme", d)
   ]), d);
+  /* the same purchase paid with USDC from any of the other 11 chains (dollars to the buyer's Arc address first) */
+  const U = await import("../designs/uzak-alim.js");
+  kutu.append(U.uzakAlimKutusu({ cuzdan, fiyat6: t.ilan.fiyat, arcAlim: usdcIleAl, hesapIste: () => bagliHesap(cuzdan), eylem, durumSatiri,
+    onKontrol: async () => { if (!(await (await S.nft()).kancaAyar(await S.havuzKancasi(t.token))).izinli) throw new Error("This designer token's pool hook is not allowed for USDC purchases yet, so paying from another chain is not open for it; buy with $" + sym + " on Arc."); } }));
   if (S.SURUM === 2) kutu.append(el("div", { sinif: "ds-cihaz", yazi: "Buyer protection: your payment is held by the contract until the seller delivers the file key to you" + (ay.teslimSuresi ? " (within " + Math.round(ay.teslimSuresi / 86400) + " days, or you are refunded)" : "") + "; you can say the key does not work before it is released." }));
   else if (ay.emanetAcik && Date.now() <= t.itirazBitis) kutu.append(el("div", { sinif: "ds-cihaz", yazi: "Buyer protection: during the challenge window your payment is held by the contract and goes back to you if the design is burned." }));
   return kutu;
@@ -675,16 +681,41 @@ async function yayinlaSayfasi({ cuzdan }) {
   const onizGir = el("input", { sinif: "girdi", attr: { type: "file", accept: "image/*", "aria-label": "Preview image" } });
   const onizEtiket = el("label", { attr: { style: "display:none" } }, ["Preview image (a render or photo; shown publicly, watermarked)", onizGir]);
   const parmakYazi = el("div", { sinif: "ds-durum" });
+  const benzerYazi = el("div", { sinif: "ds-benzer", attr: { role: "status", "aria-live": "polite" } });
   const onizResim = el("div", { sinif: "ds-detay__resim", attr: { style: "max-width:320px;display:none" } });
   kap.append(el("div", { sinif: "ds-adim" }, [el("h3", { yazi: "2. The file" }),
     el("label", {}, ["Design file (image, SVG, STL/OBJ/3MF, PDF, …). It is encrypted in your browser before upload; only the holder can open it.", dosyaGir]),
-    onizEtiket, onizResim, parmakYazi]));
+    onizEtiket, onizResim, parmakYazi, benzerYazi]));
 
   /* step 3: details */
   const adGir = el("input", { sinif: "girdi", attr: { type: "text", maxlength: "120", placeholder: "Title", "aria-label": "Title" } });
   const acikGir = el("textarea", { sinif: "girdi", attr: { maxlength: "4000", placeholder: "Description (public)", "aria-label": "Description" } });
   const fiyatGir = el("input", { sinif: "girdi", attr: { type: "number", min: "0", step: "0.01", placeholder: "Price in USDC (0 = not for sale yet)", "aria-label": "Price in USDC" } });
-  kap.append(el("div", { sinif: "ds-adim" }, [el("h3", { yazi: "3. Details" }), el("div", { sinif: "ds-form" }, [adGir, acikGir, fiyatGir])]));
+  const katSec = el("select", { sinif: "girdi", attr: { "aria-label": "Category" } }, KATEGORILER.map(([k, ad]) => el("option", { attr: { value: k, ...(k === "diger" ? { selected: "" } : {}) }, yazi: ad })));
+  const ekGir = el("input", { sinif: "girdi", attr: { type: "file", accept: "image/*", multiple: "", "aria-label": "More preview images (up to " + EK_GORSEL_AZAMI + ")" } });
+  const ekOniz = el("div", { sinif: "ds-ek-oniz", attr: { style: "display:flex;gap:8px;flex-wrap:wrap" } });
+  const ekYazi = el("div", { sinif: "ds-durum" });
+  let ekBloblar = [];   // watermarked extra previews, in the order chosen
+  ekGir.addEventListener("change", async () => {
+    const fl = [...(ekGir.files || [])];
+    ekBloblar = []; temizle(ekOniz);
+    if (fl.length > EK_GORSEL_AZAMI) durumYaz(ekYazi, "At most " + EK_GORSEL_AZAMI + " more images; the first " + EK_GORSEL_AZAMI + " are used.");
+    else durumYaz(ekYazi, "");
+    const P = await import("../designs/parmakizi.js");
+    try {
+      for (const f of fl.slice(0, EK_GORSEL_AZAMI)) {
+        const b = await P.onizlemeYap(await P.gorselYukle(f));
+        ekBloblar.push(b);
+        ekOniz.append(el("img", { attr: { src: URL.createObjectURL(b), alt: "Extra preview " + ekBloblar.length + " (watermarked)", style: "width:88px;height:88px;object-fit:cover;border-radius:10px" } }));
+      }
+      if (ekBloblar.length) durumYaz(ekYazi, ekBloblar.length + " more preview" + (ekBloblar.length > 1 ? "s" : "") + " ready (watermarked like the main one, shown publicly).", "ok");
+      depoTahmin();
+    } catch (e) { ekBloblar = []; temizle(ekOniz); durumYaz(ekYazi, "Could not read an image: " + ((e && e.message) || e), "hata"); }
+  });
+  kap.append(el("div", { sinif: "ds-adim" }, [el("h3", { yazi: "3. Details" }), el("div", { sinif: "ds-form" }, [adGir, acikGir, fiyatGir,
+    el("label", {}, ["Category", katSec]),
+    el("label", {}, ["More preview images (optional, up to " + EK_GORSEL_AZAMI + ": other views, mock-ups). Public and watermarked; the file itself stays encrypted.", ekGir]),
+    ekOniz, ekYazi])]));
 
   /* step 4: storage */
   const yolIrys = el("input", { attr: { type: "radio", name: "ds-depo", value: "irys", checked: "" } });
@@ -697,9 +728,10 @@ async function yayinlaSayfasi({ cuzdan }) {
   const sifreliIndir = el("div", { sinif: "ds-dugmeler" });
   const dosyaUriGir = el("input", { sinif: "girdi", attr: { type: "text", placeholder: "URI of the ENCRYPTED file you uploaded", "aria-label": "Encrypted file URI" } });
   const onizUriGir = el("input", { sinif: "girdi", attr: { type: "text", placeholder: "URI of the preview image you uploaded", "aria-label": "Preview URI" } });
+  const ekUriGir = el("textarea", { sinif: "girdi", attr: { rows: "2", placeholder: "URIs of the extra previews you uploaded (optional, one per line, up to " + EK_GORSEL_AZAMI + ")", "aria-label": "Extra preview URIs" } });
   const metaIndir = el("div", { sinif: "ds-dugmeler" });
   kendiKutu.append(el("p", { sinif: "ds-lisans", yazi: "Upload with any permanent storage you use (IPFS pinning, Arweave). 1) Download the encrypted file and the preview and upload both. 2) Paste their URIs and download the metadata JSON. 3) Upload it and paste its URI. The full file is never uploaded unencrypted." }),
-    sifreliIndir, dosyaUriGir, onizUriGir, metaIndir, uriGir);
+    sifreliIndir, dosyaUriGir, onizUriGir, ekUriGir, metaIndir, uriGir);
   const depoDegisti = () => { kendiKutu.style.display = yolKendi.checked ? "" : "none"; };
   yolIrys.addEventListener("change", depoDegisti); yolKendi.addEventListener("change", depoDegisti); yolEth.addEventListener("change", depoDegisti);
   kap.append(el("div", { sinif: "ds-adim" }, [el("h3", { yazi: "4. Storage" }),
@@ -718,7 +750,7 @@ async function yayinlaSayfasi({ cuzdan }) {
     const f = dosyaGir.files && dosyaGir.files[0];
     if (!f) return;
     hazir = null;
-    temizle(sifreliIndir); temizle(metaIndir);
+    temizle(sifreliIndir); temizle(metaIndir); temizle(benzerYazi);
     const P = await import("../designs/parmakizi.js");
     durumYaz(parmakYazi, "Computing fingerprints in your browser…");
     try {
@@ -730,6 +762,7 @@ async function yayinlaSayfasi({ cuzdan }) {
       if (bekleyenT) durumYaz(d, "Step 1 of 2 is already done for this file (commitment in Arc block " + bekleyenT.blok + ", valid until block " + bekleyenT.son + "). Press Publish to finish with step 2.", "ok");
       else if (S.TAAHHUT_VAR && cuzdan.hesap()) kayipTaahhutBak(cuzdan.hesap(), parmak.dosyaHash);
       if ((k.dosya || k.algi) && !bekleyenT) { durumYaz(parmakYazi, "This design is already published (design #" + (k.dosya || k.algi) + (k.dosya ? ", the same file" : ", the same fingerprint") + ").", "hata"); return; }
+      benzerUyar(parmak.algiHash);
       let onizBlob = null;
       if (parmak.img) onizBlob = await P.onizlemeYap(parmak.img);
       onizEtiket.style.display = parmak.img ? "none" : "";
@@ -743,19 +776,35 @@ async function yayinlaSayfasi({ cuzdan }) {
       depoTahmin();
       durumYaz(parmakYazi, "Exact hash " + parmak.dosyaHash.slice(0, 18) + "… · " + parmak.aciklama + " · not published yet ✓ · encrypted in your browser (" + Math.ceil(sifreli.size / 1024) + " KB).", "ok");
       const indir = (blob, ad) => { const a = el("a", { attr: { href: URL.createObjectURL(blob), download: ad } }); document.body.append(a); a.click(); a.remove(); };
-      sifreliIndir.append(dugme("Download encrypted file", () => indir(sifreli, f.name + ".apd")), onizBlob ? dugme("Download preview", () => indir(onizBlob, "preview.jpg")) : null);
+      sifreliIndir.append(dugme("Download encrypted file", () => indir(sifreli, f.name + ".apd")), onizBlob ? dugme("Download preview", () => indir(onizBlob, "preview.jpg")) : null,
+        dugme("Download extra previews", () => { ekBloblar.forEach((b, i) => indir(b, "preview-" + (i + 2) + ".jpg")); }));
       const metaDugme = eylem("Download metadata JSON", async (yaz) => {
-        const m = await metaHazirla({ dosyaUri: dosyaUriGir.value.trim(), onizUri: onizUriGir.value.trim(), yaz });
+        const ekUriler = ekUriGir.value.split(/\s+/).map((x) => x.trim()).filter(Boolean);
+        for (const u of ekUriler) if (!uriGecerli(u)) throw new Error("Not a storage URI: " + u.slice(0, 60));
+        const m = await metaHazirla({ dosyaUri: dosyaUriGir.value.trim(), onizUri: onizUriGir.value.trim(), ekUriler, yaz });
         indir(new Blob([JSON.stringify(m, null, 2)], { type: "application/json" }), "metadata.json");
         yaz("Upload metadata.json and paste its URI below.", "ok");
       }, "dugme");
       metaIndir.append(metaDugme, metaDugme._durum);
     } catch (e) { durumYaz(parmakYazi, "Could not read the file: " + ((e && e.message) || e), "hata"); }
   }
+  /* near copies: a published image whose fingerprint is a few bits away (a warning; publishing stays allowed) */
+  async function benzerUyar(algiHash) {
+    try {
+      const B = await import("../designs/benzer.js");
+      const l = B.benzerler(algiHash, await S.yayinlar());
+      temizle(benzerYazi);
+      if (!l.length) return;
+      benzerYazi.append(el("div", { sinif: "not not--uyari" }, [el("div", { sinif: "yigin" }, [
+        el("div", { yazi: "This image looks very similar to " + (l.length === 1 ? "a published design" : l.length + " published designs") + ". If it is not your own earlier work, it may be challenged as a copy and taken down. You can still publish." }),
+        el("div", { sinif: "ds-dugmeler" }, l.slice(0, 6).map((x) => el("a", { attr: { href: "#/designs/d/" + x.id, target: "_blank", rel: "noopener" }, yazi: "Design #" + x.id + " (" + (x.mesafe === 0 ? "same fingerprint" : x.mesafe + " of 64 bits differ") + ") ↗" })))])]));
+    } catch (e) { /* a hint only */ }
+  }
+  const ekBoyut = () => ekBloblar.reduce((a, b) => a + b.size, 0);
   async function depoTahmin() {
     depoUsdc = null;
     if (!hazir) return;
-    const bayt = hazir.sifreli.size + (hazir.onizBlob ? hazir.onizBlob.size : 0) + 16384;
+    const bayt = hazir.sifreli.size + (hazir.onizBlob ? hazir.onizBlob.size : 0) + ekBoyut() + 16384;
     durumYaz(depoMaliyet, "Pricing the storage…");
     try {
       const I = await import("../designs/irys.js");
@@ -770,7 +819,7 @@ async function yayinlaSayfasi({ cuzdan }) {
   dosyaGir.addEventListener("change", hazirla);
   onizGir.addEventListener("change", hazirla);
 
-  async function metaHazirla({ dosyaUri, onizUri, yaz }) {
+  async function metaHazirla({ dosyaUri, onizUri, ekUriler = [], yaz }) {
     if (!hazir) throw new Error("Choose the design file first.");
     if (!uriGecerli(dosyaUri)) throw new Error("Paste the encrypted file's URI (ipfs://, ar:// or https://).");
     if (!hazir.zarf) {
@@ -787,7 +836,8 @@ async function yayinlaSayfasi({ cuzdan }) {
       dosya: { uri: dosyaUri, name: hazir.dosya.name, mime: hazir.dosya.type || "application/octet-stream", size: hazir.dosya.size, sha256: hazir.parmak.dosyaHash, encryption: "AES-256-GCM, APD1 header; key wrapped per holder (ECIES secp256k1)" },
       parmak: { algiHash: hazir.parmak.algiHash, method: hazir.parmak.aciklama },
       anahtarlar: [hazir.zarf],
-      tur: hazir.parmak.tur === P.TUR.GORSEL ? "Image" : hazir.parmak.tur === P.TUR.UCBOYUT ? "3D model" : "File"
+      tur: hazir.parmak.tur === P.TUR.GORSEL ? "Image" : hazir.parmak.tur === P.TUR.UCBOYUT ? "3D model" : "File",
+      kategori: katSec.value, ekGorseller: ekUriler.slice(0, EK_GORSEL_AZAMI)
     });
   }
 
@@ -847,7 +897,7 @@ async function yayinlaSayfasi({ cuzdan }) {
     } else {
       const I = await import("../designs/irys.js");
       const { imzala } = await import("../designs/imza.js");
-      const toplam = hazir.sifreli.size + hazir.onizBlob.size + 16384;
+      const toplam = hazir.sifreli.size + hazir.onizBlob.size + ekBoyut() + 16384;
       yaz("Sign once so Irys can read your wallet's public key (sends nothing)…");
       const imzaci = await I.cuzdanImzacisi(cuzdan, (m) => imzala(cuzdan, m));
       await irysFonla(cuzdan, toplam, yaz, yolEth.checked ? "eth" : "usdc", depoUsdc || undefined);
@@ -855,7 +905,12 @@ async function yayinlaSayfasi({ cuzdan }) {
       const on = await I.yukle(new Uint8Array(await hazir.onizBlob.arrayBuffer()), [{ name: "Content-Type", value: "image/jpeg" }, { name: "Type", value: "preview" }, { name: "File-Hash", value: hazir.parmak.dosyaHash }], imzaci);
       yaz("Uploading the encrypted file (sign in your wallet)…");
       const df = await I.yukle(new Uint8Array(await hazir.sifreli.arrayBuffer()), [{ name: "Content-Type", value: "application/octet-stream" }, { name: "Type", value: "file" }, { name: "File-Hash", value: hazir.parmak.dosyaHash }], imzaci);
-      const m = await metaHazirla({ dosyaUri: df.url, onizUri: on.url, yaz });
+      const ekUriler = [];
+      for (const [i, b] of ekBloblar.entries()) {
+        yaz("Uploading extra preview " + (i + 1) + " of " + ekBloblar.length + " (sign in your wallet)…");
+        ekUriler.push((await I.yukle(new Uint8Array(await b.arrayBuffer()), [{ name: "Content-Type", value: "image/jpeg" }, { name: "Type", value: "preview" }, { name: "File-Hash", value: hazir.parmak.dosyaHash }], imzaci)).url);
+      }
+      const m = await metaHazirla({ dosyaUri: df.url, onizUri: on.url, ekUriler, yaz });
       yaz("Uploading the metadata (sign in your wallet)…");
       const mu = await I.yukle(new TextEncoder().encode(JSON.stringify(m)), [{ name: "Content-Type", value: "application/json" }, { name: "Type", value: "metadata" }, { name: "File-Hash", value: hazir.parmak.dosyaHash }], imzaci);
       uri = mu.url;

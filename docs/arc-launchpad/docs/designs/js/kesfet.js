@@ -6,10 +6,14 @@
  * signed on this device), newest first, then everything else. With no
  * wallet the feed is Explore.
  * Explore: every design on TasarimNFT2 as a square grid; newest, popular
- * (likes on ProfilKaydi), for sale, price low/high; search by @handle,
- * name or address; the designers as a row of avatars on top.
+ * (likes on ProfilKaydi), for sale, price low/high; category chips (the
+ * metadata's `category`; designs without one are Other); search by @handle,
+ * designer name or address and by the design's name, description and
+ * category (client-side, over the metadata already loaded for the tiles);
+ * the designers as a row of avatars on top.
  * =========================================================================== */
 import { el, temizle, S, SO, usd, kisa, esit, adresMi, avatar, isim, karo, resimKutusu, adYaz, begeniDugmesi, takipDugmesi, bosKutu, gorunurler, yukleniyor } from "./ortak.js";
+import { metaOku, KATEGORILER, kategoriOf, kategoriAdi } from "../../js/designs/meta.js";
 
 async function veri() {
   const liste = await gorunurler(await S.yayinlar());
@@ -99,11 +103,24 @@ export async function kesfet({ cuzdan, param }, { akistan } = {}) {
   kap.append(hikayeler(liste));
   if (!liste.length) { kap.append(ilkTasarim()); return kap; }
 
-  const ara = el("input", { sinif: "girdi dz-ara", attr: { type: "search", placeholder: "Search @handle, name or 0x address", "aria-label": "Search designers", value: param.get("q") || "" } });
+  const ara = el("input", { sinif: "girdi dz-ara", attr: { type: "search", placeholder: "Search designs, categories, @handle or 0x address", "aria-label": "Search designs and designers", value: param.get("q") || "" } });
   const SIRALAR = [["yeni", "Newest"], ["populer", "Popular"], ["satista", "For sale"], ["ucuz", "Price ↑"], ["pahali", "Price ↓"]];
   let sira = SIRALAR.some(([k]) => k === param.get("s")) ? param.get("s") : "yeni";
   const cipler = el("div", { sinif: "dz-cipler", attr: { role: "tablist", "aria-label": "Sort" } });
   const ipucu = el("div", { sinif: "ds-cihaz" });
+  let kat = KATEGORILER.some(([k]) => k === param.get("k")) ? param.get("k") : "";
+  const katCipler = el("div", { sinif: "dz-cipler dz-kat-cipler", attr: { role: "group", "aria-label": "Category" } });
+  /* the metadata of every design (the tiles fetch the same, cached in meta.js), for categories and search */
+  const metalar = new Map();
+  let _metaHazir = null;
+  const metaHazir = () => (_metaHazir ||= Promise.all(liste.map((t) => metaOku(t.uri).then((m) => metalar.set(t.id, m)).catch(() => {}))));
+  /* a slow gateway must not hold the grid: wait at most 6 s, then filter with what has arrived */
+  const metaBekle = () => Promise.race([metaHazir(), new Promise((r) => setTimeout(r, 6000))]);
+  const metaUyar = (t, q) => {
+    const m = metalar.get(t.id);
+    if (!m) return false;
+    return String(m.name || "").toLowerCase().includes(q) || String(m.description || "").toLowerCase().includes(q) || kategoriAdi(kategoriOf(m)).toLowerCase().includes(q);
+  };
   const izgara = el("div");
   const sonuclar = el("div");
 
@@ -116,16 +133,22 @@ export async function kesfet({ cuzdan, param }, { akistan } = {}) {
     temizle(cipler);
     for (const [k, y] of SIRALAR) cipler.append(el("button", { sinif: "dz-cip", attr: { type: "button", role: "tab", "aria-selected": String(k === sira) }, yazi: y,
       on: { click: () => { sira = k; ciz(); } } }));
-    const q = ara.value.trim().toLowerCase().replace(/^@/, "");
+    temizle(katCipler);
+    for (const [k, y] of [["", "All"], ...KATEGORILER]) katCipler.append(el("button", { sinif: "dz-cip dz-cip--kat", attr: { type: "button", "aria-pressed": String(k === kat), "data-kat": k }, yazi: y,
+      on: { click: () => { kat = k; ciz(); } } }));
+    const ham = ara.value.trim().toLowerCase();
+    const q = ham.replace(/^@/, "");
     temizle(sonuclar);
     let l = liste;
+    if (kat) { await metaBekle(); l = l.filter((t) => kategoriOf(metalar.get(t.id)) === kat); }
     if (q) {
-      await profilHazir;
+      await Promise.all([profilHazir, ham.startsWith("@") ? null : metaBekle()]);
       const uyan = (a) => {
         const p = profiller.get(a.toLowerCase());
         return a.toLowerCase().includes(q) || (p && !p.gizli && ((p.kullaniciAdi || "").includes(q) || (p.ad || "").toLowerCase().includes(q)));
       };
-      l = l.filter((t) => uyan(t.tasarimci));
+      /* "@x" searches people only; anything else also searches the designs' own words */
+      l = l.filter((t) => uyan(t.tasarimci) || (!ham.startsWith("@") && metaUyar(t, ham)));
       /* an exact handle or address that is not a designer is still a profile to open */
       const kisiler = tasarimcilar.filter(uyan).slice(0, 8);
       if (adresMi(q) && !kisiler.some((a) => esit(a, q))) kisiler.unshift(ara.value.trim());
@@ -143,16 +166,17 @@ export async function kesfet({ cuzdan, param }, { akistan } = {}) {
     ipucu.textContent = sira === "populer" && !SO.PROFIL_VAR ? "Popular sorts by public likes on Arc, which open with on-chain profiles soon; until then this is the newest first." : "";
     temizle(izgara);
     izgara.append(l.length ? el("div", { sinif: "dz-izgara" }, l.map((t) => karo(t, durumlar.get(t.id), SO.PROFIL_VAR ? (begeniler.get(t.id) || 0) : null)))
-      : bosKutu("Nothing matches", q ? "No designer matches “" + ara.value.trim() + "”." : "No design is listed for sale right now."));
+      : bosKutu("Nothing matches", q ? "No design or designer matches “" + ara.value.trim() + "”" + (kat ? " in " + kategoriAdi(kat) : "") + "." : kat ? "No design in " + kategoriAdi(kat) + (sira === "yeni" || sira === "populer" ? "" : " is listed for sale") + " yet." : "No design is listed for sale right now."));
     /* the URL keeps the view (shareable), without a new history entry */
     const p = new URLSearchParams();
     if (sira !== "yeni") p.set("s", sira);
+    if (kat) p.set("k", kat);
     if (q) p.set("q", ara.value.trim());
     if (!akistan) history.replaceState(null, "", "#/explore" + (p.toString() ? "?" + p : ""));
   };
   let zam = null;
   ara.addEventListener("input", () => { clearTimeout(zam); zam = setTimeout(ciz, 250); });
-  kap.append(el("div", { sinif: "dz-filtre" }, [ara, cipler]), ipucu, sonuclar, izgara);
+  kap.append(el("div", { sinif: "dz-filtre" }, [ara, cipler]), katCipler, ipucu, sonuclar, izgara);
   await ciz();
   return kap;
 }

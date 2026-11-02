@@ -234,7 +234,9 @@ export const AGLAR = [
   }
 ];
 
-/* One address on all nine chains (Arachnid CREATE2, identical init code). */
+/* One address on all nine chains (Arachnid CREATE2, identical init code).
+   fthmIkiz is the OLD platform token's EVM twin (FTHM, before ARCP on 31 Oct 2026; ARCP has
+   no twins). Nothing on the site reads it now; kept so an old import still resolves. */
 export const AG = {
   "yayici": "0x24C644e7C29F6582B892cb5D89d7b23Bc34d1bD9",
   "fiyatAgi": "0x18b8D56c8c2b8f36B06380f47796e40b65DE45C6",

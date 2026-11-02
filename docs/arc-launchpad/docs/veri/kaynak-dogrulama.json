@@ -1,5 +1,5 @@
 {
- "zaman": "2026-10-24",
+ "zaman": "2026-11-02",
  "sozlesmeler": [
   {
    "chainId": 5042,
@@ -293,6 +293,276 @@
    "chainId": 4663,
    "ad": "IkizOFTAg",
    "adres": "0x71BB76124b14E7D682D519FBC3cca7C419cFE9ff",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 5042,
+   "ad": "TurKaydi2",
+   "adres": "0xbC0639f73e6485e479aCeE3bd5a427154CDe7402",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 5042,
+   "ad": "TurKaydi",
+   "adres": "0xc9d5ca394c62362eDcDe6E62cC4c9E72B94e35C9",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 5042,
+   "ad": "KilitFabrikasi",
+   "adres": "0xD299317959eC4908DeEBBcEfC31cF8F03D69919c",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 5042,
+   "ad": "TokenDAOFabrikasi",
+   "adres": "0xB9330D7D7613Ed8Bf1293568e89F7aE15d927a6A",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 5042,
+   "ad": "ProfilKaydi",
+   "adres": "0x1a311e8266EFbbD72f9258af5fEcCfb8586498Fc",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 5042,
+   "ad": "MesajKutusu",
+   "adres": "0x98D6240c9204B33FdF393f9CCd1254799628a6aB",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 5042,
+   "ad": "TasarimNFT2",
+   "adres": "0xFbE8F98e76bfbD2Acfe80c36d4c475041Fd8FEaa",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 5042,
+   "ad": "DevPool",
+   "adres": "0x0C6Fe02146f46b6df581905A24dB4Bc8c9B48FF4",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 5042,
+   "ad": "SepetDefteri",
+   "adres": "0x82877BB860127242A887ffBB7aAD454b7a4a4f14",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 5042,
+   "ad": "SepetKasasiArc",
+   "adres": "0x92319E41D12aB3Ae626693BF96bec0077058EcAE",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 5042,
+   "ad": "SepetUcu",
+   "adres": "0x49b4afb882A198eAeE717581029b077fDEC4E5AD",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 5042,
+   "ad": "PulseLikiditeKasasi5",
+   "adres": "0x52975E8d83678070b7e5a1B0d9414E39f1B0082E",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 5042,
+   "ad": "PulseLaunchpad5",
+   "adres": "0x87045C17BD5fCf3495abC30898803E39E25Be0dD",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 5042,
+   "ad": "IkizHub",
+   "adres": "0x4334C0b728D01d94d0054CC0Fc88aC9974CB33BF",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 5042,
+   "ad": "MerkezKapi",
+   "adres": "0xA64AC16a5469561080bd8657fD852E346Bf8bF49",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 5042,
+   "ad": "LaunchEmaneti",
+   "adres": "0x67Ea96f6187552DA4127B1D1dC15b6e72e19D329",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 5042,
+   "ad": "PulseHook6",
+   "adres": "0x84144495479E6Ba4aEED060C07C818e572C8AECC",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 8453,
+   "ad": "SepetKasasi",
+   "adres": "0x559AeCBF74842B46E5F788BE9362Edbb0A4541FB",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 42161,
+   "ad": "SepetKasasi",
+   "adres": "0x0B2CD07c9c52687aFb59C2a721197704945ca037",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 1,
+   "ad": "SepetKasasi",
+   "adres": "0xA33f201C4428dd0d4Bb4ac25fFee9DE83024991e",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 43114,
+   "ad": "SepetKasasi",
+   "adres": "0x51012D6c500235320aC9E2404551252342C4f7C0",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 143,
+   "ad": "SepetKasasi",
+   "adres": "0x51012D6c500235320aC9E2404551252342C4f7C0",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 999,
+   "ad": "SepetKasasi",
+   "adres": "0xE556db8FA8908782020a3129c5Aa71a8AC08d8Bc",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 4663,
+   "ad": "SepetKasasi",
+   "adres": "0x66a3ab2AC43445B91c61B98631Be14886ab45F40",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 56,
+   "ad": "SepetKasasi",
+   "adres": "0x8ddddB96CAb12c999896dE7b25F31Bb8474701a3",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 8453,
+   "ad": "SepetKasasi",
+   "adres": "0x5adE7C354Eda7AC5Dc1Ac2385E7d3277B42CDb5C",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 42161,
+   "ad": "SepetKasasi",
+   "adres": "0xCd98ccC96325423752e655F0b23a76F92BDC00C3",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 43114,
+   "ad": "SepetKasasi",
+   "adres": "0xAD0261f4d501d331fb334226fcEec3b51c6d178e",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 143,
+   "ad": "SepetKasasi",
+   "adres": "0xAD0261f4d501d331fb334226fcEec3b51c6d178e",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 999,
+   "ad": "SepetKasasi",
+   "adres": "0xaC170EE5FF4c85E569644203E0b8d46be97fD47B",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 4663,
+   "ad": "SepetKasasi",
+   "adres": "0xEcB57eDDf0830aa76ee8E5eCeFcf4A3F6ACE5a95",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 1,
+   "ad": "SepetKasasi",
+   "adres": "0x4094Eee7c46377C751F419E0E8f7dA6269Eb67D9",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 56,
+   "ad": "SepetKasasi",
+   "adres": "0x6D9Ba5791e07190B243F06dE35DF92fE89f6daAb",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 5042,
+   "ad": "FthmYakici",
+   "adres": "0x32d96E618142aaAB3100C26183b60940D00D1644",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 5042,
+   "ad": "SepetDefteri",
+   "adres": "0x64306Ac4ED453B41159d664Fa7F90DC489fcf5fc",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 5042,
+   "ad": "SepetKasasiArc",
+   "adres": "0x7F2e0fB8F648b6b822ad2aA84D1ECC95a36ee5a6",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 5042,
+   "ad": "SepetUcu",
+   "adres": "0x259CF82E6313EB7D1d768a7FE5971FE394c2bF5d",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 5042,
+   "ad": "PulseLikiditeKasasi5",
+   "adres": "0xc4AC2511BC0cb7F4dEFEa021B763cECD9368eD68",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 5042,
+   "ad": "PulseLaunchpad5",
+   "adres": "0x2D3a0DaBD48207528800bDA6aDbC1b84E8d1f98B",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 5042,
+   "ad": "IkizHub",
+   "adres": "0x74C715b1bE6c950480127F27093bB4A2F0E065Da",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 5042,
+   "ad": "MerkezKapi",
+   "adres": "0x1f042E18E1C7899E87cec5CAC5C07c487163BBbF",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 5042,
+   "ad": "LaunchEmaneti",
+   "adres": "0x1a30cb68ED4d2226710298A41E21F267da124306",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 5042,
+   "ad": "PulseHook5",
+   "adres": "0x7CBF813E4B1A45B03911E6af27Cc58a308f36ecc",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 5042,
+   "ad": "LaunchpadTeshis",
+   "adres": "0xa8bf7291d9c9E0bd358367eb5BCB55A24F3359De",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 8453,
+   "ad": "AktarmaLZ",
+   "adres": "0xA98a04c893b6cdb983F93E764A9332667D73aC08",
    "eslesme": "exact_match"
   }
  ]

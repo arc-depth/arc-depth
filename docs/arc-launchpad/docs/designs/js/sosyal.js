@@ -241,12 +241,13 @@ export { esit };
 /* ---- messages (MesajKutusu): the ciphertext lives in Mesaj events ---- */
 async function mk() { return new Contract(SOSYAL.mesaj, MESAJ_ABI, await S.arc()); }
 const mesajOlayi = (x) => { const e = ifcM.parseLog(x).args; return { gonderen: e.gonderen, alici: e.alici, konusma: e.konusma, sifreli: e.sifreli, zaman: Number(e.zaman) * 1000, blok: x.blockNumber, tx: x.transactionHash, sira: x.index ?? 0 }; };
-/** Every message to or from `ben`, oldest first. */
-export async function mesajlar(ben) {
+/** Every message to or from `ben`, oldest first; with `sonra`, only those after that block (the live inbox). */
+export async function mesajlar(ben, sonra) {
   if (!MESAJ_VAR || !ben) return [];
   const p = await S.arc();
   const t = ifcM.getEvent("Mesaj").topicHash;
-  const q = (topics) => p.getLogs({ address: SOSYAL.mesaj, topics, fromBlock: SOSYAL.baslangicBloku, toBlock: "latest" });
+  const bas = Number.isInteger(sonra) ? Math.max(SOSYAL.baslangicBloku, sonra + 1) : SOSYAL.baslangicBloku;
+  const q = (topics) => p.getLogs({ address: SOSYAL.mesaj, topics, fromBlock: bas, toBlock: "latest" });
   const [gelen, giden] = await Promise.all([q([t, null, konu(ben)]), q([t, konu(ben)])]);
   const gor = new Set();
   return [...gelen, ...giden].filter((x) => { const k = x.transactionHash + ":" + (x.index ?? 0); if (gor.has(k)) return false; gor.add(k); return true; })

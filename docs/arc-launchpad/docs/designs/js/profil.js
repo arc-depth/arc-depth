@@ -8,10 +8,13 @@
  * (ProfilKaydi.profilYaz + kullaniciAdiAl; the avatar uploaded to Irys
  * paid from Arc USDC through the main app's irys.js flow, or a pasted
  * link) and the unlock-key box (teslim.js) needed to receive files and
- * messages. A profile the admin hid (gizle) shows nothing.
+ * messages, and for other wallets a Report button (yorumlar.js). A
+ * profile the admin hid (gizle) shows nothing.
  * =========================================================================== */
 import { formatUnits } from "../../vendor/ethers.min.js";
 import { el, temizle, S, SO, ANA, kisa, esit, adresMi, avatar, isim, karo, takipDugmesi, eylem, durumSatiri, durumYaz, bosKutu, hesapIste, tasarimciJetonlari, gorselUrl, yukleniyor } from "./ortak.js";
+import { bildirDugmesi } from "./yorumlar.js";
+import { PROFIL } from "./yorum.js";
 
 export function benimBos({ cuzdan }) {
   const b = eylem("Connect wallet", async () => { await hesapIste(); }, "dugme dugme--marka");
@@ -39,7 +42,8 @@ export async function profilSayfasi({ cuzdan }, adres) {
     el("div", { sinif: "ds-dugmeler" }, [
       benim ? el("button", { sinif: "dugme dugme--kucuk", attr: { type: "button" }, yazi: "Edit profile", on: { click: () => duzenle() } }) : takipDugmesi(cuzdan, adres, { degisti: () => setTimeout(yenileSayilar, 500) }),
       benim ? el("a", { sinif: "dugme dugme--kucuk", attr: { href: "#/publish" }, yazi: "Publish" }) : el("a", { sinif: "dugme dugme--kucuk", attr: { href: "#/messages/" + adres }, yazi: "Message" }),
-      el("a", { sinif: "dugme dugme--kucuk dugme--sade", attr: { href: S.TASARIM.kasif + "/address/" + adres, target: "_blank", rel: "noopener" }, yazi: "Explorer ↗" })])
+      el("a", { sinif: "dugme dugme--kucuk dugme--sade", attr: { href: S.TASARIM.kasif + "/address/" + adres, target: "_blank", rel: "noopener" }, yazi: "Explorer ↗" }),
+      benim ? null : bildirDugmesi({ cuzdan }, { nft: adres, id: PROFIL, ad: "profile " + (p.kullaniciAdi ? "@" + p.kullaniciAdi : kisa(adres)) })])
   ]);
   const sayilar = el("div", { sinif: "dz-sayilar" });
   const yenileSayilar = async () => {

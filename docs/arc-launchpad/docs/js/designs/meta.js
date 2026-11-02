@@ -3,10 +3,14 @@
  *
  * tokenURI points at an ERC-721 metadata JSON (on Irys, IPFS or Arweave):
  *   name, description, image (the public, watermarked preview),
+ *   images (optional, up to 4 more watermarked previews: other views,
+ *   mock-ups), category (optional, one of KATEGORILER' labels),
  *   license / license_text (TasarimNFT.LISANS_URI / LISANS),
  *   arcpulse: { v, designer, token, file: {uri, name, mime, size, sha256,
  *               encryption}, fingerprint: {algiHash, method}, keys: [envelope
- *               to the designer's unlock key] }
+ *               to the designer's unlock key], category: key }
+ * Designs published before `category` / `images` existed simply have none:
+ * they read as "Other" with a single image (kategoriOf / gorseller).
  * Only gateways the page's Content-Security-Policy allows are fetched.
  * =========================================================================== */
 
@@ -47,14 +51,41 @@ export async function baytAl(uri) {
   return new Uint8Array(await r.arrayBuffer());
 }
 
-export function metaYap({ ad, aciklama, onizleme, lisans, lisansUri, tasarimci, token, dosya, parmak, anahtarlar, tur }) {
+/* ---- categories and extra preview images (optional; older metadata has neither) ---- */
+export const KATEGORILER = [
+  ["tshirt", "T-shirt / print"], ["3d", "3D print"], ["poster", "Poster / art"],
+  ["desen", "Pattern"], ["logo", "Logo / brand"], ["diger", "Other"]
+];
+export const EK_GORSEL_AZAMI = 4;
+const KAT_AD = new Map(KATEGORILER);
+export const kategoriAdi = (k) => KAT_AD.get(k) || "Other";
+/** The category key of a metadata JSON: arcpulse.category, else the `category` label, else "diger". */
+export function kategoriOf(m) {
+  const k = m && m.arcpulse && m.arcpulse.category;
+  if (KAT_AD.has(k)) return k;
+  const l = String((m && m.category) || "").trim().toLowerCase();
+  for (const [kk, ad] of KATEGORILER) if (l && (l === ad.toLowerCase() || l === kk)) return kk;
+  return "diger";
+}
+/** The preview images of a design: `image` first, then up to EK_GORSEL_AZAMI from `images` (deduplicated). */
+export function gorseller(m) {
+  if (!m) return [];
+  const ek = Array.isArray(m.images) ? m.images.filter((x) => typeof x === "string").slice(0, EK_GORSEL_AZAMI) : [];
+  return [...new Set([m.image, ...ek].filter((x) => typeof x === "string" && x.trim()))];
+}
+
+export function metaYap({ ad, aciklama, onizleme, lisans, lisansUri, tasarimci, token, dosya, parmak, anahtarlar, tur, kategori, ekGorseller }) {
+  const kat = KAT_AD.has(kategori) ? kategori : "diger";
+  const ek = (ekGorseller || []).filter(Boolean).slice(0, EK_GORSEL_AZAMI);
   return {
     name: ad,
     description: aciklama,
     image: onizleme || undefined,
+    images: ek.length ? ek : undefined,
+    category: kategoriAdi(kat),
     license: lisansUri,
     license_text: lisans,
-    attributes: [{ trait_type: "Kind", value: tur }, { trait_type: "Designer token", value: token }],
-    arcpulse: { v: 1, designer: tasarimci, token, file: dosya, fingerprint: parmak, keys: anahtarlar }
+    attributes: [{ trait_type: "Kind", value: tur }, { trait_type: "Category", value: kategoriAdi(kat) }, { trait_type: "Designer token", value: token }],
+    arcpulse: { v: 1, designer: tasarimci, token, file: dosya, fingerprint: parmak, keys: anahtarlar, category: kat }
   };
 }

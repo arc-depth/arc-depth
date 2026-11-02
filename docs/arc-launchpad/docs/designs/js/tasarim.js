@@ -1,19 +1,24 @@
 /* ===========================================================================
  * designs/js/tasarim.js — one design (TasarimNFT2)
  *
- * Big preview, designer and owner, price in USDC and in the designer token
+ * Big preview (a carousel when the metadata has more images, galeri.js),
+ * its category, designer and owner, price in USDC and in the designer token
  * (30-minute TWAP), likes, Buy (with the designer token, or with Arc USDC
  * swapped into it: al / alUsdc, the buyer's unlock key registered in the
  * same call), the v2 delivery states (deliver / open / confirm / dispute /
  * refund / release, from the main app's teslim.js), listing for the
- * holder, the stake, the history from the events and the license.
+ * holder, the stake, the history from the events, the license, and below
+ * the comments with a Report button (yorumlar.js, YorumKaydi; "Comments
+ * open soon" until it is deployed).
  * Payment is on Arc (USDC or the designer token, which the main app's
  * trade page sells from 12 chains); copy challenges stay on the main
  * app's design page.
  * =========================================================================== */
 import { parseUnits } from "../../vendor/ethers.min.js";
 import { el, temizle, S, SO, ANA, usd, kisa, esit, tarih, jetonYaz, avatar, isim, resimKutusu, begeniDugmesi, takipDugmesi, eylem, durumSatiri, bosKutu, hesapIste, gorunurler } from "./ortak.js";
-import { metaOku, baytAl } from "../../js/designs/meta.js";
+import { metaOku, baytAl, kategoriOf, kategoriAdi } from "../../js/designs/meta.js";
+import { galeri } from "./galeri.js";
+import { yorumBolumu, bildirDugmesi } from "./yorumlar.js";
 
 export async function tasarimSayfasi({ cuzdan }, id) {
   const kap = el("div", { sinif: "dz-tasarim-sayfa" });
@@ -27,18 +32,21 @@ export async function tasarimSayfasi({ cuzdan }, id) {
   const ad = meta && meta.name ? String(meta.name).slice(0, 120) : "Design #" + id;
   document.title = ad + " · ARC PULSE Designs";
 
-  const sol = el("div", { sinif: "dz-tasarim__sol" }, [resimKutusu(t.uri, "dz-tasarim__resim", ad)]);
+  /* one preview, or a carousel when the metadata has more images (meta.js gorseller) */
+  const sol = el("div", { sinif: "dz-tasarim__sol" }, [meta ? galeri(meta, t.uri, ad) : resimKutusu(t.uri, "dz-tasarim__resim", ad)]);
   const yan = el("div", { sinif: "dz-tasarim__yan" });
   yan.append(el("header", { sinif: "dz-tasarim__ust" }, [
     el("a", { sinif: "dz-kisi", attr: { href: "#/u/" + t.tasarimci } }, [avatar(t.tasarimci, 36), el("span", {}, [isim(t.tasarimci), el("span", { sinif: "ds-cihaz", yazi: " · designer" })])]),
     el("span", { attr: { style: "margin-left:auto" } }, [takipDugmesi(cuzdan, t.tasarimci)])]));
   yan.append(el("h1", { sinif: "dz-tasarim__ad", yazi: ad }));
+  if (meta) { const k = kategoriOf(meta); yan.append(el("a", { sinif: "dz-kategori", attr: { href: "#/explore?k=" + k, title: "More in this category" }, yazi: kategoriAdi(k) })); }
   if (meta && meta.description) yan.append(el("p", { sinif: "dz-tasarim__aciklama", yazi: String(meta.description).slice(0, 4000) }));
   const pencereAcik = Date.now() <= t.itirazBitis;
   yan.append(el("div", { sinif: "dz-tasarim__eylem" }, [begeniDugmesi(cuzdan, id),
     t.sahip ? null : el("span", { sinif: "ds-rozet ds-rozet--uyari", yazi: "Taken down" }),
     t.itiraz ? el("span", { sinif: "ds-rozet ds-rozet--uyari", yazi: "Challenge open" }) : pencereAcik ? el("span", { sinif: "ds-rozet", attr: { title: "Anyone may challenge a copy until then" }, yazi: "Challenge window until " + tarih(t.itirazBitis) }) : el("span", { sinif: "ds-rozet ds-rozet--ok", yazi: "Original · window closed" }),
-    el("button", { sinif: "dugme dugme--sade dugme--kucuk", attr: { type: "button", style: "margin-left:auto" }, yazi: "Copy link", on: { click: async (e) => { try { await navigator.clipboard.writeText(location.href); e.target.textContent = "Copied"; } catch (x) { e.target.textContent = location.href; } } } })]));
+    el("button", { sinif: "dugme dugme--sade dugme--kucuk", attr: { type: "button", style: "margin-left:auto" }, yazi: "Copy link", on: { click: async (e) => { try { await navigator.clipboard.writeText(location.href); e.target.textContent = "Copied"; } catch (x) { e.target.textContent = location.href; } } } }),
+    bildirDugmesi({ cuzdan }, { nft: S.TASARIM.adres, id, ad: "design #" + id })]));
 
   if (t.sahip) yan.append(await fiyatKutusu({ cuzdan, t, ay, j, sym }));
   yan.append(el("div", { sinif: "ds-kutu" }, [
@@ -65,6 +73,7 @@ export async function tasarimSayfasi({ cuzdan }, id) {
     .catch((e) => { gecmis.lastChild.replaceWith(el("div", { sinif: "ds-durum ds-durum--hata", yazi: "Could not read the history: " + ((e && e.message) || e) })); });
 
   kap.append(el("article", { sinif: "dz-tasarim" }, [sol, yan]));
+  kap.append(yorumBolumu({ cuzdan }, t));
   /* more from this designer */
   const digerleri = (await S.yayinlar()).filter((x) => esit(x.tasarimci, t.tasarimci) && x.id !== id).slice(0, 6);
   if (digerleri.length) {
@@ -115,8 +124,8 @@ async function fiyatKutusu({ cuzdan, t, ay, j, sym }) {
   if (t.satis) { kutu.append(el("div", { sinif: "ds-cihaz", yazi: "A sale is in progress (waiting for the file key); buying opens again when it settles." })); return kutu; }
   const d = durumSatiri();
   const T = await import("../../js/designs/teslim.js");
-  kutu.append(el("div", { sinif: "ds-dugmeler" }, [
-    eylem("Buy with USDC", async (yaz) => {
+  /* the Arc purchase with USDC; also the last step of a payment from another chain (uzak-alim.js) */
+  const usdcIleAl = async (yaz) => {
       await hesapIste();
       const kanca = await S.havuzKancasi(t.token);
       const ka = await (await S.nft()).kancaAyar(kanca);
@@ -128,7 +137,10 @@ async function fiyatKutusu({ cuzdan, t, ay, j, sym }) {
       await S.gonder({ cuzdan, data: S.veri.alUsdc(t.id, kanca, miktar * 9700n / 10000n, anahtar), durum: yaz, aciklama: "Confirm the purchase (" + usd(t.ilan.fiyat) + " USDC, swapped into $" + sym + " for the seller)" });
       yaz("Bought. Your payment waits until the seller delivers the file key to you; this page then opens the file.", "ok");
       setTimeout(() => location.reload(), 2500);
-    }, "dugme dugme--marka", d, S.hataAcikla),
+  };
+  const U = await import("../../js/designs/uzak-alim.js");
+  kutu.append(el("div", { sinif: "ds-dugmeler" }, [
+    eylem("Buy with USDC", usdcIleAl, "dugme dugme--marka", d, S.hataAcikla),
     eylem("Buy with " + symL, async (yaz) => {
       await hesapIste();
       const miktar = await S.tokenKarsiligi(t.token, t.ilan.fiyat);
@@ -140,7 +152,9 @@ async function fiyatKutusu({ cuzdan, t, ay, j, sym }) {
       yaz("Bought. Your payment waits until the seller delivers the file key to you; this page then opens the file.", "ok");
       setTimeout(() => location.reload(), 2500);
     }, "dugme", d, S.hataAcikla)]), d,
-    el("div", { sinif: "ds-cihaz", yazi: "Both ways pay on Arc: USDC on Arc (Arc's gas token too) or the designer token, which you can buy on its trade page in the ARC PULSE app from 12 chains." }),
+    el("div", { sinif: "ds-cihaz", yazi: "Both ways pay on Arc: USDC on Arc (Arc's gas token too) or the designer token, which you can buy on its trade page in the ARC PULSE app from 12 chains. Holding USDC on another chain? Pay from there below." }),
+    U.uzakAlimKutusu({ cuzdan, fiyat6: t.ilan.fiyat, arcAlim: usdcIleAl, hesapIste, durumSatiri, eylem: (a, f, s, dd) => eylem(a, f, s, dd, S.hataAcikla),
+      onKontrol: async () => { if (!(await (await S.nft()).kancaAyar(await S.havuzKancasi(t.token))).izinli) throw new Error("This designer token's pool is not allowed for USDC purchases yet, so paying from another chain is not open for it; buy with $" + sym + " on Arc."); } }),
     el("div", { sinif: "ds-cihaz", yazi: "Buyer protection: the contract holds your payment until the seller delivers the file key to you" + (ay.teslimSuresi ? " (within " + Math.round(ay.teslimSuresi / 86400) + " days, or you are refunded)" : "") + "; you can say the key does not work before it is released." }));
   return kutu;
 }

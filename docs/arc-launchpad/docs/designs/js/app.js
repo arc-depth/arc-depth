@@ -15,6 +15,10 @@
  *   #/messages[/<a>]   inbox / one conversation
  *   #/publish          publish a design (the main app's flow, wrapped)
  *   #/license          the license every design carries
+ * Top bar: the wallet button and, once connected, the notifications bell
+ * (js/bildirim.js, computed in the browser from public Arc events).
+ * Design pages carry comments and a Report button (js/yorumlar.js, the
+ * YorumKaydi contract; "open soon" until it is deployed).
  * The main app's own Designs links (#/designs/...) are understood too, and
  * any other route (a token's trade page, Create) opens in the main app.
  *
@@ -50,6 +54,8 @@ function kabukCiz() {
     el("a", { sinif: "dz-yan__oge dz-yan__ana", attr: { href: ANA + "#/kesfet" } }, [ikon("geri"), el("span", { yazi: "ARC PULSE app" })]),
     el("a", { sinif: "dz-yan__kucuk", attr: { href: "#/license" }, yazi: "License" }));
   cuzdanDugme();
+  /* the notifications bell for the connected wallet (js/bildirim.js), re-mounted on a wallet change */
+  import("./bildirim.js").then((B) => B.zilKur(cuzdan)).catch(() => {});
   aktifIsaretle();
 }
 function markaIkon() {

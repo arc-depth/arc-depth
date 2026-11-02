@@ -232,3 +232,72 @@ button.dz-sayi { cursor: pointer; }
 .dz-sarili .ds-ust .dugme--marka[href="#/designs/publish"] { display: none; }
 
 .bos { text-align: center; }
+
+/* ---- categories (Discover chips, the design page's label) ---- */
+.dz-kat-cipler { margin: -4px 0 12px; }
+.dz-cip--kat { height: 28px; padding: 0 12px; border-radius: 999px; font-size: var(--boy-s); }
+.dz-cip--kat[aria-pressed="true"] { background: var(--marka-zemin); color: #fff; border-color: var(--marka-parlak); font-weight: var(--kalin-yari); }
+.dz-kategori { justify-self: start; display: inline-flex; align-items: center; height: 26px; padding: 0 10px; border-radius: 999px; border: 1px solid var(--marka-cizgi); color: var(--marka-parlak) !important; font-size: var(--boy-s); text-decoration: none; }
+.dz-kategori:hover { background: var(--marka-zemin); color: #fff !important; }
+
+/* ---- image carousel ---- */
+.dz-galeri { position: relative; display: block; outline: none; }
+.dz-galeri:focus-visible { box-shadow: 0 0 0 2px var(--marka-parlak); }
+.dz-galeri__sahne, .dz-galeri__slayt { width: 100%; height: 100%; }
+.dz-galeri__sahne { touch-action: pan-y; user-select: none; }
+.dz-galeri__slayt { display: flex; align-items: center; justify-content: center; }
+.dz-galeri__slayt[hidden] { display: none; }
+.dz-galeri__ok { position: absolute; top: 50%; transform: translateY(-50%); width: 38px; height: 38px; border-radius: 12px; border: 1px solid var(--cizgi-guclu); background: rgba(10, 11, 13, .7); color: #fff; font-size: 24px; line-height: 1; cursor: pointer; }
+.dz-galeri__ok--sol { left: 8px; }
+.dz-galeri__ok--sag { right: 8px; }
+.dz-galeri__ok:hover, .dz-galeri__ok:focus-visible { background: var(--marka); }
+.dz-galeri__sayac { position: absolute; top: 8px; right: 8px; padding: 2px 8px; border-radius: 999px; background: rgba(10, 11, 13, .7); color: #fff; font-size: var(--boy-xs); }
+.dz-galeri__noktalar { position: absolute; left: 0; right: 0; bottom: 8px; display: flex; justify-content: center; gap: 6px; }
+.dz-galeri__nokta { width: 10px; height: 10px; padding: 0; border-radius: 3px; border: 1px solid rgba(255, 255, 255, .7); background: rgba(10, 11, 13, .5); cursor: pointer; transform: rotate(45deg); }
+.dz-galeri__nokta[aria-current="true"] { background: var(--marka-parlak); border-color: var(--marka-parlak); }
+.dz-gizli-yazi { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ---- comments ---- */
+.dz-yorumlar { margin-top: 28px; display: grid; gap: 12px; max-width: 720px; }
+.dz-yorumlar h2 { font-size: var(--boy-l); margin: 0; }
+.dz-yorum-yakinda { display: grid; gap: 4px; padding: 14px 16px; border: 1px dashed var(--marka-cizgi); border-radius: 14px; background: var(--yuzey-1); color: var(--yazi-2); }
+.dz-yorum-yakinda b { color: var(--yazi-1); }
+.dz-yorum-liste { display: grid; gap: 4px; }
+.dz-yorum { display: grid; grid-template-columns: 32px 1fr; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--cizgi); }
+.dz-yorum--gizli { opacity: .6; }
+.dz-yorum__govde { min-width: 0; display: grid; gap: 2px; }
+.dz-yorum__ust { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.dz-yorum__kim { font-weight: var(--kalin-yari); text-decoration: none; }
+.dz-yorum__metin { margin: 2px 0; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.5; }
+.dz-yorum__eylem { display: flex; gap: 12px; flex-wrap: wrap; }
+.dz-yorum__dugme { background: none; border: 0; padding: 2px 0; color: var(--yazi-3); font: inherit; font-size: var(--boy-s); font-weight: var(--kalin-yari); cursor: pointer; }
+.dz-yorum__dugme:hover, .dz-yorum__dugme:focus-visible { color: var(--yazi-1); }
+.dz-yorum-form { display: grid; gap: 6px; }
+.dz-yorum-yanit { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: var(--boy-s); color: var(--yazi-2); }
+.dz-yorum-yanit[hidden] { display: none; }
+.dz-yorum-yaz { resize: vertical; min-height: 44px; }
+.dz-yorum-alt { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.dz-yorum-sayac--asim { color: var(--satis); }
+
+/* ---- notifications bell ---- */
+.dz-zil-kap { position: relative; margin-left: auto; }
+.dz-zil-kap + .dz-ust__sag { margin-left: 4px; }
+.dz-zil { position: relative; width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; border-radius: 12px; border: 1px solid var(--cizgi); background: var(--yuzey-1); color: var(--yazi-1); cursor: pointer; }
+.dz-zil:hover, .dz-zil[aria-expanded="true"] { border-color: var(--marka-parlak); }
+.dz-zil__sayi { position: absolute; top: -5px; right: -5px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 6px; background: var(--marka); color: #fff; font-size: 11px; font-weight: var(--kalin-kalin); line-height: 18px; text-align: center; }
+.dz-zil__sayi[hidden] { display: none; }
+.dz-zil__panel { position: absolute; right: 0; top: 46px; width: min(360px, calc(100vw - 24px)); max-height: 70vh; overflow: auto; background: var(--yuzey-3); border: 1px solid var(--cizgi-guclu); border-radius: 14px; box-shadow: var(--golge-menu); padding: 8px; display: grid; gap: 4px; z-index: 40; }
+.dz-zil__panel[hidden] { display: none; }
+.dz-zil__ust { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 4px 6px 8px; border-bottom: 1px solid var(--cizgi); }
+.dz-zil__liste { display: grid; gap: 2px; }
+.dz-zil__oge { display: grid; gap: 2px; padding: 8px 10px; border-radius: 10px; text-decoration: none; border-left: 3px solid transparent; }
+.dz-zil__oge:hover { background: var(--yuzey-2); }
+.dz-zil__oge--yeni { border-left-color: var(--marka-parlak); background: rgba(124, 92, 255, .08); }
+.dz-zil__oge--teslim { border-left-color: var(--uyari); }
+.dz-zil__metin { overflow-wrap: anywhere; line-height: 1.4; }
+.dz-zil__bos { padding: 12px 10px; }
+.dz-zil__not { margin: 4px 6px 2px; }
+
+/* ---- inbox: unread dot ---- */
+.dz-okunmadi { margin-left: auto; flex: none; width: 10px; height: 10px; border-radius: 3px; background: var(--marka-parlak); transform: rotate(45deg); }
+.dz-gelen__oge--yeni .dz-isim { color: var(--yazi-1); font-weight: var(--kalin-kalin); }
