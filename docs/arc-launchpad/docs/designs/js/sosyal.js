@@ -20,11 +20,17 @@ export const SOSYAL = {
   /* LIVE 1 Nov 2026 (dagitim-sosyal.json) */
   profil: "0x1a311e8266EFbbD72f9258af5fEcCfb8586498Fc",   // ProfilKaydi, block 29043552
   mesaj: "0x98D6240c9204B33FdF393f9CCd1254799628a6aB",    // MesajKutusu, block 29043562
-  baslangicBloku: 29043552   // the earlier of the two deploy blocks (event scans start here)
+  baslangicBloku: 29043552,  // the earlier of the two deploy blocks (event scans start here)
+  /* the private box (MesajKutusu2: recipient hidden). Empty until scripts/mesaj2-dagit.js
+     --uygula has written dagitim-mesaj2.json; then set both from it. While empty, sending
+     stays on MesajKutusu above exactly as before. */
+  mesaj2: "0xfb3415daD37107c69Cfc91249FE8be7F6C5143b8",   // MesajKutusu2 (deployed 2 Nov 2026)
+  mesaj2Blok: 29118694
 };
 const adresMi = (a) => /^0x[0-9a-fA-F]{40}$/.test(a || "");
 export const PROFIL_VAR = adresMi(SOSYAL.profil) && SOSYAL.baslangicBloku > 0;
 export const MESAJ_VAR = adresMi(SOSYAL.mesaj) && SOSYAL.baslangicBloku > 0;
+export const MESAJ2_VAR = adresMi(SOSYAL.mesaj2) && SOSYAL.mesaj2Blok > 0;
 
 /* ProfilKaydi (build/ProfilKaydi.json, admin-only functions left out) */
 export const PROFIL_ABI = [
@@ -74,8 +80,26 @@ export const MESAJ_ABI = [
   "function mesajSayisi(uint256) view returns (uint256)"
 ];
 
+/* MesajKutusu2 (build/MesajKutusu2.json, admin-only functions left out) */
+export const MESAJ2_ABI = [
+  "error YetkiYok()", "error SifirAdres()", "error BosMesaj()", "error MesajCokUzun(uint256 uzunluk, uint256 azami)",
+  "error Susturuldu()", "error HizSiniri(uint64 tekrarZamani)", "error KotuDeger()", "error MesajYok()", "error ZatenSilindi()",
+  "event Mesaj(address indexed gonderen, bytes32 indexed id, bytes sifreli, uint64 zaman)",
+  "event Sil(address indexed gonderen, bytes32 indexed id)",
+  "function SIFRELI_AZAMI() view returns (uint256)",
+  "function idOf(address gonderen, uint64 nonce) pure returns (bytes32)",
+  "function gonder(bytes sifreli) returns (bytes32 id)",
+  "function sil(uint64 nonce)",
+  "function gonderilebilir(address gonderen) view returns (uint8)",
+  "function gonderilenSayisi(address) view returns (uint64)",
+  "function silindi(bytes32) view returns (bool)",
+  "function susturuldu(address) view returns (bool)",
+  "function toplamMesaj() view returns (uint256)"
+];
+
 export const ifcP = new Interface(PROFIL_ABI);
 export const ifcM = MESAJ_ABI.length ? new Interface(MESAJ_ABI) : null;
+export const ifcM2 = new Interface(MESAJ2_ABI);
 
 const konu = (a) => zeroPadValue(a, 32);
 const esit = (a, b) => !!a && !!b && a.toLowerCase() === b.toLowerCase();
@@ -192,7 +216,7 @@ export function hataAcikla(e) {
   const d = e && (e.data || (e.info && e.info.error && e.info.error.data) || (e.error && e.error.data));
   const ham = typeof d === "string" ? d : d && typeof d.data === "string" ? d.data : null;
   let ad = null, args = [];
-  for (const i of [ifcP, ifcM].filter(Boolean)) {
+  for (const i of [ifcP, ifcM, ifcM2].filter(Boolean)) {
     if (ad || !ham || ham.length < 10) break;
     try { const p = i.parseError(ham); if (p) { ad = p.name; args = p.args; } } catch (x) { /* not this contract */ }
   }
@@ -213,6 +237,8 @@ export function hataAcikla(e) {
     TakipteDegil: "Not following.",
     ZatenBegenildi: "Already liked.",
     Begenilmemis: "Not liked yet.",
+    MesajYok: "That message was not sent by this wallet.",
+    ZatenSilindi: "Already deleted.",
     YetkiYok: "This wallet is not allowed to do that."
   };
   if (ad && M[ad]) return M[ad];
@@ -236,6 +262,7 @@ export async function gonder({ cuzdan, to, data, durum, aciklama }) {
 }
 export const profilGonder = (o) => gonder({ ...o, to: SOSYAL.profil });
 export const mesajGonder = (o) => gonder({ ...o, to: SOSYAL.mesaj });
+export const mesaj2Gonder = (o) => gonder({ ...o, to: SOSYAL.mesaj2 });
 export { esit };
 
 /* ---- messages (MesajKutusu): the ciphertext lives in Mesaj events ---- */
@@ -259,4 +286,39 @@ export async function engelliMi(alici, gonderen) { return MESAJ_VAR ? (await mk(
 export const veriM = {
   gonder: (alici, sifreli) => ifcM.encodeFunctionData("gonder", [alici, sifreli]),
   engelle: (kim, evet) => ifcM.encodeFunctionData("engelle", [kim, !!evet])
+};
+
+/* ---- the private box (MesajKutusu2): ONE shared stream, no recipient on chain ----
+   Every message of every wallet is read (the published archive + new blocks);
+   mesaj2.js finds the reader's own by view tag and decryption, in the browser. */
+async function mk2() { return new Contract(SOSYAL.mesaj2, MESAJ2_ABI, await S.arc()); }
+const mesaj2Olayi = (x) => { const e = ifcM2.parseLog(x).args; return { surum: 2, gonderen: e.gonderen, id: e.id, sifreli: e.sifreli, zaman: Number(e.zaman) * 1000, blok: x.blockNumber, tx: x.transactionHash, sira: x.index ?? 0 }; };
+const bas2 = (sonra) => (Number.isInteger(sonra) ? Math.max(SOSYAL.mesaj2Blok, sonra + 1) : SOSYAL.mesaj2Blok);
+/** Every MesajKutusu2 message (all wallets), oldest first; with `sonra`/`kadar`, only blocks (sonra, kadar]. */
+export async function mesajlar2(sonra, kadar) {
+  if (!MESAJ2_VAR) return [];
+  const p = await S.arc();
+  const l = await p.getLogs({ address: SOSYAL.mesaj2, topics: [ifcM2.getEvent("Mesaj").topicHash], fromBlock: bas2(sonra), toBlock: Number.isInteger(kadar) ? kadar : "latest" });
+  return l.map(mesaj2Olayi).sort((a, b) => a.blok - b.blok || a.sira - b.sira);
+}
+/** Ids (lowercase) of messages deleted by their senders (Sil events). */
+export async function silinenler2() {
+  if (!MESAJ2_VAR) return new Set();
+  const p = await S.arc();
+  const l = await p.getLogs({ address: SOSYAL.mesaj2, topics: [ifcM2.getEvent("Sil").topicHash], fromBlock: SOSYAL.mesaj2Blok, toBlock: "latest" });
+  return new Set(l.map((x) => String(ifcM2.parseLog(x).args.id).toLowerCase()));
+}
+/** 0 ok, 1 muted, 4 rate limited. */
+export async function gonderilebilir2(ben) { return Number(await (await mk2()).gonderilebilir(ben)); }
+/** The nonce of `ben`'s message `id` (for sil), or -1. */
+export async function nonceBul2(ben, id) {
+  const c = await mk2();
+  const n = Number(await c.gonderilenSayisi(ben));
+  const { solidityPackedKeccak256 } = await import("../../vendor/ethers.min.js");
+  for (let i = n - 1; i >= 0; i--) if (solidityPackedKeccak256(["address", "uint64"], [ben, i]).toLowerCase() === String(id).toLowerCase()) return i;
+  return -1;
+}
+export const veriM2 = {
+  gonder: (sifreli) => ifcM2.encodeFunctionData("gonder", [sifreli]),
+  sil: (nonce) => ifcM2.encodeFunctionData("sil", [nonce])
 };

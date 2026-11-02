@@ -447,7 +447,8 @@ async function satisKutusu({ cuzdan, t, ay, j, sym }) {
     const ka = await (await S.nft()).kancaAyar(kanca);
     if (!ka.izinli) throw new Error("This designer token's pool hook is not allowed for USDC purchases yet; buy with $" + sym + ".");
     const miktar = await S.tokenKarsiligi(t.token, t.ilan.fiyat);
-    const asgari = miktar * 9700n / 10000n;
+    if (miktar == null) throw new Error("Buying opens when the price feed is live.");
+    const asgari = await S.alUsdcAsgari(miktar);   // the contract's floor: the pool's fee and the collateral tax come off first
     await S.onayGerekirse({ cuzdan, token: S.TASARIM.usdc, miktar: t.ilan.fiyat, durum: yaz, etiket: "USDC" });
     const anahtarU = S.SURUM === 2 ? await (await import("../designs/teslim.js")).alimAnahtari(cuzdan, yaz) : undefined;
     await S.gonder({ cuzdan, data: S.veri.alUsdc(t.id, kanca, asgari, anahtarU), durum: yaz, aciklama: "Confirm the purchase (" + usd(t.ilan.fiyat) + " USDC swapped into $" + sym + " for the seller)" });
@@ -831,7 +832,7 @@ async function yayinlaSayfasi({ cuzdan }) {
     const P = await import("../designs/parmakizi.js");
     return metaYap({
       ad: adGir.value.trim() || hazir.dosya.name, aciklama: acikGir.value.trim(), onizleme: onizUri || undefined,
-      lisans: (ay && ay.lisans) || S.LISANS_YEDEK, lisansUri: "https://arcpulse.app/#/designs/license",
+      lisans: (ay && ay.lisans) || S.LISANS_YEDEK, lisansUri: "https://arcpulse.app/arc-launchpad/docs/designs/#/license",
       tasarimci: cuzdan.hesap().toLowerCase(), token: jetonSec.value,
       dosya: { uri: dosyaUri, name: hazir.dosya.name, mime: hazir.dosya.type || "application/octet-stream", size: hazir.dosya.size, sha256: hazir.parmak.dosyaHash, encryption: "AES-256-GCM, APD1 header; key wrapped per holder (ECIES secp256k1)" },
       parmak: { algiHash: hazir.parmak.algiHash, method: hazir.parmak.aciklama },

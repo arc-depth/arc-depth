@@ -129,6 +129,7 @@ export const TASARIM_ABI2 = [
   "error SureBitmedi()",
   "error SureBitti()",
   "error TaahhutYok()",
+  "error TooLittleReceived(uint256 gelen, uint256 asgari)",   // the swap router under alUsdc
   "error TasarimciDegil()",
   "error YetkiYok()",
   "event AnahtarItirazi(uint256 indexed id, address alici)",
@@ -275,7 +276,8 @@ export function hataAcikla(e) {
     AnahtarYok: "Register your unlock key first (My profile), or buy from this page: it registers it in the same transaction.",
     KotuDurum: "The sale is not in the state this needs (it may have moved on: reload the page).",
     Kilitli: "This design is in an open sale (waiting for the key or the buyer's confirmation) and cannot be moved now.",
-    TaahhutYok: "No matching publish commitment from an earlier block."
+    TaahhutYok: "No matching publish commitment from an earlier block.",
+    TooLittleReceived: "The pool would return too few designer tokens for the seller right now (its price moved away from the time-weighted price). Nothing was paid; try again in a few minutes."
   };
   if (ad && M[ad]) return M[ad];
   const m = (e && (e.shortMessage || e.message)) || String(e);
@@ -451,6 +453,18 @@ export async function kayitliMi(dosyaHash, algiHash) {
 /** Designer tokens worth `fiyat` USDC at the TWAP, or null while there is no price feed. */
 export async function tokenKarsiligi(token, fiyat) {
   try { return await (await nft()).tokenKarsiligi(token, fiyat); } catch (e) { return null; }
+}
+
+/**
+ * The fewest designer tokens an alUsdc purchase of `miktar` (tokenKarsiligi of the price) may return:
+ * the contract's own floor, the TWAP value minus alUsdcToleransBps (10% at deployment). The pool takes its
+ * 2.2% trade fee and the token's 1–5% collateral tax from the USDC before the swap, so the output is
+ * 3.2–7.2% under the TWAP value even when the pool sits at the TWAP; the old fixed 97% floor refused every
+ * USDC purchase (measured on Arc mainnet 2 Nov 2026: a 1%-tax token returned 96.7%, reverted).
+ */
+export async function alUsdcAsgari(miktar) {
+  const tol = await (await nft()).alUsdcToleransBps().catch(() => 1000n);
+  return (miktar * (10_000n - BigInt(tol))) / 10_000n;
 }
 
 /** Token name/symbol/decimals, cached per page load. */

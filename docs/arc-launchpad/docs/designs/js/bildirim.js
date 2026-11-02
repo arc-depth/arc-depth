@@ -5,8 +5,14 @@
  * since the last visit: a new follower and a like on one of my designs
  * (ProfilKaydi), a comment on my design (YorumKaydi, once deployed), my
  * design sold and its file key still to deliver / a key delivered to me
- * (TasarimNFT2), and new messages (MesajKutusu). "My designs" are the ones
- * the wallet designed or holds now.
+ * (TasarimNFT2), and new messages (MesajKutusu; and the private box
+ * MesajKutusu2 once it is set). "My designs" are the ones the wallet
+ * designed or holds now.
+ * Private box: no recipient is on chain, so the bell can only find the
+ * wallet's private messages with its unlock key (view tag + decryption,
+ * mesaj2.js). It does that once the key is in memory (after "Unlock" in the
+ * inbox, one signature per page load), from the block it started at.
+ * Deleted, disappeared and locally blocked/hidden messages are not counted.
  * The last block seen is kept in this browser's localStorage per wallet
  * (okundu.js, convenience only); without it the bell shows the last few
  * hours. Nothing is sent anywhere: these are the same public reads every
@@ -37,8 +43,9 @@ async function benimkiler(ben) {
   return _benim.set;
 }
 
-/** Notifications for `ben` in blocks (bas, son]; each {anahtar, tur, blok, parcalar, href}. */
-export async function tara(ben, bas, son) {
+/** Notifications for `ben` in blocks (bas, son]; each {anahtar, tur, blok, parcalar, href}.
+ *  `ozel`: { bas, sk } to also look for private-box messages in (ozel.bas, son] with unlock key sk. */
+export async function tara(ben, bas, son, ozel) {
   const p = await S.arc();
   const out = [];
   const ekle = (o) => out.push(o);
@@ -84,12 +91,24 @@ export async function tara(ben, bas, son) {
     }
   })());
 
-  /* messages to me, one line per sender */
+  /* messages to me, one line per sender (a wallet blocked in this browser is left out once the private box is on) */
   if (SO.MESAJ_VAR) isler.push((async () => {
-    const gelen = (await SO.mesajlar(ben, bas)).filter((m) => m.blok <= son && !esit(m.gonderen, ben));
+    const engel = SO.MESAJ2_VAR ? O.engelliler(ben) : new Set();
+    const gelen = (await SO.mesajlar(ben, bas)).filter((m) => m.blok <= son && !esit(m.gonderen, ben) && !engel.has(ad(m.gonderen)));
     const g = new Map();
     for (const m of gelen) { const k = ad(m.gonderen); if (!g.has(k)) g.set(k, { kim: m.gonderen, n: 0, blok: 0 }); const o = g.get(k); o.n++; o.blok = Math.max(o.blok, m.blok); }
     for (const o of g.values()) ekle({ anahtar: "mesaj:" + ad(o.kim) + ":" + o.blok, tur: "mesaj", blok: o.blok, kim: o.kim, parcalar: [o.n > 1 ? o.n + " new messages from " : "New message from ", isim(o.kim)], href: "#/messages/" + o.kim });
+  })());
+
+  /* private box: every message in the range, mine found by view tag (needs the unlock key) */
+  if (SO.MESAJ2_VAR && ozel && ozel.sk) isler.push((async () => {
+    const M2 = await import("./mesaj2.js");
+    const [olaylar, silinen] = await Promise.all([SO.mesajlar2(ozel.bas, son), SO.silinenler2().catch(() => new Set())]);
+    const F = { ben, silinen, gizli: O.gizlenenler(ben), engel: O.engelliler(ben) };
+    const gelen = (await M2.tara(olaylar, { sk: ozel.sk, ben })).filter((m) => !esit(m.gonderen, ben) && M2.gorunurMu(m, F));
+    const g = new Map();
+    for (const m of gelen) { const k = ad(m.gonderen); if (!g.has(k)) g.set(k, { kim: m.gonderen, n: 0, blok: 0 }); const o = g.get(k); o.n++; o.blok = Math.max(o.blok, m.blok); }
+    for (const o of g.values()) ekle({ anahtar: "mesaj2:" + ad(o.kim) + ":" + o.blok, tur: "mesaj", blok: o.blok, kim: o.kim, parcalar: [o.n > 1 ? o.n + " new private messages from " : "New private message from ", isim(o.kim)], href: "#/messages/" + o.kim });
   })());
 
   const sonuc = await Promise.allSettled(isler);
@@ -115,11 +134,12 @@ export function zilKur(cuzdan) {
   const panel = el("div", { sinif: "dz-zil__panel", attr: { role: "dialog", "aria-label": "Notifications", hidden: "" } }, [
     el("div", { sinif: "dz-zil__ust" }, [el("b", { yazi: "Notifications" }), izin]),
     liste,
-    el("p", { sinif: "ds-cihaz dz-zil__not", yazi: "Read from public Arc events in this browser; nothing is sent or stored by ARC PULSE. The last one seen is remembered on this device only." })]);
+    el("p", { sinif: "ds-cihaz dz-zil__not", yazi: "Read from public Arc events in this browser; nothing is sent or stored by ARC PULSE. The last one seen is remembered on this device only." + (SO.MESAJ2_VAR ? " Private messages show here after you unlock your inbox on this page." : "") })]);
   const kap = el("div", { sinif: "dz-zil-kap" }, [dugme, panel]);
   yer.parentNode.insertBefore(kap, yer);
 
   let ogeler = [], gorulen = O.bildirimGoruldu(ben), taranan = null, ilk = true, calisiyor = false;
+  let ozelTaranan = null;   // private box: the block it has been scanned up to with the unlock key
   const izinYaz = () => {
     const destek = typeof Notification !== "undefined";
     const acik = destek && Notification.permission === "granted" && O.bildirimIzni(ben);
@@ -163,15 +183,22 @@ export function zilKur(cuzdan) {
   const esc = (e) => { if (e.key === "Escape" && !panel.hidden) { ac(false); dugme.focus(); } };
   document.addEventListener("keydown", esc);
 
+  let tekrar = false;   // asked again while a look was running (e.g. the key just arrived)
   const tur = async () => {
-    if (calisiyor || (!ilk && document.visibilityState !== "visible")) return;
+    if (calisiyor) { tekrar = true; return; }
+    if (!ilk && document.visibilityState !== "visible") return;
     calisiyor = true;
     try {
       const son = await (await S.arc()).getBlockNumber();
       let bas = taranan != null ? taranan : gorulen != null ? gorulen : son - ILK_GERI;
       bas = Math.max(bas, son - AZAMI_GERI);
-      if (son <= bas) return;
-      const { ogeler: y } = await tara(ben, bas, son);
+      /* the private box from where the bell started, as soon as the unlock key is in memory */
+      const sk = SO.MESAJ2_VAR ? (await import("../../js/designs/sifre.js")).bellektekiAnahtar(ben) : null;
+      if (_ilkBas == null) _ilkBas = bas;
+      const ozel = sk ? { sk, bas: Math.max(ozelTaranan != null ? ozelTaranan : _ilkBas, son - AZAMI_GERI) } : null;
+      if (son <= bas && !(ozel && son > ozel.bas)) return;
+      const { ogeler: y } = await tara(ben, Math.min(bas, son), son, ozel);
+      if (ozel) ozelTaranan = son;
       const var_ = new Set(ogeler.map((o) => o.anahtar));
       const taze = y.filter((o) => !var_.has(o.anahtar));
       ogeler = [...taze, ...ogeler].sort((a, b) => b.blok - a.blok).slice(0, 200);
@@ -179,14 +206,18 @@ export function zilKur(cuzdan) {
       if (!ilk && taze.length) tarayiciBildirimi(ben, taze);
       ciz();
     } catch (e) { /* the next round tries again */ }
-    finally { calisiyor = false; ilk = false; }
+    finally { calisiyor = false; ilk = false; if (tekrar) { tekrar = false; setTimeout(tur, 0); } }
   };
+  let _ilkBas = null;
   izinYaz(); ciz();
   tur();
+  /* the inbox derived the unlock key: look for private messages now */
+  const anahtarda = () => tur();
+  window.addEventListener("dz-anahtar", anahtarda);
   const z = setInterval(tur, YOKLAMA);
   const gorunur = () => { if (document.visibilityState === "visible") tur(); };
   document.addEventListener("visibilitychange", gorunur);
-  _zil = { kap, tur, dur: () => { clearInterval(z); document.removeEventListener("visibilitychange", gorunur); document.removeEventListener("click", disari); document.removeEventListener("keydown", esc); } };
+  _zil = { kap, tur, dur: () => { clearInterval(z); document.removeEventListener("visibilitychange", gorunur); document.removeEventListener("click", disari); document.removeEventListener("keydown", esc); window.removeEventListener("dz-anahtar", anahtarda); } };
   return _zil;
 }
 

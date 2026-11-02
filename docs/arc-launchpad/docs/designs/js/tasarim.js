@@ -134,7 +134,7 @@ async function fiyatKutusu({ cuzdan, t, ay, j, sym }) {
       if (miktar == null) throw new Error("Buying opens when the price feed is live.");
       await S.onayGerekirse({ cuzdan, token: S.TASARIM.usdc, miktar: t.ilan.fiyat, durum: yaz, etiket: usd(t.ilan.fiyat) + " USDC" });
       const anahtar = await T.alimAnahtari(cuzdan, yaz);
-      await S.gonder({ cuzdan, data: S.veri.alUsdc(t.id, kanca, miktar * 9700n / 10000n, anahtar), durum: yaz, aciklama: "Confirm the purchase (" + usd(t.ilan.fiyat) + " USDC, swapped into $" + sym + " for the seller)" });
+      await S.gonder({ cuzdan, data: S.veri.alUsdc(t.id, kanca, await S.alUsdcAsgari(miktar), anahtar), durum: yaz, aciklama: "Confirm the purchase (" + usd(t.ilan.fiyat) + " USDC, swapped into $" + sym + " for the seller)" });
       yaz("Bought. Your payment waits until the seller delivers the file key to you; this page then opens the file.", "ok");
       setTimeout(() => location.reload(), 2500);
   };

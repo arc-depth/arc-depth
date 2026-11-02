@@ -301,3 +301,25 @@ button.dz-sayi { cursor: pointer; }
 /* ---- inbox: unread dot ---- */
 .dz-okunmadi { margin-left: auto; flex: none; width: 10px; height: 10px; border-radius: 3px; background: var(--marka-parlak); transform: rotate(45deg); }
 .dz-gelen__oge--yeni .dz-isim { color: var(--yazi-1); font-weight: var(--kalin-kalin); }
+
+/* ---- private box (MesajKutusu2) ---- */
+.dz-gelen__baslik { padding: 10px 12px 4px; font-size: var(--boy-xs); color: var(--yazi-3); border-top: 1px solid var(--cizgi); }
+.dz-gelen__kilit { border-top: 0; border-bottom: 1px solid var(--cizgi); }
+.dz-balonlar__ayrac { align-self: center; font-size: var(--boy-xs); color: var(--yazi-3); padding: 2px 10px; border: 1px solid var(--cizgi); border-radius: 999px; }
+.dz-balonlar__ayrac--ozel { color: var(--yazi-2); }
+.dz-balon__alt { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.dz-balon__eylem { margin-left: auto; background: none; border: 0; padding: 0; font: inherit; font-size: var(--boy-xs); color: inherit; opacity: .7; text-decoration: underline; cursor: pointer; }
+.dz-balon__eylem:hover, .dz-balon__eylem:focus-visible { opacity: 1; }
+.dz-konusma__eylem { display: flex; gap: 8px; align-items: center; }
+.dz-kaybol { height: 32px; width: auto; padding: 0 8px; font-size: var(--boy-s); }
+.dz-mesaj-not { margin: 0; padding: 0 12px 10px; }
+
+/* phone (found in the mainnet end-to-end test, 2 Nov 2026): the top bar did not fit 390px (the wallet
+   button ran off the right edge) and the bell's panel, anchored to the bell, ran off the left edge.
+   The wallet button shows only its avatar, and the panel spans the screen under the top bar. */
+@media (max-width: 599px) {
+  .dz-ust { gap: 8px; padding: 0 12px; }
+  .dz-hesap { padding: 0 5px; }
+  .dz-hesap .dz-isim { display: none; }
+  .dz-zil__panel { position: fixed; left: 12px; right: 12px; top: calc(var(--dz-ust) + 4px); width: auto; max-height: calc(100vh - var(--dz-ust) - 96px); }
+}
