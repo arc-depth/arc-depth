@@ -25,14 +25,15 @@ export const adresMi = (a) => /^0x[0-9a-fA-F]{40}$/.test(String(a || "").trim())
 
 /* ---- icons (constant SVG, never user text) ---- */
 const IKON = {
-  ev: '<path d="M3 11.5 12 4l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
-  kesfet: '<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',
-  mesaj: '<path d="M21 4 3 11l7 2.5L12.5 21z"/><path d="M10 13.5 21 4"/>',
-  arti: '<rect x="3" y="3" width="18" height="18" rx="5"/><path d="M12 8v8M8 12h8"/>',
-  kisi: '<circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/>',
-  kalp: '<path d="M12 20s-7-4.4-9-9a5 5 0 0 1 9-3 5 5 0 0 1 9 3c-2 4.6-9 9-9 9z"/>',
-  geri: '<path d="M15 5 8 12l7 7"/>',
-  kilit: '<rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>'
+  /* ARC PULSE's own set: rounded squares, diamonds and the pulse line */
+  ev: '<rect x="3" y="3" width="18" height="18" rx="6"/><path d="M6.5 12.5h2.5l1.5-3.5 3 7 1.5-3.5h2.5"/>',
+  kesfet: '<rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2"/><path d="M17 12.6 20.4 16 17 19.4 13.6 16z"/>',
+  mesaj: '<path d="M4 6a3 3 0 0 1 3-3h7a3 3 0 0 1 3 3v5a3 3 0 0 1-3 3H9l-3 2.5V14a3 3 0 0 1-2-3z"/><path d="M20 9.5v5a3 3 0 0 1-2 2.8V20l-3-2.5h-4"/>',
+  arti: '<path d="M12 2.8 21.2 12 12 21.2 2.8 12z"/><path d="M12 8.5v7M8.5 12h7"/>',
+  kisi: '<rect x="8" y="3.5" width="8" height="8" rx="3"/><path d="M4.5 20.5a7.5 6 0 0 1 15 0"/>',
+  kalp: '<path d="M12 3 14 10 21 12 14 14 12 21 10 14 3 12 10 10z"/>',
+  geri: '<path d="M19 12H5M11 6l-6 6 6 6"/>',
+  kilit: '<rect x="5" y="10" width="14" height="10" rx="4"/><path d="M8.5 10V7.5a3.5 3.5 0 0 1 7 0V10"/><path d="M12 14v2"/>'
 };
 export function ikon(ad, boy = 24) {
   return el("span", { sinif: "dz-ikon", attr: { "aria-hidden": "true" },
@@ -144,7 +145,7 @@ export function adYaz(uri, hedef, yedek) {
   metaOku(uri).then((m) => { if (m && m.name) hedef.textContent = String(m.name).slice(0, 80); }).catch(() => {});
   return hedef;
 }
-/** Square grid tile (Instagram style): preview, and on hover the price and likes. */
+/** Grid tile: preview, the price always on a chip, and on hover the name and likes. */
 export function karo(t, durum, begeni) {
   const ad = el("span", { sinif: "dz-karo__ad" });
   adYaz(t.uri, ad, "Design #" + t.id);
@@ -153,7 +154,7 @@ export function karo(t, durum, begeni) {
     el("span", { sinif: "dz-karo__ust" }, [ad,
       el("span", { sinif: "dz-karo__bilgi" }, [
         el("span", { yazi: durum && durum.fiyat ? usd(durum.fiyat) : durum && !durum.sahip ? "taken down" : "not listed" }),
-        begeni != null ? el("span", { yazi: "♥ " + begeni }) : null])]),
+        begeni != null ? el("span", { yazi: "✦ " + begeni }) : null])]),
     durum && durum.fiyat ? el("span", { sinif: "dz-karo__etiket", yazi: usd(durum.fiyat) }) : null
   ]);
 }

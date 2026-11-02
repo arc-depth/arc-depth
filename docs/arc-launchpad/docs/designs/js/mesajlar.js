@@ -18,7 +18,7 @@ function ustBant() {
 
 export async function mesajSayfasi({ cuzdan }, kiminle) {
   const kap = el("div", { sinif: "dz-mesaj-sayfa" });
-  kap.append(el("div", { sinif: "dz-sayfa-ust" }, [el("h1", { yazi: "Messages" })]), ustBant());
+  kap.append(el("div", { sinif: "dz-sayfa-ust" }, [el("h1", { yazi: "Inbox" })]), ustBant());
   if (!SO.MESAJ_VAR) { kap.append(bosKutu("Messages open soon", "Wallet-to-wallet messages, encrypted in your browser, open when the message box is deployed on Arc.")); return kap; }
   const ben = cuzdan.hesap();
   if (!ben) {

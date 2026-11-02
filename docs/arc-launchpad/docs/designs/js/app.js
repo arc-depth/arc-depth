@@ -1,7 +1,7 @@
 /* ===========================================================================
  * designs/js/app.js — ARC PULSE Designs, the standalone site (docs/designs/)
  *
- * An Instagram-style home for designer NFTs (TasarimNFT2 on Arc): a feed of
+ * A social home for designer NFTs (TasarimNFT2 on Arc): a feed of
  * the profiles you follow, Explore, profiles, design pages, messages and
  * publishing. It reuses the main app's modules (docs/js/designs/*,
  * cuzdan.js, ui.js) read-only; the main app keeps its own #/designs pages.
@@ -32,7 +32,7 @@ const SO = await import("./sosyal.js");
 
 const icerik = document.getElementById("dz-icerik");
 const SEKMELER = [
-  ["", "Home", "ev"], ["explore", "Explore", "kesfet"], ["messages", "Messages", "mesaj"], ["publish", "Publish", "arti"], ["me", "Profile", "kisi"]
+  ["", "Pulse", "ev"], ["explore", "Discover", "kesfet"], ["messages", "Inbox", "mesaj"], ["publish", "Publish", "arti"], ["me", "Studio", "kisi"]
 ];
 
 /* ---- the shell: side rail (desktop), bottom bar (phone), top bar ---- */
@@ -43,7 +43,7 @@ function kabukCiz() {
   yan.append(el("a", { sinif: "dz-marka", attr: { href: "#/" } }, [markaIkon(), el("span", { yazi: "ARC PULSE Designs" })]));
   for (const [k, ad, ik] of SEKMELER) {
     yan.append(el("a", { sinif: "dz-yan__oge", attr: { href: "#/" + k, "data-sekme": k } }, [ik === "kisi" && cuzdan.hesap() ? avatar(cuzdan.hesap(), 24) : ikon(ik), el("span", { yazi: ad })]));
-    alt.append(el("a", { sinif: "dz-alt__oge", attr: { href: "#/" + k, "data-sekme": k, "aria-label": ad } }, [ik === "kisi" && cuzdan.hesap() ? avatar(cuzdan.hesap(), 26) : ikon(ik, 26)]));
+    alt.append(el("a", { sinif: "dz-alt__oge", attr: { href: "#/" + k, "data-sekme": k } }, [ik === "kisi" && cuzdan.hesap() ? avatar(cuzdan.hesap(), 24) : ikon(ik, 24), el("span", { sinif: "dz-alt__ad", yazi: ad })]));
   }
   yan.append(el("div", { sinif: "dz-yan__bosluk" }),
     el("a", { sinif: "dz-yan__oge dz-yan__ana", attr: { href: ANA + "#/kesfet" } }, [ikon("geri"), el("span", { yazi: "ARC PULSE app" })]),
