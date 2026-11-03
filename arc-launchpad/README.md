@@ -225,11 +225,38 @@ It checks that wrapped supply equals vault shares, that minted minus burned equa
 | `relayer/relayer.js` | carries lock and burn notices; dry-run by default, refuses to act when the two chains already disagree |
 | `scripts/denetim.js` | the independent check: wrapped supply must equal vault shares |
 | `docs/index.html` | a static page that reads the launchpad straight from Arc, no backend |
+| `LimitEmir` | limit orders on Arc without a server (`0x1fef84Bd1Dd626E0F3e8FcD6A48521D5C6f839dC`, Sourcify exact_match) |
+| `scripts/limit-bekci.js` | the public keeper for those orders: anyone runs it and earns the orders' tips |
 
 The governor is honest about its reach: it governs nothing already deployed,
 because the hook, the vault and every launch are immutable and have no
 function a vote could call. It decides who the developer share pays, what a
 future version uses, and what the treasury does.
+
+### Limit orders and the keeper
+
+A wallet escrows USDC (buy) or a launched token (sell) in `LimitEmir` with a
+minimum output and an expiry; the minimum output *is* the limit price, all in
+(pool fee, collateral tax, platform fee, tip). Anyone may call `doldur(id)`:
+the trade goes through the MerkezKapi that launched the token and the contract
+reverts unless the owner receives at least the minimum, so a keeper cannot fill
+an order worse than its limit. The owner cancels any time for the whole
+deposit; after expiry anyone can send it back. Fee on fills only: 0.20% of the
+order's USDC by default (admin-adjustable, capped at 1%, fixed into each order
+when placed), split 30% ARCP buy-and-burn / 30% ARCP DAO developer fund / 20%
+marketing / 20% platform. The keeper's tip is chosen by the owner: at least
+$0.02, at most $1 and 5% of the order's USDC.
+
+```bash
+node scripts/limit-bekci.js                     # dry run: open orders, which fill now, tip vs gas
+LIMIT_BEKCI_KEY=0x… node scripts/limit-bekci.js --uygula              # fill the profitable ones once
+LIMIT_BEKCI_KEY=0x… node scripts/limit-bekci.js --uygula --dongu 60   # keep going every 60 s
+```
+
+The keeper needs only a little Arc USDC for gas (a fill is ~0.7-1M gas, about
+$0.02 at 20 gwei). It is a script you start yourself, not a hosted service.
+Audit on the real pools: `node scripts/limit-denetim.js`; the page in a browser:
+`node scripts/limit-site-sim.mjs`.
 
 ## Running it
 

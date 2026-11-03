@@ -325,3 +325,96 @@ button.dz-sayi { cursor: pointer; }
   .dz-hesap .dz-isim { display: none; }
   .dz-zil__panel { position: fixed; left: 12px; right: 12px; top: calc(var(--dz-ust) + 4px); width: auto; max-height: calc(100vh - var(--dz-ust) - 96px); }
 }
+
+/* ---- market v3 (TasarimPazar3: offers, auctions, resale, splits; js/pazar.js) ---- */
+.dz-pazar { display: flex; flex-direction: column; gap: 10px; }
+.dz-pazar__baslik { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.dz-pazar__baslik h3 { margin: 0; }
+.dz-pazar__blok { display: flex; flex-direction: column; gap: 8px; padding: 12px; border: 1px solid var(--cizgi); border-radius: 14px; background: var(--yuzey-1); }
+.dz-pazar__blok--satis { border-color: var(--marka-cizgi); }
+.dz-pazar__ust { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.dz-pazar__sayac { font-variant-numeric: tabular-nums; color: var(--marka-parlak); font-weight: var(--kalin-kalin); }
+.dz-pazar__satir { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.dz-pazar__satir .girdi { flex: 1 1 120px; min-width: 0; width: auto; }
+.dz-pazar__satir select.girdi { flex: 0 1 auto; }
+.dz-pazar__teklif { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; padding: 6px 0; border-top: 1px solid var(--cizgi); }
+.dz-pazar__teklif > :last-child { margin-left: auto; }
+.dz-pazar__pay .ds-satir { font-size: var(--boy-s); color: var(--yazi-2); }
+.dz-pazar__gecmis summary { cursor: pointer; color: var(--yazi-2); }
+.dz-pazar__karo-alt { padding: 6px 8px; font-size: var(--boy-s); color: var(--yazi-2); font-variant-numeric: tabular-nums; }
+.dz-bolus__satirlar { display: flex; flex-direction: column; gap: 6px; }
+.dz-bolus__satir { display: flex; gap: 6px; align-items: center; }
+.dz-bolus__satir .girdi { flex: 1 1 auto; min-width: 0; width: auto; }
+.dz-bolus__satir .dz-bolus__pay { flex: 0 0 84px; }
+.dz-bolus-yayin { margin-top: 16px; }
+.dz-pazar-sayfa { display: flex; flex-direction: column; gap: 14px; }
+.dz-pazar-sayfa h2 { margin: 8px 0 0; }
+.dz-pazar-sayfa .dz-sayfa-baslik { margin: 0; }
+
+/* ---- Jobs (isler.js), collections and drops (koleksiyonlar.js), Verified designer badge (rozet.js) ---- */
+.dz-is-ust { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.dz-is-liste { display: grid; gap: 10px; margin-top: 12px; }
+.dz-is-kart { display: grid; gap: 8px; padding: 14px 16px; border: 1px solid var(--cizgi); border-radius: 16px; background: var(--yuzey-1); text-decoration: none; color: inherit; }
+.dz-is-kart:hover { border-color: var(--marka-cizgi); }
+.dz-is-kart__ust { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-width: 0; }
+.dz-is-kart__ust h1 { font-size: var(--boy-2xl); margin: 0; overflow-wrap: anywhere; }
+.dz-is-kart__ad { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.dz-is-kart__alt, .dz-is-meta { display: flex; flex-wrap: wrap; gap: 6px 14px; color: var(--yazi-2); font-size: var(--boy-s); align-items: center; }
+.dz-is-butce { color: var(--yazi-1); font-weight: var(--kalin-yari); }
+.dz-is-durum { flex: none; }
+.dz-is-durum--1 { border-color: var(--marka-parlak); color: var(--marka-parlak); }
+.dz-is-durum--3, .dz-is-durum--4 { border-color: #e0a84a; color: #e0a84a; }
+.dz-is-durum--5, .dz-is-durum--7 { border-color: #3fbf7f; color: #3fbf7f; }
+.dz-is-baslik { display: grid; gap: 8px; margin-bottom: 12px; }
+.dz-is-govde { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.55; }
+.dz-is-brief-metin h2, .dz-is-sayfa section > h2 { font-size: var(--boy-l); margin: 0 0 8px; }
+.dz-is-eylemler { display: grid; gap: 10px; }
+.dz-is-eylem h3 { margin: 0 0 6px; }
+.dz-is-eylem details, .dz-kol-duzen details { margin-top: 8px; }
+.dz-is-eylem summary, .dz-kol-duzen > summary { cursor: pointer; color: var(--yazi-2); }
+.dz-is-form textarea, .dz-is-form input, .dz-is-eylem textarea, .dz-is-eylem input, .dz-is-eylem select { width: 100%; box-sizing: border-box; }
+.dz-is-iki { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+.dz-is-ozet, .dz-is-not { margin-top: 8px; }
+.dz-is-basvurular { display: grid; gap: 10px; }
+.dz-is-basvuru { display: grid; gap: 6px; padding: 10px 0; border-top: 1px solid var(--cizgi); }
+.dz-is-basvuru:first-child { border-top: 0; }
+.dz-is-basvuru__not { white-space: pre-wrap; overflow-wrap: anywhere; color: var(--yazi-2); }
+.dz-is-teslim { display: grid; gap: 4px; padding: 8px 0; border-top: 1px solid var(--cizgi); }
+.dz-is-teslim:first-of-type { border-top: 0; }
+.dz-izgara--tek { grid-template-columns: minmax(0, 220px); }
+.dz-kesfet-ek { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+.dz-kesfet-ek .dz-cip { display: inline-flex; align-items: center; gap: 6px; text-decoration: none; }
+.dz-rozet-dogru { display: inline-flex; vertical-align: middle; margin-left: 4px; color: var(--marka-parlak); line-height: 0; }
+.dz-rozet-dogru[hidden] { display: none; }
+.dz-karo { position: relative; }
+.dz-karo__rozet { position: absolute; top: 8px; left: 8px; line-height: 0; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .6)); }
+.dz-karo__rozet .dz-rozet-dogru { margin: 0; }
+.dz-dogru-liste { padding-left: 18px; line-height: 1.6; }
+.dz-kol-izgara { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+.dz-kol-izgara--serit { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
+.dz-kol-kart { display: grid; border: 1px solid var(--cizgi); border-radius: 18px; overflow: hidden; background: var(--yuzey-1); text-decoration: none; color: inherit; }
+.dz-kol-kart:hover { border-color: var(--marka-cizgi); }
+.dz-kol-kapak { aspect-ratio: 16 / 10; background: linear-gradient(135deg, var(--marka-zemin), var(--yuzey-2, #15171c)); overflow: hidden; display: grid; place-items: center; }
+.dz-kol-kapak img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.dz-kol-kart__alt { display: grid; gap: 4px; padding: 10px 12px 12px; min-width: 0; }
+.dz-kol-kart__ad { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dz-kol-kart__kim { color: var(--yazi-2); font-size: var(--boy-s); display: inline-flex; align-items: center; }
+.dz-kol-baslik { display: grid; gap: 16px; margin-bottom: 16px; }
+@media (min-width: 720px) { .dz-kol-baslik { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); align-items: start; } }
+.dz-kol-baslik .dz-kol-kapak { border-radius: 18px; }
+.dz-kol-baslik__bilgi { display: grid; gap: 10px; min-width: 0; }
+.dz-kol-baslik__bilgi h1 { margin: 0; font-size: var(--boy-2xl); overflow-wrap: anywhere; }
+.dz-kol-aciklama { white-space: pre-wrap; overflow-wrap: anywhere; color: var(--yazi-2); margin: 0; }
+.dz-kol-drop { display: grid; gap: 4px; }
+.dz-geri-sayim { display: inline-block; font-variant-numeric: tabular-nums; font-weight: var(--kalin-yari); color: var(--marka-parlak); }
+.dz-geri-sayim--acik { color: #3fbf7f; }
+.dz-kol-secim { display: grid; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); margin: 8px 0; }
+.dz-kol-secim__oge { display: grid; gap: 4px; justify-items: center; font-size: var(--boy-s); cursor: pointer; }
+.dz-kol-secim__resim { width: 100%; aspect-ratio: 1; border-radius: 10px; overflow: hidden; background: var(--yuzey-1); }
+.dz-kol-secim__resim img { width: 100%; height: 100%; object-fit: cover; }
+.dz-kol-drop-sec > span { display: inline-flex; gap: 6px; align-items: center; }
+.dz-profil-kol { margin: 16px 0; }
+.dz-profil-kol h2 { font-size: var(--boy-l); margin: 0 0 10px; }
+.dz-tasarim__kol { display: inline-block; margin: 4px 0 8px; color: var(--yazi-2); text-decoration: none; font-size: var(--boy-s); }
+.dz-tasarim__kol:hover { color: var(--yazi-1); }
+.dz-drop-kutu { display: grid; gap: 6px; }

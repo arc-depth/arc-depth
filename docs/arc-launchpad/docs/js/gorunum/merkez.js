@@ -1000,6 +1000,14 @@ export async function ciz({ param } = {}) {
       kpDugme, kpDurum,
       ...(V2.surum >= 4 ? [el("div", { sinif: "alan__ipucu", yazi: "Every trade's collateral tax goes to the basket in the same transaction. When several lines cross $50 at once it may need more gas than a trade gives it; then it waits, safe, and anyone passes it on here." }),
         kovaDugme, kovaDurum] : [])] : [])])));
+  /* limit orders on Arc, right under the trade panel (LimitEmir: docs/js/limit-panel.js, docs/js/limit-emir.js) */
+  const limitYer = el("div", { sinif: "yigin" });
+  kap.append(limitYer);
+  import("../limit-panel.js").then((m) => limitYer.append(m.limitPaneli({ tokenGirdi: token }))).catch(() => limitYer.append(not("The limit order panel could not be loaded. Reload the page to use it.", "uyari")));
+  /* the token page's price chart, top holders and recent trades, following the address above (docs/js/token-etkinlik.js) */
+  const etkinlikYer = el("div", { sinif: "yigin" });
+  kap.append(etkinlikYer);
+  import("../token-etkinlik.js").then((m) => etkinlikYer.append(m.etkinlikPaneli(token))).catch(() => {});
   /* Solana / Sui / Aptos wallets (docs/js/uzak-cuzdan.js) */
   if (V2) import("../uzak-cuzdan.js").then((m) => kap.append(m.uzakCuzdanPaneli({ token, V2, kaymaOrani }))).catch(() => kap.append(not("The Solana / Sui / Aptos wallet panel could not be loaded. Reload the page to use it.", "uyari")));
   return kap;

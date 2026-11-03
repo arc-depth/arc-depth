@@ -8,13 +8,17 @@
  * (ProfilKaydi.profilYaz + kullaniciAdiAl; the avatar uploaded to Irys
  * paid from Arc USDC through the main app's irys.js flow, or a pasted
  * link) and the unlock-key box (teslim.js) needed to receive files and
- * messages, and for other wallets a Report button (yorumlar.js). A
+ * messages, and for other wallets a Report button (yorumlar.js) and Hire
+ * (a job addressed to them, isler.js). The Verified designer badge (rozet.js)
+ * sits by the handle; the designer's collections (koleksiyonlar.js) above
+ * the works. A
  * profile the admin hid (gizle) shows nothing.
  * =========================================================================== */
 import { formatUnits } from "../../vendor/ethers.min.js";
 import { el, temizle, S, SO, ANA, kisa, esit, adresMi, avatar, isim, karo, takipDugmesi, eylem, durumSatiri, durumYaz, bosKutu, hesapIste, tasarimciJetonlari, gorselUrl, yukleniyor } from "./ortak.js";
 import { bildirDugmesi } from "./yorumlar.js";
 import { PROFIL } from "./yorum.js";
+import { rozet } from "./rozet.js";
 
 export function benimBos({ cuzdan }) {
   const b = eylem("Connect wallet", async () => { await hesapIste(); }, "dugme dugme--marka");
@@ -38,11 +42,12 @@ export async function profilSayfasi({ cuzdan }, adres) {
   /* ---- header ---- */
   const sayi = (n, ad, f) => el(f ? "button" : "span", { sinif: "dz-sayi", attr: f ? { type: "button" } : {}, on: f ? { click: f } : {} }, [el("b", { yazi: n == null ? "—" : String(n) }), " " + ad]);
   const basliklar = el("div", { sinif: "dz-profil__isimler" }, [
-    el("h1", { sinif: "dz-profil__tutamac", yazi: p.kullaniciAdi ? "@" + p.kullaniciAdi : kisa(adres) }),
+    el("h1", { sinif: "dz-profil__tutamac" }, [p.kullaniciAdi ? "@" + p.kullaniciAdi : kisa(adres), rozet(adres, 22)]),
     el("div", { sinif: "ds-dugmeler" }, [
       benim ? el("button", { sinif: "dugme dugme--kucuk", attr: { type: "button" }, yazi: "Edit profile", on: { click: () => duzenle() } }) : takipDugmesi(cuzdan, adres, { degisti: () => setTimeout(yenileSayilar, 500) }),
       benim ? el("a", { sinif: "dugme dugme--kucuk", attr: { href: "#/publish" }, yazi: "Publish" }) : el("a", { sinif: "dugme dugme--kucuk", attr: { href: "#/messages/" + adres }, yazi: "Message" }),
       el("a", { sinif: "dugme dugme--kucuk dugme--sade", attr: { href: S.TASARIM.kasif + "/address/" + adres, target: "_blank", rel: "noopener" }, yazi: "Explorer ↗" }),
+      benim ? null : el("a", { sinif: "dugme dugme--kucuk", attr: { href: "#/jobs/new?to=" + adres, title: "Post a job addressed to this designer" }, yazi: "Hire" }),
       benim ? null : bildirDugmesi({ cuzdan }, { nft: adres, id: PROFIL, ad: "profile " + (p.kullaniciAdi ? "@" + p.kullaniciAdi : kisa(adres)) })])
   ]);
   const sayilar = el("div", { sinif: "dz-sayilar" });
@@ -76,6 +81,11 @@ export async function profilSayfasi({ cuzdan }, adres) {
   const duzenKutu = el("div");
   kap.append(duzenKutu);
   if (benim && S.SURUM === 2) kap.append(el("details", { sinif: "dz-acilir" }, [el("summary", { yazi: "Unlock key (to receive design files and messages)" }), (await import("../../js/designs/teslim.js")).anahtarKutusu(cuzdan)]));
+
+  /* ---- collections (KoleksiyonKaydi) ---- */
+  const kolYer = el("div");
+  kap.append(kolYer);
+  import("./koleksiyonlar.js").then((Kl) => Kl.profilKoleksiyonlari(adres)).then((x) => kolYer.append(x)).catch(() => {});
 
   /* ---- works / collected ---- */
   const sekme = el("div");

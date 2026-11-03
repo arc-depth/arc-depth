@@ -11,6 +11,7 @@ import { el, sayfaUst, panel, bos, not, adres } from "../ui.js";
 import { para } from "../bicim.js";
 import { ozetOku, dolar } from "./analitik.js";
 import * as v2a from "../v2-analitik.js";
+import { zincirSiralari } from "./liderlik-zincir.js";
 
 const ZAD = { 26: "Arc", 6: "Base", 3: "Arbitrum", 0: "Ethereum", 1: "Avalanche", 15: "Monad", 19: "HyperEVM", 17: "BNB", 35: "Robinhood", 5: "Solana", 8: "Sui", 9: "Aptos" };
 
@@ -48,7 +49,8 @@ function liste(baslik, satirlar, sutunlar) {
 
 export async function ciz() {
   const kap = el("div", { sinif: "yigin" });
-  kap.append(sayfaUst("Leaderboards", "Top tokens and founders"));
+  kap.append(sayfaUst("Leaderboards", "Top traders, launchers, designers, referrers, tokens and founders"));
+  await zincirSiralari(kap);
   await v2Siralar(kap);
   kap.append(el("h3", { yazi: "First generation (snapshot)" }));
 
@@ -80,7 +82,7 @@ export async function ciz() {
     [["Founder", (f) => el("td", {}, [adres(f.kurucu)])], ["Launches", (f) => el("td", { yazi: String(f.launch) })],
      ["Their tokens' volume", (f) => el("td", { yazi: para(f.hacim) })]]));
 
-  kap.append(not("No trader ranking: a swap's sender on chain is the router contract, not the person, so ranking traders would mean guessing. " +
+  kap.append(not("No trader ranking in this snapshot: a swap's sender on chain is the router contract, not the person (the live trader ranking above uses the recipient the ARC PULSE gate delivered to). " +
     "Snapshot written " + new Date(o.olusturuldu).toUTCString() + ".", "bilgi"));
   return kap;
 }

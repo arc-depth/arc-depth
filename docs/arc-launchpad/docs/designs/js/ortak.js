@@ -33,6 +33,9 @@ const IKON = {
   kisi: '<rect x="8" y="3.5" width="8" height="8" rx="3"/><path d="M4.5 20.5a7.5 6 0 0 1 15 0"/>',
   kalp: '<path d="M12 3 14 10 21 12 14 14 12 21 10 14 3 12 10 10z"/>',
   geri: '<path d="M19 12H5M11 6l-6 6 6 6"/>',
+  is: '<rect x="3" y="7" width="18" height="13" rx="4"/><path d="M9 7V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5V7"/><path d="M6.5 13.5h3l1.5-2.5 2 5 1.5-2.5h3"/>',
+  koleksiyon: '<rect x="6.5" y="6.5" width="14" height="14" rx="4"/><path d="M3.5 15.5v-8a4 4 0 0 1 4-4h8"/><path d="M13.5 10.5 16 13l-2.5 2.5L11 13z"/>',
+  pazar: '<path d="M3.5 12.2V5.5a2 2 0 0 1 2-2h6.7l8.3 8.3a2 2 0 0 1 0 2.8l-5.9 5.9a2 2 0 0 1-2.8 0z"/><path d="M8.5 7.2 10 8.7 8.5 10.2 7 8.7z"/>',
   kilit: '<rect x="5" y="10" width="14" height="10" rx="4"/><path d="M8.5 10V7.5a3.5 3.5 0 0 1 7 0V10"/><path d="M12 14v2"/>'
 };
 export function ikon(ad, boy = 24) {
@@ -155,8 +158,16 @@ export function karo(t, durum, begeni) {
       el("span", { sinif: "dz-karo__bilgi" }, [
         el("span", { yazi: durum && durum.fiyat ? usd(durum.fiyat) : durum && !durum.sahip ? "taken down" : "not listed" }),
         begeni != null ? el("span", { yazi: "✦ " + begeni }) : null])]),
-    durum && durum.fiyat ? el("span", { sinif: "dz-karo__etiket", yazi: usd(durum.fiyat) }) : null
+    durum && durum.fiyat ? el("span", { sinif: "dz-karo__etiket", yazi: usd(durum.fiyat) }) : null,
+    t.tasarimci ? karoRozet(t.tasarimci) : null
   ]);
+}
+
+/* the Verified designer badge on a tile (js/rozet.js; empty until the browser has computed it) */
+function karoRozet(adres) {
+  const k = el("span", { sinif: "dz-karo__rozet" });
+  import("./rozet.js").then((R) => k.append(R.rozet(adres, 18, { baglanti: false }))).catch(() => {});
+  return k;
 }
 
 /* ---- like and follow ---- */

@@ -19,6 +19,7 @@ import { el, temizle, S, SO, ANA, usd, kisa, esit, tarih, jetonYaz, avatar, isim
 import { metaOku, baytAl, kategoriOf, kategoriAdi } from "../../js/designs/meta.js";
 import { galeri } from "./galeri.js";
 import { yorumBolumu, bildirDugmesi } from "./yorumlar.js";
+import { rozet } from "./rozet.js";
 
 export async function tasarimSayfasi({ cuzdan }, id) {
   const kap = el("div", { sinif: "dz-tasarim-sayfa" });
@@ -36,9 +37,13 @@ export async function tasarimSayfasi({ cuzdan }, id) {
   const sol = el("div", { sinif: "dz-tasarim__sol" }, [meta ? galeri(meta, t.uri, ad) : resimKutusu(t.uri, "dz-tasarim__resim", ad)]);
   const yan = el("div", { sinif: "dz-tasarim__yan" });
   yan.append(el("header", { sinif: "dz-tasarim__ust" }, [
-    el("a", { sinif: "dz-kisi", attr: { href: "#/u/" + t.tasarimci } }, [avatar(t.tasarimci, 36), el("span", {}, [isim(t.tasarimci), el("span", { sinif: "ds-cihaz", yazi: " · designer" })])]),
+    el("a", { sinif: "dz-kisi", attr: { href: "#/u/" + t.tasarimci } }, [avatar(t.tasarimci, 36), el("span", {}, [isim(t.tasarimci), rozet(t.tasarimci, 16, { baglanti: false }), el("span", { sinif: "ds-cihaz", yazi: " · designer" })])]),
     el("span", { attr: { style: "margin-left:auto" } }, [takipDugmesi(cuzdan, t.tasarimci)])]));
   yan.append(el("h1", { sinif: "dz-tasarim__ad", yazi: ad }));
+  /* its collection (KoleksiyonKaydi) and, before the drop starts, a countdown instead of Buy */
+  const Kl = await import("./koleksiyonlar.js");
+  const drop = await Kl.tasarimDropu(id).catch(() => null);
+  if (drop) yan.append(el("a", { sinif: "dz-tasarim__kol", attr: { href: "#/c/" + drop.k.id } }, ["Collection: " + drop.k.ad, drop.bekliyor ? Kl.geriSayimEl(drop.k.baslangic, " · drop in ") : null]));
   if (meta) { const k = kategoriOf(meta); yan.append(el("a", { sinif: "dz-kategori", attr: { href: "#/explore?k=" + k, title: "More in this category" }, yazi: kategoriAdi(k) })); }
   if (meta && meta.description) yan.append(el("p", { sinif: "dz-tasarim__aciklama", yazi: String(meta.description).slice(0, 4000) }));
   const pencereAcik = Date.now() <= t.itirazBitis;
@@ -48,9 +53,13 @@ export async function tasarimSayfasi({ cuzdan }, id) {
     el("button", { sinif: "dugme dugme--sade dugme--kucuk", attr: { type: "button", style: "margin-left:auto" }, yazi: "Copy link", on: { click: async (e) => { try { await navigator.clipboard.writeText(location.href); e.target.textContent = "Copied"; } catch (x) { e.target.textContent = location.href; } } } }),
     bildirDugmesi({ cuzdan }, { nft: S.TASARIM.adres, id, ad: "design #" + id })]));
 
-  if (t.sahip) yan.append(await fiyatKutusu({ cuzdan, t, ay, j, sym }));
+  if (t.sahip) yan.append(drop && drop.bekliyor && !(t.ilan && esit(t.ilan.satici, ben)) ? Kl.dropKutusu(drop.k) : await fiyatKutusu({ cuzdan, t, ay, j, sym }));
+  /* market v3 (TasarimPazar3): offers, auctions, USDC resale, royalty, co-designer splits (js/pazar.js) */
+  const PZ = await import("./pazar.js");
+  if (t.sahip || !t.iptal) yan.append(await PZ.pazarKutusu({ cuzdan, t, meta }).catch((e) => el("div", { sinif: "ds-durum ds-durum--hata", yazi: "Market: " + ((e && e.message) || e) })));
+  if (esit(t.tasarimci, ben)) yan.append(await PZ.bolusKutusu({ cuzdan, id }).catch(() => el("span")));
   yan.append(el("div", { sinif: "ds-kutu" }, [
-    el("div", { sinif: "ds-satir" }, [el("span", { yazi: "Owner" }), t.sahip ? el("a", { attr: { href: "#/u/" + t.sahip } }, [esit(t.sahip, ben) ? "you" : isim(t.sahip)]) : el("span", { yazi: "none (burned)" })]),
+    el("div", { sinif: "ds-satir" }, [el("span", { yazi: "Owner" }), t.sahip ? (esit(t.sahip, PZ.PAZAR3_ADRES) ? el("span", { yazi: "the market (in escrow or auction)" }) : el("a", { attr: { href: "#/u/" + t.sahip } }, [esit(t.sahip, ben) ? "you" : isim(t.sahip)])) : el("span", { yazi: "none (burned)" })]),
     el("div", { sinif: "ds-satir" }, [el("span", { yazi: "Designer token" }), el("a", { attr: { href: ANA + "#/merkez?t=" + t.token }, yazi: (j.sembol ? "$" + j.sembol : kisa(t.token)) + " · Trade ↗" })]),
     meta && meta.arcpulse && meta.arcpulse.file ? el("div", { sinif: "ds-satir" }, [el("span", { yazi: "File" }), el("span", { yazi: String(meta.arcpulse.file.name || "file").slice(0, 80) + (meta.arcpulse.file.size ? " · " + Math.ceil(meta.arcpulse.file.size / 1024) + " KB" : "") + " · encrypted" })]) : null,
     el("div", { sinif: "ds-satir" }, [el("span", { yazi: "Exact file hash" }), el("span", { sinif: "ds-mono", attr: { title: t.dosyaHash }, yazi: t.dosyaHash.slice(0, 18) + "…" })]),

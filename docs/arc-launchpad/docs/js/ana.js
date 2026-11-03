@@ -29,6 +29,7 @@ import { ikon } from "./ikon.js";
 import { el, temizle, dagitimBekliyor, yapimda, hata, iskelet } from "./ui.js";
 import { geriDugmesi } from "./geri.js";
 import { cuzdan, cuzdanUygulamalari, mobilMi, tarayiciCuzdani, WC_ACIK } from "./cuzdan.js";
+import { davetYakala } from "./davet.js";
 
 const VARSAYILAN = "kesfet";
 
@@ -218,6 +219,7 @@ const GORUNUMLER = {
   zincirler: () => import("./gorunum/zincirler.js"),
   analitik: () => import("./gorunum/analitik.js"),
   liderlik: () => import("./gorunum/liderlik.js"),
+  davet: () => import("./gorunum/davet.js"),   // referrals (DavetKaydi + DavetOdemesi)
   guvenlik: () => import("./gorunum/guvenlik.js"),
   /* Governance. These two read and WRITE to the live Governor, which is
      the one contract in this product that is already deployed. */
@@ -429,6 +431,8 @@ sekmeleriCiz();
 aramayiCiz();
 cuzdanDugmesiniTazele();
 
+/* an invite link (?ref=<address or code>): remembered in this browser until the visitor links it on Arc */
+try { davetYakala({ cuzdan }); } catch (e) { /* never block the app on an invite */ }
 window.addEventListener("hashchange", ciz);
 if (!location.hash) location.replace("#/" + VARSAYILAN);
 ciz();

@@ -1,0 +1,23 @@
+{
+  "id": "./app.html",
+  "name": "ARC PULSE",
+  "short_name": "ARC PULSE",
+  "description": "Launch and trade tokens from 12 chains in one pool on Arc, with a collateral basket behind every token.",
+  "start_url": "./app.html#/kesfet",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0a0b0d",
+  "theme_color": "#0a0b0d",
+  "categories": ["finance"],
+  "icons": [
+    { "src": "ikon/app-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "ikon/app-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "ikon/app-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Create a token", "url": "./app.html#/olustur", "icons": [{ "src": "ikon/app-192.png", "sizes": "192x192" }] },
+    { "name": "Buy ARCP", "url": "./app.html#/fthm", "icons": [{ "src": "ikon/app-192.png", "sizes": "192x192" }] },
+    { "name": "Designs", "url": "./designs/", "icons": [{ "src": "ikon/designs-192.png", "sizes": "192x192" }] }
+  ]
+}

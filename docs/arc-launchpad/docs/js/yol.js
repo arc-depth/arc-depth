@@ -371,8 +371,20 @@ export const YOLLAR = [
        by launches. No trader ranking: the sender of a swap is the router,
        so it would be a guess, and the page says so. */
     durum: "canli",
-    ozet: "Top tokens by volume and by vault, and top founders, on both chains.",
-    kaynak: "veri/analitik.json"
+    ozet: "Top traders, launchers, designers and referrers live from Arc (24h / 7d / all time), plus tokens by volume and vault and founders.",
+    kaynak: "veri/analitik.json + MerkezKapi / TasarimNFT2 / DavetKaydi logs"
+  },
+  {
+    yol: "davet",
+    ad: "Referrals",
+    kisa: "Invite",
+    grup: "yonetisim",
+    ikon: "insanlar",
+    /* LIVE: DavetKaydi (who invited whom, set once by the invited wallet) and
+       DavetOdemesi (USDC rewards from the platform's cut, Merkle roots the page recomputes). */
+    durum: "canli",
+    ozet: "Your invite link, who you invited, and your share of the platform's cut of their fees, claimable in USDC.",
+    kaynak: "DavetKaydi + DavetOdemesi (Arc)"
   },
 
   /* ---- trust ------------------------------------------------------- */

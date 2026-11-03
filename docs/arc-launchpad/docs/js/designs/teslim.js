@@ -57,10 +57,18 @@ export async function dosyaAnahtariBul(cuzdan, t, meta, yaz) {
   for (const z of ((m.arcpulse && m.arcpulse.keys) || []).filter((z) => z && String(z.to).toLowerCase() === me)) {
     try { const k = await Sf.ac(z, sk, t.dosyaHash); if (tamam(k)) return k; } catch (e) { /* not for this key */ }
   }
-  const liste = await S.zarflar(t.id);
+  /* envelopes from TasarimNFT2 sales and from the market v3 (TasarimPazar3) sales, oldest first */
+  const liste = [...(await S.zarflar(t.id)), ...(await import("./pazar3.js").then((P) => P.zarflar(t.id)).catch(() => []))];
   for (const z of liste.reverse().filter((z) => esit(z.alici, me))) {
     try { const k = await Sf.acIkili(z.zarf, sk, me, t.dosyaHash); if (tamam(k)) return k; } catch (e) { /* not for this key */ }
   }
+  /* a design delivered through a commission (SiparisKaydi): its file key was posted to the client there */
+  try {
+    const Si = await import("../../designs/js/siparis.js");
+    for (const z of (await Si.nftZarflari(t.id)).reverse().filter((z) => esit(z.alici, me))) {
+      try { const k = await Sf.acIkili(z.zarf, sk, me, t.dosyaHash); if (tamam(k)) return k; } catch (e) { /* not for this key */ }
+    }
+  } catch (e) { /* commissions not readable */ }
   throw new Error("No file key for this wallet yet: the seller has not delivered it to your registered key.");
 }
 

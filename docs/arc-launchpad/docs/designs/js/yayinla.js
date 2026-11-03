@@ -17,5 +17,10 @@ async function sarili(ctx, alt) {
   const sayfa = await D.ciz({ ...ctx, param });
   return el("div", { sinif: "dz-sarili" }, [sayfa]);
 }
-export const yayinlaSayfasi = (ctx) => sarili(ctx, "publish");
+/* below the wrapped flow: the co-designer split for a published design (market v3, js/pazar.js) */
+export const yayinlaSayfasi = async (ctx) => {
+  const sayfa = await sarili(ctx, "publish");
+  sayfa.append(await (await import("./pazar.js")).yayinBolusu(ctx).catch(() => el("span")));
+  return sayfa;
+};
 export const lisansSayfasi = (ctx) => sarili(ctx, "license");

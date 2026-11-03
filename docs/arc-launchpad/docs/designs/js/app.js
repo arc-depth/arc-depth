@@ -9,12 +9,16 @@
  * Routes (hash):
  *   #/                 feed (followed profiles first; Explore without a wallet)
  *   #/explore          every design: newest, popular, for sale, by price; search
+ *   #/market           market v3: live auctions, USDC resale, your balance and offers (js/pazar.js)
  *   #/d/<id>           a design
  *   #/u/<address>      a profile (#/@handle resolves the handle)
  *   #/me               the connected wallet's profile
  *   #/messages[/<a>]   inbox / one conversation
  *   #/publish          publish a design (the main app's flow, wrapped)
  *   #/license          the license every design carries
+ *   #/jobs[/new|/<id>] hire a designer: USDC escrow on SiparisKaydi (js/isler.js)
+ *   #/collections[/new], #/c/<id>  collections and drop countdowns (js/koleksiyonlar.js)
+ *   #/verified         the Verified designer badge rule (js/rozet.js)
  * Top bar: the wallet button and, once connected, the notifications bell
  * (js/bildirim.js, computed in the browser from public Arc events).
  * Design pages carry comments and a Report button (js/yorumlar.js, the
@@ -50,8 +54,14 @@ function kabukCiz() {
     yan.append(el("a", { sinif: "dz-yan__oge", attr: { href: "#/" + k, "data-sekme": k } }, [ik === "kisi" && cuzdan.hesap() ? avatar(cuzdan.hesap(), 24) : ikon(ik), el("span", { yazi: ad })]));
     alt.append(el("a", { sinif: "dz-alt__oge", attr: { href: "#/" + k, "data-sekme": k } }, [ik === "kisi" && cuzdan.hesap() ? avatar(cuzdan.hesap(), 24) : ikon(ik, 24), el("span", { sinif: "dz-alt__ad", yazi: ad })]));
   }
+  /* the market v3 (offers, auctions, resale): side rail only; phones reach it from every design page */
+  yan.append(el("a", { sinif: "dz-yan__oge", attr: { href: "#/market", "data-sekme": "market" } }, [ikon("pazar"), el("span", { yazi: "Market" })]));
+  /* jobs and collections: side rail; phones reach them from Discover and the account menu */
+  yan.append(el("a", { sinif: "dz-yan__oge", attr: { href: "#/jobs", "data-sekme": "jobs" } }, [ikon("is"), el("span", { yazi: "Jobs" })]),
+    el("a", { sinif: "dz-yan__oge", attr: { href: "#/collections", "data-sekme": "collections" } }, [ikon("koleksiyon"), el("span", { yazi: "Collections" })]));
   yan.append(el("div", { sinif: "dz-yan__bosluk" }),
     el("a", { sinif: "dz-yan__oge dz-yan__ana", attr: { href: ANA + "#/kesfet" } }, [ikon("geri"), el("span", { yazi: "ARC PULSE app" })]),
+    el("a", { sinif: "dz-yan__kucuk", attr: { href: ANA + "#/davet" }, yazi: "Invite friends (referrals)" }),
     el("a", { sinif: "dz-yan__kucuk", attr: { href: "#/license" }, yazi: "License" }));
   cuzdanDugme();
   /* the notifications bell for the connected wallet (js/bildirim.js), re-mounted on a wallet change */
@@ -68,6 +78,8 @@ function cuzdanDugme() {
   if (!h) { yer.append(el("button", { sinif: "dugme dugme--marka dugme--kucuk", attr: { type: "button" }, yazi: "Connect", on: { click: () => cuzdanSec() } })); return; }
   const menu = el("div", { sinif: "dz-menu", attr: { hidden: "" } }, [
     el("a", { attr: { href: "#/me" }, yazi: "My profile" }),
+    el("a", { attr: { href: "#/jobs?f=benim" }, yazi: "My jobs" }),
+    el("a", { attr: { href: "#/collections" }, yazi: "Collections" }),
     el("a", { attr: { href: ANA + "#/portfoy" }, yazi: "Portfolio (main app)" }),
     el("button", { attr: { type: "button" }, yazi: "Disconnect", on: { click: async () => { menu.hidden = true; await cuzdan.kes(); } } }),
     el("button", { attr: { type: "button" }, yazi: "Disconnect and forget this device", on: { click: async () => { menu.hidden = true; await cuzdan.unut(); } } })
@@ -100,7 +112,7 @@ async function git() {
     location.replace("#/" + (alt === "feed" ? "" : alt) + (param.toString() ? "?" + param : ""));
     return;
   }
-  const BIZIM = /^(|explore|me|publish|license|messages(\/0x[0-9a-fA-F]{40})?|d\/\d+|u\/0x[0-9a-fA-F]{40}|@[a-z0-9_]{3,20})$/;
+  const BIZIM = /^(|explore|market|me|publish|license|jobs(\/new|\/\d+)?|collections(\/new)?|c\/\d+|verified|messages(\/0x[0-9a-fA-F]{40})?|d\/\d+|u\/0x[0-9a-fA-F]{40}|@[a-z0-9_]{3,20})$/;
   if (!BIZIM.test(yol)) { location.href = ANA + location.hash; return; }
   const sira = ++_sira;
   aktifIsaretle();
@@ -112,6 +124,7 @@ async function git() {
   try {
     if (yol === "" ) sayfa = await (await import("./kesfet.js")).akis(ctx);
     else if (yol === "explore") sayfa = await (await import("./kesfet.js")).kesfet(ctx);
+    else if (yol === "market") sayfa = await (await import("./pazar.js")).pazarSayfasi(ctx);
     else if (yol.startsWith("d/")) sayfa = await (await import("./tasarim.js")).tasarimSayfasi(ctx, Number(yol.slice(2)));
     else if (yol.startsWith("u/")) sayfa = await (await import("./profil.js")).profilSayfasi(ctx, yol.slice(2));
     else if (yol.startsWith("@")) {
@@ -126,6 +139,15 @@ async function git() {
     else if (yol.startsWith("messages")) sayfa = await (await import("./mesajlar.js")).mesajSayfasi(ctx, yol.split("/")[1] || null);
     else if (yol === "publish") sayfa = await (await import("./yayinla.js")).yayinlaSayfasi(ctx);
     else if (yol === "license") sayfa = await (await import("./yayinla.js")).lisansSayfasi(ctx);
+    else if (yol === "jobs") sayfa = await (await import("./isler.js")).isListesi(ctx);
+    else if (yol === "jobs/new") sayfa = await (await import("./isler.js")).isYeni(ctx);
+    else if (yol.startsWith("jobs/")) sayfa = await (await import("./isler.js")).isSayfasi(ctx, Number(yol.slice(5)));
+    else if (yol === "collections") sayfa = await (await import("./koleksiyonlar.js")).koleksiyonListesi(ctx);
+    else if (yol === "collections/new") sayfa = await (await import("./koleksiyonlar.js")).koleksiyonYeni(ctx);
+    else if (yol.startsWith("c/")) sayfa = await (await import("./koleksiyonlar.js")).koleksiyonSayfasi(ctx, Number(yol.slice(2)));
+    else if (yol === "verified") sayfa = await (await import("./rozet.js")).kuralSayfasi(ctx);
+    /* Discover also links Jobs and Collections (phones have no side rail) */
+    if (yol === "explore" && sayfa) sayfa.prepend(el("nav", { sinif: "dz-kesfet-ek", attr: { "aria-label": "More on Designs" } }, [el("a", { sinif: "dz-cip", attr: { href: "#/jobs" } }, [ikon("is", 16), " Jobs: hire a designer"]), el("a", { sinif: "dz-cip", attr: { href: "#/collections" } }, [ikon("koleksiyon", 16), " Collections"])]));
   } catch (e) {
     sayfa = el("div", { sinif: "hata" }, [el("div", { sinif: "hata__baslik", yazi: "Could not read Designs from Arc" }), el("div", { yazi: (e && e.message) || String(e) })]);
   }

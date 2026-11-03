@@ -627,3 +627,9 @@ textarea.girdi { height: auto; min-height: 84px; padding: var(--bosluk-3); resiz
 .geri-dugme { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px 0 8px; border-radius: 10px; border: 1px solid var(--cizgi-guclu); background: var(--yuzey-1); color: var(--yazi-2); font: inherit; font-size: var(--boy-s); font-weight: var(--kalin-yari); cursor: pointer; }
 .geri-dugme:hover { color: var(--yazi-1); border-color: var(--marka-cizgi); }
 .geri-dugme:focus-visible { outline: 2px solid var(--marka-parlak); outline-offset: 2px; }
+
+/* ---- Referrals (js/davet.js, js/gorunum/davet.js) ---- */
+.davet-cubuk { position: fixed; z-index: 55; left: 50%; bottom: 16px; transform: translateX(-50%); display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; max-width: min(760px, calc(100vw - 32px)); padding: 10px 14px; font-size: var(--boy-s); box-shadow: 0 8px 30px rgba(0,0,0,.45); }
+.davet-link .girdi { flex: 1; min-width: 0; }
+.davet-adimlar { margin: 0; padding-left: 20px; display: grid; gap: 6px; color: var(--yazi-2); }
+.lider-pencere { margin-bottom: 4px; }

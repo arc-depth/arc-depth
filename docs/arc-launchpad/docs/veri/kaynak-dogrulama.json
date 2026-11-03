@@ -564,6 +564,42 @@
    "ad": "AktarmaLZ",
    "adres": "0xA98a04c893b6cdb983F93E764A9332667D73aC08",
    "eslesme": "exact_match"
+  },
+  {
+   "chainId": 5042,
+   "ad": "LimitEmir",
+   "adres": "0x1fef84Bd1Dd626E0F3e8FcD6A48521D5C6f839dC",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 5042,
+   "ad": "TasarimPazar3",
+   "adres": "0x20b3fB80e77aBeB635c53639625702AB26E3Bb2B",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 5042,
+   "ad": "DavetKaydi",
+   "adres": "0x998de4D2553F4d8Ad7b4D4D5DC2073d240790aEd",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 5042,
+   "ad": "DavetOdemesi",
+   "adres": "0x8366B24873f95B6a9e984eA3742fAAeB5eA2AADa",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 5042,
+   "ad": "SiparisKaydi",
+   "adres": "0x22111796D4d6E5A7598612517952083E4cc23C00",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 5042,
+   "ad": "KoleksiyonKaydi",
+   "adres": "0x27F2f84E0d9D7139aB12EC769bF8eb1b6F263bc1",
+   "eslesme": "exact_match"
   }
  ]
 }
