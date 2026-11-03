@@ -32,17 +32,17 @@ function kurallar(oranBps, bekleme) {
   return panel("How it works", el("div", { sinif: "yigin yigin--sik" }, [
     el("ol", { sinif: "davet-adimlar" }, [
       el("li", { yazi: "Share your link. Anyone who opens it and then links their wallet (one Arc transaction, gas only) becomes your invitee. The link is set once per wallet, forever: the first invite they link wins, nobody can change it, and a wallet cannot invite itself." }),
-      el("li", { yazi: "When your invitees launch, trade through ARC PULSE, publish a design or buy one with USDC, the platform takes its usual fee. Nothing is added for them." }),
-      el("li", { yazi: "You earn " + oran + " of the PLATFORM's cut of those fees (the development fund + operations share: 0.50% of a trade, half of the 2% launch fee, the whole design publish fee), for activity after they linked. The platform side pays it from what it received." }),
-      el("li", { yazi: "Rewards are computed from public Arc logs by an open program (the same code this page runs). The admin publishes a root of every referrer's cumulative reward on DavetOdemesi; after a " + Math.round(bekleme / 3600) + "-hour wait you claim it in USDC here." })
+      el("li", { yazi: "When your invitees trade, launch, publish or buy a design, hire on Designs or fill a limit order, the contracts take their usual fees. Nothing is added for them." }),
+      el("li", { yazi: "You earn " + oran + " of the DEVELOPMENT + MARKETING share of those fees, exactly as each contract paid it, for activity after they linked: on a v8 trade 0.30% + 0.20% of it, on a v9 trade 0.30% + 0.10%, half of the 2% launch fee, the $0.10 marketing half of a design publish fee, and the development and marketing slices of Designs market, commission and limit-order fees. The burn share and the owner's share are never part of it. The development / marketing side pays it." }),
+      el("li", { yazi: "Rewards are computed from public Arc logs by an open program (the same code this page runs). Once a day a published root of every referrer's cumulative reward goes on DavetOdemesi; after a " + Math.round(bekleme / 3600) + "-hour wait you claim it in USDC here." })
     ]),
-    not("The rate is set on chain (now " + oran + ", hard cap 30%) and changes are public events that only apply from their block on. A root can never promise more than the contract holds. Rewards depend on the platform funding the program: no amount is promised, and this is not an investment or income product."),
+    not("The rate is set on chain (now " + oran + ", hard cap 30%) and changes are public events that only apply from their block on. A root can never promise more than the contract holds. Rewards come only from fees your invitees actually pay: no amount is promised, and this is not an investment or income product."),
   ]));
 }
 
 export async function ciz({ cuzdan }) {
   const kap = el("div", { sinif: "yigin" });
-  kap.append(sayfaUst("Referrals", "Invite people to ARC PULSE and receive a share of the platform's cut of their fees, in USDC"));
+  kap.append(sayfaUst("Referrals", "Invite people to ARC PULSE and receive 20% of the development + marketing share of the fees they pay, in USDC"));
   if (!davetCanli()) { kap.append(panel("Referrals", bos("Not deployed", "The referral contracts are not set on this page yet."))); return kap; }
   const p = arcOkur();
   const kayit = new Contract(H.DAVET.kayit, H.KAYIT_ABI, p);
@@ -139,14 +139,14 @@ export async function ciz({ cuzdan }) {
 async function panoCiz(pano, { ben, durum, odeme, cuzdan }) {
   const v = await zincirVerisi();
   const k = ben.toLowerCase();
-  const benim = v.oduller.get(k) || { odul: 0n, hacim: 0n, platform: 0n, davetli: new Set(), aktif: new Set(), adet: 0 };
+  const benim = v.oduller.get(k) || { odul: 0n, hacim: 0n, platform: 0n, gelistirme: 0n, pazarlama: 0n, davetli: new Set(), aktif: new Set(), adet: 0 };
   const [guncel, etkin, odenen, kasa, borc] = await Promise.all([
     odeme.guncel(), odeme.etkinKok(), odeme.odenen(ben), arcOkur().call({ to: "0x3600000000000000000000000000000000000000", data: "0x70a08231" + H.DAVET.odeme.slice(2).toLowerCase().padStart(64, "0") }).then(BigInt), odeme.borc()
   ]);
   const ozet = el("div", { sinif: "izgara izgara--olcum" }, [
     olcum("Invited wallets", String(durum.davetli), benim.aktif.size + " active"),
     olcum("Their volume", usd(benim.hacim), "after linking"),
-    olcum("Platform cut from them", usdTam(benim.platform)),
+    olcum("Dev + marketing fees from them", usdTam(benim.platform), "development " + usdTam(benim.gelistirme) + " · marketing " + usdTam(benim.pazarlama)),
     olcum("Earned so far", usdTam(benim.odul), "computed live to block " + v.sonBlok.toLocaleString("en-US")),
     olcum("Claimed", usdTam(odenen))
   ]);
@@ -158,7 +158,7 @@ async function panoCiz(pano, { ben, durum, odeme, cuzdan }) {
   const kokVar = !/^0x0{64}$/i.test(etkin.kok);
   const bekleyenVar = !/^0x0{64}$/i.test(guncel[0]) && Number(guncel[2]) * 1000 > Date.now();
   if (!kokVar && !bekleyenVar) {
-    kokKap.append(not("No reward root is published yet. Earnings above are what the program computes from Arc today; they become claimable once the platform funds the contract and publishes a root that includes them."));
+    kokKap.append(not("No reward root is published yet. Earnings above are what the program computes from Arc today; they become claimable once the daily root that includes them is published and its wait has passed."));
   }
   if (bekleyenVar) kokKap.append(not("A new root (up to block " + Number(guncel[1]).toLocaleString("en-US") + ", total " + usdTam(guncel[3]) + ") becomes claimable " + new Date(Number(guncel[2]) * 1000).toLocaleString() + "."));
   if (kokVar) {

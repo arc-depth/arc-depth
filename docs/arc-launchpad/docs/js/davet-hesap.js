@@ -1,65 +1,81 @@
 /* ===========================================================================
  * davet-hesap.js — referral rewards and leaderboards from public Arc logs
  *
- * One file, two readers: the site (Referrals and Leaderboards pages) and
- * scripts/davet-kok.js, which publishes the reward root on DavetOdemesi.
- * Because both run THIS code over the same chain logs, anyone can recompute
- * the root the admin published and see whether it matches; the Referrals
- * page does that before it offers a claim. No DOM, no network of its own:
- * callers hand it a getLogs function.
+ * One file, two readers: the site (Referrals and Leaderboards pages) and the
+ * scripts that publish the reward root on DavetOdemesi (davet-kok.js, the
+ * daily davet-otomatik.js). Because they all run THIS code over the same
+ * chain logs, anyone can recompute the published root and see whether it
+ * matches; the Referrals page does that before it offers a claim. No DOM, no
+ * network of its own: callers hand it a getLogs function.
  *
- * What counts (everything is an event of a deployed ARC PULSE contract):
- *   buy      MerkezKapi v8/v9 Alindi       wallet = alici, volume = girdi
- *   sell     MerkezKapi v8/v9 Satildi      wallet = alici, volume = cikan
- *   launch   MerkezKapi v8/v9 MerkezLaunch wallet = kurucu, fee from the
- *            same transaction's PulseLaunchpad5 IlkAlim (ucret)
- *   publish  TasarimNFT2 Yayinlandi        wallet = tasarimci, fee = ucret
- *   design   TasarimNFT2 Satildi           wallet = alici (buyer), volume = fiyat
- * Only wallets that are EVM addresses count (a 32-byte recipient whose top
- * 12 bytes are zero); referral links are EVM addresses.
- *
- * THE PLATFORM'S CUT (what a referral share is a share of), in USDC:
- *   trades and USDC design buys: 0.50% of the amount (development fund
- *     0.30% + operations 0.20% of PulseHook5/6's 2.20%); a sale's amount is
- *     what the seller received (slightly under the traded amount, so the
- *     figure errs low);
- *   launches: half of the 2% launch fee (development 30% + operations 20%);
- *   design publishes: the whole publish fee (it goes to the two platform
- *     wallets).
- * A referrer's reward for one activity of a wallet it invited is
- *   floor(platform cut x oranBps / 10,000), oranBps being DavetOdemesi's
- *   rate in force at that block (its OranDegisti events), counted only for
- *   activity in a block AFTER the wallet's binding block.
+ * THE RULE (owner, 3 Nov 2026): a referrer earns oranBps (20%) of the
+ * DEVELOPMENT + MARKETING share of the fees paid by the wallets it referred,
+ * and nothing else. The burn share, the owner's share, the founder's share,
+ * liquidity and depth are never part of it. The amounts are the ones each
+ * contract actually paid, read from its own events:
+ *   v8 trades (PulseHook5 Ucret): gelistirici (0.30%) + isletme (0.20%);
+ *     both go to DevPool, the ARCP DAO's development fund.
+ *   v9 trades (PulseHook6 Ucret): gelistirici (0.30%, DevPool) + the
+ *     marketing half of isletme (0.10%, 0xFE99…; the other 0.10% is the
+ *     owner's and does not count). PulseHook6 computes the two halves with
+ *     the same formula, so marketing = isletme / 2 exactly.
+ *     A hook's Ucret belongs to the wallet of the same transaction that
+ *     traded that pool: the MerkezKapi buyer / seller (Alindi / Satildi
+ *     recipient), the TasarimNFT2 USDC buyer, or a LimitEmir order's owner.
+ *   launches (PulseLaunchpad5 IlkAlim, v8 and v9): the 2% launch fee's
+ *     development 30% + operations 20% (both to DevPool); the 50% liquidity
+ *     slice does not count. Wallet: the MerkezLaunch founder.
+ *   Designs publish (TasarimNFT2 Yayinlandi): only ucret2 (the second $0.10,
+ *     paid to the development / marketing wallet 0xFE99…); ucret1 goes to
+ *     the owner and does not count. ucret2 at the block is read from the
+ *     contract's AyarDegisti history (100,000 = $0.10 from deploy).
+ *   Designs market v3 (TasarimPazar3 Dagitildi): gelistirme + pazarlama;
+ *     wallet: the buyer of that sale (its latest Emanete).
+ *   Commissions (SiparisKaydi UcretDagitildi): gelistirici + pazarlama;
+ *     wallet: the job's client (IsAcildi musteri).
+ *   Limit orders (LimitEmir UcretDagitildi): gelistirici (30%) + pazarlama
+ *     (20%) of its fee; wallet: the order's owner (EmirDolduruldu, same tx).
+ * A source with no development / marketing slice earns nothing.
+ * A referrer's reward for one fee is floor((dev + marketing) x oranBps /
+ * 10,000), oranBps being DavetOdemesi's rate in force at that block (its
+ * OranDegisti events), counted only for a block AFTER the wallet's binding.
+ * Only wallets that are EVM addresses count (a 32-byte recipient whose top 12
+ * bytes are zero); referral links are EVM addresses.
  * The reward root: leaves (referrer, cumulative amount) in OpenZeppelin's
  * StandardMerkleTree leaf format, pairs hashed sorted (commutative).
  * =========================================================================== */
-import { Interface, AbiCoder, keccak256, toUtf8Bytes, getAddress, concat } from "../vendor/ethers.min.js";
+import { Interface, AbiCoder, keccak256, toUtf8Bytes, getAddress, concat, encodeBytes32String } from "../vendor/ethers.min.js";
 
 /* ---- the switch: set after scripts/davet-dagit.js (dagitim-davet.json) ---- */
 export const DAVET = {
   kayit: "0x998de4D2553F4d8Ad7b4D4D5DC2073d240790aEd",   // DavetKaydi (2 Nov 2026)
-  odeme: "0x8366B24873f95B6a9e984eA3742fAAeB5eA2AADa",   // DavetOdemesi (15%, 1-day wait)
+  odeme: "0x8366B24873f95B6a9e984eA3742fAAeB5eA2AADa",   // DavetOdemesi (20% of dev + marketing fees, 1-day wait)
   kayitBlok: 29167756,
   odemeBlok: 29167765
 };
 
-/* the deployed contracts whose events count (deploy blocks found by eth_getCode) */
+/* the deployed contracts whose events count (deploy blocks found by eth_getCode or their records) */
 export const KAYNAKLAR = {
   kapiV8: { adres: "0x1f042E18E1C7899E87cec5CAC5C07c487163BBbF", blok: 28828693 },
   kapiV9: { adres: "0xA64AC16a5469561080bd8657fD852E346Bf8bF49", blok: 29032987 },
   lpV8: { adres: "0x2D3a0DaBD48207528800bDA6aDbC1b84E8d1f98B", blok: 28828687 },
   lpV9: { adres: "0x87045C17BD5fCf3495abC30898803E39E25Be0dD", blok: 29032981 },
-  tasarim: { adres: "0xFbE8F98e76bfbD2Acfe80c36d4c475041Fd8FEaa", blok: 29038512 }
+  hook5: { adres: "0x7CBF813E4B1A45B03911E6af27Cc58a308f36ecc", blok: 28828698 },   // PulseHook5 (v8 pools)
+  hook6: { adres: "0x84144495479E6Ba4aEED060C07C818e572C8AECC", blok: 29033001 },   // PulseHook6 (v9 pools)
+  tasarim: { adres: "0xFbE8F98e76bfbD2Acfe80c36d4c475041Fd8FEaa", blok: 29038512 },
+  pazar3: { adres: "0x20b3fB80e77aBeB635c53639625702AB26E3Bb2B", blok: 29167576 },  // TasarimPazar3
+  siparis: { adres: "0x22111796D4d6E5A7598612517952083E4cc23C00", blok: 29168588 }, // SiparisKaydi
+  limit: { adres: "0x1fef84Bd1Dd626E0F3e8FcD6A48521D5C6f839dC", blok: 29167436 }    // LimitEmir
 };
 
 /* contracts that buy or sell on someone else's behalf (the recipient in their trades is the contract,
    not a person): left out of the trader ranking. LimitEmir: limit orders (dagitim-limit.json). */
 export const ARACILAR = new Set(["0x1fef84bd1dd626e0f3e8fcd6a48521d5c6f839dc"]);
 
-export const PLATFORM_PPM = 5_000n;           // 0.50% of a trade
-export const LAUNCH_PLATFORM_BPS = 5_000n;    // half of the launch fee
-export const VARSAYILAN_ORAN_BPS = 1_500;     // the deploy rate: 15% of the platform's cut
+export const ORAN_BPS = 2_000;                // the rule: 20% of the dev + marketing share
+export const VARSAYILAN_ORAN_BPS = ORAN_BPS;
 export const ORAN_TAVAN_BPS = 3_000;
+export const UCRET2_ILK = 100_000n;           // TasarimNFT2 ucret2 at deploy ($0.10)
 
 export const KAYIT_ABI = [
   "function bagla(address davetci)",
@@ -90,6 +106,7 @@ export const ODEME_ABI = [
   "function kokSayisi() view returns (uint256)",
   "function yonetici() view returns (address)",
   "function kokYayinla(bytes32 kok, uint64 sonBlok, uint128 toplam, bytes32 veriHash)",
+  "function oranAyarla(uint16 bps)",
   "event Fonlandi(address indexed kim, uint256 miktar)",
   "event KokYayinlandi(uint256 indexed no, bytes32 kok, uint64 sonBlok, uint128 toplam, uint64 gecerli, bytes32 veriHash)",
   "event KokIptal(uint256 indexed no, bytes32 kok)",
@@ -101,10 +118,31 @@ const KAPI_OLAY = new Interface([
   "event Alindi(address indexed token, uint256 girdi, uint256 alinan, uint32 hedefEid, bytes32 alici)",
   "event Satildi(address indexed token, uint256 miktar, uint256 cikan, uint32 odemeZincir, bytes32 alici)"
 ]);
-const LP_OLAY = new Interface(["event IlkAlim(uint256 indexed id, address kurucu, uint256 odenen, uint256 ucret, uint256 net, uint256 alinanToken)"]);
+const LP_OLAY = new Interface([
+  "event IlkAlim(uint256 indexed id, address kurucu, uint256 odenen, uint256 ucret, uint256 net, uint256 alinanToken)",
+  "event Launched(uint256 indexed id, address indexed token, address indexed kurucu, address acici, address kasa, string ad, string sembol)",
+  "event HavuzAcildi(uint256 indexed id, bytes32 havuzId, uint160 sqrtPriceX96, int24 alt, int24 ust, uint256 merdiven, uint256 teklif)"
+]);
+const HOOK_OLAY = new Interface([
+  "event Ucret(bytes32 indexed id, bool alim, bool exactInput, uint256 kurucu, uint256 gelistirici, uint256 likidite, uint256 isletme, uint256 vergi, uint256 derinlik, uint256 snipe, uint256 kalkan)"
+]);
 const TAS_OLAY = new Interface([
   "event Yayinlandi(uint256 indexed id, address indexed tasarimci, address indexed token, bytes32 dosyaHash, bytes32 algiHash, bytes32 anahtarTaahhut, string uri, uint256 ucret, uint256 teminat)",
-  "event Satildi(uint256 indexed id, address indexed satici, address indexed alici, uint256 fiyat, address token, uint256 tokenMiktari, uint256 telif, bool usdcIle)"
+  "event Satildi(uint256 indexed id, address indexed satici, address indexed alici, uint256 fiyat, address token, uint256 tokenMiktari, uint256 telif, bool usdcIle)",
+  "event AyarDegisti(bytes32 indexed ad, uint256 deger)"
+]);
+const PAZAR3_OLAY = new Interface([
+  "event Emanete(uint256 indexed id, address indexed satici, address indexed alici, uint256 fiyat, uint8 tur, uint64 teslimSonu)",
+  "event Dagitildi(uint256 indexed id, address indexed satici, uint256 net, uint256 telif, uint256 yakim, uint256 gelistirme, uint256 pazarlama, uint256 sahip)"
+]);
+const SIPARIS_OLAY = new Interface([
+  "event IsAcildi(uint256 indexed id, address indexed musteri, address indexed hedef, uint256 butce, uint64 son, uint16 ucretBps, uint64 incelemeSuresi, string brief)",
+  "event UcretDagitildi(uint256 indexed id, uint256 yakim, uint256 gelistirici, uint256 pazarlama, uint256 sahip)"
+]);
+const LIMIT_OLAY = new Interface([
+  "event EmirVerildi(uint256 indexed id, address indexed sahip, address indexed token, bool alim, uint256 girdi, uint256 asgari, uint256 bahsis, uint40 bitis, uint16 ucretBps, address kapi)",
+  "event EmirDolduruldu(uint256 indexed id, address indexed sahip, address indexed bekci, uint256 cikti, uint256 iade, uint256 ucret, uint256 bahsis)",
+  "event UcretDagitildi(uint256 yakim, uint256 gelistirici, uint256 pazarlama, uint256 sahip)"
 ]);
 export const KAYIT_OLAY = new Interface(KAYIT_ABI);
 export const ODEME_OLAY = new Interface(ODEME_ABI);
@@ -127,50 +165,147 @@ function coz(iface, l) {
   try { return iface.parseLog({ topics: l.topics, data: l.data }); } catch (_) { return null; }
 }
 
+const UCRET2_AD = k(encodeBytes32String("ucret2"));
+
 /**
- * Every countable activity in `loglar` (raw logs of the KAYNAKLAR contracts, any order).
- * Returns [{ tur, cuzdan, blok, sira, tx, hacim, platform, token?, satici?, tasarimci?, id? }],
- * amounts as BigInt USDC (6 decimals), sorted by block then log index.
+ * Every countable activity and fee in `loglar` (raw logs of the KAYNAKLAR contracts, any order).
+ * Activities (volume, for the leaderboards): tur al | sat | launch | yayin | tasarim, with hacim.
+ * Fees (what a referral share is a share of): tur "ucret", kaynak = the source, gelistirme + pazarlama
+ * = the development and marketing amounts that contract paid, platform = their sum.
+ * Every record: { tur, cuzdan, blok, sira, tx, hacim, platform, ... }, amounts BigInt USDC (6 decimals),
+ * sorted by block then log index.
  */
 export function etkinlikCikar(loglar) {
-  const kapi = new Set([k(KAYNAKLAR.kapiV8.adres), k(KAYNAKLAR.kapiV9.adres)]);
-  const lp = new Set([k(KAYNAKLAR.lpV8.adres), k(KAYNAKLAR.lpV9.adres)]);
-  const tas = k(KAYNAKLAR.tasarim.adres);
-  const ucretOfTx = new Map();      // launch tx -> IlkAlim.ucret
-  const tasarimciOf = new Map();    // design id -> designer
-  for (const l of loglar) {
-    const a = k(l.address);
-    if (lp.has(a)) { const o = coz(LP_OLAY, l); if (o) ucretOfTx.set(txOf(l), (ucretOfTx.get(txOf(l)) || 0n) + o.args.ucret); }
-    else if (a === tas) { const o = coz(TAS_OLAY, l); if (o && o.name === "Yayinlandi") tasarimciOf.set(String(o.args.id), k(o.args.tasarimci)); }
-  }
-  const out = [];
-  for (const l of loglar) {
-    const a = k(l.address);
-    const taban = { blok: blokOf(l), sira: sirasiOf(l), tx: txOf(l) };
-    if (kapi.has(a)) {
-      const o = coz(KAPI_OLAY, l);
-      if (!o) continue;
-      if (o.name === "Alindi") {
-        const c = evmAdres(o.args.alici);
-        if (c) out.push({ ...taban, tur: "al", cuzdan: c, token: k(o.args.token), hacim: o.args.girdi, platform: (o.args.girdi * PLATFORM_PPM) / 1_000_000n });
-      } else if (o.name === "Satildi") {
-        const c = evmAdres(o.args.alici);
-        if (c) out.push({ ...taban, tur: "sat", cuzdan: c, token: k(o.args.token), hacim: o.args.cikan, platform: (o.args.cikan * PLATFORM_PPM) / 1_000_000n });
-      } else if (o.name === "MerkezLaunch") {
-        const c = evmAdres(o.args.kurucu);
-        const ucret = ucretOfTx.get(taban.tx) || 0n;
-        if (c) out.push({ ...taban, tur: "launch", cuzdan: c, token: k(o.args.token), hacim: ucret * 50n, platform: (ucret * LAUNCH_PLATFORM_BPS) / 10_000n });
-      }
-    } else if (a === tas) {
+  const A = Object.fromEntries(Object.entries(KAYNAKLAR).map(([n, x]) => [n, k(x.adres)]));
+  const kapi = new Set([A.kapiV8, A.kapiV9]);
+  const lp = new Set([A.lpV8, A.lpV9]);
+  const sirali = [...loglar].sort((x, y) => blokOf(x) - blokOf(y) || sirasiOf(x) - sirasiOf(y));
+
+  /* pass 1: lookups */
+  const tasarimciOf = new Map();       // design id -> designer
+  const launchToken = new Map();       // lp|id -> token
+  const launchHavuz = new Map();       // lp|id -> pool id
+  const ucret2 = [];                   // [{ blok, deger }]
+  const musteriOf = new Map();         // job id -> client
+  const limitToken = new Map();        // order id -> token
+  const txler = new Map();             // tx -> logs (in order)
+  for (const l of sirali) {
+    const a = k(l.address), t = txOf(l);
+    if (!txler.has(t)) txler.set(t, []);
+    txler.get(t).push(l);
+    if (lp.has(a)) {
+      const o = coz(LP_OLAY, l);
+      if (o && o.name === "Launched") launchToken.set(a + "|" + o.args.id, k(o.args.token));
+      if (o && o.name === "HavuzAcildi") launchHavuz.set(a + "|" + o.args.id, k(o.args.havuzId));
+    } else if (a === A.tasarim) {
       const o = coz(TAS_OLAY, l);
-      if (!o) continue;
-      if (o.name === "Yayinlandi") {
-        out.push({ ...taban, tur: "yayin", cuzdan: k(o.args.tasarimci), id: String(o.args.id), hacim: 0n, platform: o.args.ucret });
-      } else if (o.name === "Satildi") {
+      if (o && o.name === "Yayinlandi") tasarimciOf.set(String(o.args.id), k(o.args.tasarimci));
+      if (o && o.name === "AyarDegisti" && k(l.topics[1]) === UCRET2_AD) ucret2.push({ blok: blokOf(l), deger: o.args.deger });
+    } else if (a === A.siparis) {
+      const o = coz(SIPARIS_OLAY, l);
+      if (o && o.name === "IsAcildi") musteriOf.set(String(o.args.id), k(o.args.musteri));
+    } else if (a === A.limit) {
+      const o = coz(LIMIT_OLAY, l);
+      if (o && o.name === "EmirVerildi") limitToken.set(String(o.args.id), k(o.args.token));
+    }
+  }
+  const havuzOfToken = new Map();
+  for (const [key, tok] of launchToken) if (launchHavuz.has(key)) havuzOfToken.set(tok, launchHavuz.get(key));
+  const ucret2At = (blok) => { let d = UCRET2_ILK; for (const u of ucret2) { if (u.blok <= blok) d = u.deger; else break; } return d; };
+
+  /* pass 2, per transaction: who traded which token (the wallet a hook fee in that tx belongs to) */
+  const out = [];
+  const aliciOfPazar3 = new Map();     // design id -> buyer of its latest escrowed sale
+  for (const [tx, ll] of txler) {
+    const tuccar = new Map();          // token -> wallet, for this tx
+    let limitSahip = null, limitTok = null;
+    for (const l of ll) {
+      if (k(l.address) !== A.limit) continue;
+      const o = coz(LIMIT_OLAY, l);
+      if (o && o.name === "EmirDolduruldu") { limitSahip = k(o.args.sahip); limitTok = limitToken.get(String(o.args.id)) || null; }
+    }
+    for (const l of ll) {
+      const a = k(l.address);
+      const taban = { blok: blokOf(l), sira: sirasiOf(l), tx };
+      if (kapi.has(a)) {
+        const o = coz(KAPI_OLAY, l);
+        if (!o) continue;
+        const tok = k(o.args.token);
+        if (o.name === "Alindi" || o.name === "Satildi") {
+          let c = evmAdres(o.args.alici);
+          if (c && limitSahip && ARACILAR.has(c)) c = limitSahip;   // a limit order filled through the gate
+          if (!c) continue;
+          const hacim = o.name === "Alindi" ? o.args.girdi : o.args.cikan;
+          out.push({ ...taban, tur: o.name === "Alindi" ? "al" : "sat", cuzdan: c, token: tok, hacim, platform: 0n });
+          if (!tuccar.has(tok)) tuccar.set(tok, c);
+        } else if (o.name === "MerkezLaunch") {
+          const c = evmAdres(o.args.kurucu);
+          let ucret = 0n;
+          for (const m of ll) if (lp.has(k(m.address))) { const x = coz(LP_OLAY, m); if (x && x.name === "IlkAlim") ucret += x.args.ucret; }
+          if (!c) continue;
+          out.push({ ...taban, tur: "launch", cuzdan: c, token: tok, hacim: ucret * 50n, platform: 0n });
+          tuccar.set(tok, c);
+          /* the launch fee: development 30% + operations 20% (both DevPool); liquidity 50% does not count */
+          for (const m of ll) {
+            if (!lp.has(k(m.address))) continue;
+            const x = coz(LP_OLAY, m);
+            if (!x || x.name !== "IlkAlim") continue;
+            const u = x.args.ucret, g = (u * 3_000n) / 10_000n, li = (u * 5_000n) / 10_000n, i = u - g - li;
+            out.push({ blok: blokOf(m), sira: sirasiOf(m), tx, tur: "ucret", kaynak: "launch", cuzdan: c, hacim: 0n, gelistirme: g + i, pazarlama: 0n, platform: g + i });
+          }
+        }
+      } else if (a === A.tasarim) {
+        const o = coz(TAS_OLAY, l);
+        if (!o) continue;
+        if (o.name === "Yayinlandi") {
+          const c = k(o.args.tasarimci);
+          out.push({ ...taban, tur: "yayin", cuzdan: c, id: String(o.args.id), hacim: 0n, platform: 0n });
+          const u2 = ucret2At(taban.blok), p = o.args.ucret < u2 ? o.args.ucret : u2;
+          if (p > 0n) out.push({ ...taban, sira: taban.sira + 0.5, tur: "ucret", kaynak: "yayin", cuzdan: c, hacim: 0n, gelistirme: 0n, pazarlama: p, platform: p });
+        } else if (o.name === "Satildi") {
+          const id = String(o.args.id), c = k(o.args.alici);
+          out.push({ ...taban, tur: "tasarim", cuzdan: c, satici: k(o.args.satici), tasarimci: tasarimciOf.get(id) || k(o.args.satici), id, hacim: o.args.fiyat, platform: 0n });
+          if (o.args.usdcIle) tuccar.set(k(o.args.token), c);   // its USDC was swapped in the designer token's pool
+        }
+      } else if (a === A.pazar3) {
+        const o = coz(PAZAR3_OLAY, l);
+        if (!o) continue;
         const id = String(o.args.id);
-        out.push({ ...taban, tur: "tasarim", cuzdan: k(o.args.alici), satici: k(o.args.satici), tasarimci: tasarimciOf.get(id) || k(o.args.satici), id,
-          hacim: o.args.fiyat, platform: o.args.usdcIle ? (o.args.fiyat * PLATFORM_PPM) / 1_000_000n : 0n });
+        if (o.name === "Emanete") {
+          aliciOfPazar3.set(id, k(o.args.alici));
+          out.push({ ...taban, tur: "tasarim", cuzdan: k(o.args.alici), satici: k(o.args.satici), tasarimci: tasarimciOf.get(id) || k(o.args.satici), id, hacim: o.args.fiyat, platform: 0n });
+        } else if (o.name === "Dagitildi") {
+          const c = aliciOfPazar3.get(id);
+          const g = o.args.gelistirme, p = o.args.pazarlama;
+          if (c && g + p > 0n) out.push({ ...taban, tur: "ucret", kaynak: "pazar3", cuzdan: c, hacim: 0n, gelistirme: g, pazarlama: p, platform: g + p });
+        }
+      } else if (a === A.siparis) {
+        const o = coz(SIPARIS_OLAY, l);
+        if (!o || o.name !== "UcretDagitildi") continue;
+        const c = musteriOf.get(String(o.args.id));
+        const g = o.args.gelistirici, p = o.args.pazarlama;
+        if (c && g + p > 0n) out.push({ ...taban, tur: "ucret", kaynak: "siparis", cuzdan: c, hacim: 0n, gelistirme: g, pazarlama: p, platform: g + p });
+      } else if (a === A.limit) {
+        const o = coz(LIMIT_OLAY, l);
+        if (!o || o.name !== "UcretDagitildi" || !limitSahip) continue;
+        const g = o.args.gelistirici, p = o.args.pazarlama;
+        if (g + p > 0n) out.push({ ...taban, tur: "ucret", kaynak: "limit", cuzdan: limitSahip, hacim: 0n, gelistirme: g, pazarlama: p, platform: g + p });
       }
+    }
+    if (limitSahip && limitTok && !tuccar.has(limitTok)) tuccar.set(limitTok, limitSahip);
+    /* the hooks' fees in this tx, to the wallet that traded that pool */
+    for (const l of ll) {
+      const a = k(l.address);
+      if (a !== A.hook5 && a !== A.hook6) continue;
+      const o = coz(HOOK_OLAY, l);
+      if (!o) continue;
+      const havuz = k(o.args.id);
+      let c = null;
+      for (const [tok, w] of tuccar) if (havuzOfToken.get(tok) === havuz) { c = w; break; }
+      if (!c) continue;
+      /* PulseHook5: gelistirici and isletme both to DevPool. PulseHook6: gelistirici to DevPool; isletme = owner + marketing halves */
+      const g = o.args.gelistirici, p = a === A.hook5 ? 0n : o.args.isletme / 2n, gi = a === A.hook5 ? g + o.args.isletme : g;
+      if (gi + p > 0n) out.push({ blok: blokOf(l), sira: sirasiOf(l), tx, tur: "ucret", kaynak: a === A.hook5 ? "islem-v8" : "islem-v9", cuzdan: c, hacim: 0n, gelistirme: gi, pazarlama: p, platform: gi + p });
     }
   }
   return out.sort((x, y) => x.blok - y.blok || x.sira - y.sira);
@@ -207,13 +342,13 @@ function oranAt(oranlar, blok) {
 
 /**
  * Each referrer's cumulative reward for activity up to `sonBlok`.
- * Returns Map(davetci -> { odul, hacim, platform, davetli: Set, aktif: Set, adet }).
+ * Returns Map(davetci -> { odul, hacim, platform (dev + marketing fees), gelistirme, pazarlama, davetli: Set, aktif: Set, adet }).
  */
 export function odulHesapla({ etkinlikler, baglar, oranlar, sonBlok }) {
   const m = new Map();
   for (const [d, b] of baglar) {
     if (b.blok > sonBlok) continue;
-    if (!m.has(b.davetci)) m.set(b.davetci, { odul: 0n, hacim: 0n, platform: 0n, davetli: new Set(), aktif: new Set(), adet: 0 });
+    if (!m.has(b.davetci)) m.set(b.davetci, { odul: 0n, hacim: 0n, platform: 0n, gelistirme: 0n, pazarlama: 0n, davetli: new Set(), aktif: new Set(), adet: 0 });
     m.get(b.davetci).davetli.add(d);
   }
   for (const e of etkinlikler) {
@@ -222,9 +357,11 @@ export function odulHesapla({ etkinlikler, baglar, oranlar, sonBlok }) {
     if (!b || e.blok <= b.blok) continue;
     const r = m.get(b.davetci);
     const oran = oranAt(oranlar, e.blok);
-    r.odul += (e.platform * oran) / 10_000n;
+    if (e.platform > 0n) r.odul += (e.platform * oran) / 10_000n;
     r.hacim += e.hacim;
     r.platform += e.platform;
+    r.gelistirme += e.gelistirme || 0n;
+    r.pazarlama += e.pazarlama || 0n;
     r.aktif.add(e.cuzdan);
     r.adet++;
   }
@@ -331,7 +468,7 @@ export function siralamalar(etkinlikler, baglar, enAzBlok = 0) {
       puan(e.cuzdan, dolar(e.hacim) * PUAN.dolar);
     } else if (e.tur === "launch") {
       const x = al(K, e.cuzdan, { launch: 0, ucret: 0 });
-      x.launch++; x.ucret += dolar(e.platform) * 2;
+      x.launch++; x.ucret += dolar(e.hacim) / 50;   // the launch fee is 2% of the first buy
       puan(e.cuzdan, PUAN.launch);
     } else if (e.tur === "tasarim") {
       const x = al(D, e.tasarimci, { satis: 0, hacim: 0, yayin: 0 });
