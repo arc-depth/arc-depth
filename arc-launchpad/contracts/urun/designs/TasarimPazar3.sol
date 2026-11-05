@@ -27,8 +27,11 @@ import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol
  *      An outbid bidder's USDC is credited to alacakOf and withdrawn with cek
  *      (pull). Anyone settles after the end (muzayedeKapat); no bid returns
  *      the NFT.
- *   3. Resale at a fixed USDC price (ilanVer / satinAl). The holder keeps the
- *      NFT until a buyer pays.
+ *   3. Resale at a fixed USDC price (ilanVer / satinAl). The NFT waits in
+ *      custody here while listed (the seller changes the price or takes it
+ *      back any time), so a listing can never outlive the seller's hold on
+ *      the NFT. Offers can be made on a listed design and its seller accepts
+ *      them or turns the listing into an auction without a new approval.
  *   4. Splits: the designer of a design (TasarimNFT2.tasarimOf) records up to
  *      5 payees with basis points (bolusAyarla), optionally locked for good.
  *      A primary sale (seller = designer) pays the seller's share to them; a
@@ -362,21 +365,35 @@ contract TasarimPazar3 is ReentrancyGuard {
      * RESALE AT A FIXED PRICE (the NFT stays with the holder until bought)
      * ====================================================================== */
 
-    function ilanVer(uint256 id, uint256 fiyat) external calisiyor {
-        if (nft.ownerOf(id) != msg.sender) revert YetkiYok();
+    /// List (the NFT moves here, approval needed) or, for the seller of a
+    /// listing held here, change its price. A listing exists only while its
+    /// NFT is in custody here: a plain ERC-721 transfer cannot leave a stale
+    /// listing behind that revives if the NFT comes back.
+    function ilanVer(uint256 id, uint256 fiyat) external nonReentrant calisiyor {
         if (fiyat < asgariFiyat) revert KotuDeger();
+        (address s, bool ilanda) = _tutan(id);
+        if (s != msg.sender) revert YetkiYok();
+        if (ilanda) {
+            ilanOf[id].fiyat = fiyat;
+            emit IlanVerildi(id, msg.sender, fiyat);
+            return;
+        }
         if (!_onayli(msg.sender, id)) revert OnayYok();
         ilanOf[id] = Ilan(msg.sender, fiyat);
         emit IlanVerildi(id, msg.sender, fiyat);
+        nft.transferFrom(msg.sender, address(this), id);
     }
 
-    /// The seller, or anyone once the listing is stale (the NFT moved).
-    function ilanKaldir(uint256 id) external {
+    /// The seller takes the listing down and gets the NFT back; anyone
+    /// clears the listing of a design TasarimNFT2 burned meanwhile.
+    function ilanKaldir(uint256 id) external nonReentrant {
         Ilan memory i = ilanOf[id];
         if (i.fiyat == 0) revert IlanYok();
-        if (msg.sender != i.satici && _sahibi(id) == i.satici) revert YetkiYok();
+        bool bizde = _bizde(id);
+        if (msg.sender != i.satici && bizde) revert YetkiYok();
         delete ilanOf[id];
         emit IlanKalkti(id);
+        if (bizde) nft.transferFrom(address(this), i.satici, id);
     }
 
     /// Buy at the listed price (at most `azamiFiyat`); the buyer's key must be
@@ -386,13 +403,12 @@ contract TasarimPazar3 is ReentrancyGuard {
         if (i.fiyat == 0) revert IlanYok();
         if (i.fiyat > azamiFiyat) revert FiyatDegisti(i.fiyat);
         if (msg.sender == i.satici) revert KotuDeger();
-        if (nft.ownerOf(id) != i.satici) revert IlanYok();
+        if (!_bizde(id)) revert IlanYok(); // burned by TasarimNFT2 while listed
         _anahtarIste(msg.sender);
         delete ilanOf[id];
         emit IlanKalkti(id);
         usdc.safeTransferFrom(msg.sender, address(this), i.fiyat);
         toplamBorc += i.fiyat;
-        nft.transferFrom(i.satici, address(this), id);
         _emanetBaslat(id, i.satici, msg.sender, i.fiyat, 1);
     }
 
@@ -401,8 +417,8 @@ contract TasarimPazar3 is ReentrancyGuard {
      * ====================================================================== */
 
     function teklifVer(uint256 id, uint256 miktar, uint64 sure) external nonReentrant calisiyor returns (uint256 tid) {
-        address s = nft.ownerOf(id); // reverts for a burned design
-        if (s == msg.sender || s == address(this)) revert KotuDeger(); // not while held here
+        (address s,) = _tutan(id); // reverts for a burned design; 0 in an auction or escrow
+        if (s == msg.sender || s == address(0)) revert KotuDeger();
         if (miktar < asgariFiyat) revert KotuDeger();
         if (sure < 1 hours || sure > teklifAzamiSure) revert KotuDeger();
         _anahtarIste(msg.sender);
@@ -426,17 +442,19 @@ contract TasarimPazar3 is ReentrancyGuard {
         emit TeklifKalkti(tid, t.tasarimId, t.alici, t.miktar);
     }
 
-    /// The holder accepts an unexpired offer (NFT approved to this contract).
+    /// The holder accepts an unexpired offer (NFT approved to this contract),
+    /// or the seller of a listing held here (the listing ends).
     function teklifKabul(uint256 tid, uint256 asgariMiktar) external nonReentrant {
         Teklif memory t = teklifOf[tid];
         if (t.miktar == 0) revert TeklifYok();
         if (block.timestamp > t.bitis) revert SureBitti();
         if (t.miktar < asgariMiktar) revert FiyatDegisti(t.miktar);
-        if (nft.ownerOf(t.tasarimId) != msg.sender || msg.sender == t.alici) revert YetkiYok();
+        (address s, bool ilanda) = _tutan(t.tasarimId);
+        if (s != msg.sender || msg.sender == t.alici) revert YetkiYok();
         delete teklifOf[tid];
-        if (ilanOf[t.tasarimId].fiyat != 0) { delete ilanOf[t.tasarimId]; emit IlanKalkti(t.tasarimId); }
+        if (ilanda) { delete ilanOf[t.tasarimId]; emit IlanKalkti(t.tasarimId); }
         emit TeklifKabul(tid, t.tasarimId, msg.sender, t.alici, t.miktar);
-        nft.transferFrom(msg.sender, address(this), t.tasarimId);
+        if (!ilanda) nft.transferFrom(msg.sender, address(this), t.tasarimId);
         _emanetBaslat(t.tasarimId, msg.sender, t.alici, t.miktar, 2);
     }
 
@@ -444,16 +462,18 @@ contract TasarimPazar3 is ReentrancyGuard {
      * TIMED AUCTIONS (the NFT in custody here)
      * ====================================================================== */
 
+    /// The holder (NFT approved), or the seller of a listing held here (the listing ends).
     function muzayedeBaslat(uint256 id, uint256 rezerv, uint64 sure, uint16 adimBps) external nonReentrant calisiyor {
-        if (nft.ownerOf(id) != msg.sender) revert YetkiYok();
+        (address s, bool ilanda) = _tutan(id);
+        if (s != msg.sender) revert YetkiYok();
         if (rezerv < asgariFiyat) revert KotuDeger();
         if (sure < muzayedeAsgari || sure > muzayedeAzami) revert KotuDeger();
         if (adimBps < asgariAdimBps || adimBps > ADIM_AZAMI_BPS) revert KotuDeger();
         uint64 bitis = uint64(block.timestamp) + sure;
         muzayedeOf[id] = Muzayede(msg.sender, bitis, adimBps, rezerv, address(0), 0);
-        if (ilanOf[id].fiyat != 0) { delete ilanOf[id]; emit IlanKalkti(id); }
+        if (ilanda) { delete ilanOf[id]; emit IlanKalkti(id); }
         emit MuzayedeBasladi(id, msg.sender, rezerv, bitis, adimBps);
-        nft.transferFrom(msg.sender, address(this), id);
+        if (!ilanda) nft.transferFrom(msg.sender, address(this), id);
     }
 
     /// The lowest bid accepted now.
@@ -738,6 +758,17 @@ contract TasarimPazar3 is ReentrancyGuard {
 
     function _bizde(uint256 id) private view returns (bool) {
         return _sahibi(id) == address(this);
+    }
+
+    /// Who the market deals with for design `id`: its owner, or the seller of
+    /// a listing held here (ilanda). 0 while it is here in an auction or a
+    /// sale's escrow. Reverts for a burned design (TasarimNFT2.ownerOf).
+    function _tutan(uint256 id) private view returns (address s, bool ilanda) {
+        s = nft.ownerOf(id);
+        if (s == address(this)) {
+            s = ilanOf[id].satici;
+            ilanda = s != address(0);
+        }
     }
 
     function _anahtarIste(address a) private view {

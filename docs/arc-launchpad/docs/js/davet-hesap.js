@@ -66,7 +66,8 @@ export const KAYNAKLAR = {
   hook5: { adres: "0x7CBF813E4B1A45B03911E6af27Cc58a308f36ecc", blok: 28828698 },   // PulseHook5 (v8 pools)
   hook6: { adres: "0x84144495479E6Ba4aEED060C07C818e572C8AECC", blok: 29033001 },   // PulseHook6 (v9 pools)
   tasarim: { adres: "0xFbE8F98e76bfbD2Acfe80c36d4c475041Fd8FEaa", blok: 29038512 },
-  pazar3: { adres: "0x20b3fB80e77aBeB635c53639625702AB26E3Bb2B", blok: 29167576 },  // TasarimPazar3
+  pazar3: { adres: "0xd35225C49D272CFeb528E6677EAa9E653FC56771", blok: 29671408 },  // TasarimPazar3
+  pazar3Eski: { adres: "0x20b3fB80e77aBeB635c53639625702AB26E3Bb2B", blok: 29167576 },  // the first TasarimPazar3 (replaced 5 Nov 2026)
   siparis: { adres: "0x22111796D4d6E5A7598612517952083E4cc23C00", blok: 29168588 }, // SiparisKaydi
   limit: { adres: "0x1fef84Bd1Dd626E0F3e8FcD6A48521D5C6f839dC", blok: 29167436 }    // LimitEmir
 };
@@ -218,7 +219,7 @@ export function etkinlikCikar(loglar) {
 
   /* pass 2, per transaction: who traded which token (the wallet a hook fee in that tx belongs to) */
   const out = [];
-  const aliciOfPazar3 = new Map();     // design id -> buyer of its latest escrowed sale
+  const aliciOfPazar3 = new Map();     // market|design id -> buyer of its latest escrowed sale
   for (const [tx, ll] of txler) {
     const tuccar = new Map();          // token -> wallet, for this tx
     let limitSahip = null, limitTok = null;
@@ -270,15 +271,15 @@ export function etkinlikCikar(loglar) {
           out.push({ ...taban, tur: "tasarim", cuzdan: c, satici: k(o.args.satici), tasarimci: tasarimciOf.get(id) || k(o.args.satici), id, hacim: o.args.fiyat, platform: 0n });
           if (o.args.usdcIle) tuccar.set(k(o.args.token), c);   // its USDC was swapped in the designer token's pool
         }
-      } else if (a === A.pazar3) {
+      } else if (a === A.pazar3 || a === A.pazar3Eski) {
         const o = coz(PAZAR3_OLAY, l);
         if (!o) continue;
         const id = String(o.args.id);
         if (o.name === "Emanete") {
-          aliciOfPazar3.set(id, k(o.args.alici));
+          aliciOfPazar3.set(a + "|" + id, k(o.args.alici));
           out.push({ ...taban, tur: "tasarim", cuzdan: k(o.args.alici), satici: k(o.args.satici), tasarimci: tasarimciOf.get(id) || k(o.args.satici), id, hacim: o.args.fiyat, platform: 0n });
         } else if (o.name === "Dagitildi") {
-          const c = aliciOfPazar3.get(id);
+          const c = aliciOfPazar3.get(a + "|" + id);
           const g = o.args.gelistirme, p = o.args.pazarlama;
           if (c && g + p > 0n) out.push({ ...taban, tur: "ucret", kaynak: "pazar3", cuzdan: c, hacim: 0n, gelistirme: g, pazarlama: p, platform: g + p });
         }

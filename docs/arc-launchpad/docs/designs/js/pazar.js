@@ -65,6 +65,9 @@ export async function pazarKutusu({ cuzdan, t, meta }) {
   catch (e) { kutu.append(el("div", { sinif: "ds-durum ds-durum--hata", yazi: "Could not read the market: " + ((e && e.message) || e) })); return kutu; }
   const ben = cuzdan.hesap();
   const sahibim = esit(t.sahip, ben);
+  /* a listed design waits in the market's custody: its seller still acts as the holder (no new approval) */
+  const ilanda = !!dm.ilan && esit(t.sahip, P.PAZAR3.adres);
+  const tutanBen = sahibim || (ilanda && esit(dm.ilan.satici, ben));
   const ilk = (satici) => esit(satici, t.tasarimci);
   const d = durumSatiri();
 
@@ -107,13 +110,13 @@ export async function pazarKutusu({ cuzdan, t, meta }) {
 
   /* ---- fixed-price resale listing ---- */
   if (dm.ilan) {
-    const i = dm.ilan, gecerli = esit(t.sahip, i.satici);
+    const i = dm.ilan, gecerli = ilanda;
     const blok = el("div", { sinif: "dz-pazar__blok" }, [
       el("div", { sinif: "dz-pazar__ust" }, [el("span", { sinif: "ds-rozet", yazi: "Buy now in USDC" })]),
       el("div", { sinif: "ds-buyuk-fiyat", yazi: usd(i.fiyat) + " USDC" }),
       el("div", { sinif: "ds-satir" }, [el("span", { yazi: "Seller" }), esit(i.satici, ben) ? el("span", { yazi: "you" }) : isim(i.satici)]), payNotu(ay, i.fiyat, ilk(i.satici))]);
-    if (!gecerli) blok.append(el("div", { sinif: "ds-cihaz", yazi: "This listing went stale (the design moved)." }), ek("Remove the stale listing", async (yaz) => { await hesapIste(); await P.gonder({ cuzdan, data: P.veri.ilanKaldir(t.id), durum: yaz }); yaz("Removed.", "ok"); yenile(); }, "dugme", d));
-    else if (esit(i.satici, ben)) blok.append(ek("Remove listing", async (yaz) => { await P.gonder({ cuzdan, data: P.veri.ilanKaldir(t.id), durum: yaz }); yaz("Listing removed.", "ok"); yenile(); }, "dugme", d));
+    if (!gecerli) blok.append(el("div", { sinif: "ds-cihaz", yazi: "This listing went stale (the design was taken down)." }), ek("Remove the stale listing", async (yaz) => { await hesapIste(); await P.gonder({ cuzdan, data: P.veri.ilanKaldir(t.id), durum: yaz }); yaz("Removed.", "ok"); yenile(); }, "dugme", d));
+    else if (esit(i.satici, ben)) blok.append(ek("Remove listing", async (yaz) => { await P.gonder({ cuzdan, data: P.veri.ilanKaldir(t.id), durum: yaz }); yaz("Listing removed; the design is back in your wallet.", "ok"); yenile(); }, "dugme", d));
     else blok.append(ek("Buy for " + usd(i.fiyat), async (yaz) => {
       await hesapIste();
       await anahtarGarantile(cuzdan, yaz);
@@ -130,8 +133,8 @@ export async function pazarKutusu({ cuzdan, t, meta }) {
     const doldu = Date.now() > o.bitis;
     const satir = el("div", { sinif: "dz-pazar__teklif" }, [el("b", { yazi: usd(o.miktar) }), esit(o.alici, ben) ? el("span", { yazi: "you" }) : isim(o.alici),
       el("span", { sinif: "ds-cihaz", yazi: doldu ? "expired" : "until " + tarih(o.bitis) })]);
-    if (sahibim && !doldu && !esit(o.alici, ben)) satir.append(ek("Accept", async (yaz) => {
-      await P.nftOnayGerekirse({ cuzdan, id: t.id, durum: yaz });
+    if (tutanBen && !doldu && !esit(o.alici, ben)) satir.append(ek("Accept", async (yaz) => {
+      if (!ilanda) await P.nftOnayGerekirse({ cuzdan, id: t.id, durum: yaz });
       await P.gonder({ cuzdan, data: P.veri.teklifKabul(o.tid, o.miktar), durum: yaz, aciklama: "Confirm accepting " + usd(o.miktar) });
       yaz("Accepted. Deliver the file key to the buyer now; you are paid when they confirm or their window passes.", "ok"); yenile();
     }, "dugme dugme--marka dugme--kucuk", d));
@@ -141,7 +144,7 @@ export async function pazarKutusu({ cuzdan, t, meta }) {
     }, "dugme dugme--kucuk", d));
     tekBlok.append(satir);
   }
-  if (t.sahip && !sahibim && !esit(t.sahip, P.PAZAR3.adres)) {
+  if (t.sahip && !tutanBen && (ilanda || !esit(t.sahip, P.PAZAR3.adres))) {
     const g = usdGirdi("Offer in USDC");
     const sure = el("select", { sinif: "girdi", attr: { "aria-label": "Offer valid for" } }, [["1 day", 86400], ["3 days", 3 * 86400], ["7 days", 7 * 86400], ["30 days", 30 * 86400]]
       .filter(([, s]) => s <= ay.teklifAzamiSure).map(([a, s]) => el("option", { attr: { value: String(s) }, yazi: a })));
@@ -157,7 +160,7 @@ export async function pazarKutusu({ cuzdan, t, meta }) {
   kutu.append(tekBlok);
 
   /* ---- the holder: list or auction ---- */
-  if (sahibim && !dm.satis) {
+  if (tutanBen && !dm.satis) {
     const fiyat = usdGirdi("Price in USDC");
     const rezerv = usdGirdi("Reserve in USDC");
     const sure = el("select", { sinif: "girdi", attr: { "aria-label": "Auction length" } }, [["1 hour", 3600], ["1 day", 86400], ["3 days", 3 * 86400], ["7 days", 7 * 86400]]
@@ -166,18 +169,18 @@ export async function pazarKutusu({ cuzdan, t, meta }) {
     kutu.append(el("div", { sinif: "dz-pazar__blok" }, [el("div", { sinif: "dz-pazar__ust" }, [el("span", { sinif: "ds-rozet", yazi: "Sell on the market" })]),
       el("div", { sinif: "dz-pazar__satir" }, [fiyat, ek(dm.ilan ? "Change price" : "List for resale", async (yaz) => {
         const f = usdOku(fiyat, "a price");
-        await P.nftOnayGerekirse({ cuzdan, id: t.id, durum: yaz });
-        await P.gonder({ cuzdan, data: P.veri.ilanVer(t.id, f), durum: yaz, aciklama: "Confirm listing at " + usd(f) });
-        yaz("Listed at " + usd(f) + ". The design stays with you until someone buys.", "ok"); yenile();
+        if (!ilanda) await P.nftOnayGerekirse({ cuzdan, id: t.id, durum: yaz });
+        await P.gonder({ cuzdan, data: P.veri.ilanVer(t.id, f), durum: yaz, aciklama: (ilanda ? "Confirm the new price " : "Confirm listing at ") + usd(f) });
+        yaz((ilanda ? "Price changed to " : "Listed at ") + usd(f) + ". The market holds the design until someone buys it or you remove the listing.", "ok"); yenile();
       }, "dugme dugme--marka", d)]),
       el("div", { sinif: "dz-pazar__satir" }, [rezerv, sure, adim, ek("Start auction", async (yaz) => {
         const r = usdOku(rezerv, "a reserve");
-        await P.nftOnayGerekirse({ cuzdan, id: t.id, durum: yaz });
+        if (!ilanda) await P.nftOnayGerekirse({ cuzdan, id: t.id, durum: yaz });
         await P.gonder({ cuzdan, data: P.veri.muzayedeBaslat(t.id, r, Number(sure.value), Number(adim.value)), durum: yaz, aciklama: "Confirm the auction (reserve " + usd(r) + ")" });
         yaz("Auction started. The contract holds the design until it ends; with no bids it comes back.", "ok"); yenile();
       }, "dugme", d)]),
       el("div", { sinif: "ds-cihaz", yazi: (ilk(ben) ? "First sale: you receive the price minus the " + yuzde(ay.ucretBps) + " platform fee, split with your co-designers if you set any." : "Resale: " + yuzde(ay.telifBps) + " goes to the designer as a royalty and " + yuzde(ay.ucretBps) + " is the platform fee.") +
-        " Buyers pay in USDC on Arc; every sale waits in escrow until you deliver the file key. Approval is per design (TasarimNFT2.approve)." })]));
+        " Buyers pay in USDC on Arc; every sale waits in escrow until you deliver the file key. Approval is per design (TasarimNFT2.approve); a listed design waits in the market until it sells or you remove the listing." })]));
   }
   kutu.append(d);
   const gecmis = el("details", { sinif: "dz-pazar__gecmis" }, [el("summary", { yazi: "Market history" }), el("div", { sinif: "ds-cihaz", yazi: "Reading…" })]);

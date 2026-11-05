@@ -59,7 +59,7 @@ export async function tasarimSayfasi({ cuzdan }, id) {
   if (t.sahip || !t.iptal) yan.append(await PZ.pazarKutusu({ cuzdan, t, meta }).catch((e) => el("div", { sinif: "ds-durum ds-durum--hata", yazi: "Market: " + ((e && e.message) || e) })));
   if (esit(t.tasarimci, ben)) yan.append(await PZ.bolusKutusu({ cuzdan, id }).catch(() => el("span")));
   yan.append(el("div", { sinif: "ds-kutu" }, [
-    el("div", { sinif: "ds-satir" }, [el("span", { yazi: "Owner" }), t.sahip ? (esit(t.sahip, PZ.PAZAR3_ADRES) ? el("span", { yazi: "the market (in escrow or auction)" }) : el("a", { attr: { href: "#/u/" + t.sahip } }, [esit(t.sahip, ben) ? "you" : isim(t.sahip)])) : el("span", { yazi: "none (burned)" })]),
+    el("div", { sinif: "ds-satir" }, [el("span", { yazi: "Owner" }), t.sahip ? (esit(t.sahip, PZ.PAZAR3_ADRES) ? el("span", { yazi: "the market (listed, in escrow or auction)" }) : el("a", { attr: { href: "#/u/" + t.sahip } }, [esit(t.sahip, ben) ? "you" : isim(t.sahip)])) : el("span", { yazi: "none (burned)" })]),
     el("div", { sinif: "ds-satir" }, [el("span", { yazi: "Designer token" }), el("a", { attr: { href: ANA + "#/merkez?t=" + t.token }, yazi: (j.sembol ? "$" + j.sembol : kisa(t.token)) + " · Trade ↗" })]),
     meta && meta.arcpulse && meta.arcpulse.file ? el("div", { sinif: "ds-satir" }, [el("span", { yazi: "File" }), el("span", { yazi: String(meta.arcpulse.file.name || "file").slice(0, 80) + (meta.arcpulse.file.size ? " · " + Math.ceil(meta.arcpulse.file.size / 1024) + " KB" : "") + " · encrypted" })]) : null,
     el("div", { sinif: "ds-satir" }, [el("span", { yazi: "Exact file hash" }), el("span", { sinif: "ds-mono", attr: { title: t.dosyaHash }, yazi: t.dosyaHash.slice(0, 18) + "…" })]),

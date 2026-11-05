@@ -3,7 +3,10 @@
  *
  * Contract: contracts/urun/designs/TasarimPazar3.sol (deploy record
  * dagitim-pazar3.json). It sits next to TasarimNFT2 and moves NFTs only with
- * the holder's ERC-721 approval: offers (USDC escrowed by the buyer), timed
+ * the holder's ERC-721 approval. A listed design waits in the market's custody
+ * (the seller changes the price, accepts an offer, starts an auction or takes
+ * it back without a new approval), so a listing cannot outlive the seller's
+ * hold on the NFT. Offers (USDC escrowed by the buyer), timed
  * auctions (reserve, minimum step, anti-snipe, outbid refunds to pull),
  * fixed-price USDC resale, the designer's royalty and co-designer splits.
  * Every sale waits in escrow until the seller delivers the file key to the
@@ -19,8 +22,10 @@
 import { Interface, Contract } from "../../vendor/ethers.min.js";
 import * as S from "./sozlesme.js";
 
-/* LIVE 2 Nov 2026: deployed on Arc (dagitim-pazar3.json) */
-export const PAZAR3 = { adres: "0x20b3fB80e77aBeB635c53639625702AB26E3Bb2B", baslangicBloku: 29167576 };
+/* LIVE on Arc (dagitim-pazar3.json). 5 Nov 2026: redeployed with listings held in custody; the first
+   market 0x20b3fB80e77aBeB635c53639625702AB26E3Bb2B (block 29167576) never held a listing, sale or balance */
+export const PAZAR3 = { adres: "0xd35225C49D272CFeb528E6677EAa9E653FC56771", baslangicBloku: 29671408 };
+export const PAZAR3_ESKI = { adres: "0x20b3fB80e77aBeB635c53639625702AB26E3Bb2B", baslangicBloku: 29167576 };
 export const PAZAR3_VAR = /^0x[0-9a-fA-F]{40}$/.test(PAZAR3.adres || "") && PAZAR3.baslangicBloku > 0;
 
 /* build/TasarimPazar3.json, admin setters left out */
@@ -199,7 +204,7 @@ export function hataAcikla(e) {
     AzTeklif: "The bid is too low: at least " + (args[0] != null ? "$" + (Number(args[0]) / 1e6).toLocaleString("en-US", { maximumFractionDigits: 6 }) : "the minimum step") + " now.",
     Durduruldu: "The market is paused by the admin right now (withdrawals, refunds and settlement still work).",
     FiyatDegisti: "The price changed: it is now $" + (args[0] != null ? (Number(args[0]) / 1e6).toLocaleString("en-US", { maximumFractionDigits: 6 }) : "?") + ". Reload and try again.",
-    IlanYok: "This design is not listed on the market (or the listing went stale when the NFT moved).",
+    IlanYok: "This design is not listed on the market (or it was taken down while listed).",
     ItirazAcik: "A copy challenge is open on this design; the payment waits for it to be resolved.",
     Kilitli: "This split is locked for good.",
     KotuDeger: "A value was refused (price under the minimum, duration out of range, your own design, or a bad split).",

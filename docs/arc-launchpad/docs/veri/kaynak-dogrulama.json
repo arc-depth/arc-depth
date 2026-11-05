@@ -618,6 +618,12 @@
    "ad": "DavetOdemesi",
    "adres": "0x0329C355175B7d1cb69642b3E192eb28Aaf0D5D0",
    "eslesme": "exact_match"
+  },
+  {
+   "chainId": 5042,
+   "ad": "TasarimPazar3",
+   "adres": "0xd35225C49D272CFeb528E6677EAa9E653FC56771",
+   "eslesme": "exact_match"
   }
  ]
 }
