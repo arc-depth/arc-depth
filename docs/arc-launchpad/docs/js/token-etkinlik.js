@@ -299,7 +299,7 @@ async function doldur(kap, token, gecerli = () => true) {
   }));
   if (!gecerli()) return;
   const ETIKET = new Map([[PM.toLowerCase(), "Uniswap v4 pool (locked)"], [String(L.kasa).toLowerCase(), "Collateral vault"], [String(L.lp).toLowerCase(), "Launchpad"]]);
-  if (L.set) for (const [k, ad] of [["kapi", "Launch gate"], ["ucu", "Redemption gate"], ["hub", "Twin hub (tokens on other chains)"], ["emanet", "Launch escrow"], ["hook", "Pool hook"]]) if (L.set[k]) ETIKET.set(String(L.set[k]).toLowerCase(), ad);
+  if (L.set) for (const [k, ad] of [["kapi", "Launch gate"], ["ucu", "Redemption gate"], ["hub", "Twin hub (tokens on other chains)"], ["emanet", "Launch escrow"], ["emanetEski", "Launch escrow (earlier)"], ["hook", "Pool hook"]]) if (L.set[k]) ETIKET.set(String(L.set[k]).toLowerCase(), ad);
   if (L.kurucu) ETIKET.set(String(L.kurucu).toLowerCase(), "Founder");
   const ilk = kontrol.filter((x) => x.bakiye > 0n).sort((a, b) => (b.bakiye > a.bakiye ? 1 : b.bakiye < a.bakiye ? -1 : 0)).slice(0, 10);
   const toplam = arz ? Number(arz) / 1e18 : null;

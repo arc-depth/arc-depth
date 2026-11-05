@@ -25,7 +25,11 @@ import {MerkleProof} from "@openzeppelin/contracts/utils/cryptography/MerkleProo
  *   publishes the root with kokYayinla. Anyone can recompute it from the
  *   chain and compare; the site does exactly that before it offers a claim.
  *   A new root waits `beklemeSaniye` before it can be claimed against, and
- *   the admin can cancel a root while it waits.
+ *   the admin can cancel a root while it waits. The wait is never below
+ *   BEKLEME_TABAN (1 day), and a shorter wait takes effect only once the
+ *   wait in force has passed (a longer one at once), so a root published
+ *   right after a cut still waits the old wait and the previous root stays
+ *   claimable that long.
  *
  * RULES THE CONTRACT ENFORCES
  *   - The rate (oranBps, share of the platform's cut) is capped at
@@ -48,6 +52,7 @@ contract DavetOdemesi is ReentrancyGuard {
 
     uint16 public constant ORAN_TAVAN_BPS = 3_000;      // at most 30% of the platform's cut
     uint32 public constant BEKLEME_TAVAN = 7 days;
+    uint32 public constant BEKLEME_TABAN = 1 days;
 
     IERC20 public immutable usdc;
     /// the DavetKaydi whose bindings the amounts use (informational)
@@ -56,7 +61,11 @@ contract DavetOdemesi is ReentrancyGuard {
     address public yonetici;
     address public bekleyenYonetici;
     uint16 public oranBps;
-    uint32 public beklemeSaniye;
+    /// the wait in force until a pending cut applies (read beklemeSaniye())
+    uint32 private _bekleme;
+    /// a shorter wait, applying from `bekleyenBeklemeZamani` (0: none pending)
+    uint32 public bekleyenBekleme;
+    uint64 public bekleyenBeklemeZamani;
 
     struct Kok {
         bytes32 kok;
@@ -79,6 +88,7 @@ contract DavetOdemesi is ReentrancyGuard {
     event Odendi(address indexed hesap, uint256 miktar, uint256 toplamHak);
     event OranDegisti(uint16 eski, uint16 yeni, uint64 blok);
     event BeklemeDegisti(uint32 saniye);
+    event BeklemeAzalacak(uint32 saniye, uint64 zaman);
     event FazlaCekildi(address indexed kime, uint256 miktar);
     event YoneticiOnerildi(address yeni);
     event YoneticiDegisti(address eski, address yeni);
@@ -100,12 +110,12 @@ contract DavetOdemesi is ReentrancyGuard {
 
     constructor(IERC20 usdc_, address kayit_, address yonetici_, uint16 oranBps_, uint32 beklemeSaniye_) {
         if (address(usdc_) == address(0) || kayit_ == address(0) || yonetici_ == address(0)) revert SifirAdres();
-        if (oranBps_ > ORAN_TAVAN_BPS || beklemeSaniye_ > BEKLEME_TAVAN) revert KotuDeger();
+        if (oranBps_ > ORAN_TAVAN_BPS || beklemeSaniye_ < BEKLEME_TABAN || beklemeSaniye_ > BEKLEME_TAVAN) revert KotuDeger();
         usdc = usdc_;
         kayit = kayit_;
         yonetici = yonetici_;
         oranBps = oranBps_;
-        beklemeSaniye = beklemeSaniye_;
+        _bekleme = beklemeSaniye_;
         emit YoneticiDegisti(address(0), yonetici_);
         emit OranDegisti(0, oranBps_, uint64(block.number));
         emit BeklemeDegisti(beklemeSaniye_);
@@ -143,7 +153,7 @@ contract DavetOdemesi is ReentrancyGuard {
         uint256 karsilik = toplamOdenen + usdc.balanceOf(address(this));
         if (toplam > karsilik) revert Karsiliksiz(toplam, karsilik);
         if (guncelGecerli) onceki = guncel;
-        uint64 g = uint64(block.timestamp) + beklemeSaniye;
+        uint64 g = uint64(block.timestamp) + beklemeSaniye();
         guncel = Kok(kok, sonBlok, g, toplam);
         unchecked { ++kokSayisi; }
         emit KokYayinlandi(kokSayisi, kok, sonBlok, toplam, g, veriHash);
@@ -193,10 +203,30 @@ contract DavetOdemesi is ReentrancyGuard {
         oranBps = bps;
     }
 
+    /// The wait a root published now gets.
+    function beklemeSaniye() public view returns (uint32) {
+        uint64 z = bekleyenBeklemeZamani;
+        return z != 0 && block.timestamp >= z ? bekleyenBekleme : _bekleme;
+    }
+
+    /// A longer wait applies at once; a shorter one only after the wait in
+    /// force has passed, so it cannot shorten the window of a root that is
+    /// already claimable. Never below BEKLEME_TABAN or above BEKLEME_TAVAN.
     function beklemeAyarla(uint32 saniye) external sadeceYonetici {
-        if (saniye > BEKLEME_TAVAN) revert KotuDeger();
-        beklemeSaniye = saniye;
-        emit BeklemeDegisti(saniye);
+        if (saniye < BEKLEME_TABAN || saniye > BEKLEME_TAVAN) revert KotuDeger();
+        uint32 simdiki = beklemeSaniye();
+        _bekleme = simdiki;
+        if (saniye >= simdiki) {
+            _bekleme = saniye;
+            bekleyenBekleme = 0;
+            bekleyenBeklemeZamani = 0;
+            emit BeklemeDegisti(saniye);
+        } else {
+            uint64 z = uint64(block.timestamp) + simdiki;
+            bekleyenBekleme = saniye;
+            bekleyenBeklemeZamani = z;
+            emit BeklemeAzalacak(saniye, z);
+        }
     }
 
     /// Take back USDC that no published root owes.

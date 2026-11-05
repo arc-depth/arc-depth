@@ -49,9 +49,12 @@ import { Interface, AbiCoder, keccak256, toUtf8Bytes, getAddress, concat, encode
 /* ---- the switch: set after scripts/davet-dagit.js (dagitim-davet.json) ---- */
 export const DAVET = {
   kayit: "0x998de4D2553F4d8Ad7b4D4D5DC2073d240790aEd",   // DavetKaydi (2 Nov 2026)
-  odeme: "0x8366B24873f95B6a9e984eA3742fAAeB5eA2AADa",   // DavetOdemesi (20% of dev + marketing fees, 1-day wait)
+  odeme: "0x0329C355175B7d1cb69642b3E192eb28Aaf0D5D0",   // DavetOdemesi v2 (5 Nov 2026: 1-day wait floor; 20% of dev + marketing fees)
   kayitBlok: 29167756,
-  odemeBlok: 29167765
+  odemeBlok: 29667874,
+  /* the first DavetOdemesi (2 Nov 2026, never held a root): its OranDegisti events still set the rate for activity before the switch */
+  odemeEski: "0x8366B24873f95B6a9e984eA3742fAAeB5eA2AADa",
+  odemeEskiBlok: 29167765
 };
 
 /* the deployed contracts whose events count (deploy blocks found by eth_getCode or their records) */
@@ -419,6 +422,7 @@ export function kanitKok(hesap, miktar, kanit) {
 export function okunacaklar(davet = DAVET) {
   const r = Object.values(KAYNAKLAR).map((x) => ({ ...x, tur: "kaynak" }));
   if (/^0x[0-9a-fA-F]{40}$/.test(davet.kayit || "")) r.push({ adres: davet.kayit, blok: davet.kayitBlok, tur: "kayit" });
+  if (/^0x[0-9a-fA-F]{40}$/.test(davet.odemeEski || "")) r.push({ adres: davet.odemeEski, blok: davet.odemeEskiBlok, tur: "odeme" });
   if (/^0x[0-9a-fA-F]{40}$/.test(davet.odeme || "")) r.push({ adres: davet.odeme, blok: davet.odemeBlok, tur: "odeme" });
   return r;
 }

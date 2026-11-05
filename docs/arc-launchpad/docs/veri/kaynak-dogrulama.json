@@ -1,5 +1,5 @@
 {
- "zaman": "2026-11-02",
+ "zaman": "2026-11-05",
  "sozlesmeler": [
   {
    "chainId": 5042,
@@ -599,6 +599,24 @@
    "chainId": 5042,
    "ad": "KoleksiyonKaydi",
    "adres": "0x27F2f84E0d9D7139aB12EC769bF8eb1b6F263bc1",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 5042,
+   "ad": "LaunchEmaneti",
+   "adres": "0x4e46d398303e7596F355c8Fb0D1A15543f318546",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 5042,
+   "ad": "LaunchEmaneti",
+   "adres": "0x540f93D15B9800Ab522F1cc34F5a25C1902A192d",
+   "eslesme": "exact_match"
+  },
+  {
+   "chainId": 5042,
+   "ad": "DavetOdemesi",
+   "adres": "0x0329C355175B7d1cb69642b3E192eb28Aaf0D5D0",
    "eslesme": "exact_match"
   }
  ]

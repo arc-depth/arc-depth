@@ -7,7 +7,7 @@
  "hub": "0x74C715b1bE6c950480127F27093bB4A2F0E065Da",
  "aktarma": "0xA98a04c893b6cdb983F93E764A9332667D73aC08",
  "hook": "0x7CBF813E4B1A45B03911E6af27Cc58a308f36ecc",
- "emanet": "0x1a30cb68ED4d2226710298A41E21F267da124306",
+ "emanet": "0x540f93D15B9800Ab522F1cc34F5a25C1902A192d",
  "surum": 8,
  "teshis": "0xa8bf7291d9c9E0bd358367eb5BCB55A24F3359De",
  "platformToken": {
@@ -100,5 +100,6 @@
    "sepetProgram": "9VyBC6ygFQrEP6V212maFci9du6R32BbKHxKmF9Wecto",
    "kapiProgram": "G91zXh4LCEzY7UgE3JWic3Kt5ckBsnibkgdAXABatWJQ"
   }
- }
+ },
+ "emanetEski": "0x1a30cb68ED4d2226710298A41E21F267da124306"
 }

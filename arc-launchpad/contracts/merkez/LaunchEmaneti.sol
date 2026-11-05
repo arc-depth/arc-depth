@@ -73,9 +73,21 @@ contract LaunchEmaneti {
     uint256 private constant OLCEK = 1e12;   // Arc's native dollar has 18 decimals, its ERC-20 view 6
     /// What whoever carries a launch out here receives from its dollars
     /// ($0.05; v4): the founder's own page does it, and if that page was
-    /// closed, anyone has a reason to.
+    /// closed, anyone has a reason to. Paid only for a launch that happened
+    /// (v10): a launch that failed sends all its dollars back to `iade`.
     uint256 public constant BAHSIS = 50_000;
     uint32 private constant KESINLIK = 2000;
+    /// The least gas `isle` must still hold when it calls the launch (v10,
+    /// audit lead "try-launch-insufficient-gas-griefing"). Whoever relays
+    /// picks the gas; a launch starved of it must not count as a launch that
+    /// failed, because the CCTP message is one-shot. MerkezKapi ends a launch
+    /// with mandatory upkeep that needs up to ~2.0M + 150k gas (BakimGazi
+    /// below that), and the call forwards only 63/64 of what is left:
+    /// 2.15M * 64/63 = ~2.18M, rounded up with margin to 2.5M. Below it the
+    /// whole call reverts and the message stays unconsumed, to be relayed again.
+    uint256 public constant LAUNCH_GAZ_TABAN = 2_500_000;
+    /// MerkezKapi's `BakimGazi(uint256)`: the launch reverted for want of gas.
+    bytes4 private constant BAKIM_GAZI = bytes4(keccak256("BakimGazi(uint256)"));
 
     event Islendi(uint32 kaynakZincir, bytes32 gonderen, address token, uint256 net, uint256 iade);
     event Iade(uint32 kaynakZincir, bytes32 gonderen, uint256 miktar, uint8 neden);
@@ -84,6 +96,7 @@ contract LaunchEmaneti {
     error Alinamadi();
     error SadeceKendisi();
     error TransferOlmadi();
+    error GazYetersiz(uint256 gerek);
 
     bool private _icerde;
 
@@ -129,11 +142,18 @@ contract LaunchEmaneti {
         if (toplam <= net) {
             if (!usdc.approve(address(kapi), toplam)) revert TransferOlmadi();
             /* the rest is the LayerZero value: twins and the founder's tokens; what is unused comes back here */
-            try kapi.launch{ value: (net - toplam) * OLCEK }(q) returns (address t) { token = t; } catch {}
+            if (gasleft() < LAUNCH_GAZ_TABAN) revert GazYetersiz(LAUNCH_GAZ_TABAN);
+            uint256 g0 = gasleft();
+            try kapi.launch{ value: (net - toplam) * OLCEK }(q) returns (address t) { token = t; }
+            catch (bytes memory hata) {
+                /* starved, not refused: MerkezKapi's BakimGazi, or the launch used up all the gas it was
+                   given (only ~1/64 is left here). Revert everything so the message can be relayed again. */
+                if ((hata.length >= 4 && bytes4(hata) == BAKIM_GAZI) || gasleft() < g0 / 63) revert GazYetersiz(LAUNCH_GAZ_TABAN);
+            }
             if (!usdc.approve(address(kapi), 0)) revert TransferOlmadi();
         }
         uint256 kalan = usdc.balanceOf(address(this)) - once;
-        if (msg.sender != iade && kalan >= BAHSIS) {
+        if (token != address(0) && msg.sender != iade && kalan >= BAHSIS) {
             kalan -= BAHSIS;
             if (!usdc.transfer(msg.sender, BAHSIS)) revert TransferOlmadi();
         }

@@ -344,7 +344,11 @@ export function uzakCuzdanPaneli({ token, V2, kaymaOrani }) {
         bekleyen.onay = o;
       }
       if (!cuzdan.hesap()) await cuzdan.bagla();
-      const h = await cuzdan.agdaGonder(arcAg(), { to: V2.emanet, data: EMANET.encodeFunctionData("isle", [bekleyen.onay.message, bekleyen.onay.attestation]), value: "0x0" });
+      /* the burn names its LaunchEmaneti as destination caller (CCTP v2 header bytes 108..140): a burn made
+         before the 5 Nov 2026 redeploy is finished on the escrow it named, not on the new one */
+      const cagiran = "0x" + String(bekleyen.onay.message).replace(/^0x/, "").slice(240, 280).toLowerCase();
+      const hedef = [V2.emanet, V2.emanetEski].find((a) => a && a.toLowerCase() === cagiran) || V2.emanet;
+      const h = await cuzdan.agdaGonder(arcAg(), { to: hedef, data: EMANET.encodeFunctionData("isle", [bekleyen.onay.message, bekleyen.onay.attestation]), value: "0x0" });
       durum("Sent on Arc (" + h.slice(0, 14) + "…). Waiting for the receipt…");
       const { arcMakbuz, emanetSonucu, tokenBaglantilari } = await import("./arc-sonuc.js");
       const m = await arcMakbuz(h);
