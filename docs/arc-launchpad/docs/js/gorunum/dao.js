@@ -330,7 +330,7 @@ export async function ciz() {
       el("span", { sinif: "yazi yazi--kucuk yazi--sessiz", yazi: "  " + x.nerede })
     ]));
   }
-  iki.append(panel("Karar verebilir", yapabilir));
+  iki.append(panel("Can decide", yapabilir));
 
   const yapamaz = el("ul", { sinif: "liste liste--capraz" });
   for (const x of DAO_YETKI.yapamaz) {
@@ -339,7 +339,7 @@ export async function ciz() {
       el("span", { sinif: "yazi yazi--kucuk yazi--sessiz", yazi: "  " + x.neden })
     ]));
   }
-  iki.append(panel("Dokunamaz", yapamaz));
+  iki.append(panel("Cannot touch", yapamaz));
   yetkiGovde.append(iki);
 
   yetkiGovde.append(not(
@@ -353,12 +353,12 @@ export async function ciz() {
   /* The residual risk inside the permitted set. Stated, not buried. */
   yetkiGovde.append(not(DAO_YETKI.artikRisk, "uyari"));
 
-  kap.append(panel("DAO neye karar verebilir", yetkiGovde));
+  kap.append(panel("What the DAO can decide", yetkiGovde));
 
   /* ---- 5. the proposals themselves -------------------------------- */
 
   if (sayi === 0) {
-    kap.append(panel("Teklifler", bos(
+    kap.append(panel("Proposals", bos(
       "No proposals yet",
       "The governor has recorded " + sayi + " proposals. To propose and " +
       "to vote, go to the Proposals and voting screen — every button " +

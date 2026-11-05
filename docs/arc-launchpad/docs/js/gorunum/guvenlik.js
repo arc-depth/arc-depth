@@ -189,14 +189,14 @@ export async function ciz() {
         [canli(deger) ? adres(deger) : el("span", { sinif: "ucuncul", yazi: "—" })]),
       el("td", { attr: { "data-et": "Durum" } }, [
         canli(deger)
-          ? el("span", { sinif: "etiket etiket--alis", yazi: "zincirde" })
+          ? el("span", { sinif: "etiket etiket--alis", yazi: "on chain" })
           : el("span", { sinif: "etiket etiket--uyari", yazi: "not deployed" })
       ])
     ]));
   };
 
   for (const [ad, v] of Object.entries(PULSE)) ekle(ad, v, "this model");
-  ekle("isletme (fee target)", HEDEFLER.isletme, "a plain address");
+  ekle("operations (fee target)", HEDEFLER.isletme, "a plain address");
   ekle("PoolManager", DIS.poolManager, "Uniswap v4, not ours");
   ekle("USDC", DIS.usdc, "native on Arc — both collateral and gas");
   for (const [ad, v] of Object.entries(ESKI)) ekle(ad, v, "previous generation");
@@ -204,7 +204,7 @@ export async function ciz() {
   tablo.append(govde);
   kap.append(panel([
     el("span", { html: ikon("kilit", "yol-oge__ikon") }),
-    el("span", { yazi: "Adresler" })
+    el("span", { yazi: "Addresses" })
   ], el("div", { sinif: "tablo-sarmal" }, [tablo]), null, false));
 
   /* ---- proofs ------------------------------------------------------- */

@@ -60,14 +60,14 @@ export async function ciz() {
   /* ---- the split-trade measurement ---------------------------------- */
   const tablo = el("table", { sinif: "tablo tablo--kart" });
   tablo.append(el("thead", {}, [el("tr", {}, [
-    el("th", { yazi: "Dilim" }),
+    el("th", { yazi: "Tier" }),
     el("th", { yazi: "Cumulative size" }),
     el("th", { yazi: "Rate paid" })
   ])]));
   const govde = el("tbody");
   for (const o of OLCUM) {
     govde.append(el("tr", {}, [
-      el("td", { attr: { "data-et": "Dilim" }, yazi: String(o.dilim) }),
+      el("td", { attr: { "data-et": "Tier" }, yazi: String(o.dilim) }),
       el("td", { sinif: "sayi", attr: { "data-et": "Cumulative size" },
         yazi: o.birikmis.toFixed(3) + "%" }),
       el("td", { sinif: "sayi", attr: { "data-et": "Rate paid" },

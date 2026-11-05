@@ -51,16 +51,16 @@ const HIZ = [
 function hizTablosu() {
   const t = el("table", { sinif: "tablo tablo--kart" });
   t.append(el("thead", {}, [el("tr", {}, [
-    el("th", { yazi: "Yol" }),
+    el("th", { yazi: "Route" }),
     el("th", { yazi: "Fast (~seconds)" }),
-    el("th", { yazi: "Standart" })
+    el("th", { yazi: "Standard" })
   ])]));
   const g = el("tbody");
   for (const h of HIZ) {
     g.append(el("tr", {}, [
-      el("td", { attr: { "data-et": "Yol" }, yazi: h.yol }),
+      el("td", { attr: { "data-et": "Route" }, yazi: h.yol }),
       el("td", { sinif: "sayi", attr: { "data-et": "Fast" }, yazi: h.hizli }),
-      el("td", { sinif: "sayi", attr: { "data-et": "Standart" }, yazi: h.standart })
+      el("td", { sinif: "sayi", attr: { "data-et": "Standard" }, yazi: h.standart })
     ]));
   }
   t.append(g);

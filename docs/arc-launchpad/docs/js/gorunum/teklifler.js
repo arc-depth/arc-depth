@@ -283,7 +283,7 @@ function teklifFormu(cuzdan) {
         "it makes an empty call. Leave the target empty for a signal proposal.";
       return;
     }
-    gonder(cagriVerisi(ABI.governor, "propose", [a, h, d]), "Teklif");
+    gonder(cagriVerisi(ABI.governor, "propose", [a, h, d]), "The proposal");
   });
 
   return el("div", { sinif: "yigin yigin--sik" }, [
@@ -354,7 +354,7 @@ function teklifKarti(id, pr, durumNo, hesap, oyVerdi, gucu, cuzdan, oy) {
       ? olcum("Uygulanabilir", new Date(eta).toISOString().slice(0, 16).replace("T", " "),
         eta > Date.now() ? gecenSure(eta - Date.now()) + " left" : "now")
       : null,
-    olcum("Teklif eden", adres(pr[0]), null)
+    olcum("Proposer", adres(pr[0]), null)
   ].filter(Boolean)));
 
   govde.append(el("div", { sinif: "satir satir--arali" }, [
@@ -442,7 +442,7 @@ function teklifKarti(id, pr, durumNo, hesap, oyVerdi, gucu, cuzdan, oy) {
     d ? el("span", { sinif: "etiket " + d.sinif, yazi: d.ad }) : null
   ].filter(Boolean));
 
-  return panel("Teklif #" + id, govde, bas);
+  return panel("Proposal #" + id, govde, bas);
 }
 
 /* ---- the screen ------------------------------------------------------ */
@@ -505,7 +505,7 @@ export async function ciz({ cuzdan }) {
 
   /* ---- the form, and only if it can succeed --------------------- */
   if (!hesap) {
-    kap.append(panel("Teklif ver", bos(
+    kap.append(panel("New proposal", bos(
       "Wallet not connected",
       "Connect a wallet to propose and to vote. The page sends nothing " +
       "on its own.",
@@ -516,7 +516,7 @@ export async function ciz({ cuzdan }) {
       })
     )));
   } else if (!cuzdan.zincirdeMi()) {
-    kap.append(panel("Teklif ver", bos(
+    kap.append(panel("New proposal", bos(
       "Wallet is not on the Arc network",
       "The governor lives on Arc. You have to switch networks.",
       el("button", {
@@ -526,7 +526,7 @@ export async function ciz({ cuzdan }) {
       })
     )));
   } else if (gucu == null || esik == null) {
-    kap.append(panel("Teklif ver", not(
+    kap.append(panel("New proposal", not(
       "Voting power could not be read, so the proposal form is not " +
       "rendered: stopping is better than sending a transaction that " +
       "would be refused and charging gas for it.",
@@ -534,7 +534,7 @@ export async function ciz({ cuzdan }) {
     )));
   } else if (gucu < esik) {
     /* The measured state today: nothing is staked, so this is everyone. */
-    kap.append(panel("Teklif ver", not(
+    kap.append(panel("New proposal", not(
       "Your voting power is " + jetonMiktar(gucu) + " ARCP and the " +
       "threshold is " + jetonMiktar(esik) + " ARCP. The form is not " +
       "rendered because the transaction would be refused on chain — " +
@@ -565,7 +565,7 @@ export async function ciz({ cuzdan }) {
   }
 
   /* ---- what a proposal may ask for ----------------------------- */
-  kap.append(panel("Neye karar verilebilir", el("div", { sinif: "yigin yigin--sik" }, [
+  kap.append(panel("What can be decided", el("div", { sinif: "yigin yigin--sik" }, [
     el("ul", { sinif: "liste liste--isaretli" },
       DAO_YETKI.yapabilir.map((x) => el("li", {}, [
         el("strong", { yazi: x.ne }),
@@ -583,7 +583,7 @@ export async function ciz({ cuzdan }) {
   /* ---- the proposals ------------------------------------------- */
   const sayi = Number(P.proposalCount);
   if (sayi === 0) {
-    kap.append(panel("Teklifler", bos(
+    kap.append(panel("Proposals", bos(
       "No proposals yet",
       "The governor has recorded zero proposals. That is not a fault: " +
       "the contract is deployed and answering, nobody has proposed yet."
@@ -626,7 +626,7 @@ export async function ciz({ cuzdan }) {
       ? tekli(ABI.governor, "hasVoted", ham[k * adim + 4])
       : false;
     if (!pr) {
-      liste.append(panel("Teklif #" + id, not(
+      liste.append(panel("Proposal #" + id, not(
         "This proposal could not be read. Left empty rather than showing " +
         "invented content.", "uyari"
       )));

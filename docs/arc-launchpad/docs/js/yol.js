@@ -151,7 +151,7 @@ export const YOLLAR = [
     ikon: "kalkan",
     durum: "canli",
     ozet: "The basket vault on each of nine chains: its dollars, its auctions, and the open ones with what they ask now.",
-    kaynak: "SepetKasasi.ihaleler() / istenen() on each chain + Sui and Aptos kasa"
+    kaynak: "SepetKasasi.ihaleler() / istenen() on each chain + Sui and Aptos vaults"
   },
   {
     yol: "analitik",

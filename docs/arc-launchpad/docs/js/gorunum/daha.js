@@ -53,7 +53,7 @@ export async function ciz() {
         ]),
         y.ozet ? el("div", { sinif: "ikincil", yazi: y.ozet }) : null,
         y.durum === "canli" && y.kaynak
-          ? el("div", { sinif: "ucuncul", yazi: "Kaynak: " + y.kaynak })
+          ? el("div", { sinif: "ucuncul", yazi: "Source: " + y.kaynak })
           : null,
         y.durum !== "canli" && y.gerekli
           ? el("div", { sinif: "ucuncul", yazi: "Gereken: " + y.gerekli })

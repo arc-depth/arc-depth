@@ -181,7 +181,7 @@ export async function ciz({ kayit, cuzdan }) {
     const durumSatiri = el("div", { sinif: "yazi yazi--kucuk yazi--sessiz" });
     const dugme = el("button", {
       sinif: "dugme dugme--marka",
-      yazi: "KATKIYI KAYDET",
+      yazi: "Record contribution",
       attr: { type: "button" }
     });
 

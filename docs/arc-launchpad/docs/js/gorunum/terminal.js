@@ -173,8 +173,8 @@ export async function ciz({ param }) {
 
   /* Mobile dock: Buy and Sell, always reachable. */
   kap.append(el("div", { sinif: "islem-dock" }, [
-    el("button", { sinif: "dugme dugme--alis", yazi: "AL", attr: { type: "button", disabled: true } }),
-    el("button", { sinif: "dugme dugme--satis", yazi: "SAT", attr: { type: "button", disabled: true } })
+    el("button", { sinif: "dugme dugme--alis", yazi: "BUY", attr: { type: "button", disabled: true } }),
+    el("button", { sinif: "dugme dugme--satis", yazi: "SELL", attr: { type: "button", disabled: true } })
   ]));
 
   return kap;
@@ -200,7 +200,7 @@ async function grafikBolumu(anahtar, blok) {
 
   return el("div", { sinif: "panel__govde" }, [
     el("div", { sinif: "bos" }, [
-      el("div", { sinif: "bos__baslik", yazi: "Mum verisi yok" }),
+      el("div", { sinif: "bos__baslik", yazi: "No candle data" }),
       el("div", { sinif: "bos__yazi", yazi:
         "The chart is built from the pool's real Swap events. In the " +
         "last " + PENCERE.toLocaleString("en") + " blocks (about " +

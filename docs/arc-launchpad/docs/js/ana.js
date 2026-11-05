@@ -148,7 +148,7 @@ function sekmeleriCiz() {
     veri: { yol: "daha" }
   }, [
     el("span", { html: ikon("daha", "sekme-oge__ikon") }),
-    el("span", { yazi: "Daha" })
+    el("span", { yazi: "More" })
   ]));
 }
 
@@ -159,7 +159,7 @@ function aramayiCiz() {
     attr: {
       type: "search",
       placeholder: "Token name, symbol or address",
-      "aria-label": "Token ara",
+      "aria-label": "Search tokens",
       autocomplete: "off",
       spellcheck: "false"
     },

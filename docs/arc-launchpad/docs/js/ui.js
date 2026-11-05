@@ -206,14 +206,14 @@ export function adres(deger, kisaltMi = true) {
     }),
     el("button", {
       sinif: "dugme dugme--sade dugme--kucuk",
-      yazi: "kopyala",
+      yazi: "copy",
       attr: { type: "button" },
       on: {
         click: async (ev) => {
           try {
             await navigator.clipboard.writeText(deger);
             ev.target.textContent = "copied";
-            setTimeout(() => { ev.target.textContent = "kopyala"; }, 1200);
+            setTimeout(() => { ev.target.textContent = "copy"; }, 1200);
           } catch (e) {
             ev.target.textContent = "copy failed";
           }
