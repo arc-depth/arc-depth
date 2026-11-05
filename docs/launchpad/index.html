@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Arc Launchpad</title>
+<!--
+  A SHORT ADDRESS, NOT A SECOND COPY
+
+  Pages serves this repository from main:/docs, and the project sits whole
+  under docs/arc-launchpad/ together with its own docs/ folder. That left
+  the site three layers deep, at /arc-depth/arc-launchpad/docs/.
+
+  Copying the files a second time would shorten the address and leave two
+  copies, and two copies drift apart without fail — a bug of exactly that
+  class was hunted for a while in this project. So there is a single
+  redirect here instead: the source still lives in one place.
+
+  IT POINTED AT THE APP FOR A WHILE, AND NOW IT DOES NOT AGAIN
+
+  docs/index.html used to describe the first generation - a 0.5% fee
+  with all of it going to a floor, and nobody being rewarded - while the
+  deployed hook charges 2% and pays five places. A link had been posted
+  publicly that landed readers on that page, so this redirect was moved
+  to app.html as a stopgap.
+
+  The landing page has since been rewritten against the contracts, so
+  the front door is the front door again.
+-->
+<link rel="canonical" href="../arc-launchpad/docs/">
+<meta http-equiv="refresh" content="0; url=../arc-launchpad/docs/">
+<script>location.replace("../arc-launchpad/docs/" + location.search + location.hash);</script>
+<style>
+  :root { color-scheme: light dark; }
+  body { margin: 0; min-height: 100vh; display: grid; place-items: center;
+         font: 16px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif;
+         background: #0b0b0d; color: #e8e8ea; padding: 16px; }
+  a { color: #9ad; }
+  @media (prefers-color-scheme: light) { body { background: #fff; color: #111; } }
+</style>
+</head>
+<body>
+  <!-- So the page is not blank if the script does not run. -->
+  <p>Loading Arc Launchpad… <a href="../arc-launchpad/docs/">Click here if it does not open</a>.</p>
+</body>
+</html>
