@@ -1,7 +1,7 @@
 {
- "zaman": "2026-11-06T03:28:16.757Z",
+ "zaman": "2026-11-06T05:28:19.241Z",
  "pencereSaniye": 900,
- "sure_ms": 9699,
+ "sure_ms": 11609,
  "dugumler": [
   {
    "id": "z:arc",
@@ -9,11 +9,11 @@
    "tur": "evm",
    "eid": 30417,
    "cctp": 26,
-   "blok": 29773953,
-   "blokSuresi": 0.507,
-   "gazGwei": 20.0015,
-   "usdcArz": 1199431699.500344,
-   "yeniHavuz": 10,
+   "blok": 29788159,
+   "blokSuresi": 0.506,
+   "gazGwei": 20.0011,
+   "usdcArz": 1200672981.885896,
+   "yeniHavuz": 8,
    "hatalar": [],
    "bizim": true
   },
@@ -23,11 +23,11 @@
    "tur": "evm",
    "eid": 30416,
    "cctp": null,
-   "blok": 107265665,
-   "blokSuresi": 0.104,
-   "gazGwei": 0.0213,
+   "blok": 107334464,
+   "blokSuresi": 0.105,
+   "gazGwei": 0.0205,
    "usdcArz": null,
-   "yeniHavuz": 26,
+   "yeniHavuz": 11,
    "hatalar": [],
    "bizim": true
   },
@@ -37,11 +37,11 @@
    "tur": "evm",
    "eid": 30184,
    "cctp": 6,
-   "blok": 53726558,
+   "blok": 53762561,
    "blokSuresi": 0.2,
    "gazGwei": 0.006,
-   "usdcArz": 4316324325.250739,
-   "yeniHavuz": 15,
+   "usdcArz": 4317463304.728883,
+   "yeniHavuz": 16,
    "hatalar": [],
    "bizim": true
   },
@@ -51,11 +51,11 @@
    "tur": "evm",
    "eid": 30110,
    "cctp": 3,
-   "blok": 521674258,
-   "blokSuresi": 0.295,
+   "blok": 521699195,
+   "blokSuresi": 0.256,
    "gazGwei": 0.02,
-   "usdcArz": 2437192317.24442,
-   "yeniHavuz": 1,
+   "usdcArz": 2433199061.784457,
+   "yeniHavuz": 0,
    "hatalar": [],
    "bizim": true
   },
@@ -65,10 +65,10 @@
    "tur": "evm",
    "eid": 30101,
    "cctp": 0,
-   "blok": 26353116,
+   "blok": 26353715,
    "blokSuresi": 12.024,
-   "gazGwei": 0.0454,
-   "usdcArz": 46504750222.003265,
+   "gazGwei": 0.1173,
+   "usdcArz": 46493699737.45939,
    "yeniHavuz": 5,
    "hatalar": [],
    "bizim": true
@@ -79,11 +79,11 @@
    "tur": "evm",
    "eid": 30102,
    "cctp": null,
-   "blok": 131936737,
+   "blok": 131952736,
    "blokSuresi": 0.45,
    "gazGwei": 0.05,
    "usdcArz": null,
-   "yeniHavuz": 37,
+   "yeniHavuz": 6,
    "hatalar": [],
    "bizim": true
   },
@@ -93,10 +93,10 @@
    "tur": "evm",
    "eid": 30106,
    "cctp": 1,
-   "blok": 99550886,
-   "blokSuresi": 1.009,
-   "gazGwei": 2.5,
-   "usdcArz": 244063930.721951,
+   "blok": 99558087,
+   "blokSuresi": 0.979,
+   "gazGwei": 2.5234,
+   "usdcArz": 256708972.025347,
    "yeniHavuz": 0,
    "hatalar": [],
    "bizim": true
@@ -107,11 +107,11 @@
    "tur": "evm",
    "eid": 30390,
    "cctp": 15,
-   "blok": 119788185,
-   "blokSuresi": 0.306,
+   "blok": 119811799,
+   "blokSuresi": 0.307,
    "gazGwei": 102,
-   "usdcArz": 202344894.127745,
-   "yeniHavuz": 0,
+   "usdcArz": 202204974.456096,
+   "yeniHavuz": 1,
    "hatalar": [],
    "bizim": true
   },
@@ -121,10 +121,10 @@
    "tur": "evm",
    "eid": 30367,
    "cctp": 19,
-   "blok": 50506886,
+   "blok": 50514206,
    "blokSuresi": 0.983,
-   "gazGwei": 0.1097,
-   "usdcArz": 6401632000.507582,
+   "gazGwei": 0.1,
+   "usdcArz": 6402944707.831362,
    "yeniHavuz": 0,
    "hatalar": [
     "v4: server response 400 Bad Request"
@@ -137,7 +137,7 @@
    "tur": "SVM (Rust)",
    "eid": 30168,
    "cctp": 5,
-   "blok": 465957869,
+   "blok": 465991551,
    "hatalar": [],
    "bizim": true
   },
@@ -147,7 +147,7 @@
    "tur": "Move (Aptos)",
    "eid": 30108,
    "cctp": 9,
-   "blok": 7926164479,
+   "blok": 7927474966,
    "hatalar": [],
    "bizim": true
   },
@@ -176,28 +176,16 @@
    "cctp": 7
   },
   {
+   "id": "cctp:11",
+   "ad": "Linea",
+   "tur": "dis",
+   "cctp": 11
+  },
+  {
    "id": "cctp:14",
    "ad": "World Chain",
    "tur": "dis",
    "cctp": 14
-  },
-  {
-   "id": "cctp:27",
-   "ad": "CCTP domain 27",
-   "tur": "dis",
-   "cctp": 27
-  },
-  {
-   "id": "lz:30181",
-   "ad": "Mantle",
-   "tur": "dis",
-   "eid": 30181
-  },
-  {
-   "id": "lz:30213",
-   "ad": "Orderly Mainnet",
-   "tur": "dis",
-   "eid": 30213
   },
   {
    "id": "cctp:31",
@@ -206,22 +194,28 @@
    "cctp": 31
   },
   {
+   "id": "lz:30109",
+   "ad": "Polygon",
+   "tur": "dis",
+   "eid": 30109
+  },
+  {
    "id": "lz:30125",
    "ad": "Celo Mainnet",
    "tur": "dis",
    "eid": 30125
   },
   {
-   "id": "lz:30274",
-   "ad": "xlayer",
+   "id": "lz:30213",
+   "ad": "Orderly Mainnet",
    "tur": "dis",
-   "eid": 30274
+   "eid": 30213
   },
   {
-   "id": "lz:30343",
-   "ad": "ton",
+   "id": "lz:30388",
+   "ad": "0G",
    "tur": "dis",
-   "eid": 30343
+   "eid": 30388
   },
   {
    "id": "lz:30401",
@@ -236,48 +230,41 @@
    "eid": 30420
   },
   {
-   "id": "lz:30383",
-   "ad": "plasma",
+   "id": "cctp:16",
+   "ad": "Sei",
    "tur": "dis",
-   "eid": 30383
+   "cctp": 16
+  },
+  {
+   "id": "cctp:37",
+   "ad": "CCTP domain 37",
+   "tur": "dis",
+   "cctp": 37
+  },
+  {
+   "id": "lz:30111",
+   "ad": "Optimism",
+   "tur": "dis",
+   "eid": 30111
   },
   {
    "id": "lz:30389",
    "ad": "gatelayer",
    "tur": "dis",
    "eid": 30389
-  },
-  {
-   "id": "cctp:21",
-   "ad": "Ink",
-   "tur": "dis",
-   "cctp": 21
   }
  ],
  "kenarlar": [
   {
    "kaynak": "z:arc",
-   "hedef": "z:solana",
+   "hedef": "z:avalanche",
    "tur": "cctp",
    "adet": 1,
-   "miktar": 0.4
-  },
-  {
-   "kaynak": "z:arc",
-   "hedef": "z:monad",
-   "tur": "cctp",
-   "adet": 1,
-   "miktar": 189109.07
+   "miktar": 55622.82
   },
   {
    "kaynak": "z:robinhood",
-   "hedef": "z:solana",
-   "tur": "lz",
-   "adet": 21
-  },
-  {
-   "kaynak": "z:robinhood",
-   "hedef": "z:base",
+   "hedef": "z:ethereum",
    "tur": "lz",
    "adet": 1
   },
@@ -285,95 +272,116 @@
    "kaynak": "z:base",
    "hedef": "z:ethereum",
    "tur": "cctp",
-   "adet": 1,
-   "miktar": 64.49
+   "adet": 5,
+   "miktar": 7140.57
   },
   {
    "kaynak": "z:base",
    "hedef": "z:avalanche",
    "tur": "cctp",
-   "adet": 2,
-   "miktar": 93
+   "adet": 1,
+   "miktar": 21
   },
   {
    "kaynak": "z:base",
    "hedef": "cctp:2",
    "tur": "cctp",
-   "adet": 3,
-   "miktar": 21967.01
+   "adet": 6,
+   "miktar": 102043.01
   },
   {
    "kaynak": "z:base",
    "hedef": "z:arbitrum",
    "tur": "cctp",
-   "adet": 2,
-   "miktar": 209.63
+   "adet": 1,
+   "miktar": 14.13
   },
   {
    "kaynak": "z:base",
    "hedef": "z:solana",
    "tur": "cctp",
-   "adet": 4,
-   "miktar": 843.45
+   "adet": 1,
+   "miktar": 1081.29
   },
   {
    "kaynak": "z:base",
    "hedef": "cctp:7",
    "tur": "cctp",
-   "adet": 4,
-   "miktar": 8713.07
+   "adet": 3,
+   "miktar": 12394.43
+  },
+  {
+   "kaynak": "z:base",
+   "hedef": "cctp:11",
+   "tur": "cctp",
+   "adet": 1,
+   "miktar": 21
   },
   {
    "kaynak": "z:base",
    "hedef": "cctp:14",
    "tur": "cctp",
    "adet": 1,
-   "miktar": 18.64
+   "miktar": 2.87
+  },
+  {
+   "kaynak": "z:base",
+   "hedef": "z:monad",
+   "tur": "cctp",
+   "adet": 1,
+   "miktar": 1136.94
   },
   {
    "kaynak": "z:base",
    "hedef": "z:hyperevm",
    "tur": "cctp",
-   "adet": 1,
-   "miktar": 12
-  },
-  {
-   "kaynak": "z:base",
-   "hedef": "cctp:27",
-   "tur": "cctp",
    "adet": 3,
-   "miktar": 74.52
+   "miktar": 129.17
   },
   {
    "kaynak": "z:base",
-   "hedef": "z:solana",
+   "hedef": "z:arc",
+   "tur": "cctp",
+   "adet": 2,
+   "miktar": 11000.59
+  },
+  {
+   "kaynak": "z:base",
+   "hedef": "cctp:31",
+   "tur": "cctp",
+   "adet": 1,
+   "miktar": 1051.07
+  },
+  {
+   "kaynak": "z:base",
+   "hedef": "z:ethereum",
+   "tur": "lz",
+   "adet": 1
+  },
+  {
+   "kaynak": "z:base",
+   "hedef": "z:bsc",
+   "tur": "lz",
+   "adet": 1
+  },
+  {
+   "kaynak": "z:base",
+   "hedef": "lz:30109",
    "tur": "lz",
    "adet": 2
   },
   {
    "kaynak": "z:base",
-   "hedef": "lz:30181",
-   "tur": "lz",
-   "adet": 1
-  },
-  {
-   "kaynak": "z:base",
-   "hedef": "lz:30213",
-   "tur": "lz",
-   "adet": 1
-  },
-  {
-   "kaynak": "z:base",
    "hedef": "z:robinhood",
    "tur": "lz",
-   "adet": 10
+   "adet": 4
   },
   {
    "kaynak": "z:arbitrum",
    "hedef": "z:ethereum",
    "tur": "cctp",
    "adet": 5,
-   "miktar": 236763.4
+   "miktar": 1603.17
   },
   {
    "kaynak": "z:arbitrum",
@@ -386,48 +394,42 @@
    "kaynak": "z:arbitrum",
    "hedef": "z:solana",
    "tur": "cctp",
-   "adet": 5,
-   "miktar": 10015.17
+   "adet": 3,
+   "miktar": 87
   },
   {
    "kaynak": "z:arbitrum",
    "hedef": "z:base",
    "tur": "cctp",
-   "adet": 2,
-   "miktar": 7300.37
-  },
-  {
-   "kaynak": "z:arbitrum",
-   "hedef": "z:aptos",
-   "tur": "cctp",
-   "adet": 1,
-   "miktar": 2050
+   "adet": 3,
+   "miktar": 1626.5
   },
   {
    "kaynak": "z:arbitrum",
    "hedef": "z:hyperevm",
    "tur": "cctp",
-   "adet": 48,
-   "miktar": 3522845.42
+   "adet": 27,
+   "miktar": 478263.29
+  },
+  {
+   "kaynak": "z:arbitrum",
+   "hedef": "z:arc",
+   "tur": "cctp",
+   "adet": 4,
+   "miktar": 214402.35
   },
   {
    "kaynak": "z:arbitrum",
    "hedef": "cctp:31",
    "tur": "cctp",
-   "adet": 2,
-   "miktar": 12.92
+   "adet": 1,
+   "miktar": 3.13
   },
   {
    "kaynak": "z:arbitrum",
    "hedef": "z:ethereum",
    "tur": "lz",
-   "adet": 1
-  },
-  {
-   "kaynak": "z:arbitrum",
-   "hedef": "z:bsc",
-   "tur": "lz",
-   "adet": 1
+   "adet": 2
   },
   {
    "kaynak": "z:arbitrum",
@@ -439,7 +441,7 @@
    "kaynak": "z:arbitrum",
    "hedef": "z:base",
    "tur": "lz",
-   "adet": 1
+   "adet": 2
   },
   {
    "kaynak": "z:arbitrum",
@@ -449,13 +451,7 @@
   },
   {
    "kaynak": "z:arbitrum",
-   "hedef": "lz:30274",
-   "tur": "lz",
-   "adet": 1
-  },
-  {
-   "kaynak": "z:arbitrum",
-   "hedef": "lz:30343",
+   "hedef": "lz:30388",
    "tur": "lz",
    "adet": 1
   },
@@ -469,7 +465,7 @@
    "kaynak": "z:arbitrum",
    "hedef": "z:robinhood",
    "tur": "lz",
-   "adet": 5
+   "adet": 6
   },
   {
    "kaynak": "z:arbitrum",
@@ -481,78 +477,104 @@
    "kaynak": "z:ethereum",
    "hedef": "cctp:2",
    "tur": "cctp",
-   "adet": 2,
-   "miktar": 17231.14
+   "adet": 1,
+   "miktar": 602.65
+  },
+  {
+   "kaynak": "z:ethereum",
+   "hedef": "z:arbitrum",
+   "tur": "cctp",
+   "adet": 1,
+   "miktar": 2000
+  },
+  {
+   "kaynak": "z:ethereum",
+   "hedef": "z:solana",
+   "tur": "cctp",
+   "adet": 3,
+   "miktar": 120259.15
   },
   {
    "kaynak": "z:ethereum",
    "hedef": "z:base",
    "tur": "cctp",
-   "adet": 4,
-   "miktar": 1.49
+   "adet": 5,
+   "miktar": 2106.07
   },
   {
    "kaynak": "z:ethereum",
-   "hedef": "cctp:7",
+   "hedef": "cctp:16",
    "tur": "cctp",
-   "adet": 1,
-   "miktar": 48147.39
-  },
-  {
-   "kaynak": "z:ethereum",
-   "hedef": "z:monad",
-   "tur": "cctp",
-   "adet": 1,
-   "miktar": 21801.94
+   "adet": 2,
+   "miktar": 50
   },
   {
    "kaynak": "z:ethereum",
    "hedef": "z:hyperevm",
    "tur": "cctp",
-   "adet": 6,
-   "miktar": 129834.32
+   "adet": 1,
+   "miktar": 666.07
   },
   {
    "kaynak": "z:ethereum",
    "hedef": "z:arc",
    "tur": "cctp",
-   "adet": 1,
-   "miktar": 160000
+   "adet": 3,
+   "miktar": 642195.81
   },
   {
    "kaynak": "z:ethereum",
    "hedef": "cctp:31",
    "tur": "cctp",
-   "adet": 2,
-   "miktar": 14.98
+   "adet": 1,
+   "miktar": 10.93
+  },
+  {
+   "kaynak": "z:ethereum",
+   "hedef": "cctp:37",
+   "tur": "cctp",
+   "adet": 1,
+   "miktar": 92799.57
   },
   {
    "kaynak": "z:ethereum",
    "hedef": "z:bsc",
    "tur": "lz",
-   "adet": 6
-  },
-  {
-   "kaynak": "z:ethereum",
-   "hedef": "lz:30213",
-   "tur": "lz",
    "adet": 1
   },
   {
    "kaynak": "z:ethereum",
-   "hedef": "z:hyperevm",
+   "hedef": "z:avalanche",
    "tur": "lz",
    "adet": 2
   },
   {
    "kaynak": "z:ethereum",
-   "hedef": "lz:30383",
+   "hedef": "lz:30109",
+   "tur": "lz",
+   "adet": 3
+  },
+  {
+   "kaynak": "z:ethereum",
+   "hedef": "z:arbitrum",
    "tur": "lz",
    "adet": 1
   },
   {
    "kaynak": "z:ethereum",
-   "hedef": "z:monad",
+   "hedef": "lz:30111",
+   "tur": "lz",
+   "adet": 1
+  },
+  {
+   "kaynak": "z:ethereum",
+   "hedef": "z:solana",
+   "tur": "lz",
+   "adet": 1
+  },
+  {
+   "kaynak": "z:ethereum",
+   "hedef": "lz:30389",
    "tur": "lz",
    "adet": 1
   },
@@ -564,13 +586,19 @@
   },
   {
    "kaynak": "z:bsc",
-   "hedef": "z:ethereum",
+   "hedef": "z:arbitrum",
    "tur": "lz",
    "adet": 1
   },
   {
    "kaynak": "z:bsc",
-   "hedef": "z:arbitrum",
+   "hedef": "z:solana",
+   "tur": "lz",
+   "adet": 1
+  },
+  {
+   "kaynak": "z:bsc",
+   "hedef": "lz:30213",
    "tur": "lz",
    "adet": 1
   },
@@ -578,150 +606,153 @@
    "kaynak": "z:bsc",
    "hedef": "lz:30389",
    "tur": "lz",
-   "adet": 1
-  },
-  {
-   "kaynak": "z:avalanche",
-   "hedef": "z:base",
-   "tur": "cctp",
-   "adet": 1,
-   "miktar": 101947.68
-  },
-  {
-   "kaynak": "z:avalanche",
-   "hedef": "cctp:21",
-   "tur": "cctp",
-   "adet": 1,
-   "miktar": 100.96
-  },
-  {
-   "kaynak": "z:avalanche",
-   "hedef": "z:bsc",
-   "tur": "lz",
    "adet": 3
   },
   {
-   "kaynak": "z:monad",
-   "hedef": "cctp:2",
+   "kaynak": "z:avalanche",
+   "hedef": "z:ethereum",
+   "tur": "cctp",
+   "adet": 3,
+   "miktar": 164405.37
+  },
+  {
+   "kaynak": "z:avalanche",
+   "hedef": "z:solana",
    "tur": "cctp",
    "adet": 1,
-   "miktar": 105.73
+   "miktar": 1117.36
+  },
+  {
+   "kaynak": "z:avalanche",
+   "hedef": "z:base",
+   "tur": "cctp",
+   "adet": 3,
+   "miktar": 22569.62
+  },
+  {
+   "kaynak": "z:monad",
+   "hedef": "z:ethereum",
+   "tur": "cctp",
+   "adet": 2,
+   "miktar": 88641.62
   },
   {
    "kaynak": "z:monad",
    "hedef": "z:base",
    "tur": "cctp",
-   "adet": 2,
-   "miktar": 2481.9
+   "adet": 1,
+   "miktar": 0.13
   },
   {
    "kaynak": "z:monad",
-   "hedef": "cctp:7",
+   "hedef": "z:hyperevm",
    "tur": "cctp",
-   "adet": 6,
-   "miktar": 162895.02
+   "adet": 1,
+   "miktar": 74.16
   },
   {
    "kaynak": "z:hyperevm",
    "hedef": "z:avalanche",
    "tur": "cctp",
    "adet": 1,
-   "miktar": 100.93
+   "miktar": 4065.31
+  },
+  {
+   "kaynak": "z:hyperevm",
+   "hedef": "z:arbitrum",
+   "tur": "cctp",
+   "adet": 3,
+   "miktar": 135.76
+  },
+  {
+   "kaynak": "z:hyperevm",
+   "hedef": "z:solana",
+   "tur": "cctp",
+   "adet": 7,
+   "miktar": 233704.98
   },
   {
    "kaynak": "z:hyperevm",
    "hedef": "z:base",
    "tur": "cctp",
-   "adet": 1,
-   "miktar": 6.89
+   "adet": 3,
+   "miktar": 120.25
   }
  ],
  "kesifler": [
   {
    "tur": "akis-sicramasi",
-   "kenar": "lz:z:robinhood>z:solana",
-   "deger": 21,
-   "medyan": 1
-  },
-  {
-   "tur": "akis-sicramasi",
    "kenar": "cctp:z:base>cctp:2",
-   "deger": 21967.01,
-   "medyan": 3344.9
+   "deger": 102043.01,
+   "medyan": 3511.9
   },
   {
    "tur": "akis-sicramasi",
    "kenar": "cctp:z:base>cctp:7",
-   "deger": 8713.07,
-   "medyan": 254.96
+   "deger": 12394.43,
+   "medyan": 261.64
   },
   {
    "tur": "akis-sicramasi",
-   "kenar": "lz:z:base>z:robinhood",
-   "deger": 10,
-   "medyan": 2
+   "kenar": "cctp:z:base>z:monad",
+   "deger": 1136.94,
+   "medyan": 10.11
   },
   {
    "tur": "akis-sicramasi",
-   "kenar": "cctp:z:arbitrum>z:ethereum",
-   "deger": 236763.4,
-   "medyan": 16143.65
+   "kenar": "cctp:z:base>z:arc",
+   "deger": 11000.59,
+   "medyan": 117
   },
   {
    "tur": "akis-sicramasi",
    "kenar": "cctp:z:arbitrum>cctp:2",
    "deger": 5000,
-   "medyan": 0.26
-  },
-  {
-   "tur": "akis-sicramasi",
-   "kenar": "cctp:z:arbitrum>z:solana",
-   "deger": 10015.17,
-   "medyan": 536.23
+   "medyan": 0.5
   },
   {
    "tur": "akis-sicramasi",
    "kenar": "cctp:z:arbitrum>z:base",
-   "deger": 7300.37,
-   "medyan": 495.76
+   "deger": 1626.5,
+   "medyan": 538.48
   },
   {
    "tur": "akis-sicramasi",
-   "kenar": "cctp:z:arbitrum>z:hyperevm",
-   "deger": 3522845.42,
-   "medyan": 353121.09
+   "kenar": "cctp:z:arbitrum>z:arc",
+   "deger": 214402.35,
+   "medyan": 22131.3
   },
   {
    "tur": "akis-sicramasi",
-   "kenar": "cctp:z:ethereum>z:hyperevm",
-   "deger": 129834.32,
-   "medyan": 5628.76
+   "kenar": "cctp:z:ethereum>z:solana",
+   "deger": 120259.15,
+   "medyan": 8612.79
   },
   {
    "tur": "akis-sicramasi",
-   "kenar": "lz:z:ethereum>z:bsc",
-   "deger": 6,
-   "medyan": 1
+   "kenar": "cctp:z:ethereum>z:arc",
+   "deger": 642195.81,
+   "medyan": 82871.03
   },
   {
    "tur": "akis-sicramasi",
-   "kenar": "cctp:z:avalanche>z:base",
-   "deger": 101947.68,
-   "medyan": 21370.83
+   "kenar": "cctp:z:monad>z:ethereum",
+   "deger": 88641.62,
+   "medyan": 3130.67
   },
   {
    "tur": "akis-sicramasi",
-   "kenar": "cctp:z:monad>z:base",
-   "deger": 2481.9,
-   "medyan": 4.65
+   "kenar": "cctp:z:hyperevm>z:solana",
+   "deger": 233704.98,
+   "medyan": 9310
   }
  ],
  "analiz": {
   "sinananKenar": 571,
   "ortalamaMutlakHata": {
-   "son": 10212.0072,
-   "ortalama5": 9532.3966,
-   "ema03": 9288.8886
+   "son": 10209.7836,
+   "ortalama5": 9532.6649,
+   "ema03": 9286.8715
   },
   "enIyiYontem": "ema03"
  },
