@@ -18,7 +18,9 @@
  * relay.link simulates the Arc calls before it quotes, so a route that
  * would fail is refused before anything is signed.
  * =========================================================================== */
-import { el, sayfaUst, panel, not } from "../ui.js";
+import { el, sayfaUst, panel, not, adimlar, temizle } from "../ui.js";
+import { EKONOMI } from "../adresler.js";
+import { para } from "../bicim.js";
 import { AGLAR } from "../aglar.js";
 import { cuzdan } from "../cuzdan.js";
 import { rpcPost } from "../ag-okur.js";
@@ -355,6 +357,45 @@ const tekSefer = (dugme, fn) => async () => {
   try { await fn(); } finally { dugme._mesgul = false; dugme.disabled = false; }
 };
 
+/* "Your token": a live card beside the launch form, read from the form as it is filled. It sends
+   nothing and decides nothing; the numbers it shows are the ones the launch itself uses. */
+function onizlemeKarti({ ad, sembol, alim, vergi, zincirSec, turSecim }) {
+  const avatar = el("div", { sinif: "onz__avatar" });
+  const baslik = el("div", { sinif: "onz__ad" }), alt = el("div", { sinif: "onz__alt" });
+  const satirlar = el("div", { sinif: "onz__satirlar" });
+  const satir = (a, b, c = "") => el("div", { sinif: "onz__satir " + c }, [el("span", { yazi: a }), el("b", { yazi: b })]);
+  const ciz = () => {
+    const s = (sembol.value || "").trim().toUpperCase(), n = (ad.value || "").trim();
+    let h = 0; for (const c of (s || "ARC")) h = (h * 37 + c.charCodeAt(0)) % 360;
+    avatar.style.background = "linear-gradient(135deg,hsl(" + h + " 75% 55%),hsl(" + ((h + 80) % 360) + " 70% 40%))";
+    avatar.textContent = (s || "?").slice(0, 4);
+    baslik.textContent = n || "Your token";
+    const zincir = zincirSec.selectedOptions[0] ? zincirSec.selectedOptions[0].textContent.replace(/\s*\(.*\)/, "") : "";
+    alt.textContent = "$" + (s || "TICKER") + " · launched from " + zincir;
+    const usd = Math.max(0, Number(alim.value) || 0), ucret = usd * 0.02, kalan = usd - ucret;
+    const adet = (kalan / EKONOMI.acilisMcap) * 1e9;
+    temizle(satirlar).append(
+      satir("Product", turSecim.selectedOptions[0] ? turSecim.selectedOptions[0].textContent : "Meme"),
+      satir("Opening market cap", para(EKONOMI.acilisMcap, { kisalt: true })),
+      satir("Supply", "1,000,000,000 · fixed"),
+      satir("Your first buy", "$" + usd.toFixed(2)),
+      satir("Launch fee (2%)", "$" + ucret.toFixed(2)),
+      satir("You get about", Math.round(adet).toLocaleString("en-US") + " " + (s || "tokens"), "onz__satir--vurgu"),
+      satir("Collateral tax", (vergi.value || "2") + "% of every trade → the basket"),
+      satir("Trading fee", "2.2% · 0.30% of it to you"),
+    );
+  };
+  for (const x of [ad, sembol, alim, vergi, zincirSec, turSecim]) { x.addEventListener("input", ciz); x.addEventListener("change", ciz); }
+  ciz();
+  return el("aside", { sinif: "onz" }, [
+    el("div", { sinif: "onz__ust" }, [avatar, el("div", { attr: { style: "min-width:0" } }, [baslik, alt])]),
+    satirlar,
+    el("div", { sinif: "onz__guven" }, [
+      el("span", { yazi: "Liquidity locked from block one" }), el("span", { yazi: "No mint, no owner" }), el("span", { yazi: "Tradable from 12 chains" })]),
+    el("div", { sinif: "onz__not", yazi: "\"You get about\" is at the opening price; your own first buy moves the price a little, so it lands slightly under. The exact figure is shown before you sign." }),
+  ]);
+}
+
 export async function ciz({ param } = {}) {
   await v2Yukle();
   await v9Yukle();
@@ -375,6 +416,11 @@ export async function ciz({ param } = {}) {
   }
   const kap = el("div", { sinif: "yigin" });
   kap.append(sayfaUst("Launch on any chain", "One pool on Arc, every chain's door to it"));
+  kap.append(adimlar([
+    { ikon: "zincir", baslik: "Pick your chain", yazi: "Pay from the wallet you already use: Base, BNB, Arbitrum, Robinhood and more, or Solana, Sui and Aptos below." },
+    { ikon: "arti", baslik: "Name it, set the first buy", yazi: "Name, ticker and a first buy from $20. You get your tokens at the opening price, before anyone else." },
+    { ikon: "kasa", baslik: "Back it and launch", yazi: "Pick up to five tokens as its collateral basket, sign once, and it trades on twelve chains." },
+  ]));
   kap.append(not("Every token here has one pool and one price, on Arc. You launch, buy and sell from your own chain with its own gas token, in one signature. The token lives on your chain as its twin. Fees are shown before you sign.", "bilgi"));
 
   let ag = odemeAglari().find((a) => a.anahtar === "base");
@@ -656,7 +702,7 @@ export async function ciz({ param } = {}) {
       durum("Paid. relay launches on Arc within seconds; your tokens arrive on " + (urunKurucu.secim() ? "the founder lock or DAO treasury on Arc" : ag.ad) + " in a few minutes" + (v6mu() ? "; each basket line is bought from its chain's pool when it reaches $50." : ", the basket is bought by auction over the next hours."));
     } catch (x) { durum((x && x.message) || "Could not launch."); } finally { lMesgul = false; lDugme.disabled = false; }
   });
-  kap.append(panel("Launch", el("div", { sinif: "yigin" }, [
+  const launchPaneli = panel("Launch", el("div", { sinif: "yigin" }, [
     V2 ? el("div", { sinif: "alan__ipucu", yazi: "Paying from a Solana, Sui or Aptos wallet? Use the panel \"From a Solana, Sui or Aptos wallet\" at the bottom of this page." })
       : el("a", { sinif: "alan__ipucu", attr: { href: "#olustur-move" }, yazi: "Paying from a Sui or Aptos wallet? Use the Sui / Aptos launch form →" }),
     el("div", { sinif: "girdi-grup" }, [ad, sembol]),
@@ -669,7 +715,8 @@ export async function ciz({ param } = {}) {
     satirlar,
     V2 ? uzakEtiket : el("span"),
     el("div", { sinif: "alan__ipucu", yazi: "Every trade: 2.2% (0.30% you, the creator · 0.30% developer pool · 0.50% protocol liquidity · 0.70% back into the pool · 0.20% ARCP bought and burned · 0.20% operations) plus your 1–5% collateral tax." }),
-    lDugme, lDurum, turKutu])));
+    lDugme, lDurum, turKutu]));
+  kap.append(el("div", { sinif: "olustur-izgara" }, [launchPaneli, onizlemeKarti({ ad, sembol, alim, vergi, zincirSec, turSecim })]));
 
   /* ================= trade ================= */
   const token = el("input", { sinif: "girdi", attr: { id: "merkez-token", placeholder: "token address on Arc", value: (param && param.get("t")) || "" } });

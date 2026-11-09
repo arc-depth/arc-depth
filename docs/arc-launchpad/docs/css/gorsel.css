@@ -174,3 +174,22 @@ body::before {
 .ayrinti__govde { margin-top: 8px; line-height: 1.5; }
 .bolum-baslik { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .bolum-baslik h2 { font-size: 18px; letter-spacing: -.01em; }
+
+/* ---- Create: the form and its live "Your token" card ------------------ */
+.olustur-izgara { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 16px; align-items: start; }
+@media (max-width: 1100px) { .olustur-izgara { grid-template-columns: 1fr; } }
+.onz { position: sticky; top: calc(var(--ust-bar, 56px) + 16px); border: 1px solid var(--marka-cizgi); border-radius: 18px; padding: 18px; overflow: hidden;
+  background: radial-gradient(120% 80% at 100% 0%, rgba(124, 92, 255, .22), transparent 60%), var(--yuzey-1, #0f1115); }
+.onz__ust { display: flex; gap: 14px; align-items: center; margin-bottom: 14px; }
+.onz__avatar { width: 62px; height: 62px; border-radius: 16px; flex: none; display: grid; place-items: center; font-weight: 800; font-size: 15px; color: #fff;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, .4); animation: gNefes 4s ease-in-out infinite; }
+.onz__ad { font-size: 19px; font-weight: 800; letter-spacing: -.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.onz__alt { font-size: 12.5px; color: var(--yazi-3); }
+.onz__satirlar { display: flex; flex-direction: column; border-top: 1px solid var(--cizgi); }
+.onz__satir { display: flex; justify-content: space-between; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--cizgi); font-size: 13px; }
+.onz__satir span { color: var(--yazi-3); }
+.onz__satir b { text-align: right; font-weight: 600; }
+.onz__satir--vurgu b { color: #7dffc4; font-size: 14px; }
+.onz__guven { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+.onz__guven span { font-size: 11.5px; font-weight: 600; color: #7dffc4; border: 1px solid rgba(61, 220, 151, .35); background: rgba(61, 220, 151, .08); border-radius: 999px; padding: 3px 9px; }
+.onz__not { font-size: 11.5px; color: var(--yazi-4); margin-top: 12px; line-height: 1.4; }
