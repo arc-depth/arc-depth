@@ -7,7 +7,7 @@
  * protection that does not exist.
  * =========================================================================== */
 
-import { el, sayfaUst, panel, not, olcum, bos } from "../ui.js";
+import { el, sayfaUst, panel, not, olcum, bos, adimlar } from "../ui.js";
 import { ikon } from "../ikon.js";
 import { EKONOMI, PULSE, canli } from "../adresler.js";
 import { ppmYuzde } from "../bicim.js";
@@ -29,6 +29,11 @@ const OLCUM = [
 export async function ciz() {
   const kap = el("div", { sinif: "yigin" });
   kap.append(sayfaUst("Whale shield", "What a large sell costs, written into the floor"));
+  kap.append(adimlar([
+    { ikon: "kalkan", baslik: "Small sells pay nothing extra", yazi: "Below the threshold a sell pays the normal fee, nothing more. Buys never pay the shield." },
+    { ikon: "uyari", baslik: "A dump pays more", yazi: "A sell above the threshold in one block pays a rising extra rate, up to its cap." },
+    { ikon: "kasa", baslik: "That extra backs holders", yazi: "The extra goes into the token's collateral vault, none to the protocol, so a whale's exit backs the holders who stay." },
+  ]));
 
   kap.append(el("div", { sinif: "izgara izgara--olcum" }, [
     olcum("Threshold", ppmYuzde(EKONOMI.kalkanEsikPpm), "share of circulating, per block"),

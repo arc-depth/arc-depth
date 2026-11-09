@@ -32,7 +32,7 @@
  *   — once. Here they are read as seconds.
  * =========================================================================== */
 
-import { el, sayfaUst, panel, bos, not, olcum, adres, hata } from "../ui.js";
+import { el, sayfaUst, panel, bos, not, olcum, adres, hata, adimlar } from "../ui.js";
 import { oku, cokluCagri, cagriVerisi, sonucCoz, ABI } from "../zincir.js";
 import { YONETISIM, DAO_YETKI } from "../adresler.js";
 import { jetonMiktar, tamSayidanSayi, gecenSure } from "../bicim.js";
@@ -143,6 +143,11 @@ export async function ciz() {
     "Platform DAO",
     "Live on-chain governance — propose, vote, timelock, execute"
   ));
+  kap.append(adimlar([
+    { ikon: "kilit", baslik: "Stake ARCP", yazi: "Voting power comes from staked ARCP, counted at the moment a proposal opens, so nobody can buy a vote mid-way." },
+    { ikon: "oy", baslik: "Propose and vote", yazi: "Anyone with enough stake proposes how the developer pool is spent. Holders vote for five days." },
+    { ikon: "meclis", baslik: "Timelock, then execute", yazi: "A passed proposal waits two days, then anyone executes it. The contract pays; no team wallet in between." },
+  ]));
 
   let p;
   try {

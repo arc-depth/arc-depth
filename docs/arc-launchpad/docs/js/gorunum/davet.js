@@ -8,7 +8,7 @@
  * whether the published root matches before it offers a claim.
  * No server, no account, nothing stored about the visitor.
  * =========================================================================== */
-import { el, sayfaUst, panel, bos, not, olcum, adres } from "../ui.js";
+import { el, sayfaUst, panel, bos, not, olcum, adres, adimlar } from "../ui.js";
 import { para } from "../bicim.js";
 import * as H from "../davet-hesap.js";
 import { arcOkur, davetCanli, bekleyenDavet, baglantiDurumu, baglaGonder, arcGonder, zincirVerisi, refCoz } from "../davet.js";
@@ -43,6 +43,11 @@ function kurallar(oranBps, bekleme) {
 export async function ciz({ cuzdan }) {
   const kap = el("div", { sinif: "yigin" });
   kap.append(sayfaUst("Referrals", "Invite people to ARC PULSE and receive 20% of the development + marketing share of the fees they pay, in USDC"));
+  kap.append(adimlar([
+    { ikon: "zincir", baslik: "Share your link", yazi: "Connect a wallet and copy your invite link. It is your wallet address, or a short code you register on Arc." },
+    { ikon: "insanlar", baslik: "Friends trade and launch", yazi: "When people you invited trade, launch or buy designs, they pay the usual fees. Nothing is added for them." },
+    { ikon: "cuzdan", baslik: "You earn USDC", yazi: "20% of the development and marketing share of their fees is yours, claimable in USDC on this page every day." },
+  ]));
   if (!davetCanli()) { kap.append(panel("Referrals", bos("Not deployed", "The referral contracts are not set on this page yet."))); return kap; }
   const p = arcOkur();
   const kayit = new Contract(H.DAVET.kayit, H.KAYIT_ABI, p);
