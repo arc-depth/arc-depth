@@ -174,7 +174,7 @@ function ustYoluCiz() {
 
 function sekmeleriCiz() {
   temizle(kSekme);
-  for (const ad of BIRINCIL.slice(0, 4)) {
+  for (const ad of ["kesfet", "vitrin", "olustur", "portfoy"]) {   // the phone bar (9 Nov 2026): Trade and the rest under More
     const y = yolBul(ad);
     if (!y) continue;
     kSekme.append(el("a", {
