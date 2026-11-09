@@ -193,3 +193,15 @@ body::before {
 .onz__guven { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
 .onz__guven span { font-size: 11.5px; font-weight: 600; color: #7dffc4; border: 1px solid rgba(61, 220, 151, .35); background: rgba(61, 220, 151, .08); border-radius: 999px; padding: 3px 9px; }
 .onz__not { font-size: 11.5px; color: var(--yazi-4); margin-top: 12px; line-height: 1.4; }
+
+/* ---- empty states with Pulsy; product cards --------------------------- */
+.bos { position: relative; }
+.bos__pulsy { width: 84px; height: 84px; margin: 0 auto 6px; display: block; animation: gZipla 3.4s ease-in-out infinite; filter: drop-shadow(0 10px 18px rgba(75, 47, 214, .4)); }
+@keyframes gZipla { 50% { transform: translateY(-8px) rotate(-3deg); } }
+.urun-kartlar { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.urun-kart { border: 1px solid color-mix(in srgb, var(--renk-urunler) 30%, var(--cizgi)); border-radius: 16px; padding: 16px;
+  background: linear-gradient(160deg, color-mix(in srgb, var(--renk-urunler) 10%, transparent), transparent 60%); }
+.urun-kart p { margin: 0; font-size: 14px; line-height: 1.5; color: var(--yazi-1); }
+.urun-kart__ikon { width: 38px; height: 38px; border-radius: 11px; display: grid; place-items: center; margin-bottom: 10px; color: #04201b;
+  background: linear-gradient(135deg, var(--renk-urunler), #7dffc4); }
+.urun-kart__ikon svg { width: 19px; height: 19px; }

@@ -139,6 +139,7 @@ export function olcum(etiket, deger, alt = null, sinif = "") {
  */
 export function bos(baslik, yazi, eylem = null) {
   return el("div", { sinif: "bos" }, [
+    el("img", { sinif: "bos__pulsy", attr: { src: new URL("../img/pulsy.svg", import.meta.url).href, alt: "", width: "84", height: "84", loading: "lazy" } }),
     el("div", { sinif: "bos__baslik", yazi: baslik }),
     yazi ? el("div", { sinif: "bos__yazi", yazi }) : null,
     eylem

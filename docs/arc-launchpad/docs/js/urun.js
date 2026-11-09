@@ -18,7 +18,7 @@
  * Nothing about the visitor is stored: the selected type is a number, and
  * it is cleared as soon as the Create page reads it.
  * =========================================================================== */
-import { el, sayfaUst, panel, bos, not } from "./ui.js";
+import { el, sayfaUst, panel, bos, not, ayrinti } from "./ui.js";
 import { ikon } from "./ikon.js";
 import { TUR_KAYDI, TUR_KAYDI_ESKI } from "./adresler.js";
 import { YedekliOkur } from "./yedekli-okur.js";
@@ -424,8 +424,11 @@ export async function urunSayfasi(n, ek = {}) {
   const olusturDugme = el("a", { sinif: "dugme dugme--marka", attr: { href: "#/olustur" }, on: { click: () => turSec(t.tur) } }, [
     el("span", { html: ikon("arti", "yol-oge__ikon") }), el("span", { yazi: "Create " + (/^[AEIOU]/i.test(t.cogul) ? "an " : "a ") + t.cogul + " token" })]);
   kap.append(sayfaUst(t.ad + " tokens", "Same launch engine, same rules: one pool on Arc, collateral basket, tradable from twelve chains", [olusturDugme]));
-  kap.append(panel("What it is for", el("div", { sinif: "yigin" }, (t.metin || []).map((s) => el("p", { yazi: s })))));
-  kap.append(not("Every " + t.cogul + " token launches through the same MerkezKapi as every other: first buy $20–500, a collateral basket the founder chooses (each line at least 5% of the first buy), a 1–5% collateral tax and the same 2.2% trading fee. What makes it a " + t.cogul + " token is the type its founder writes into the TurKaydi record on Arc.", "bilgi"));
+  /* what it is for, as cards a visitor reads in seconds; the same sentences as before */
+  const ikonlar = ["hediye", "insanlar", "kupa", "zincir"];
+  kap.append(el("div", { sinif: "urun-kartlar" }, (t.metin || []).map((s, i) => el("div", { sinif: "urun-kart" }, [
+    el("div", { sinif: "urun-kart__ikon", html: ikon(ikonlar[i % ikonlar.length]) }), el("p", { yazi: s })]))));
+  kap.append(ayrinti("How is " + (/^[AEIOU]/i.test(t.cogul) ? "an " : "a ") + t.cogul + " token launched?", "Every " + t.cogul + " token launches through the same MerkezKapi as every other: first buy $20–500, a collateral basket the founder chooses (each line at least 5% of the first buy), a 1–5% collateral tax and the same 2.2% trading fee. What makes it a " + t.cogul + " token is the type its founder writes into the TurKaydi record on Arc."));
   for (const b of ek.oncesi || []) kap.append(b);
 
   const BASLIK = t.ad + " tokens on Arc";
