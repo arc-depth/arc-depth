@@ -134,6 +134,18 @@ export const YOLLAR = [
     kaynak: "OnSatis (Arc) + TweetKayit + Dagitici"
   },
   {
+    /* 9 Nov 2026 DEMO: every token on the chains relay reaches, bought from any of ours; off the rail until approved */
+    yol: "vitrin",
+    ad: "Market",
+    kisa: "Market",
+    grup: "piyasa",
+    ikon: "grafik",
+    durum: "canli",
+    gizliRay: true,
+    ozet: "Trending and new tokens on ten chains; buy any of them with the dollars you hold on any chain.",
+    kaynak: "GeckoTerminal public API + relay.link"
+  },
+  {
     yol: "move-token",
     ad: "Aptos & Sui launches",
     kisa: "Aptos & Sui",

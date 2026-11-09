@@ -239,7 +239,8 @@ const GORUNUMLER = {
   daos: () => import("./gorunum/daos.js"),
   games: () => import("./gorunum/games.js"),
   baskets: () => import("./gorunum/baskets.js"),
-  designs: () => import("./gorunum/designs.js")
+  designs: () => import("./gorunum/designs.js"),
+  vitrin: () => import("./gorunum/vitrin.js")   // Market, demo (9 Nov 2026)
 };
 
 let sonCizim = 0;
