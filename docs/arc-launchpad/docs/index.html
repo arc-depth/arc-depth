@@ -281,6 +281,14 @@ footer{border-top:1px solid var(--line);margin-top:30px;padding:34px 0 50px;colo
 .meme div{display:flex;gap:8px;padding:10px}
 .meme a{flex:1;text-align:center;font-size:13px;font-weight:700;padding:8px;border-radius:10px;text-decoration:none;color:#e8eaed;border:1px solid rgba(255,255,255,.14)}
 .meme a.x{background:#e8eaed;color:#0b0d10;border-color:#e8eaed}
+.hgrid>div{min-width:0}
+.zincir-seridi{overflow:hidden;max-width:620px;min-width:0;margin:18px 0 6px;mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)}
+.zincir-seridi>div{display:flex;gap:8px;width:max-content;animation:zincirAk 38s linear infinite}
+.zincir-seridi span{flex:none;font-size:13px;font-weight:700;padding:6px 12px;border-radius:999px;color:#fff;border:1px solid color-mix(in srgb,var(--z) 55%,transparent);background:color-mix(in srgb,var(--z) 16%,transparent)}
+.zincir-seridi:hover>div{animation-play-state:paused}
+@keyframes zincirAk{to{transform:translateX(-50%)}}
+.cta.satis{border-color:#3ddc97;color:#7dffc4}
+@media (prefers-reduced-motion:reduce){.zincir-seridi>div{animation:none}}
 @media (prefers-reduced-motion:reduce){.serit,.pulsy-sahne img,.pulsy-sahne::before,.pulsy-sahne::after{animation:none}}
 </style>
 <link rel="stylesheet" href="css/landing-visual.css">
@@ -333,17 +341,20 @@ footer{border-top:1px solid var(--line);margin-top:30px;padding:34px 0 50px;colo
 <div class="hero">
   <div class="wrap hgrid">
     <div>
-      <div class="eye">Twelve chains. One pool.</div>
+      <div class="eye">Memecoin launchpad · twelve chains · one pool</div>
       <h1><span>ARC PULSE</span></h1>
-      <p class="hsub">Token launchpad, collateral vaults and a cross-chain memecoin economy.</p>
-      <p class="lead">Launch from <b>Arc</b>, <b>Base</b>, <b>Arbitrum</b>, <b>Ethereum</b>, <b>BNB Chain</b>, <b>Avalanche</b>, <b>Monad</b>, <b>HyperEVM</b>, <b>Robinhood Chain</b>, <b>Solana</b>, <b>Sui</b> or <b>Aptos</b>.
-        Every token trades in one Uniswap v4 pool on Arc — the same price on every chain — and is backed by a collateral basket of
-        up to five tokens from any chain, bought automatically from real pools. Fixed supply, no mint function, liquidity locked from the first block.
-        <b>Every trade sets aside 0.2% to buy and burn ARCP.</b></p>
+      <p class="hsub">Launch a memecoin from any chain. One pool, one price, and a real collateral basket behind every token.</p>
+      <div class="zincir-seridi" aria-label="Launch and trade from these chains"><div>
+        <span style="--z:#7c5cff">Arc</span><span style="--z:#0052ff">Base</span><span style="--z:#14f195">Solana</span><span style="--z:#f0b90b">BNB Chain</span><span style="--z:#ccff00">Robinhood Chain</span><span style="--z:#28a0f0">Arbitrum</span><span style="--z:#627eea">Ethereum</span><span style="--z:#e84142">Avalanche</span><span style="--z:#836ef9">Monad</span><span style="--z:#50e3c2">HyperEVM</span><span style="--z:#4da2ff">Sui</span><span style="--z:#2ed8a7">Aptos</span>
+        <span style="--z:#7c5cff" aria-hidden="true">Arc</span><span style="--z:#0052ff" aria-hidden="true">Base</span><span style="--z:#14f195" aria-hidden="true">Solana</span><span style="--z:#f0b90b" aria-hidden="true">BNB Chain</span><span style="--z:#ccff00" aria-hidden="true">Robinhood Chain</span><span style="--z:#28a0f0" aria-hidden="true">Arbitrum</span><span style="--z:#627eea" aria-hidden="true">Ethereum</span><span style="--z:#e84142" aria-hidden="true">Avalanche</span><span style="--z:#836ef9" aria-hidden="true">Monad</span><span style="--z:#50e3c2" aria-hidden="true">HyperEVM</span><span style="--z:#4da2ff" aria-hidden="true">Sui</span><span style="--z:#2ed8a7" aria-hidden="true">Aptos</span>
+      </div></div>
+      <p class="lead">Every token trades in one Uniswap v4 pool on Arc, so buyers on every chain see the same price. Up to five tokens from any chain back it as collateral, bought automatically from real pools.
+        Fixed supply, no mint function, liquidity locked from the first block. <b>Every trade sets aside 0.2% to buy and burn ARCP.</b></p>
       <div class="btns">
-        <a class="cta" href="app.html">Create a token <svg class="i"><use href="#i-swap"/></svg></a>
+        <a class="cta" href="app.html#/olustur">Create a token <svg class="i"><use href="#i-swap"/></svg></a>
+        <a class="cta ghost satis" href="presale.html">Join the ARCP presale</a>
+        <a class="cta ghost" href="app.html#/vitrin">Explore Market</a>
         <a class="cta ghost" href="app.html#/fthm">Buy ARCP</a>
-        <a class="cta ghost" href="#kesfet">Discover tokens</a>
       </div>
       <div class="hfeat">
         <div><svg><use href="#i-vault"/></svg><span><b>Collateral vaults</b>one per token</span></div>
