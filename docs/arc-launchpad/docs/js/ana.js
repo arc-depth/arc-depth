@@ -52,7 +52,8 @@ const VARSAYILAN = "kesfet";
      cannot find it. */
 /* "designs" (1 Nov 2026): the owner wants the designer NFT section behind its
    own button. It is the sixth entry, so the phone bar (first four) is unchanged. */
-const BIRINCIL = ["kesfet", "olustur", "terminal", "portfoy", "dao", "designs"];
+/* "presale" (9 Nov 2026): the ARCP presale behind its own tab, likewise after the phone bar four */
+const BIRINCIL = ["kesfet", "olustur", "terminal", "portfoy", "dao", "presale", "designs"];
 
 const kIcerik = document.getElementById("icerik");
 const kRay = document.getElementById("ray");
@@ -269,6 +270,9 @@ async function ciz() {
     kIcerik.focus({ preventScroll: true });
     return;
   }
+
+  /* a route that is its own page (presale.html) with no view here: go there */
+  if (kayit.site && !GORUNUMLER[yol]) { location.replace(kayit.site); return; }
 
   const yukle = GORUNUMLER[yol];
   if (!yukle) {

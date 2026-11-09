@@ -122,6 +122,18 @@ export const YOLLAR = [
     sekme: true
   },
   {
+    /* 9 Nov 2026: the ARCP 2 presale, its own page (docs/presale.html) behind its own top tab */
+    yol: "presale",
+    ad: "ARCP presale",
+    kisa: "Presale",
+    grup: "piyasa",
+    ikon: "kupa",
+    durum: "canli",
+    site: "presale.html",
+    ozet: "250,000,000 ARCP for $15,000 in 30-day rounds, $10 to $250 per wallet; an unfilled round is refunded.",
+    kaynak: "OnSatis (Arc) + TweetKayit + Dagitici"
+  },
+  {
     yol: "move-token",
     ad: "Aptos & Sui launches",
     kisa: "Aptos & Sui",
