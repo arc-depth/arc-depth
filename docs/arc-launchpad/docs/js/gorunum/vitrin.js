@@ -14,6 +14,8 @@ import { el, temizle } from "../ui.js";
 import { AGLAR } from "../aglar.js";
 import { cuzdan } from "../cuzdan.js";
 import { rpcPost } from "../ag-okur.js";
+import { Contract } from "../../vendor/ethers.min.js";
+import { YedekliOkur } from "../yedekli-okur.js";
 
 const GECKO = "https://api.geckoterminal.com/api/v2";
 const RELAY = "https://api.relay.link";
@@ -34,6 +36,40 @@ const ZINCIRLER = [
   { k: "robinhood", ad: "Robinhood", gecko: "robinhood", relay: 4663 },
 ];
 const geckodan = (id) => ZINCIRLER.find((z) => z.gecko === id);
+
+/* what is shown: a pool needs this much liquidity (USD) to be listed; fresh pools a little less */
+const ESIK = 10_000, ESIK_YENI = 3_000;
+const YENILE_MS = 45_000;   // the page reads the market again every 45 s while it is open
+
+/* our own launches, first on the page: every launchpad generation on Arc */
+const BIZIM_LP = ["0x52e600c8259ca44D9837B7b9E6BA1faee4bC040d"];   // PulseLaunchpad5 (first generation)
+const LP_ABI = ["function launchCount() view returns (uint256)", "function launchAt(uint256) view returns ((address token, address acici, address kasa, uint256 teminat, address kurucu, uint256 kurucuToken, uint256 teklif, uint256 vergiPpm, uint64 zaman))"];
+const arcOkur = new YedekliOkur();
+let bizimOnbellek = null;
+async function bizimTokenler() {
+  if (bizimOnbellek && Date.now() - bizimOnbellek.t < 300_000) return bizimOnbellek.v;
+  const lpler = [...BIZIM_LP];
+  for (const d of ["sepet-v2", "sepet-v9"]) {
+    const j = await fetch("veri/" + d + ".json").then((x) => (x.ok ? x.json() : null)).catch(() => null);
+    if (j && j.launchpad) lpler.push(j.launchpad);
+  }
+  const out = [];
+  for (const a of lpler) {
+    try {
+      const lp = new Contract(a, LP_ABI, arcOkur);
+      const n = Number(await lp.launchCount());
+      for (let i = n - 1; i >= Math.max(0, n - 12); i--) {
+        const k = await lp.launchAt(i);
+        const c = new Contract(k.token, ["function name() view returns (string)", "function symbol() view returns (string)"], arcOkur);
+        const [ad, sembol] = await Promise.all([c.name().catch(() => "?"), c.symbol().catch(() => "?")]);
+        out.push({ adres: k.token, ad, sembol, zaman: Number(k.zaman) });
+      }
+    } catch (e) { /* a launchpad that does not answer is skipped */ }
+  }
+  out.sort((a, b) => b.zaman - a.zaman);
+  bizimOnbellek = { t: Date.now(), v: out };
+  return out;
+}
 
 const STIL = `
 .vt{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:20px}
@@ -57,7 +93,16 @@ const STIL = `
 .vt-yesil{color:#3ddc97}.vt-kirmizi{color:#ff6b6b}
 .vt-kartlar{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}
 .vt-kart{position:relative;aspect-ratio:4/5;border-radius:16px;overflow:hidden;border:1px solid var(--cizgi,#2a2f3a);cursor:pointer;background:#15171c}
-.vt-kart img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.vt-kart img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:blur(16px);transform:scale(1.1);transition:filter .25s}
+.vt-kart:hover img,.vt-kart:focus-within img{filter:none}
+.vt-uyari{margin-top:12px;border:1px solid #ffb02066;background:#ffb02014;color:#ffcf70;border-radius:10px;padding:9px 11px;font-size:12.5px}
+.vt-bizim{display:flex;gap:10px;overflow-x:auto;padding-bottom:6px;margin-bottom:18px}
+.vt-bizim a{flex:none;display:flex;gap:10px;align-items:center;padding:10px 14px;border:1px solid #7c5cff66;background:#7c5cff14;border-radius:14px;color:inherit;text-decoration:none}
+.vt-bizim a:hover{border-color:#7c5cff}
+.vt-teminat{font-size:10.5px;font-weight:700;color:#3ddc97;border:1px solid #3ddc9766;border-radius:999px;padding:1px 7px;margin-left:8px;vertical-align:middle}
+.vt-canli{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:500;opacity:.7;margin-left:10px;vertical-align:middle}
+.vt-canli i{width:7px;height:7px;border-radius:50%;background:#3ddc97;animation:vtNabiz 1.6s infinite}
+@keyframes vtNabiz{50%{opacity:.25}}
 .vt-kart .vt-ikon{position:absolute;inset:0;width:100%;height:100%;border-radius:0;font-size:20px}
 .vt-kart-alt{position:absolute;left:0;right:0;bottom:0;padding:40px 12px 12px;background:linear-gradient(transparent,rgba(0,0,0,.85))}
 .vt-rozet{position:absolute;top:10px;left:10px;background:rgba(0,0,0,.6);border-radius:999px;padding:4px 9px;font-size:11px;font-weight:600}
@@ -123,7 +168,7 @@ function cozumle(j) {
       resim: b.image_url && !/missing/.test(b.image_url) ? b.image_url : null,
       fiyat: a.base_token_price_usd, fdv: a.market_cap_usd || a.fdv_usd, hacim: a.volume_usd ? a.volume_usd.h24 : 0,
       degisim: a.price_change_percentage ? a.price_change_percentage.h24 : null, islem: a.transactions && a.transactions.h24 ? a.transactions.h24.buys + a.transactions.h24.sells : 0,
-      kuruldu: a.pool_created_at, havuz: a.address, dex: p.relationships.dex ? p.relationships.dex.data.id : "",
+      kuruldu: a.pool_created_at, havuz: a.address, likidite: Number(a.reserve_in_usd || 0), dex: p.relationships.dex ? p.relationships.dex.data.id : "",
     });
   }
   /* one row per token: the pool with the most volume */
@@ -247,7 +292,10 @@ function alKutusu(t) {
       el("div", {}, [el("span", { attr: { style: "opacity:.7" }, yazi: "Market cap" }), el("b", { yazi: para(t.fdv) })]),
       el("div", {}, [el("span", { attr: { style: "opacity:.7" }, yazi: "24h" }), yuzde(t.degisim)]),
       el("div", {}, [el("span", { attr: { style: "opacity:.7" }, yazi: "24h volume" }), el("b", { yazi: para(t.hacim) })]),
+      el("div", {}, [el("span", { attr: { style: "opacity:.7" }, yazi: "Liquidity" }), el("b", { yazi: para(t.likidite) })]),
     ]),
+    Date.now() - Date.parse(t.kuruldu) < 86_400_000
+      ? el("div", { sinif: "vt-uyari", yazi: "New pool, opened " + once(t.kuruldu) + ". New tokens are risky: check the chart and who holds the supply before you buy." }) : null,
     el("label", { yazi: "Pay from" }), kaynak,
     el("label", { yazi: "Amount (USD)" }), tutar,
     el("div", { sinif: "vt-hizli" }, [10, 20, 50, 100].map((v) => el("button", { sinif: "dugme dugme--sade", attr: { type: "button" }, yazi: "$" + v, on: { click: () => { tutar.value = v; teklif(); } } }))),
@@ -274,11 +322,18 @@ export async function ciz() {
       on: { click: () => { secili = z; cipCiz(); yukle(); } } }));
   };
 
-  async function yukle() {
-    temizle(govde).append(el("div", { sinif: "vt-alt", yazi: "Loading live markets…" }));
+  let yukleniyor = false;
+  async function yukle(sessiz = false) {
+    if (yukleniyor) return;
+    yukleniyor = true;
+    try { await ciz2(sessiz); } finally { yukleniyor = false; }
+  }
+  async function ciz2(sessiz) {
+    if (!sessiz) temizle(govde).append(el("div", { sinif: "vt-alt", yazi: "Loading live markets…" }));
     let d;
-    try { d = await veri(secili); } catch (e) { temizle(govde).append(el("div", { sinif: "vt-alt", yazi: e.message })); return; }
-    const trend = d.trend.slice(), yeni = d.yeni.slice().sort((a, b) => Date.parse(b.kuruldu) - Date.parse(a.kuruldu));
+    try { d = await veri(secili); } catch (e) { if (!sessiz) temizle(govde).append(el("div", { sinif: "vt-alt", yazi: e.message })); return; }
+    const trend = d.trend.filter((t) => t.likidite >= ESIK);
+    const yeni = d.yeni.filter((t) => t.likidite >= ESIK_YENI).sort((a, b) => Date.parse(b.kuruldu) - Date.parse(a.kuruldu));
     if (!trend.length && !yeni.length) { temizle(govde).append(el("div", { sinif: "vt-alt", yazi: "No markets on this chain right now." })); return; }
     const one = trend[0] || yeni[0];
     const ac = (t) => () => alKutusu(t);
@@ -298,7 +353,7 @@ export async function ciz() {
       resim(t), el("div", { attr: { style: "min-width:0" } }, [el("div", { sinif: "vt-ad" }, [t.ad, el("span", { sinif: "vt-zincir", yazi: t.zincir.ad })]),
         el("div", { sinif: "vt-k" }, [para(t.fdv) + " ", yuzde(t.degisim)])])])));
     const kartlar = el("div", { sinif: "vt-kartlar" }, yeni.slice(0, 16).map((t) => el("div", { sinif: "vt-kart", on: { click: ac(t) } }, [
-      resim(t), el("span", { sinif: "vt-rozet", yazi: once(t.kuruldu) }),
+      resim(t), el("span", { sinif: "vt-rozet", veri: { zaman: t.kuruldu }, yazi: once(t.kuruldu) }),
       el("div", { sinif: "vt-kart-alt" }, [el("div", { sinif: "vt-ad", yazi: t.ad }), el("div", { sinif: "vt-k" }, [para(t.fdv), el("span", { sinif: "vt-zincir", yazi: t.zincir.ad })])])])));
     const hacimSira = [...trend, ...yeni].sort((a, b) => Number(b.hacim) - Number(a.hacim)).filter((t, i, a) => a.findIndex((x) => x.adres === t.adres) === i).slice(0, 15);
     const yan = el("aside", { sinif: "vt-yan" }, [el("div", { sinif: "vt-ad", attr: { style: "margin:0 0 8px 8px" }, yazi: "Top volume · 24h" }),
@@ -306,18 +361,34 @@ export async function ciz() {
         el("div", { attr: { style: "min-width:0" } }, [el("div", { sinif: "vt-ad", yazi: t.ad }), el("div", { sinif: "vt-k", yazi: t.zincir.ad })]),
         el("div", { sinif: "r" }, [el("b", { yazi: para(t.hacim) }), el("div", {}, [yuzde(t.degisim)])])]))]);
 
+    const bizim = (!secili || secili.k === "arc") ? await bizimTokenler().catch(() => []) : [];
+    const serit = bizim.length ? [el("h2", { sinif: "vt-h2", attr: { style: "margin-top:0" } }, ["ARC PULSE launches", el("span", { sinif: "vt-teminat", yazi: "COLLATERAL-BACKED" })]),
+      el("p", { sinif: "vt-alt", yazi: "One pool on Arc, a collateral basket behind every token, tradable from twelve chains." }),
+      el("div", { sinif: "vt-bizim" }, bizim.map((b) => el("a", { attr: { href: "#/merkez?t=" + b.adres } }, [ikonYok({ adres: b.adres, sembol: b.sembol || "?" }),
+        el("div", {}, [el("div", { sinif: "vt-ad", yazi: b.ad }), el("div", { sinif: "vt-k", yazi: "$" + b.sembol + " · " + once(new Date(b.zaman * 1000).toISOString()) })])])))] : [];
     temizle(govde).append(el("div", { sinif: "vt" }, [
-      el("div", { attr: { style: "min-width:0" } }, [hero,
+      el("div", { attr: { style: "min-width:0" } }, [...serit, hero,
         el("h2", { sinif: "vt-h2", yazi: "Trending" }), el("p", { sinif: "vt-alt", yazi: "Moving on real volume in the last 24 hours. Tap any token to buy it from any chain." }), trendIzgara,
         el("h2", { sinif: "vt-h2", yazi: "New launches" }), el("p", { sinif: "vt-alt", yazi: secili ? "Fresh pools on " + secili.ad : "Fresh pools on every chain we reach" }), kartlar]),
       yan]));
   }
 
   kap.append(
-    el("h1", { attr: { style: "margin:0;font-size:26px" } }, ["Market", el("span", { sinif: "vt-demo", yazi: "DEMO" })]),
+    el("h1", { attr: { style: "margin:0;font-size:26px" } }, ["Market", el("span", { sinif: "vt-demo", yazi: "DEMO" }), el("span", { sinif: "vt-canli" }, [el("i"), "live"])]),
     el("p", { sinif: "vt-alt", yazi: "Every token on 10 chains in one place. Buy any of them with the dollars you hold on any chain, in one tap." }),
     cipler, govde);
   cipCiz();
   yukle();
+  /* live while the page is open: the market every 45 s (not while a buy box is open or the tab is hidden), the ages every second */
+  const zamanlayici = setInterval(() => {
+    if (!document.body.contains(kap)) { clearInterval(zamanlayici); clearInterval(saat); return; }
+    if (document.hidden || document.querySelector(".vt-perde")) return;
+    onbellek.clear();
+    yukle(true);
+  }, YENILE_MS);
+  const saat = setInterval(() => {
+    if (!document.body.contains(kap)) return;
+    for (const r of kap.querySelectorAll(".vt-rozet[data-zaman]")) r.textContent = once(r.dataset.zaman);
+  }, 1000);
   return kap;
 }
