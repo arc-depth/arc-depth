@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1200" width="1200" height="1200"><defs><linearGradient id="zg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#140f2e"/><stop offset="1" stop-color="#0b1622"/></linearGradient></defs><rect width="1200" height="1200" fill="url(#zg)"/>
+  <rect x="0" y="0" width="1200" height="600" fill="#1d1230"/><rect x="0" y="600" width="1200" height="600" fill="#0f2622"/>
+  <g transform="translate(250 330) scale(2.2)">
+    <defs><radialGradient id="bg" cx="35%" cy="28%" r="80%"><stop offset="0" stop-color="#c8b8ff"/><stop offset=".45" stop-color="#8b6cff"/><stop offset="1" stop-color="#4b2fd6"/></radialGradient></defs>
+    <ellipse cx="0" cy="66" rx="44" ry="7" fill="#000" opacity=".35"/>
+    <path d="M0 -62 C 30 -30, 56 -8, 56 18 C 56 46, 30 62, 0 62 C -30 62, -56 46, -56 18 C -56 -8, -30 -30, 0 -62 Z" fill="url(#bg)"/>
+    <path d="M-30 -20 C -36 -6, -38 6, -36 16" stroke="#fff" stroke-opacity=".35" stroke-width="6" stroke-linecap="round" fill="none"/>
+    <path d="M-56 22 q-16 2 -20 14" stroke="#6a4cf0" stroke-width="9" stroke-linecap="round" fill="none"/>
+    <path d="M56 22 q16 2 20 14" stroke="#6a4cf0" stroke-width="9" stroke-linecap="round" fill="none"/>
+    <path d="M-24 -14 l12 4" stroke="#120b2e" stroke-width="3" stroke-linecap="round"/><path d="M24 -14 l-12 4" stroke="#120b2e" stroke-width="3" stroke-linecap="round"/><ellipse cx="-17" cy="-4" rx="5" ry="6" fill="#fff"/><ellipse cx="17" cy="-4" rx="5" ry="6" fill="#fff"/><circle cx="-17" cy="-2" r="3" fill="#120b2e"/><circle cx="17" cy="-2" r="3" fill="#120b2e"/><path d="M-26 8 q-2 8 2 10" stroke="#7fd1ff" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M-22 22 h9 l4 -6 l5 10 l5 -12 l4 8 h17" transform="scale(1,-1) translate(0,-42)" stroke="#120b2e" stroke-width="3.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    
+  </g><g transform="translate(250 930) scale(2.2)">
+    <defs><radialGradient id="cg" cx="35%" cy="28%" r="80%"><stop offset="0" stop-color="#c8b8ff"/><stop offset=".45" stop-color="#8b6cff"/><stop offset="1" stop-color="#4b2fd6"/></radialGradient></defs>
+    <ellipse cx="0" cy="66" rx="44" ry="7" fill="#000" opacity=".35"/>
+    <path d="M0 -62 C 30 -30, 56 -8, 56 18 C 56 46, 30 62, 0 62 C -30 62, -56 46, -56 18 C -56 -8, -30 -30, 0 -62 Z" fill="url(#cg)"/>
+    <path d="M-30 -20 C -36 -6, -38 6, -36 16" stroke="#fff" stroke-opacity=".35" stroke-width="6" stroke-linecap="round" fill="none"/>
+    <path d="M-56 22 q-16 2 -20 14" stroke="#6a4cf0" stroke-width="9" stroke-linecap="round" fill="none"/>
+    <path d="M56 22 q16 2 20 14" stroke="#6a4cf0" stroke-width="9" stroke-linecap="round" fill="none"/>
+    <rect x="-33" y="-17" width="28" height="15" rx="5" fill="#0b0b12"/><rect x="5" y="-17" width="28" height="15" rx="5" fill="#0b0b12"/><path d="M-5 -12 h10" stroke="#0b0b12" stroke-width="4"/><path d="M-28 -14 l8 0" stroke="#5a5a7a" stroke-width="2.5" stroke-linecap="round"/><path d="M10 -14 l8 0" stroke="#5a5a7a" stroke-width="2.5" stroke-linecap="round"/><path d="M-22 10 Q-12 22 -5 20 L-1 12 L4 25 L8 17 Q14 21 22 10" stroke="#120b2e" stroke-width="3.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    
+  </g>
+  <text x="780" y="240" fill="#fff" font-family="Inter, Arial Black, Arial, sans-serif" font-weight="900" font-size="50" text-anchor="middle" >Me, checking if the</text><text x="780" y="310" fill="#ff9b9b" font-family="Inter, Arial Black, Arial, sans-serif" font-weight="900" font-size="50" text-anchor="middle" >liquidity is really locked</text><text x="780" y="380" fill="#ffb4b4" font-family="Inter, Arial Black, Arial, sans-serif" font-weight="700" font-size="40" text-anchor="middle" >before I buy</text>
+  <text x="780" y="830" fill="#fff" font-family="Inter, Arial Black, Arial, sans-serif" font-weight="900" font-size="52" text-anchor="middle" >ARC PULSE:</text><text x="780" y="905" fill="#7dffc4" font-family="Inter, Arial Black, Arial, sans-serif" font-weight="900" font-size="46" text-anchor="middle" >locked from block one.</text><text x="780" y="970" fill="#7dffc4" font-family="Inter, Arial Black, Arial, sans-serif" font-weight="900" font-size="46" text-anchor="middle" >No withdraw function.</text><g opacity=".9"><text x="1170" y="1170" fill="#cfc6ff" font-family="Inter, Arial Black, Arial, sans-serif" font-weight="700" font-size="26" text-anchor="end" >arcpulse.app</text></g></svg>
