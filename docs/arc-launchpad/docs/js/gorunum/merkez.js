@@ -21,7 +21,8 @@
 import { el, sayfaUst, panel, not, adimlar, temizle } from "../ui.js";
 import { EKONOMI } from "../adresler.js";
 import { para } from "../bicim.js";
-import { AGLAR, ELYSIUM } from "../aglar.js";
+import { AGLAR } from "../aglar.js";
+import { ELYSIUM } from "../elysium.js";
 import { cuzdan } from "../cuzdan.js";
 import { rpcPost } from "../ag-okur.js";
 import { YedekliOkur } from "../yedekli-okur.js";

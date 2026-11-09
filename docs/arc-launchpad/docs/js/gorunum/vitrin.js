@@ -15,7 +15,8 @@
  * A top tab (ana.js BIRINCIL) and on the rail.
  * =========================================================================== */
 import { el, temizle, bos } from "../ui.js";
-import { AGLAR, ELYSIUM } from "../aglar.js";
+import { AGLAR } from "../aglar.js";
+import { ELYSIUM } from "../elysium.js";
 import { cuzdan } from "../cuzdan.js";
 import { rpcPost } from "../ag-okur.js";
 import { Contract } from "../../vendor/ethers.min.js";

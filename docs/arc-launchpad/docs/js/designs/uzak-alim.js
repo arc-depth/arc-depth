@@ -144,7 +144,8 @@ async function evmMakbuz(ag, h, durum) {
 /** Run relay's steps from the paying wallet, then follow the request until it is done on Arc. */
 export async function relayOde(k, t, { cuzdan, durum }) {
   if (evmMi(k)) {
-    const { AGLAR, ELYSIUM } = await import("../aglar.js");
+    const { AGLAR } = await import("../aglar.js");
+    const { ELYSIUM } = await import("../elysium.js");
     const ag = AGLAR.find((a) => a.id === k.id) || (k.id === ELYSIUM.id ? ELYSIUM : null);
     if (!ag) throw new Error("Unknown chain " + k.ad + ".");
     for (const s of t.q.steps) for (const it of s.items || []) {

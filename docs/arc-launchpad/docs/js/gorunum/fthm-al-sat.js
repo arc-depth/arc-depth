@@ -15,7 +15,8 @@
  * =========================================================================== */
 import { el, sayfaUst, panel, not, temizle, olcum, ayrinti } from "../ui.js";
 import { FTHM as ARCP, fthmDurum as arcpDurum } from "../fthm-veri.js";
-import { AGLAR, ELYSIUM } from "../aglar.js";
+import { AGLAR } from "../aglar.js";
+import { ELYSIUM } from "../elysium.js";
 import { cuzdan } from "../cuzdan.js";
 import { JsonRpcProvider, Contract, Interface } from "../../vendor/ethers.min.js";
 import { YedekliOkur } from "../yedekli-okur.js";
