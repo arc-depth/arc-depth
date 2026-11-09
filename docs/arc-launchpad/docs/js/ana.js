@@ -288,6 +288,22 @@ const GORUNUMLER = {
 
 let sonCizim = 0;
 
+/* A long page (four sections or more) gets "On this page": its section titles as chips under the
+   cover, each one a jump to its section. Built from what the page already shows; nothing new is read. */
+function sayfaIcindekiler(parca) {
+  const basliklar = [...parca.querySelectorAll(":scope > .panel > .panel__baslik, :scope > .panel .panel__baslik")].filter((b, i, a) => a.indexOf(b) === i);
+  if (basliklar.length < 4) return;
+  const serit = el("nav", { sinif: "icindekiler", attr: { "aria-label": "On this page" } }, [el("span", { sinif: "icindekiler__et", yazi: "On this page" })]);
+  basliklar.forEach((b, i) => {
+    const bolum = b.closest(".panel");
+    if (!bolum.id) bolum.id = "bolum-" + (i + 1);
+    const yazi = (b.textContent || "").trim().replace(/\s+/g, " ").slice(0, 48);
+    serit.append(el("button", { attr: { type: "button" }, yazi, on: { click: () => bolum.scrollIntoView({ behavior: "smooth", block: "start" }) } }));
+  });
+  const kapak = parca.querySelector(".sayfa-ust");
+  if (kapak) kapak.after(serit); else parca.prepend(serit);
+}
+
 async function ciz() {
   const { yol, param } = hashiCoz();
   const kayit = yol === "daha"
@@ -336,6 +352,7 @@ async function ciz() {
     const parca = await mod.ciz({ kayit, param, cuzdan });
     if (bu !== sonCizim) return;
     temizle(kIcerik).append(...geri(), parca);
+    sayfaIcindekiler(parca);
   } catch (e) {
     if (bu !== sonCizim) return;
     temizle(kIcerik).append(...geri(),

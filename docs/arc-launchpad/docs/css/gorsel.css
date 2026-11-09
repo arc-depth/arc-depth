@@ -205,3 +205,10 @@ body::before {
 .urun-kart__ikon { width: 38px; height: 38px; border-radius: 11px; display: grid; place-items: center; margin-bottom: 10px; color: #04201b;
   background: linear-gradient(135deg, var(--renk-urunler), #7dffc4); }
 .urun-kart__ikon svg { width: 19px; height: 19px; }
+
+/* ---- "On this page" on long pages ------------------------------------- */
+.icindekiler { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; padding: 10px 12px; border: 1px solid var(--cizgi); border-radius: 14px; background: rgba(255, 255, 255, .02); }
+.icindekiler__et { font-size: 10.5px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--yazi-3); margin-right: 4px; }
+.icindekiler button { border: 1px solid var(--cizgi-guclu); background: transparent; color: var(--yazi-2); border-radius: 999px; padding: 5px 11px; font: inherit; font-size: 12.5px; cursor: pointer; }
+.icindekiler button:hover { color: var(--yazi-1); border-color: var(--marka-cizgi); background: var(--marka-zemin); }
+.panel { scroll-margin-top: calc(var(--ust-bar, 56px) + 12px); }
