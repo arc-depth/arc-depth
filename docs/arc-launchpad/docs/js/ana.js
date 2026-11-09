@@ -53,7 +53,8 @@ const VARSAYILAN = "kesfet";
 /* "designs" (1 Nov 2026): the owner wants the designer NFT section behind its
    own button. It is the sixth entry, so the phone bar (first four) is unchanged. */
 /* "presale" (9 Nov 2026): the ARCP presale behind its own tab, likewise after the phone bar four */
-const BIRINCIL = ["kesfet", "olustur", "terminal", "portfoy", "dao", "presale", "designs"];
+/* "vitrin" (Market, 9 Nov 2026): every token on ten chains, bought from any of them; second, after Discover */
+const BIRINCIL = ["kesfet", "vitrin", "olustur", "terminal", "portfoy", "dao", "presale", "designs"];
 
 const kIcerik = document.getElementById("icerik");
 const kRay = document.getElementById("ray");

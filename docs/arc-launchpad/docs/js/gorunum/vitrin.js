@@ -1,14 +1,15 @@
 /* ===========================================================================
- * vitrin.js — Market (DEMO, 9 Nov 2026): every token on the chains relay.link
+ * vitrin.js — Market (9 Nov 2026): every token on the chains relay.link
  * reaches, trending and new, and a buy box that pays from any of our EVM chains.
  *
  *   data   GeckoTerminal's public API, read by the visitor's browser (trending
  *          pools, new pools; one chain or all of them). Nothing is stored.
  *   trade  relay.link /quote: the visitor's chain dollar -> the token on its own
  *          chain, delivered to the visitor's address there (Solana: the address
- *          typed in). appFees carries the ARC PULSE fee; the split is not decided
- *          yet, so in the demo it goes to one wallet.
- * Reached at #/vitrin; not in the menus while it is a demo.
+ *          typed in). appFees carries the ARC PULSE fee (0.5%) to the fee wallet;
+ *          scripts/pazar-ucret.js collects it daily and splits it on Arc:
+ *          0.20% ARCP burn, 0.15% developer pool, 0.10% marketing, 0.05% founder.
+ * A top tab (ana.js BIRINCIL) and on the rail.
  * =========================================================================== */
 import { el, temizle } from "../ui.js";
 import { AGLAR } from "../aglar.js";
@@ -20,7 +21,7 @@ import { YedekliOkur } from "../yedekli-okur.js";
 const GECKO = "https://api.geckoterminal.com/api/v2";
 const RELAY = "https://api.relay.link";
 const UCRET_BPS = "50";   // 0.5%
-const UCRET_ALICI = "0x89189C84DC95d0520AEeC9c8cF3BA5B9d42611D0";   // demo: one wallet until the split is decided
+const UCRET_ALICI = "0x89189C84DC95d0520AEeC9c8cF3BA5B9d42611D0";   // the fee wallet: relay accrues here, pazar-ucret.js splits it
 
 /* the chains shown: GeckoTerminal's network id, relay's chain id */
 const ZINCIRLER = [
@@ -253,6 +254,7 @@ function alKutusu(t) {
         satir("You get", "~" + Number(d.currencyOut.amountFormatted).toLocaleString("en-US", { maximumFractionDigits: 2 }) + " " + t.sembol + " on " + t.zincir.ad),
         satir("Worth", para(d.currencyOut.amountUsd)),
         satir("ARC PULSE fee (0.5%)", para(f.app && f.app.amountUsd)),
+        el("div", { sinif: "vt-k", attr: { style: "display:block;padding-top:2px" }, yazi: "0.20% buys and burns ARCP · 0.15% developer pool · 0.10% marketing · 0.05% founder" }),
         satir("Network + route", para(Number((f.relayer && f.relayer.amountUsd) || 0) + Number((f.gas && f.gas.amountUsd) || 0))),
         satir("Time", "~" + (d.timeEstimate || 1) + "s"));
     } catch (e) { if (bu === sayac) temizle(ozet).append(el("div", {}, ["Route service unavailable"])); }
@@ -374,7 +376,7 @@ export async function ciz() {
   }
 
   kap.append(
-    el("h1", { attr: { style: "margin:0;font-size:26px" } }, ["Market", el("span", { sinif: "vt-demo", yazi: "DEMO" }), el("span", { sinif: "vt-canli" }, [el("i"), "live"])]),
+    el("h1", { attr: { style: "margin:0;font-size:26px" } }, ["Market", el("span", { sinif: "vt-canli" }, [el("i"), "live"])]),
     el("p", { sinif: "vt-alt", yazi: "Every token on 10 chains in one place. Buy any of them with the dollars you hold on any chain, in one tap." }),
     cipler, govde);
   cipCiz();

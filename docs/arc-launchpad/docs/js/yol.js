@@ -141,7 +141,6 @@ export const YOLLAR = [
     grup: "piyasa",
     ikon: "grafik",
     durum: "canli",
-    gizliRay: true,
     ozet: "Trending and new tokens on ten chains; buy any of them with the dollars you hold on any chain.",
     kaynak: "GeckoTerminal public API + relay.link"
   },
