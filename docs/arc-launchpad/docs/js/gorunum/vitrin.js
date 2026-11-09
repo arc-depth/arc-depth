@@ -305,6 +305,38 @@ function osSlayt(o) {
   ]);
 }
 
+/* ---- Elysium launchpads, measured here: the busiest v4 pools (GeckoTerminal), each pool's hook from its
+   Initialize record on Elysium's PoolManager, volume summed per hook. Hook names are the ones identified
+   from the launchpads' own tokens (e/acc on Ascend, TESTICLES on Montra, VOLTA on Volta). ---- */
+const ELY_PM = "0xe2e105d3f7209a9da11f83ccf3e7398a753823f1";
+const ELY_INIT = "0xdd466e674ea557f56295e2d0218a125ea4b4f0f6f3307b95f85e6110838d6438";   // Initialize(bytes32,address,address,uint24,int24,address,uint160,int24)
+const ELY_HOOK = { "0xe0def4221b9840a610d4e7d55812a79a6431a8ec": "Ascend", "0x6b1216a40b65c83e9c9e18a562c446697b8cf8ec": "Montra", "0x3ab88ddc3cf2a012af88b60828edb4553697e5dc": "Volta" };
+let elyOnbellek = null;
+async function elysiumLaunchpadlari() {
+  if (elyOnbellek && Date.now() - elyOnbellek.t < 300_000) return elyOnbellek.v;
+  const havuz = [];
+  for (let s = 1; s <= 3; s++) {
+    const r = await fetch(GECKO + "/networks/elysium/pools?sort=h24_volume_usd_desc&page=" + s, { headers: { accept: "application/json" } }).catch(() => null);
+    if (!r || !r.ok) { if (havuz.length) break; throw new Error("The market data service is busy, try again in a minute."); }
+    const j = await r.json();
+    for (const p of j.data || []) if (p.relationships.dex.data.id === "uniswap-v4-elysium")
+      havuz.push({ id: p.attributes.address.toLowerCase(), ad: p.attributes.name.split(" / ")[0], hacim: Number((p.attributes.volume_usd || {}).h24 || 0) });
+  }
+  const r = await fetch(ELYSIUM.rpc, { method: "POST", headers: { "content-type": "application/json" },
+    body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "eth_getLogs", params: [{ address: ELY_PM, fromBlock: "0x0", toBlock: "latest", topics: [ELY_INIT, havuz.map((h) => h.id)] }] }) }).then((x) => x.json());
+  if (!r.result) throw new Error("Elysium's chain record did not answer, try again in a minute.");
+  const hook = new Map(r.result.map((l) => [l.topics[1].toLowerCase(), ("0x" + l.data.slice(2 + 152, 2 + 192)).toLowerCase()]));
+  const g = new Map();
+  for (const h of havuz) {
+    const k = hook.get(h.id) || "?";
+    if (!g.has(k)) g.set(k, { hook: k, ad: /^0x0+$/.test(k) ? "Plain Uniswap v4 pools" : ELY_HOOK[k] || "Unnamed launchpad", hacim: 0, n: 0, ornek: [] });
+    const x = g.get(k); x.hacim += h.hacim; x.n++; if (x.ornek.length < 3 && !x.ornek.includes(h.ad)) x.ornek.push(h.ad);
+  }
+  const v = { havuz: havuz.length, satirlar: [...g.values()].filter((x) => x.hook !== "?").sort((a, b) => b.hacim - a.hacim) };
+  elyOnbellek = { t: Date.now(), v };
+  return v;
+}
+
 /* ---- buy box -------------------------------------------------------- */
 const evmler = () => [...AGLAR, ELYSIUM].filter((a) => /^0x/.test(a.dolar || ""));
 const dolarHam = (ag, usd) => BigInt(Math.round(usd * 1e6)) * 10n ** BigInt(ag.anahtar === "bsc" ? 12 : 0);
@@ -482,8 +514,31 @@ export async function ciz() {
     }
   }
   const eski = (bu) => bu !== sira || bekleyen !== null;
+  async function elysiumLpCiz(sessiz, bu) {
+    if (!sessiz) temizle(govde).append(el("div", { sinif: "vt-alt", yazi: "Measuring Elysium launchpads from the chain…" }));
+    let v;
+    try { v = await elysiumLaunchpadlari(); } catch (e) { if (!sessiz && !eski(bu)) temizle(govde).append(el("div", { sinif: "vt-alt", yazi: e.message })); return; }
+    if (eski(bu)) return;
+    const toplam = v.satirlar.reduce((s, p) => s + p.hacim, 0);
+    const bas = el("div", { sinif: "vt-lp-sat" }, [el("span", { yazi: "#" }), el("span"), el("span", { yazi: "Launchpad" }), el("span", { yazi: "Example tokens" }),
+      el("span", { sinif: "r", yazi: "Volume 24h" }), el("span", { sinif: "r", yazi: "Pools" }), el("span", { sinif: "r", yazi: "Share" })]);
+    const satir = (p, i) => el("div", { sinif: "vt-lp-sat" }, [el("span", { sinif: "vt-k", yazi: String(i + 1) }),
+      ikonYok({ adres: p.hook, sembol: p.ad.replace(/[^A-Za-z]/g, "").slice(0, 3) || "?" }),
+      el("div", { attr: { style: "min-width:0" } }, [el("div", { sinif: "vt-ad", yazi: p.ad }), el("div", { sinif: "vt-k", yazi: /^0x0+$/.test(p.hook) ? "no launchpad hook" : p.hook.slice(0, 8) + "…" + p.hook.slice(-4) })]),
+      el("div", { sinif: "vt-lp-z" }, p.ornek.map((x) => el("span", { yazi: x }))),
+      el("b", { sinif: "r", yazi: para(p.hacim) }), el("span", { sinif: "r", yazi: String(p.n) }), el("span", { sinif: "r", yazi: toplam ? (p.hacim / toplam * 100).toFixed(1) + "%" : "—" })]);
+    temizle(govde).append(
+      el("div", { sinif: "vt-lp-ozet" }, [
+        el("div", {}, [el("span", { sinif: "vt-k", yazi: "24h volume, top pools" }), el("b", { yazi: para(toplam) })]),
+        el("div", {}, [el("span", { sinif: "vt-k", yazi: "Pools measured" }), el("b", { yazi: String(v.havuz) })]),
+        v.satirlar[0] ? el("div", {}, [el("span", { sinif: "vt-k", yazi: "#1 on Elysium" }), el("b", { yazi: v.satirlar[0].ad })]) : null,
+      ]),
+      el("div", { sinif: "vt-lp" }, [bas, ...v.satirlar.slice(0, 30).map(satir)]),
+      el("p", { sinif: "vt-k", attr: { style: "margin-top:10px" }, yazi: "Measured by ARC PULSE: the busiest Uniswap v4 pools on Elysium (GeckoTerminal), each traced on chain to the launchpad hook that created it (the pool's Initialize record). Named where the hook is known; a launchpad that deploys one hook per token shows up as several rows. DefiLlama does not track Elysium launchpads yet." }));
+  }
   async function lpCiz(sessiz, bu) {
-    if (secili && !secili.llama) {   // Elysium: the launchpad volumes are not tracked by DefiLlama yet
+    if (secili && secili.k === "elysium") return elysiumLpCiz(sessiz, bu);   // measured here: DefiLlama has no Elysium launchpads
+    if (secili && !secili.llama) {
       temizle(govde).append(bos(secili.ad + " launchpads are not tracked yet", "DefiLlama does not publish launchpad volumes for " + secili.ad + " yet, so they cannot be ranked here honestly. Its tokens are live in the Tokens tab, buyable from any chain."));
       return;
     }
@@ -497,6 +552,13 @@ export async function ciz() {
       zincirler: Object.keys(p.g24).filter((k) => LLAMA_AD[k] && topla(p.g24, [k]) > 0).map((k) => LLAMA_AD[k]) }))
       .filter((p) => p.v24 > 0 || p.v30 > 0);
     if (!secili || secili.k === "arc") satirlar.push({ ad: "ARC PULSE", biz: true, v24: biz, v30: null, degisim: null, zincirler: ["13 chains"] });
+    /* all chains: Elysium's launchpads join the ranking from our own measurement (24 h only; plain pools are not a launchpad) */
+    if (!secili) {
+      const ely = await elysiumLaunchpadlari().catch(() => null);
+      if (ely) for (const x of ely.satirlar) if (!/^0x0+$/.test(x.hook) && x.hacim > 0)
+        satirlar.push({ ad: x.ad === "Unnamed launchpad" ? "Unnamed (" + x.hook.slice(0, 6) + "…" + x.hook.slice(-4) + ")" : x.ad, v24: x.hacim, v30: null, degisim: null, zincirler: ["Elysium"] });
+      if (eski(bu)) return;
+    }
     satirlar.sort((a, b) => b.v24 - a.v24 || (b.v30 || 0) - (a.v30 || 0));
     const sira = satirlar.findIndex((p) => p.biz) + 1;
     const toplam = satirlar.reduce((s, p) => s + p.v24, 0);
@@ -522,7 +584,7 @@ export async function ciz() {
       el("span", { sinif: "r" }, [p.degisim == null ? "—" : yuzde(p.degisim)]),
     ]));
     temizle(govde).append(ozet, el("div", { sinif: "vt-lp" }, [bas, ...govdeSat]),
-      el("p", { sinif: "vt-k", attr: { style: "margin-top:10px" }, yazi: "Volumes from DefiLlama (Launchpad category), counted on " + (secili ? secili.ad : "Arc, Base, Solana, BNB, Ethereum, Arbitrum, Avalanche, Monad, HyperEVM, Robinhood, Sui and Aptos") + ". ARC PULSE: the 24 h volume of its own pools on Arc. 24h change is the launchpad's total across all its chains." }));
+      el("p", { sinif: "vt-k", attr: { style: "margin-top:10px" }, yazi: "Volumes from DefiLlama (Launchpad category), counted on " + (secili ? secili.ad : "Arc, Base, Solana, BNB, Ethereum, Arbitrum, Avalanche, Monad, HyperEVM, Robinhood, Sui and Aptos") + ". Elysium launchpads (24 h): measured by ARC PULSE from Elysium's chain records. ARC PULSE: the 24 h volume of its own pools on Arc. 24h change is the launchpad's total across all its chains." }));
   }
   async function ciz2(sessiz, bu) {
     if (!sessiz) temizle(govde).append(el("div", { sinif: "vt-alt", yazi: "Loading live markets…" }));
