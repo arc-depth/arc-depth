@@ -19,7 +19,7 @@
  * Nothing about the visitor is stored or sent: the cache holds the site's
  * public files only, and the worker makes no request the page did not make.
  * =========================================================================== */
-const SURUM = "arcpulse-v1";
+const SURUM = "arcpulse-v2";   // v2 (9 Nov 2026): pages and scripts revalidate with the server on every load
 const KABUK = ["./", "./index.html", "./app.html", "./designs/", "./app.webmanifest", "./designs/manifest.webmanifest",
   "./ikon/app-192.png", "./ikon/designs-192.png"];
 
@@ -38,7 +38,8 @@ const kalici = (yol) => /\.(png|webp|jpg|jpeg|svg|ico|woff2?|ttf|wasm|mv)$/i.tes
 async function agOnce(istek) {
   const c = await caches.open(SURUM);
   try {
-    const y = await fetch(istek);
+    /* "no-cache": always ask the server (an unchanged file costs a 304), so a phone never runs scripts the HTTP cache kept from before a deploy */
+    const y = await fetch(istek, { cache: "no-cache" });
     if (y && y.ok && y.type === "basic") c.put(istek, y.clone()).catch(() => {});
     return y;
   } catch (hata) {
