@@ -1,0 +1,721 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval' 'sha256-m8ps1dov2Cm/yrBNl14Cv7zL5EqAHjf5sVXRhtqi+wc='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://api.web3modal.org; font-src 'self' data:; connect-src 'self' https://rpc.mainnet.arc.io https://arc-rpc.publicnode.com https://rpc.drpc.mainnet.arc.io https://rpc.blockdaemon.mainnet.arc.io https://arc-mainnet.drpc.org https://mainnet.base.org https://base-rpc.publicnode.com https://base.drpc.org https://arb1.arbitrum.io https://arbitrum-one-rpc.publicnode.com https://arbitrum.drpc.org https://ethereum-rpc.publicnode.com https://eth.drpc.org https://api.avax.network https://avalanche-c-chain-rpc.publicnode.com https://avalanche.drpc.org https://rpc.monad.xyz https://monad.drpc.org https://monad-mainnet.drpc.org https://rpc.hyperliquid.xyz https://hyperliquid.drpc.org https://bsc-dataseed.bnbchain.org https://bsc-dataseed1.bnbchain.org https://bsc-rpc.publicnode.com https://rpc.mainnet.chain.robinhood.com https://robinhood-rpc.publicnode.com https://robinhood.drpc.org https://robinhood-mainnet.drpc.org https://optimism-rpc.publicnode.com https://polygon-bor-rpc.publicnode.com https://unichain-rpc.publicnode.com https://solana-rpc.publicnode.com https://graphql.mainnet.sui.io https://api.mainnet.aptoslabs.com https://api.relay.link https://iris-api.circle.com https://api.dexscreener.com wss://relay.walletconnect.org https://relay.walletconnect.org https://verify.walletconnect.org https://verify.walletconnect.com https://api.web3modal.org; frame-src 'self' https://verify.walletconnect.org https://verify.walletconnect.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%237c5cff'/%3E%3Cpath d='M6 17h5l3-7 4 14 3-7h5' stroke='%23fff' stroke-width='2.4' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<title>ARCP Presale — 250,000,000 ARCP for $15,000 | ARC PULSE</title>
+<meta name="description" content="The ARCP presale on Arc: 25% of the supply, 250,000,000 ARCP for $15,000 at $0.00006, below the $0.00007 opening price. Every dollar goes into the Uniswap pool as permanent buy-side liquidity. 30-day rounds, $10 to $250 per wallet, automatic refunds if a round does not fill.">
+<meta name="keywords" content="ARCP presale, Arc Pulse presale, ARC PULSE, ARCP token, Arc presale, Circle Arc token presale, fair presale, refund presale">
+<link rel="canonical" href="https://arcpulse.app/arc-launchpad/docs/presale.html">
+<meta property="og:title" content="ARCP Presale — 250M ARCP for $15,000, all of it into the pool">
+<meta property="og:description" content="$0.00006 per ARCP, opening at $0.00007. Every presale dollar becomes locked buy-side liquidity. Automatic refunds if a round does not fill.">
+<meta property="og:image" content="https://arcpulse.app/arc-launchpad/docs/veri/pulse-social.png">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+:root{
+  --bg:#090a0c; --panel:#12141a; --panel2:#171a21; --raise:#1d212a;
+  --line:#242934; --line2:#2f3542;
+  --tx:#e9ebf0; --dim:#8d95a4; --dim2:#646c7a;
+  --acc:#4fe3a3; --acc-dim:#1d7a58; --acc-bg:rgba(79,227,163,.10);
+  --vio:#7d8cff; --vio-bg:rgba(125,140,255,.11);
+  --warn:#ffb65c; --bad:#ff6f6f; --pink:#ff7ac6; --sky:#6ec3ff; --lime:#c7e05a;
+  --r:16px; --r2:11px;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--tx);
+  font:400 15px/1.55 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{color:var(--acc);text-decoration:none}
+a:hover{text-decoration:underline}
+.wrap{max-width:1080px;margin:0 auto;padding:0 16px}
+.mono{font-family:var(--mono);font-size:.92em}
+.hid{display:none!important}
+.num{font-variant-numeric:tabular-nums}
+
+header.top{border-bottom:1px solid var(--line);background:rgba(9,10,12,.9);
+  backdrop-filter:blur(10px);position:sticky;top:0;z-index:40}
+.topin{display:flex;align-items:center;gap:14px;height:62px}
+.brand{display:flex;align-items:center;gap:10px;font:700 16px Inter,sans-serif;color:var(--tx)}
+.brand:hover{text-decoration:none}
+.mark{width:22px;height:22px;border-radius:7px;background:linear-gradient(135deg,var(--acc),var(--vio))}
+.spacer{flex:1}
+nav.top{display:flex;gap:2px}
+nav.top a{color:var(--dim);font:500 14px Inter,sans-serif;padding:8px 11px;border-radius:9px}
+nav.top a:hover{color:var(--tx);background:rgba(255,255,255,.04);text-decoration:none}
+@media(max-width:760px){nav.top{display:none}}
+.wbtn{background:var(--panel2);border:1px solid var(--line2);color:var(--tx);
+  border-radius:var(--r2);padding:9px 14px;font:600 13.5px Inter,sans-serif;cursor:pointer;white-space:nowrap}
+.wbtn:hover{background:var(--raise)}
+.wbtn.conn{border-color:var(--acc-dim)}
+.wdot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--acc);margin-right:7px}
+
+/* ---- hero ---- */
+.hero{position:relative;padding:46px 0 26px;overflow:hidden}
+.hero::before{content:"";position:absolute;inset:-40% -20% auto;height:560px;pointer-events:none;
+  background:radial-gradient(closest-side,rgba(79,227,163,.16),transparent 70%) 20% 40%/60% 100% no-repeat,
+             radial-gradient(closest-side,rgba(125,140,255,.18),transparent 70%) 85% 20%/55% 90% no-repeat}
+.hero>*{position:relative}
+.kicker{display:inline-flex;align-items:center;gap:8px;font:700 11.5px Inter,sans-serif;letter-spacing:.14em;
+  color:var(--acc);background:var(--acc-bg);border:1px solid rgba(79,227,163,.25);border-radius:99px;padding:6px 12px}
+.kicker i{width:7px;height:7px;border-radius:50%;background:var(--acc);box-shadow:0 0 0 0 rgba(79,227,163,.6);animation:puls 1.8s infinite}
+@keyframes puls{0%{box-shadow:0 0 0 0 rgba(79,227,163,.55)}70%{box-shadow:0 0 0 10px rgba(79,227,163,0)}100%{box-shadow:0 0 0 0 rgba(79,227,163,0)}}
+h1{font:800 clamp(34px,6vw,60px)/1.03 Inter,sans-serif;letter-spacing:-.035em;margin:18px 0 14px;max-width:16ch}
+h1 em{font-style:normal;background:linear-gradient(90deg,var(--acc),var(--vio));-webkit-background-clip:text;background-clip:text;color:transparent}
+.lead{color:var(--dim);font-size:17px;max-width:62ch;margin:0 0 26px}
+.lead b{color:var(--tx)}
+
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:0 0 26px}
+@media(max-width:760px){.stats{grid-template-columns:repeat(2,1fr)}}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:var(--r2);padding:14px}
+.stat b{display:block;font:800 22px Inter,sans-serif;letter-spacing:-.02em}
+.stat span{color:var(--dim2);font:600 11px Inter,sans-serif;letter-spacing:.08em;text-transform:uppercase}
+.stat.acc b{color:var(--acc)}
+
+/* ---- layout ---- */
+.grid{display:grid;grid-template-columns:1.15fr .85fr;gap:16px;align-items:start}
+@media(max-width:900px){.grid{grid-template-columns:1fr}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:20px}
+.panel.glow{border-color:rgba(79,227,163,.28);box-shadow:0 0 0 1px rgba(79,227,163,.06),0 18px 60px -30px rgba(79,227,163,.35)}
+h2{font:800 22px/1.2 Inter,sans-serif;letter-spacing:-.02em;margin:0 0 12px}
+h3{font:700 15.5px Inter,sans-serif;margin:0 0 8px}
+section{margin:44px 0 0}
+.sec-k{font:700 11.5px Inter,sans-serif;letter-spacing:.14em;color:var(--dim2);text-transform:uppercase;margin:0 0 8px}
+p{margin:0 0 12px}
+.dim{color:var(--dim)}
+.small{font-size:13px;color:var(--dim)}
+
+/* round */
+.round-top{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
+.round-top .tag{font:700 12px Inter,sans-serif;color:var(--vio);background:var(--vio-bg);border-radius:99px;padding:4px 10px}
+.raised{font:800 clamp(30px,5vw,42px) Inter,sans-serif;letter-spacing:-.03em;margin:10px 0 2px}
+.raised small{font:600 16px Inter,sans-serif;color:var(--dim)}
+.bar{height:14px;background:var(--raise);border-radius:99px;overflow:hidden;margin:12px 0 8px;position:relative}
+.bar i{display:block;height:100%;width:0;border-radius:99px;
+  background:linear-gradient(90deg,var(--acc-dim),var(--acc) 60%,#9ff5cf);transition:width .8s cubic-bezier(.2,.8,.2,1)}
+.bar::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(115deg,transparent 0 14px,rgba(255,255,255,.06) 14px 28px)}
+.barlab{display:flex;justify-content:space-between;font-size:12.5px;color:var(--dim)}
+.clock{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:16px 0 4px}
+.clock div{background:var(--panel2);border:1px solid var(--line);border-radius:var(--r2);padding:10px 6px;text-align:center}
+.clock b{display:block;font:800 26px var(--mono);letter-spacing:-.02em}
+.clock span{font:600 10.5px Inter,sans-serif;color:var(--dim2);letter-spacing:.1em;text-transform:uppercase}
+
+.rows{display:flex;flex-direction:column;gap:7px;font-size:13.5px;margin-top:14px}
+.row{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding-bottom:7px;border-bottom:1px solid var(--line)}
+.row:last-child{border-bottom:0;padding-bottom:0}
+.row>span{color:var(--dim)}
+.row b{font-variant-numeric:tabular-nums;text-align:right}
+
+.field{margin:14px 0 12px}
+label{display:block;font:600 12.5px Inter,sans-serif;color:var(--dim);margin:0 0 6px}
+.inrow{display:flex;gap:8px}
+input{width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--tx);
+  border-radius:var(--r2);padding:12px 13px;font:600 17px var(--mono)}
+input:focus{outline:none;border-color:var(--acc-dim);background:var(--raise)}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.chip{background:var(--panel2);border:1px solid var(--line2);color:var(--tx);border-radius:99px;padding:6px 12px;font:600 12.5px Inter,sans-serif;cursor:pointer}
+.chip:hover{background:var(--raise)}
+.hint{color:var(--dim2);font-size:12.5px;margin-top:7px;line-height:1.5}
+.get{display:flex;justify-content:space-between;align-items:center;background:var(--acc-bg);border:1px solid rgba(79,227,163,.22);
+  border-radius:var(--r2);padding:12px 14px;margin:4px 0 12px}
+.get span{color:var(--dim);font-size:13px}
+.get b{font:800 19px Inter,sans-serif;color:var(--acc)}
+.btn{width:100%;background:var(--acc);color:#04120c;border:0;border-radius:var(--r2);
+  padding:13px;font:800 15px Inter,sans-serif;cursor:pointer}
+.btn:hover:not(:disabled){filter:brightness(1.08)}
+.btn:disabled{opacity:.38;cursor:not-allowed}
+.btn.alt{background:var(--panel2);color:var(--tx);border:1px solid var(--line2)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+
+.msg{border-radius:var(--r2);padding:11px 13px;font-size:13.5px;margin-top:12px;line-height:1.5}
+.msg.info{background:var(--vio-bg);border:1px solid rgba(125,140,255,.25)}
+.msg.ok{background:var(--acc-bg);border:1px solid rgba(79,227,163,.28)}
+.msg.err{background:rgba(255,111,111,.08);border:1px solid rgba(255,111,111,.26);color:#ffb3b3}
+.msg.uyari{background:rgba(255,182,92,.08);border:1px solid rgba(255,182,92,.28);color:#ffd9a8}
+
+/* steps */
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;counter-reset:s}
+@media(max-width:900px){.steps{grid-template-columns:1fr 1fr}}
+@media(max-width:520px){.steps{grid-template-columns:1fr}}
+.step{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px;position:relative}
+.step::before{counter-increment:s;content:counter(s);display:inline-grid;place-items:center;width:28px;height:28px;border-radius:9px;
+  background:var(--acc-bg);color:var(--acc);font:800 14px Inter,sans-serif;margin-bottom:10px}
+.step p{color:var(--dim);font-size:13.5px;margin:0}
+
+/* supply */
+.split{display:flex;height:18px;border-radius:99px;overflow:hidden;margin:6px 0 16px}
+.split i{display:block;height:100%}
+.legend{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media(max-width:760px){.legend{grid-template-columns:1fr 1fr}}
+@media(max-width:460px){.legend{grid-template-columns:1fr}}
+.lg{background:var(--panel);border:1px solid var(--line);border-radius:var(--r2);padding:12px 14px}
+.lg .h{display:flex;align-items:center;gap:8px;font:700 13.5px Inter,sans-serif}
+.lg .h i{width:10px;height:10px;border-radius:3px}
+.lg .h b{margin-left:auto;font-variant-numeric:tabular-nums}
+.lg p{color:var(--dim);font-size:12.5px;margin:6px 0 0}
+
+/* ladder svg */
+.lad svg{width:100%;height:auto;display:block}
+.lad text{font:600 11px Inter,sans-serif;fill:var(--dim)}
+
+/* rewards */
+.code{display:flex;align-items:center;gap:10px;background:var(--panel2);border:1px dashed var(--acc-dim);border-radius:var(--r2);padding:12px 14px;margin:8px 0 12px}
+.code b{font:800 20px var(--mono);color:var(--acc);letter-spacing:.04em;flex:1}
+.claims{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.cl{display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--panel2);border:1px solid var(--line);border-radius:var(--r2);padding:10px 12px;font-size:13.5px}
+.cl button{width:auto;padding:8px 14px;font-size:13px}
+
+details{background:var(--panel);border:1px solid var(--line);border-radius:var(--r2);padding:13px 16px;margin-bottom:8px}
+summary{cursor:pointer;font:700 14.5px Inter,sans-serif}
+details p{color:var(--dim);font-size:14px;margin:10px 0 0}
+
+.ort{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:60;padding:16px}
+.kutu{background:var(--panel);border:1px solid var(--line2);border-radius:var(--r);width:100%;max-width:400px;padding:18px}
+.kutubas{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.kapat{background:none;border:0;color:var(--dim);font-size:24px;cursor:pointer;line-height:1}
+.cz{display:flex;align-items:center;gap:11px;width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:var(--r2);
+  padding:11px 13px;margin-bottom:8px;color:var(--tx);font:600 14px Inter,sans-serif;cursor:pointer;text-align:left}
+.cz:hover{background:var(--raise)}
+.cz img{width:24px;height:24px;border-radius:6px}
+
+footer{border-top:1px solid var(--line);margin-top:56px;padding:26px 0 40px;color:var(--dim2);font-size:12.5px}
+.adr{display:flex;flex-direction:column;gap:5px;margin-top:10px;font-family:var(--mono);font-size:11.5px;word-break:break-all}
+.adr a{color:var(--dim)}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap topin">
+    <a class="brand" href="index.html"><div class="mark"></div>ARC PULSE</a>
+    <div class="spacer"></div>
+    <nav class="top">
+      <a href="#al">Presale</a>
+      <a href="#nasil">How it works</a>
+      <a href="#arz">Supply</a>
+      <a href="#odul">Rewards</a>
+      <a href="#sss">FAQ</a>
+    </nav>
+    <button id="wallet" class="wbtn">Connect wallet</button>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="hero">
+    <span class="kicker"><i></i><span id="kickerMetin">ARCP PRESALE · ON ARC</span></span>
+    <h1>Own the token that <em>every trade burns.</em></h1>
+    <p class="lead">
+      ARCP is the ARC PULSE platform token: a share of every trade on every token, on all twelve chains,
+      buys ARCP and burns it. The presale sells <b>250,000,000 ARCP (25% of the supply) for $15,000</b>,
+      below the opening price, and <b>every presale dollar goes into the Uniswap pool</b> as locked
+      buy-side liquidity. Not one dollar goes to a wallet.
+    </p>
+    <div class="stats">
+      <div class="stat acc"><b>$0.00006</b><span>Presale price</span></div>
+      <div class="stat"><b>$0.00007</b><span>Opening price</span></div>
+      <div class="stat"><b>$15,000</b><span>Into the pool</span></div>
+      <div class="stat"><b>$10 – $250</b><span>Per wallet</span></div>
+    </div>
+  </div>
+
+  <div id="durumMesaj"></div>
+
+  <div class="grid" id="al">
+    <div class="panel glow">
+      <div class="round-top">
+        <h2 id="turBaslik">Round 1</h2>
+        <span class="tag" id="turEtiket">30-day round</span>
+      </div>
+      <div class="raised num"><span id="toplanan">$0</span> <small>of $15,000</small></div>
+      <div class="bar"><i id="cubuk"></i></div>
+      <div class="barlab"><span id="yuzde">0%</span><span id="kisi">0 buyers</span></div>
+      <div class="clock" id="saat">
+        <div><b id="sG">--</b><span>days</span></div>
+        <div><b id="sS">--</b><span>hours</span></div>
+        <div><b id="sD">--</b><span>min</span></div>
+        <div><b id="sSn">--</b><span>sec</span></div>
+      </div>
+      <p class="small" id="saatNot" style="margin-top:8px">If the round does not reach $15,000 before the clock runs out, every buyer gets their USDC back automatically and the next round starts at once.</p>
+
+      <div id="alPanel">
+        <div class="field">
+          <label for="miktar">USDC to put in (Arc)</label>
+          <input id="miktar" placeholder="100" inputmode="decimal" spellcheck="false" autocomplete="off">
+          <div class="chips">
+            <button class="chip" data-v="10">$10</button><button class="chip" data-v="50">$50</button>
+            <button class="chip" data-v="100">$100</button><button class="chip" data-v="250">$250</button>
+          </div>
+        </div>
+        <div class="get"><span>You get</span><b id="alacak" class="num">0 ARCP</b></div>
+        <div class="two">
+          <button class="btn alt" id="onayBtn" disabled>1 · Approve USDC</button>
+          <button class="btn" id="alBtn" disabled>2 · Join the presale</button>
+        </div>
+        <div class="hint" id="alNot">Connect a wallet on Arc. Gas on Arc is paid in USDC and costs a fraction of a cent.</div>
+      </div>
+      <div id="kurPanel" class="hid">
+        <p class="dim">The round is full. Opening the pool is one transaction that anyone may send; the bot sends it too. It places the ladder, the $15,000 and starts the token clock.</p>
+        <button class="btn" id="kurBtn" disabled>Open the pool now</button>
+      </div>
+      <div id="islemMesaj"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Your presale</h2>
+      <div class="rows" id="benim"><div class="row"><span>wallet</span><b>not connected</b></div></div>
+      <div id="teslimPanel" class="hid" style="margin-top:14px">
+        <button class="btn" id="teslimBtn" disabled>Claim unlocked ARCP</button>
+      </div>
+      <div id="iadeler" class="claims"></div>
+      <div id="benimMesaj"></div>
+      <p class="hint" style="margin-top:14px">Your ARCP arrives in two parts: half when the pool opens, the other half unlocking second by second over the next 30 days. You can claim whenever you like. Holding USDC on another chain? Move it to your Arc address first (relay.link or Circle's bridge), then join here.</p>
+    </div>
+  </div>
+
+  <section id="nasil">
+    <p class="sec-k">How it works</p>
+    <h2>Four steps, no wallet in the middle</h2>
+    <div class="steps">
+      <div class="step"><h3>You put in USDC</h3><p>$10 to $250 per wallet per round. The money waits in the presale contract, which has no owner and no withdraw function.</p></div>
+      <div class="step"><h3>The round fills</h3><p>At exactly $15,000 the round closes. If 30 days pass first, everyone is refunded automatically and a new round starts.</p></div>
+      <div class="step"><h3>The pool opens</h3><p>One call builds the Uniswap v4 pool at $0.00007: the ARCP ladder above, all $15,000 as buy-side liquidity below. It is locked for good.</p></div>
+      <div class="step"><h3>You receive ARCP</h3><p>16,667 ARCP for every dollar: half at the opening, the rest over 30 days. Trade, stake or hold.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <p class="sec-k">The pool at the opening</p>
+    <h2>Buyers below, a ladder above</h2>
+    <div class="grid">
+      <div class="panel lad">
+        <svg viewBox="0 0 520 250" role="img" aria-label="Liquidity at the opening: USDC bid from 50k to 70k FDV, ARCP ladder from 70k upward">
+          <line x1="20" y1="210" x2="505" y2="210" stroke="#2f3542"/>
+          <rect x="40" y="70" width="86" height="140" rx="4" fill="rgba(79,227,163,.55)"/>
+          <rect x="130" y="40" width="96" height="170" rx="4" fill="rgba(125,140,255,.75)"/>
+          <rect x="230" y="120" width="140" height="90" rx="4" fill="rgba(125,140,255,.5)"/>
+          <rect x="374" y="168" width="128" height="42" rx="4" fill="rgba(125,140,255,.3)"/>
+          <line x1="128" y1="24" x2="128" y2="214" stroke="#ffb65c" stroke-dasharray="4 4"/>
+          <text x="134" y="30" style="fill:#ffb65c">opening $70k FDV</text>
+          <text x="44" y="62">$15,000 USDC</text>
+          <text x="136" y="34" style="display:none">150M</text>
+          <text x="140" y="86" style="fill:#e9ebf0">150M ARCP</text>
+          <text x="240" y="140" style="fill:#e9ebf0">100M ARCP</text>
+          <text x="382" y="188" style="fill:#e9ebf0">50M ARCP</text>
+          <text x="40" y="232">50k</text><text x="116" y="232">70k</text><text x="214" y="232">140k</text>
+          <text x="352" y="232">700k</text><text x="470" y="232">∞</text>
+        </svg>
+      </div>
+      <div class="panel">
+        <div class="rows" style="margin-top:0">
+          <div class="row"><span>USDC bid, 70k → 50k FDV</span><b>$15,000</b></div>
+          <div class="row"><span>ARCP ladder, 70k → 140k</span><b>150,000,000</b></div>
+          <div class="row"><span>ARCP ladder, 140k → 700k</span><b>100,000,000</b></div>
+          <div class="row"><span>ARCP ladder, 700k → ∞</span><b>50,000,000</b></div>
+          <div class="row"><span>pool liquidity removable</span><b>never</b></div>
+          <div class="row"><span>trading fee</span><b>0.50%</b></div>
+        </div>
+        <p class="hint" style="margin-top:12px">The sell fee splits 0.15% founder, 0.15% stakers (USDC), 0.20% pool depth; on a buy the whole fee becomes depth. Measured on an Arc fork: if every presale buyer sold everything at once, the price would still stand near $51k FDV.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="arz">
+    <p class="sec-k">Supply</p>
+    <h2>1,000,000,000 ARCP, every token born inside a contract</h2>
+    <div class="split" aria-hidden="true">
+      <i style="width:30%;background:var(--vio)"></i><i style="width:25%;background:var(--acc)"></i><i style="width:15%;background:var(--warn)"></i>
+      <i style="width:10%;background:var(--pink)"></i><i style="width:10%;background:var(--lime)"></i><i style="width:10%;background:var(--sky)"></i>
+    </div>
+    <div class="legend">
+      <div class="lg"><div class="h"><i style="background:var(--vio)"></i>Pool ladder<b>30%</b></div><p>300M in the pool, one-sided and locked forever.</p></div>
+      <div class="lg"><div class="h"><i style="background:var(--acc)"></i>Presale<b>25%</b></div><p>250M for $15,000. Half at the opening, half over 30 days.</p></div>
+      <div class="lg"><div class="h"><i style="background:var(--warn)"></i>Founder<b>15%</b></div><p>75M at the opening, 75M monthly over 12 months. Nothing before the pool opens.</p></div>
+      <div class="lg"><div class="h"><i style="background:var(--pink)"></i>Marketing<b>10%</b></div><p>Locked creator grants only: 25% on the post, the rest over 90 days. At most 30% in the first 3 months.</p></div>
+      <div class="lg"><div class="h"><i style="background:var(--lime)"></i>Airdrop<b>10%</b></div><p>60M for platform usage rounds, 40M for weekly post rewards.</p></div>
+      <div class="lg"><div class="h"><i style="background:var(--sky)"></i>Staking<b>10%</b></div><p>100M released weekly, slowing over time, on top of the USDC fee share.</p></div>
+    </div>
+    <p class="hint" style="margin-top:12px">No wallet holds ARCP before the pool opens, the founder's included. The token has no owner and no mint function.</p>
+  </section>
+
+  <section id="odul">
+    <p class="sec-k">Rewards</p>
+    <h2>Post about ARCP, earn ARCP</h2>
+    <div class="grid">
+      <div class="panel">
+        <h3>Weekly post rewards · about 1,540,000 ARCP a week</h3>
+        <p class="dim" style="font-size:14px">Write a post on X about ARC PULSE or ARCP and put your wallet's code in it. Then hand in the link here. Every week the reward is split between the valid posts. Posts during the presale count too; their ARCP arrives at the opening.</p>
+        <div class="code"><b id="kod">connect a wallet</b><button class="chip" id="kodKopya">copy</button></div>
+        <div class="two">
+          <a class="btn alt" id="tweetLink" href="https://x.com/intent/post" target="_blank" rel="noopener" style="text-align:center;text-decoration:none">Write the post</a>
+          <span></span>
+        </div>
+        <div class="field">
+          <label for="link">Link to your post</label>
+          <input id="link" placeholder="https://x.com/you/status/…" spellcheck="false" autocomplete="off" style="font-size:14px">
+        </div>
+        <button class="btn" id="bildirBtn" disabled>Hand in the post</button>
+        <div id="bildirMesaj"></div>
+        <p class="hint">Rules: the post must be public and carry your code; one counted post per X account per day; one wallet per X account. Half of each reward is paid at once; the other half 30 days later to wallets that still hold the first half (in the wallet or staked). Handing in is an Arc transaction from your wallet; nothing else about you is kept anywhere.</p>
+      </div>
+      <div class="panel">
+        <h3>Your rewards</h3>
+        <div class="claims" id="oduller"><div class="cl"><span class="dim">Connect a wallet to see your rounds.</span></div></div>
+        <div id="odulMesaj"></div>
+        <p class="hint" style="margin-top:12px">Usage airdrop rounds (60,000,000 ARCP in total) reward wallets that used ARC PULSE, read from on-chain activity only. Each round is published as a Merkle root; claims open when the pool is open.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="sss">
+    <p class="sec-k">FAQ</p>
+    <h2>Questions</h2>
+    <details><summary>Where does my money go?</summary><p>Into the presale contract on Arc. It has no owner and no withdraw function: the only ways out are the pool (when the round fills) and refunds (when it does not). When the pool opens, all $15,000 becomes buy-side liquidity and can never be removed, by anyone, us included.</p></details>
+    <details><summary>What if the round does not fill?</summary><p>When the 30 days end, every buyer of that round gets their USDC back. The bot sends refunds in batches; you can also take yours yourself with one click on this page. The next round starts immediately, with a fresh $15,000 target.</p></details>
+    <details><summary>Why is the presale price below the opening?</summary><p>Presale buyers pay $0.00006 and the pool opens at $0.00007. They take the risk of waiting and their money is what makes the pool deep, so they come in cheaper.</p></details>
+    <details><summary>Can the founder sell early?</summary><p>No ARCP exists in any wallet until the pool opens. The founder's 15% sits in a contract that pays 75M at the opening and the rest monthly over 12 months, nothing faster.</p></details>
+    <details><summary>What does ARCP earn?</summary><p>Stakers receive USDC from trading fees and a weekly ARCP release from the staking pool. A share of every trade on ARC PULSE buys ARCP and burns it, so the supply only goes down.</p></details>
+    <details><summary>What happens to the earlier ARCP?</summary><p>This presale launches a new ARCP contract. The address shown on this page is the only presale and the only new token; the previous contract stays where it is.</p></details>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    Arc mainnet, chain 5042. No contract here is upgradeable; none has a withdraw, pause or mint function.
+    <div class="adr" id="adresler"></div>
+  </div>
+</footer>
+
+<div class="ort hid" id="cuzdanOrt">
+  <div class="kutu">
+    <div class="kutubas"><strong>Choose a wallet</strong><button class="kapat" id="cuzdanKapat">&times;</button></div>
+    <div id="cuzdanListe"></div>
+  </div>
+</div>
+<script type="module">
+import { BrowserProvider, Contract, Interface, parseUnits, keccak256, getAddress, getBytes } from "./vendor/ethers.min.js";
+import { YedekliOkur } from "./js/yedekli-okur.js";
+
+const ARC = { chainId:5042, chainIdHex:"0x13b2", name:"Arc", rpc:"https://rpc.mainnet.arc.io", explorer:"https://explorer.arc.io",
+  currency:{ name:"USDC", symbol:"USDC", decimals:18 } };
+const USDC = "0x3600000000000000000000000000000000000000";
+const HEDEF = 15000, TOKEN_PER_USD = 250e6 / 15000;
+const ABI = {
+  erc20:["function balanceOf(address) view returns (uint256)","function allowance(address,address) view returns (uint256)","function approve(address,uint256) returns (bool)"],
+  os:["function baslangic() view returns (uint256)","function tur() view returns (uint256)","function turBitis(uint256) view returns (uint256)",
+      "function turToplam(uint256) view returns (uint256)","function katilimciSayisi(uint256) view returns (uint256)","function katki(uint256,address) view returns (uint256)",
+      "function dolu() view returns (bool)","function dolanTur() view returns (uint256)","function dolmaZamani() view returns (uint256)","function kuruldu() view returns (bool)",
+      "function acilisZamani() view returns (uint256)","function basarisiz() view returns (bool)","function iadeli(uint256) view returns (bool)",
+      "function hak(address) view returns (uint256)","function serbest(address) view returns (uint256)","function alinabilir(address) view returns (uint256)",
+      "function alinanToken(address) view returns (uint256)",
+      "function al(uint256) returns (uint256)","function iadeAl(uint256) returns (uint256)","function teslimEt(address) returns (uint256)","function havuzuKur()"],
+  dg:["function talep(uint256,address,uint256,bytes32[]) returns (uint256)","function alinan(uint256,address) view returns (uint256)",
+      "function ilkTalep(uint256,address) view returns (uint256)","function turlar(uint256) view returns (bytes32,uint64,bool,uint256,uint256)"],
+  tk:["function bildir(string)"]
+};
+
+const $ = (i) => document.getElementById(i);
+const read = new YedekliOkur();
+const esc = (s) => String(s==null?"":s).replace(/[&<>"]/g,(c)=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const kisa = (a) => String(a).slice(0,6)+"…"+String(a).slice(-4);
+const say = (v) => Number(String(v).replace(",","."));
+const nd = (x,d=0) => Number(x).toLocaleString("en-US",{maximumFractionDigits:d});
+const usd = (x,d=0) => "$"+Number(x).toLocaleString("en-US",{minimumFractionDigits:d,maximumFractionDigits:d});
+const satir = (l,v) => '<div class="row"><span>'+l+"</span><b>"+v+"</b></div>";
+const mesaj = (el,tip,html) => { $(el).innerHTML='<div class="msg '+tip+'">'+html+"</div>"; };
+const txLink = (h) => '<a href="'+ARC.explorer+"/tx/"+h+'" target="_blank" rel="noopener">view the transaction</a>';
+const tarih = (s) => new Date(Number(s)*1000).toUTCString().replace(" GMT"," UTC");
+/* the wallet's post code: "ARCP-" + the first 8 hex of keccak256(address); the bot checks the same */
+const kodu = (a) => "ARCP-" + keccak256(getBytes(getAddress(a))).slice(2,10).toUpperCase();
+
+function hataMetni(e){
+  const s = String((e&&(e.shortMessage||e.reason||e.message))||e);
+  if (/user rejected|denied/i.test(s)) return "The transaction was rejected in the wallet.";
+  if (/insufficient funds/i.test(s)) return "Not enough USDC for gas.";
+  if (/AzMiktar/.test(s)) return "The minimum is $10 per wallet per round.";
+  if (/Kapali/.test(s)) return "This round is already full.";
+  if (/Sifir/.test(s)) return "Nothing to do: the round or your wallet limit ($250) is already reached, or nothing is unlocked yet.";
+  if (/allowance|transferFrom|TransferOlmadi/i.test(s)) return "Approve USDC first (step 1).";
+  if (/Erken/.test(s)) return "Too early: the second half opens 30 days after the first claim.";
+  if (/HenuzYok/.test(s)) return "Not available yet: claims open when the pool opens, and the second half needs the first half still held.";
+  if (/KotuLink/.test(s)) return "That link is too long or empty.";
+  return s.length>160 ? s.slice(0,160)+"…" : s;
+}
+
+let V = null, signer = null, hesap = null, eip = null;
+let durum = null;
+
+/* ---- wallets: EIP-6963, then whatever injected itself ---- */
+const cuzdanlar = new Map();
+window.addEventListener("eip6963:announceProvider",(e)=>{ const d=e.detail; if(d&&d.info&&d.provider) cuzdanlar.set(d.info.uuid,d); });
+window.dispatchEvent(new Event("eip6963:requestProvider"));
+const ac=(id)=>$(id).classList.remove("hid");
+const kapa=(id)=>$(id).classList.add("hid");
+function cuzdanListesi(){
+  const el=$("cuzdanListe");
+  const hepsi=[...cuzdanlar.values()];
+  if(!hepsi.length && window.ethereum) hepsi.push({info:{name:"Browser wallet",icon:""},provider:window.ethereum});
+  if(!hepsi.length){ el.innerHTML='<div class="msg err">No wallet found. Install one such as MetaMask and reload the page.</div>'; return; }
+  el.innerHTML=hepsi.map((c,i)=>'<button class="cz" data-i="'+i+'">'+(c.info.icon?'<img src="'+esc(c.info.icon)+'" alt="">':"")+esc(c.info.name)+"</button>").join("");
+  for(const b of el.querySelectorAll(".cz")) b.addEventListener("click", async ()=>{
+    kapa("cuzdanOrt");
+    try{ await bagla(hepsi[Number(b.dataset.i)].provider); }catch(e){ mesaj("islemMesaj","err",esc(hataMetni(e))); }
+  });
+}
+$("cuzdanKapat").addEventListener("click",()=>kapa("cuzdanOrt"));
+$("cuzdanOrt").addEventListener("click",(e)=>{ if(e.target===$("cuzdanOrt")) kapa("cuzdanOrt"); });
+$("wallet").addEventListener("click",()=>{ if(hesap){ navigator.clipboard&&navigator.clipboard.writeText(hesap); return; } cuzdanListesi(); ac("cuzdanOrt"); });
+
+async function bagla(p){
+  await p.request({method:"eth_requestAccounts"});
+  const net = await (new BrowserProvider(p)).getNetwork();
+  if(Number(net.chainId)!==ARC.chainId){
+    try{ await p.request({method:"wallet_switchEthereumChain",params:[{chainId:ARC.chainIdHex}]}); }
+    catch(sw){
+      if(sw&&(sw.code===4902||/Unrecognized chain|Unsupported chain/i.test(String(sw.message))))
+        await p.request({method:"wallet_addEthereumChain",params:[{chainId:ARC.chainIdHex,chainName:ARC.name,rpcUrls:[ARC.rpc],nativeCurrency:ARC.currency,blockExplorerUrls:[ARC.explorer]}]});
+      else throw sw;
+    }
+  }
+  eip = p;
+  signer = await (new BrowserProvider(p)).getSigner();
+  hesap = await signer.getAddress();
+  $("wallet").innerHTML='<span class="wdot"></span>'+kisa(hesap);
+  $("wallet").classList.add("conn");
+  if(p.on){ p.on("accountsChanged",()=>location.reload()); p.on("chainChanged",()=>location.reload()); }
+  kodGoster();
+  await oku();
+}
+
+/* every write: estimate, then 30% on top. Unlocks grow by the second, so an
+   estimate taken at the exact edge can fall short a block later. */
+async function gonder(adres, abi, f, args, el, ad){
+  const c = new Contract(adres, abi, signer);
+  const tahmin = await c[f].estimateGas(...args);
+  mesaj(el,"info","Confirm in your wallet…");
+  const tx = await c[f](...args, { gasLimit: tahmin * 13n / 10n + 20000n });
+  mesaj(el,"info",ad+" sent, waiting for confirmation… "+txLink(tx.hash));
+  await tx.wait();
+  mesaj(el,"ok","<strong>"+ad+" done.</strong> "+txLink(tx.hash));
+  await oku();
+}
+
+/* ---- reads ---- */
+const os = () => new Contract(V.onSatis, ABI.os, read);
+async function oku(){
+  if(!V) return;
+  try{
+    const o = os();
+    const [t, dolu, kuruldu, basarisiz, dolanTur, dolmaZamani, acilis] = await Promise.all([
+      o.tur(), o.dolu(), o.kuruldu(), o.basarisiz(), o.dolanTur(), o.dolmaZamani(), o.acilisZamani()]);
+    const gT = dolu ? dolanTur : t;
+    const [toplam, kisi, bitis] = await Promise.all([o.turToplam(gT), o.katilimciSayisi(gT), o.turBitis(gT)]);
+    durum = { t:Number(t), gT:Number(gT), dolu, kuruldu, basarisiz, toplam:Number(toplam)/1e6, kisi:Number(kisi), bitis:Number(bitis),
+              dolmaZamani:Number(dolmaZamani), acilis:Number(acilis) };
+    ciz();
+    if(hesap) await benimOku();
+    await odulOku();
+  }catch(e){
+    mesaj("durumMesaj","err","The chain could not be reached: "+esc(hataMetni(e))+" — retrying.");
+  }
+}
+
+function ciz(){
+  const d = durum;
+  $("turBaslik").textContent = "Round " + (d.gT + 1);
+  $("toplanan").textContent = usd(d.toplam);
+  const y = Math.min(100, d.toplam / HEDEF * 100);
+  $("cubuk").style.width = y + "%";
+  $("yuzde").textContent = nd(y,1) + "% · " + usd(Math.max(0,HEDEF-d.toplam)) + " to go";
+  $("kisi").textContent = d.kisi + (d.kisi===1?" buyer":" buyers");
+  $("durumMesaj").innerHTML = "";
+  kapa("kurPanel"); ac("alPanel");
+  if (d.kuruldu) {
+    $("kickerMetin").textContent = "PRESALE COMPLETE · POOL OPEN";
+    $("turEtiket").textContent = "filled";
+    kapa("alPanel");
+    mesaj("durumMesaj","ok","<strong>The presale is complete and the pool is open</strong> since "+esc(tarih(d.acilis))+
+      ". Claim your ARCP on the right. Trade and stake on the <a href=\"fathom.html\">ARCP page</a>.");
+    $("saat").style.opacity=.35; $("saatNot").textContent = "Round "+(d.gT+1)+" filled on "+tarih(d.dolmaZamani)+".";
+  } else if (d.basarisiz) {
+    $("turEtiket").textContent = "refunding";
+    kapa("alPanel");
+    mesaj("durumMesaj","uyari","The round filled but the pool was not opened within 7 days, so this round is refunded. Take your USDC back on the right.");
+  } else if (d.dolu) {
+    $("kickerMetin").textContent = "ROUND FULL · OPENING THE POOL";
+    $("turEtiket").textContent = "full";
+    kapa("alPanel"); ac("kurPanel");
+    $("kurBtn").disabled = !hesap;
+    $("saatNot").textContent = "Filled on "+tarih(d.dolmaZamani)+". The pool must be opened within 7 days; otherwise the round is refunded.";
+  } else {
+    $("kickerMetin").textContent = "ROUND " + (d.gT + 1) + " IS LIVE · ARCP PRESALE";
+    $("turEtiket").textContent = "ends " + new Date(d.bitis*1000).toUTCString().slice(5,22) + " UTC";
+  }
+  saat();
+}
+function saat(){
+  if(!durum || durum.dolu) { for (const k of ["sG","sS","sD","sSn"]) $(k).textContent="00"; return; }
+  const k = Math.max(0, durum.bitis - Math.floor(Date.now()/1000));
+  const p = (n) => String(n).padStart(2,"0");
+  $("sG").textContent = p(Math.floor(k/86400)); $("sS").textContent = p(Math.floor(k%86400/3600));
+  $("sD").textContent = p(Math.floor(k%3600/60)); $("sSn").textContent = p(k%60);
+  if (k === 0) setTimeout(oku, 4000);
+}
+setInterval(saat, 1000);
+
+async function benimOku(){
+  const o = os(), u = new Contract(USDC, ABI.erc20, read);
+  const d = durum;
+  const [bak, izin, katki, hak, serbest, alinabilir, alinan] = await Promise.all([
+    u.balanceOf(hesap), u.allowance(hesap, V.onSatis), o.katki(d.gT, hesap), o.hak(hesap), o.serbest(hesap), o.alinabilir(hesap), o.alinanToken(hesap)]);
+  const k = Number(katki)/1e6;
+  let html = satir("USDC on Arc", usd(Number(bak)/1e6,2)) +
+    satir("you put in, round "+(d.gT+1), usd(k,2)) +
+    satir("your ARCP from it", nd(k*TOKEN_PER_USD)+" ARCP");
+  if (!d.dolu) html += satir("you may still add", usd(Math.max(0,250-k),2));
+  if (d.kuruldu) {
+    html += satir("unlocked so far", nd(Number(serbest)/1e18)+" ARCP") + satir("claimed", nd(Number(alinan)/1e18)+" ARCP") +
+            satir("ready to claim", "<span style=\"color:var(--acc)\">"+nd(Number(alinabilir)/1e18)+" ARCP</span>");
+    ac("teslimPanel"); $("teslimBtn").disabled = alinabilir === 0n;
+  } else kapa("teslimPanel");
+  $("benim").innerHTML = html;
+  durum.izin = Number(izin)/1e6; durum.kalanKisi = Math.max(0,250-k);
+  onizle();
+
+  /* refunds: every earlier round that holds money of yours, and the filled round if it failed */
+  const turler = [];
+  for (let i = 0; i <= d.t; i++) turler.push(i);
+  const kat = await Promise.all(turler.map((i)=>o.katki(i, hesap)));
+  const iade = await Promise.all(turler.map((i,j)=> kat[j] > 0n ? o.iadeli(i) : false));
+  $("iadeler").innerHTML = turler.filter((i,j)=>kat[j]>0n && iade[j]).map((i)=>{
+    const j = turler.indexOf(i);
+    return '<div class="cl"><span>Round '+(i+1)+' refund · <b>'+usd(Number(kat[j])/1e6,2)+'</b></span><button class="btn" data-iade="'+i+'">Take it back</button></div>';
+  }).join("");
+  for (const b of $("iadeler").querySelectorAll("[data-iade]")) b.addEventListener("click", async ()=>{
+    try{ await gonder(V.onSatis, ABI.os, "iadeAl", [BigInt(b.dataset.iade)], "benimMesaj", "The refund"); }
+    catch(e){ mesaj("benimMesaj","err",esc(hataMetni(e))); }
+  });
+}
+
+function onizle(){
+  const v = say($("miktar").value);
+  $("alacak").textContent = (v>0 ? nd(v*TOKEN_PER_USD) : "0") + " ARCP";
+  if (!hesap) { $("onayBtn").disabled = $("alBtn").disabled = true; return; }
+  const d = durum || {};
+  const yeterli = v > 0 && d.izin >= v;
+  $("onayBtn").disabled = !(v > 0) || yeterli;
+  $("alBtn").disabled = !(v > 0) || !yeterli;
+  if (v > 0 && v < 10) $("alNot").textContent = "The minimum is $10 per wallet per round (except for the purchase that closes the round).";
+  else if (v > (d.kalanKisi ?? 250)) $("alNot").textContent = "Your wallet can add at most "+usd(d.kalanKisi,2)+" more this round; only that much will be taken.";
+  else if (v > 0 && !yeterli) $("alNot").textContent = "Step 1: approve exactly "+usd(v,2)+" for the presale contract.";
+  else if (v > 0) $("alNot").textContent = "Approved. Step 2 joins the presale.";
+  else $("alNot").textContent = "Enter an amount between $10 and $250.";
+}
+$("miktar").addEventListener("input", onizle);
+for (const c of document.querySelectorAll(".chip[data-v]")) c.addEventListener("click", ()=>{ $("miktar").value = c.dataset.v; onizle(); });
+
+$("onayBtn").addEventListener("click", async ()=>{
+  try{ const v = say($("miktar").value); await gonder(USDC, ABI.erc20, "approve", [V.onSatis, parseUnits(String(v),6)], "islemMesaj", "The approval"); }
+  catch(e){ mesaj("islemMesaj","err",esc(hataMetni(e))); }
+});
+$("alBtn").addEventListener("click", async ()=>{
+  try{ const v = say($("miktar").value); await gonder(V.onSatis, ABI.os, "al", [parseUnits(String(v),6)], "islemMesaj", "Your presale purchase"); }
+  catch(e){ mesaj("islemMesaj","err",esc(hataMetni(e))); }
+});
+$("kurBtn").addEventListener("click", async ()=>{
+  try{ await gonder(V.onSatis, ABI.os, "havuzuKur", [], "islemMesaj", "Opening the pool"); }
+  catch(e){ mesaj("islemMesaj","err",esc(hataMetni(e))); }
+});
+$("teslimBtn").addEventListener("click", async ()=>{
+  try{ await gonder(V.onSatis, ABI.os, "teslimEt", [hesap], "benimMesaj", "The ARCP claim"); }
+  catch(e){ mesaj("benimMesaj","err",esc(hataMetni(e))); }
+});
+
+/* ---- rewards ---- */
+function kodGoster(){
+  if (!hesap) return;
+  const k = kodu(hesap);
+  $("kod").textContent = k;
+  const metin = "I'm in the $ARCP presale on @ArcPulseApp: every trade on every token burns ARCP, and every presale dollar goes into the pool. " + k + "\nhttps://arcpulse.app/arc-launchpad/docs/presale.html";
+  $("tweetLink").href = "https://x.com/intent/post?text=" + encodeURIComponent(metin);
+  $("bildirBtn").disabled = false;
+}
+$("kodKopya").addEventListener("click", async ()=>{
+  if (!hesap) return;
+  try{ await navigator.clipboard.writeText(kodu(hesap)); $("kodKopya").textContent="copied"; }catch(e){ $("kodKopya").textContent="copy failed"; }
+  setTimeout(()=>{ $("kodKopya").textContent="copy"; },1600);
+});
+$("bildirBtn").addEventListener("click", async ()=>{
+  const l = $("link").value.trim();
+  if (!/^https:\/\/(x|twitter)\.com\/[A-Za-z0-9_]{1,15}\/status\/\d{5,25}(\?.*)?$/.test(l)) { mesaj("bildirMesaj","err","Paste the link of the post itself: https://x.com/name/status/…"); return; }
+  try{ await gonder(V.tweetKayit, ABI.tk, "bildir", [l.split("?")[0]], "bildirMesaj", "Handing in the post"); $("link").value=""; }
+  catch(e){ mesaj("bildirMesaj","err",esc(hataMetni(e))); }
+});
+
+const ODUL = { kullanim:"Usage airdrop", tweet:"Post rewards" };
+const _odulVeri = {};
+async function odulVeri(tur){
+  if (!(tur in _odulVeri)) _odulVeri[tur] = fetch("veri/arcp2-odul/"+tur+".json",{cache:"no-cache"}).then((r)=>r.ok?r.json():null).catch(()=>null);
+  return _odulVeri[tur];
+}
+async function odulOku(){
+  if (!hesap) return;
+  const satirlar = [];
+  const ben = hesap.toLowerCase();
+  const simdi = Math.floor(Date.now()/1000);
+  for (const tur of Object.keys(ODUL)) {
+    const veri = await odulVeri(tur);
+    if (!veri || !Array.isArray(veri.turlar)) continue;
+    const dg = new Contract(V[tur], ABI.dg, read);
+    for (const r of veri.turlar) {
+      const h = r.hak && r.hak[ben];
+      if (!h) continue;
+      const [alinan, ilk] = await Promise.all([dg.alinan(r.tur, hesap), dg.ilkTalep(r.tur, hesap)]);
+      const miktar = BigInt(h.miktar), al = BigInt(alinan);
+      let durumM, buton = "";
+      if (al >= miktar) durumM = "claimed in full";
+      else if (!durum || !durum.kuruldu) durumM = "claimable when the pool opens";
+      else if (al === 0n) { durumM = "first half ready"; buton = "Claim half"; }
+      else if (simdi < Number(ilk) + 30*86400) durumM = "second half on " + new Date((Number(ilk)+30*86400)*1000).toUTCString().slice(5,16);
+      else { durumM = "second half ready (hold the first half)"; buton = "Claim the rest"; }
+      satirlar.push('<div class="cl"><span>'+ODUL[tur]+' · round '+(r.tur+1)+' · <b>'+nd(Number(miktar)/1e18)+' ARCP</b><br><span class="dim" style="font-size:12px">'+durumM+'</span></span>'+
+        (buton ? '<button class="btn" data-tur="'+tur+'" data-t="'+r.tur+'">'+buton+'</button>' : "")+"</div>");
+    }
+  }
+  $("oduller").innerHTML = satirlar.length ? satirlar.join("") : '<div class="cl"><span class="dim">No rewards for this wallet yet. Rounds are published weekly.</span></div>';
+  for (const b of $("oduller").querySelectorAll("[data-tur]")) b.addEventListener("click", async ()=>{
+    try{
+      const veri = await odulVeri(b.dataset.tur);
+      const r = veri.turlar.find((x)=>String(x.tur)===b.dataset.t);
+      const h = r.hak[hesap.toLowerCase()];
+      await gonder(V[b.dataset.tur], ABI.dg, "talep", [BigInt(r.tur), hesap, BigInt(h.miktar), h.kanit], "odulMesaj", "The reward claim");
+    }catch(e){ mesaj("odulMesaj","err",esc(hataMetni(e))); }
+  });
+}
+
+/* ---- start: the addresses come from veri/arcp2.json, written from the deploy record ---- */
+(async function basla(){
+  try{
+    const r = await fetch("veri/arcp2.json",{cache:"no-cache"});
+    const j = r.ok ? await r.json() : null;
+    if (j && j.canli === true && /^0x[0-9a-fA-F]{40}$/.test(j.onSatis||"")) V = j;
+  }catch(e){}
+  if (!V) {
+    $("kickerMetin").textContent = "ARCP PRESALE · OPENING SOON";
+    mesaj("durumMesaj","info","<strong>The presale contract is being deployed.</strong> Round 1 opens here as soon as it is live; this page will show the counter and the buy button then. Follow <a href=\"https://x.com/ArcPulseApp\" target=\"_blank\" rel=\"noopener\">@ArcPulseApp</a>.");
+    $("saatNot").textContent = "The 30-day clock starts when the presale contract is live.";
+    return;
+  }
+  $("adresler").innerHTML = [["ARCP token",V.token],["presale",V.onSatis],["pool opener",V.acici],["hook",V.hook],["stake",V.stake],
+    ["founder share",V.kurucuPayi],["marketing treasury",V.pazarlama],["usage airdrop",V.kullanim],["post rewards",V.tweet],["post inbox",V.tweetKayit],["governance",V.governor]]
+    .map(([ad,a])=>'<a href="'+ARC.explorer+"/address/"+a+'" target="_blank" rel="noopener">'+ad+" · "+a+"</a>").join("");
+  await oku();
+  setInterval(oku, 20000);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,30 @@
+{
+ "canli": true,
+ "zincir": 5042,
+ "token": "0xfa80848710dD0bEba18a9f9c76312c5a4a1633A1",
+ "onSatis": "0x75af92874E82bEfA69d9aC2a74208B952d3dFb5E",
+ "acici": "0xbcd2AA1c952DCCdc977956DC13f5dD239AcE0c20",
+ "hook": "0x7D449248FC102FB68114A7D55E17C652198C6a44",
+ "stake": "0x2146196BDA5e23Ab4836eE4D2c36bf2d72112eD7",
+ "kurucuPayi": "0xC05A3a8beC66846cc7115E9e178C0948921308Ef",
+ "pazarlama": "0x52911da0Ea5e48E28e29581d8549a62Bf2f45368",
+ "kullanim": "0x8F9296fa8c94DD2d0CEB26Db2386b07c6C2C9671",
+ "tweet": "0xa949dc9Fa472feFC75c91565C8fF7EA683a0e265",
+ "tweetKayit": "0xC517fD81a28CB304f01359f7c15088958A5852Dc",
+ "governor": "0x3becA311373D0779D9f19Aa5D0878707878950d2",
+ "usdc": "0x3600000000000000000000000000000000000000",
+ "havuzId": "0xa4007748201a97d5c5afbdad17467612a1da86fc8b46c3f66abbf6c951d1a522",
+ "fee": 0,
+ "spacing": 60,
+ "acilisTick": 372000,
+ "tokenSifirinci": false,
+ "tikler": [
+  365040,
+  372000,
+  348960,
+  -887220,
+  372060,
+  375360
+ ],
+ "kuruldu": "2026-11-09T13:45:06.423Z"
+}
