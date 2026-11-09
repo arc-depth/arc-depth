@@ -145,7 +145,7 @@ export async function ciz({ param }) {
   const arama = ((param && param.get("q")) || "").trim().toLowerCase();
   const uyar = (x) => !arama || [x.ad, x.sembol, x.simge, x.token].join(" ").toLowerCase().includes(arama);
 
-  kap.append(sayfaUst("Discover", "Collateral-backed tokens: one pool on Arc, reachable from twelve chains", [
+  kap.append(sayfaUst("Discover", "Collateral-backed tokens: one pool on Arc, reachable from thirteen chains", [
     el("a", { sinif: "dugme dugme--marka", attr: { href: "#/olustur" } }, [
       el("span", { html: ikon("arti", "yol-oge__ikon") }), el("span", { yazi: "Create a token" })]),
   ]));
@@ -153,7 +153,7 @@ export async function ciz({ param }) {
   /* what this is, in three steps, before any number */
   kap.append(adimlar([
     { ikon: "arti", baslik: "Launch from any chain", yazi: "Name it, pick up to five tokens from any chain as its collateral, pay from the wallet you already use." },
-    { ikon: "zincir", baslik: "One pool, one price", yazi: "Every token trades in one pool on Arc. Buyers on twelve chains see the same price." },
+    { ikon: "zincir", baslik: "One pool, one price", yazi: "Every token trades in one pool on Arc. Buyers on thirteen chains see the same price." },
     { ikon: "kasa", baslik: "Backed, not just hyped", yazi: "A slice of every trade fills the token's collateral basket. Holders can redeem their share without selling." },
   ]));
   /* the hottest tokens on our chains right now, bought from any chain (Market); never blocks the page */

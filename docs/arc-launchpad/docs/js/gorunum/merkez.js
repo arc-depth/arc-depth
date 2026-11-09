@@ -21,7 +21,7 @@
 import { el, sayfaUst, panel, not, adimlar, temizle } from "../ui.js";
 import { EKONOMI } from "../adresler.js";
 import { para } from "../bicim.js";
-import { AGLAR } from "../aglar.js";
+import { AGLAR, ELYSIUM } from "../aglar.js";
 import { cuzdan } from "../cuzdan.js";
 import { rpcPost } from "../ag-okur.js";
 import { YedekliOkur } from "../yedekli-okur.js";
@@ -145,9 +145,10 @@ async function odemeYeri(ag, ben) {
 /* reads move to the next Arc RPC when one answers 429/403 */
 const arc = new YedekliOkur();
 /* every chain pays: Arc in its own USDC straight to the gate, the others through relay */
-const odemeAglari = () => AGLAR;
+/* the chains a launch or a buy can be paid from: the twin chains, and Elysium (paid there, delivered on Arc) */
+const odemeAglari = () => [...AGLAR, ELYSIUM];
 /* where the gate delivers tokens for a wallet on `ag`: 0 means on Arc itself */
-const teslimEid = (ag) => (ag.anahtar === "arc" ? 0 : ag.eid);
+const teslimEid = (ag) => (ag.anahtar === "arc" || !ag.eid ? 0 : ag.eid);   // a pay-only chain (Elysium) delivers on Arc
 const sec = (lz, compose = 0, composeDeger = 0n) => composeDeger
   /* lzCompose with native value (v4 redemption from a twin: Arc's dollar pays the vault orders' fees) */
   ? solidityPacked(["uint16", "uint8", "uint16", "uint8", "uint128", "uint8", "uint16", "uint8", "uint16", "uint128", "uint128"],
@@ -391,7 +392,7 @@ function onizlemeKarti({ ad, sembol, alim, vergi, zincirSec, turSecim }) {
     el("div", { sinif: "onz__ust" }, [avatar, el("div", { attr: { style: "min-width:0" } }, [baslik, alt])]),
     satirlar,
     el("div", { sinif: "onz__guven" }, [
-      el("span", { yazi: "Liquidity locked from block one" }), el("span", { yazi: "No mint, no owner" }), el("span", { yazi: "Tradable from 12 chains" })]),
+      el("span", { yazi: "Liquidity locked from block one" }), el("span", { yazi: "No mint, no owner" }), el("span", { yazi: "Tradable from 13 chains" })]),
     el("div", { sinif: "onz__not", yazi: "\"You get about\" is at the opening price; your own first buy moves the price a little, so it lands slightly under. The exact figure is shown before you sign." }),
   ]);
 }
@@ -417,17 +418,18 @@ export async function ciz({ param } = {}) {
   const kap = el("div", { sinif: "yigin" });
   kap.append(sayfaUst("Launch on any chain", "One pool on Arc, every chain's door to it"));
   kap.append(adimlar([
-    { ikon: "zincir", baslik: "Pick your chain", yazi: "Pay from the wallet you already use: Base, BNB, Arbitrum, Robinhood and more, or Solana, Sui and Aptos below." },
+    { ikon: "zincir", baslik: "Pick your chain", yazi: "Pay from the wallet you already use: Base, BNB, Arbitrum, Robinhood, Elysium and more, or Solana, Sui and Aptos below." },
     { ikon: "arti", baslik: "Name it, set the first buy", yazi: "Name, ticker and a first buy from $20. You get your tokens at the opening price, before anyone else." },
-    { ikon: "kasa", baslik: "Back it and launch", yazi: "Pick up to five tokens as its collateral basket, sign once, and it trades on twelve chains." },
+    { ikon: "kasa", baslik: "Back it and launch", yazi: "Pick up to five tokens as its collateral basket, sign once, and it trades on thirteen chains." },
   ]));
   kap.append(not("Every token here has one pool and one price, on Arc. You launch, buy and sell from your own chain with its own gas token, in one signature. The token lives on your chain as its twin. Fees are shown before you sign.", "bilgi"));
 
   let ag = odemeAglari().find((a) => a.anahtar === "base");
   const zincirSec = el("select", { sinif: "girdi", attr: { id: "merkez-zincir" } }, odemeAglari().map((a) => el("option", { attr: { value: a.anahtar }, yazi: a.ad + " (pay in " + a.gaz + ")" })));
   zincirSec.value = ag.anahtar;
-  zincirSec.addEventListener("change", () => { ag = AGLAR.find((a) => a.anahtar === zincirSec.value); });
-  kap.append(panel("Your chain", el("div", { sinif: "yigin" }, [zincirSec,
+  const elysiumNotu = el("div", { sinif: "alan__ipucu", attr: { hidden: true }, yazi: "Elysium: you pay in HYPE on Elysium and your tokens are delivered to your same address on Arc. There is no twin on Elysium yet (LayerZero does not reach it), so to sell or redeem later, switch to Arc." });
+  zincirSec.addEventListener("change", () => { ag = odemeAglari().find((a) => a.anahtar === zincirSec.value); elysiumNotu.hidden = !ag.sadeceOdeme; });
+  kap.append(panel("Your chain", el("div", { sinif: "yigin" }, [zincirSec, elysiumNotu,
     el("div", { sinif: "alan__ipucu", yazi: V2 ? "EVM chains here. A Solana, Sui or Aptos wallet has its own panel at the bottom of this page." : "Solana, Sui and Aptos wallets come next; today the doors are the EVM chains." })])));
 
   /* ================= launch ================= */
@@ -487,7 +489,7 @@ export async function ciz({ param } = {}) {
   const tasarimNotu = el("div", { sinif: "not not--bilgi", attr: { style: "display:none" } }, [el("span", { yazi:
     "Designer tokens launch on the v9 set (PulseHook6), whose time-weighted price lets buyers pay for your designs in your token. " +
     "Its basket can use Arc, Base, Arbitrum, Ethereum, Avalanche, Monad, HyperEVM, Robinhood and BNB; Solana, Sui and Aptos are not connected to the v9 set yet, so they are switched off below. " +
-    "Everything else is the same: the rules, the fees, and buying from all twelve chains." })]);
+    "Everything else is the same: the rules, the fees, and buying from all thirteen chains." })]);
   const sepetKisitla = () => {
     const t = tasarimciMi();
     tasarimNotu.style.display = t ? "" : "none";
@@ -573,6 +575,7 @@ export async function ciz({ param } = {}) {
         const yeni = ag.anahtar === "arc" ? launchTokeni(rq && rq._arcMakbuz) : await relayLaunchTokeni(rq._id).catch(() => null);
         if (yeni) token.value = yeni;
         durum((ag.anahtar === "arc" ? "Paid. Launched on Arc: the token and its pool are open and your tokens are in your wallet. Any LayerZero fee not used came back to you."
+          : ag.sadeceOdeme ? "Launched on Arc. Your tokens are at your same address on Arc. Any LayerZero fee not used comes back there too."
           : "Launched on Arc. Your tokens arrive on " + ag.ad + " in a few minutes. Any LayerZero fee not used comes back to your address on Arc.") +
           (yeni ? "  " + tokenBaglantilari(yeni) : "  (The token's address could not be read yet: find it on Discover.)"));
         if (yeni && !urunKurucu.launchSonrasi({ token: yeni, kap: turKutu, cuzdan, bilgi: urun.bilgiYap(turBilgi.value, "") })) turAdimi(yeni);
@@ -813,7 +816,7 @@ export async function ciz({ param } = {}) {
         { to: S().kapi, data: KAPI_ABI.encodeFunctionData("al", [t, usdc6, asgari, teslimEid(ag), zeroPadValue(ben, 32), teslimEid(ag) ? sec(100_000n) : "0x", ben]), value: deger.toString() },
       ];
       await relayIle(ag, ben, usdc6, deger, txs, durum);
-      durum(ag.anahtar === "arc" ? "Paid. Bought on Arc; the tokens are in your wallet." : "Paid. Bought on Arc; the tokens arrive on " + ag.ad + " in a few minutes.");
+      durum(ag.anahtar === "arc" ? "Paid. Bought on Arc; the tokens are in your wallet." : ag.sadeceOdeme ? "Paid. Bought on Arc; the tokens are at your same address on Arc." : "Paid. Bought on Arc; the tokens arrive on " + ag.ad + " in a few minutes.");
     } catch (x) { durum((x && x.message) || "Could not buy."); }
   }));
 
@@ -867,6 +870,7 @@ export async function ciz({ param } = {}) {
         return durum(v4mu() ? "Burned for redemption: the waiting dollars' share is in your wallet now; each vault sells your share in its own pool" + (v6mu() ? "" : " (auction where it has none)") + " and pays you on Arc."
           : "Burned for redemption; each vault sells your share by auction and pays you on Arc.");
       }
+      if (ag.sadeceOdeme) return durum("Tokens bought from " + ag.ad + " are on Arc: choose Arc as your chain to sell or redeem them.");
       const ikiz = await new Contract(YAYICI, ["function ikizAdresi(address) view returns (address)"], arc).ikizAdresi(t);
       const p = new JsonRpcProvider(ag.rpc, ag.id, { staticNetwork: true });
       const oft = new Contract(ikiz, OFT_ABI, p);

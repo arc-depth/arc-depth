@@ -77,7 +77,7 @@ await (await token.approve("0xYourGameContract...", price)).wait();
 function gelistiriciBolumu() {
   return panel("For game developers", el("div", { sinif: "yigin" }, [
     el("p", { yazi: "A game token is a standard ERC-20 token. A game can take it as payment the same way it would take any ERC-20: the player sends it to the game's wallet (transfer), or approves the game's contract, which then pulls the amount (transferFrom). The game confirms the payment from the Transfer event in the transaction receipt, and reads balances with balanceOf." }),
-    el("p", { yazi: "Players do not need Arc's gas token to get it: on the token's page they can buy it paying from any of the twelve chains with that chain's own gas token. The token itself lives on Arc and, as its twin, on the chains where the twin has been created (listed on each card above; one twin address shared by the EVM chains)." }),
+    el("p", { yazi: "Players do not need Arc's gas token to get it: on the token's page they can buy it paying from any of the thirteen chains with that chain's own gas token. The token itself lives on Arc and, as its twin, on the chains where the twin has been created (listed on each card above; one twin address shared by the EVM chains)." }),
     kodBlogu(KOD),
     not("There is no ARC PULSE game SDK: the example uses ethers v6 and the standard ERC-20 calls only. Accept a payment only after its receipt is confirmed, and store the hashes you have accepted.", "bilgi"),
   ]));

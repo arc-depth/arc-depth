@@ -15,7 +15,7 @@
  * =========================================================================== */
 import { el, sayfaUst, panel, not, temizle, olcum } from "../ui.js";
 import { FTHM as ARCP, fthmDurum as arcpDurum } from "../fthm-veri.js";
-import { AGLAR } from "../aglar.js";
+import { AGLAR, ELYSIUM } from "../aglar.js";
 import { cuzdan } from "../cuzdan.js";
 import { JsonRpcProvider, Contract, Interface } from "../../vendor/ethers.min.js";
 import { YedekliOkur } from "../yedekli-okur.js";
@@ -43,7 +43,7 @@ async function teklif(usdcden, miktar) {
 }
 const asgariOf = (x) => (x * BigInt(Math.round((1 - KAYMA) * 1000))) / 1000n;
 /* every EVM chain, Arc included: relay routes each chain's dollar to ARCP on Arc */
-const evmler = () => AGLAR.slice();
+const evmler = () => [...AGLAR, ELYSIUM];   // Elysium pays in its USDCe; the ARCP is delivered on Arc
 /* the chain's dollar in raw units: BNB's USDC has 18 decimals, the others 6 */
 const dolarHam = (ag, usd) => BigInt(Math.round(usd * 1e6)) * 10n ** BigInt(ag.anahtar === "bsc" ? 12 : 0);
 
@@ -117,7 +117,7 @@ export async function ciz() {
   let ag = evmler().find((a) => a.anahtar === "base") || evmler()[0];
   const zincirSec = el("select", { sinif: "girdi" }, evmler().map((a) => el("option", { attr: { value: a.anahtar }, yazi: a.ad })));
   zincirSec.value = ag.anahtar;
-  zincirSec.addEventListener("change", () => { ag = AGLAR.find((a) => a.anahtar === zincirSec.value); });
+  zincirSec.addEventListener("change", () => { ag = evmler().find((a) => a.anahtar === zincirSec.value); });
 
   /* ---- buy: relay.link brings your chain's dollar to Arc, buys ARCP in its pool and delivers it to your address on Arc ---- */
   const alTutar = el("input", { sinif: "girdi girdi--sayi", attr: { type: "number", min: "1", step: "1", value: "10" } });

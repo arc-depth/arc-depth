@@ -423,7 +423,7 @@ export async function urunSayfasi(n, ek = {}) {
   const kap = el("div", { sinif: "yigin" });
   const olusturDugme = el("a", { sinif: "dugme dugme--marka", attr: { href: "#/olustur" }, on: { click: () => turSec(t.tur) } }, [
     el("span", { html: ikon("arti", "yol-oge__ikon") }), el("span", { yazi: "Create " + (/^[AEIOU]/i.test(t.cogul) ? "an " : "a ") + t.cogul + " token" })]);
-  kap.append(sayfaUst(t.ad + " tokens", "Same launch engine, same rules: one pool on Arc, collateral basket, tradable from twelve chains", [olusturDugme]));
+  kap.append(sayfaUst(t.ad + " tokens", "Same launch engine, same rules: one pool on Arc, collateral basket, tradable from thirteen chains", [olusturDugme]));
   /* what it is for, as cards a visitor reads in seconds; the same sentences as before */
   const ikonlar = ["hediye", "insanlar", "kupa", "zincir"];
   kap.append(el("div", { sinif: "urun-kartlar" }, (t.metin || []).map((s, i) => el("div", { sinif: "urun-kart" }, [

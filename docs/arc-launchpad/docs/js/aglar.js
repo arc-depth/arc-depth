@@ -253,3 +253,14 @@ export const IKIZ_SECENEK = "0x000301001101000000000000000000000000005b8d80";
 
 export const agBul = (anahtarYaDaId) =>
   AGLAR.find((a) => a.anahtar === anahtarYaDaId || a.id === Number(anahtarYaDaId)) || null;
+
+/* Elysium (9 Nov 2026): a chain people PAY FROM, not one of the twin chains. relay.link routes it
+   (chain 99901, native HYPE, USDCe for dollars) both ways, so a launch, a buy or an ARCP purchase can be
+   paid there; LayerZero does not reach Elysium, so no twin and no basket vault live there and what is
+   bought is delivered to the same address on Arc. Kept out of AGLAR on purpose: every view that walks
+   AGLAR reads contracts that do not exist on Elysium. */
+export const ELYSIUM = {
+  anahtar: "elysium", ad: "Elysium", id: 99901, rpc: "https://rpc.elysium.kinetiq.xyz", gaz: "HYPE",
+  kasif: "https://elysium.kinetiq.xyz/explorer", dolar: "0xb47c4C8F73F009CC0C0d3f92B388d13E293F0B65", dolarSembol: "USDCe",
+  sadeceOdeme: true,
+};

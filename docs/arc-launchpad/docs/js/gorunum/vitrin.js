@@ -15,7 +15,7 @@
  * A top tab (ana.js BIRINCIL) and on the rail.
  * =========================================================================== */
 import { el, temizle } from "../ui.js";
-import { AGLAR } from "../aglar.js";
+import { AGLAR, ELYSIUM } from "../aglar.js";
 import { cuzdan } from "../cuzdan.js";
 import { rpcPost } from "../ag-okur.js";
 import { Contract } from "../../vendor/ethers.min.js";
@@ -305,7 +305,7 @@ function osSlayt(o) {
 }
 
 /* ---- buy box -------------------------------------------------------- */
-const evmler = () => AGLAR.filter((a) => /^0x/.test(a.dolar || ""));
+const evmler = () => [...AGLAR, ELYSIUM].filter((a) => /^0x/.test(a.dolar || ""));
 const dolarHam = (ag, usd) => BigInt(Math.round(usd * 1e6)) * 10n ** BigInt(ag.anahtar === "bsc" ? 12 : 0);
 async function makbuz(ag, hash) {
   for (let i = 0; i < 160; i++) {
@@ -347,7 +347,7 @@ function alKutusu(t) {
   const dugme = el("button", { sinif: "dugme dugme--marka", attr: { type: "button", style: "width:100%;margin-top:14px" }, yazi: ben ? "Buy " + t.sembol : "Connect wallet" });
   let sonTeklif = null, sayac = 0;
 
-  const ag = () => AGLAR.find((a) => a.anahtar === kaynak.value);
+  const ag = () => evmler().find((a) => a.anahtar === kaynak.value);
   const alici = () => t.zincir.k === "solana" ? solAlici.value.trim() : (cuzdan.hesap() || UCRET_ALICI);
   async function teklif() {
     const bu = ++sayac;
@@ -491,7 +491,7 @@ export async function ciz() {
     const satirlar = lp.map((p) => ({ ...p, v24: topla(p.g24, anahtar), v30: topla(p.g30, anahtar),
       zincirler: Object.keys(p.g24).filter((k) => LLAMA_AD[k] && topla(p.g24, [k]) > 0).map((k) => LLAMA_AD[k]) }))
       .filter((p) => p.v24 > 0 || p.v30 > 0);
-    if (!secili || secili.k === "arc") satirlar.push({ ad: "ARC PULSE", biz: true, v24: biz, v30: null, degisim: null, zincirler: ["12 chains"] });
+    if (!secili || secili.k === "arc") satirlar.push({ ad: "ARC PULSE", biz: true, v24: biz, v30: null, degisim: null, zincirler: ["13 chains"] });
     satirlar.sort((a, b) => b.v24 - a.v24 || (b.v30 || 0) - (a.v30 || 0));
     const sira = satirlar.findIndex((p) => p.biz) + 1;
     const toplam = satirlar.reduce((s, p) => s + p.v24, 0);
@@ -499,7 +499,7 @@ export async function ciz() {
     const ozet = el("div", { sinif: "vt-lp-ozet" }, [
       el("div", {}, [el("span", { sinif: "vt-k", yazi: "Launchpads with volume" }), el("b", { yazi: String(satirlar.filter((p) => p.v24 > 0).length) })]),
       el("div", {}, [el("span", { sinif: "vt-k", yazi: "24h launchpad volume" }), el("b", { yazi: para(toplam) })]),
-      lider ? el("div", {}, [el("span", { sinif: "vt-k", yazi: "#1 on " + (secili ? secili.ad : "our 12 chains") }), el("b", { yazi: lider.ad })]) : null,
+      lider ? el("div", {}, [el("span", { sinif: "vt-k", yazi: "#1 on " + (secili ? secili.ad : "our chains") }), el("b", { yazi: lider.ad })]) : null,
       sira ? el("div", {}, [el("span", { sinif: "vt-k", yazi: "ARC PULSE rank" }), el("b", { yazi: "#" + sira + " of " + satirlar.length })]) : null,
     ]);
     const bas = el("div", { sinif: "vt-lp-sat" }, [el("span", { yazi: "#" }), el("span"), el("span", { yazi: "Launchpad" }), el("span", { yazi: "Chains" }),
@@ -562,7 +562,7 @@ export async function ciz() {
 
     const bizim = (!secili || secili.k === "arc") ? await bizimTokenler().catch(() => []) : [];
     const serit = bizim.length ? [el("h2", { sinif: "vt-h2", attr: { style: "margin-top:0" } }, ["ARC PULSE launches", el("span", { sinif: "vt-teminat", yazi: "COLLATERAL-BACKED" })]),
-      el("p", { sinif: "vt-alt", yazi: "One pool on Arc, a collateral basket behind every token, tradable from twelve chains." }),
+      el("p", { sinif: "vt-alt", yazi: "One pool on Arc, a collateral basket behind every token, tradable from thirteen chains." }),
       el("div", { sinif: "vt-bizim" }, bizim.map((b) => el("a", { attr: { href: "#/merkez?t=" + b.adres } }, [ikonYok({ adres: b.adres, sembol: b.sembol || "?" }),
         el("div", {}, [el("div", { sinif: "vt-ad", yazi: b.ad }), el("div", { sinif: "vt-k", yazi: "$" + b.sembol + " · " + once(new Date(b.zaman * 1000).toISOString()) })])])))] : [];
     if (eski(bu)) return;

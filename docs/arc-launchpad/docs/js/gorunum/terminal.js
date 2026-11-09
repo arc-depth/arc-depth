@@ -51,7 +51,7 @@ export async function ciz({ param }) {
   if (!liste.length) {
     /* this terminal reads the first-generation registry, which is empty; the launches live on the
        one-pool registries, each traded on its own page, and every other token is in Market */
-    kap.append(sayfaUst("Trade", "Buy and sell any ARC PULSE token from twelve chains, or any token on eleven chains in Market"));
+    kap.append(sayfaUst("Trade", "Buy and sell any ARC PULSE token from thirteen chains, or any token on eleven chains in Market"));
     const bizim = await import("./vitrin.js").then((m) => m.bizimTokenler()).catch(() => []);
     if (bizim.length) {
       kap.append(panel("ARC PULSE tokens", el("div", { sinif: "izgara izgara--kart" }, bizim.map((b) => el("a", { sinif: "jeton-kart", attr: { href: "#/merkez?t=" + b.adres } }, [
