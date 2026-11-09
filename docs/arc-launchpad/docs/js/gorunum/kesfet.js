@@ -19,7 +19,7 @@
  * =========================================================================== */
 
 import { YedekliOkur } from "../yedekli-okur.js";
-import { el, panel, sayfaUst, bos, olcum } from "../ui.js";
+import { el, panel, sayfaUst, bos, olcum, adimlar, ayrinti } from "../ui.js";
 import { ikon } from "../ikon.js";
 import { EKONOMI } from "../adresler.js";
 import { para } from "../bicim.js";
@@ -150,6 +150,20 @@ export async function ciz({ param }) {
       el("span", { html: ikon("arti", "yol-oge__ikon") }), el("span", { yazi: "Create a token" })]),
   ]));
 
+  /* what this is, in three steps, before any number */
+  kap.append(adimlar([
+    { ikon: "arti", baslik: "Launch from any chain", yazi: "Name it, pick up to five tokens from any chain as its collateral, pay from the wallet you already use." },
+    { ikon: "zincir", baslik: "One pool, one price", yazi: "Every token trades in one pool on Arc. Buyers on twelve chains see the same price." },
+    { ikon: "kasa", baslik: "Backed, not just hyped", yazi: "A slice of every trade fills the token's collateral basket. Holders can redeem their share without selling." },
+  ]));
+  /* the hottest tokens on our chains right now, bought from any chain (Market); never blocks the page */
+  if (!arama) {
+    const yer = el("div");
+    kap.append(el("div", { sinif: "yigin yigin--sik" }, [el("div", { sinif: "bolum-baslik" }, [el("h2", { yazi: "Hot right now on 10 chains" }),
+      el("a", { sinif: "dugme dugme--sade dugme--kucuk", attr: { href: "#/vitrin" }, yazi: "Open Market →" })]), yer]));
+    import("./vitrin.js").then((m) => m.trendSeridi(8)).then((x) => { if (x) yer.replaceWith(x); else yer.remove(); }).catch(() => yer.remove());
+  }
+
   const sayfa = Number((param && param.get("s")) || 1) || 1;
   /* the second generation, once wired, is the main list; the first stays readable below it */
   const [v2, v9] = await Promise.all([sepetV2(), sepetV9()]);
@@ -176,7 +190,7 @@ export async function ciz({ param }) {
   kap.append(izgara);
 
   /* ---- the one pool on Arc: collateral cards, newest first ---- */
-  const BASLIK = "Collateral of every launch (one pool on Arc)";
+  const BASLIK = "ARC PULSE launches · collateral-backed";
   if (arcS.status !== "fulfilled") {
     kap.append(panel(BASLIK, bos("Could not read the registry", String(arcS.reason && arcS.reason.message || arcS.reason))));
   } else if (!arcS.value.liste.length) {
@@ -188,7 +202,7 @@ export async function ciz({ param }) {
     const satirlar = v.liste.filter(uyar);
     const izg = el("div", { sinif: "izgara izgara--kart" }, satirlar.map((x) => teminatKarti(x, cfg)));
     kap.append(panel(BASLIK, el("div", { sinif: "yigin" }, [
-      el("div", { sinif: "yazi yazi--kucuk yazi--sessiz", yazi: "Collateral now = what each vault holds for the token at market price (DexScreener; the vault's last auction price where the market has none) plus dollars waiting to be bought. Change is against what the founder put in. Newest first; the 2,000 newest are kept." }),
+      ayrinti("How is the collateral counted?", "Collateral now = what each vault holds for the token at market price (DexScreener; the vault's last auction price where the market has none) plus dollars waiting to be bought. Change is against what the founder put in. Newest first; the 2,000 newest are kept."),
       satirlar.length ? izg : bos("No matches", 'Nothing on this page for "' + arama + '".'),
       v.sayfaSayisi > 1 ? sayfalayici(v.sayfa, v.sayfaSayisi) : el("span"),
     ]), el("span", { sinif: "tk__canli", yazi: "live · " + v.n + " token · page " + v.sayfa + " of " + v.sayfaSayisi })));
@@ -208,12 +222,12 @@ export async function ciz({ param }) {
      prices from the v9 launchpad's pool key (the PulseHook6 pool) and reads its collateral from the
      v9 Defter and the vaults bound to it (sepet-v9.json). ---- */
   if (v9) {
-    const B9 = "Collateral of every launch on the v9 set (PulseHook6)";
+    const B9 = "Designer launches · collateral-backed";
     if (v9S.status !== "fulfilled") kap.append(panel(B9, bos("Could not read the v9 registry", String(v9S.reason && v9S.reason.message || v9S.reason))));
     else if (v9S.value && v9S.value.liste.length) {
       const v = v9S.value, satirlar = v.liste.filter(uyar);
       kap.append(panel(B9, el("div", { sinif: "yigin" }, [
-        el("div", { sinif: "yazi yazi--kucuk yazi--sessiz", yazi: "Designer tokens launch on the v9 set: the same one pool on Arc and the same 2.2% fee, with a time-weighted price that lets buyers pay for designs in the designer's token. Its basket vaults are on Arc and the eight EVM chains bound to the v9 Defter." }),
+        ayrinti("What is different about designer tokens?", "Designer tokens launch on the v9 set (PulseHook6): the same one pool on Arc and the same 2.2% fee, with a time-weighted price that lets buyers pay for designs in the designer's token. Its basket vaults are on Arc and the eight EVM chains bound to the v9 Defter."),
         satirlar.length ? el("div", { sinif: "izgara izgara--kart" }, satirlar.map((x) => teminatKarti(x, v9))) : bos("No matches", 'Nothing on this page for "' + arama + '".'),
         v.sayfaSayisi > 1 ? sayfalayici(v.sayfa, v.sayfaSayisi, "s9") : el("span"),
       ]), el("span", { sinif: "tk__canli", yazi: "live · " + v.n + " token · page " + v.sayfa + " of " + v.sayfaSayisi })));

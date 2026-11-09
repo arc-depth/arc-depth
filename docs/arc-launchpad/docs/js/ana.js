@@ -55,6 +55,10 @@ const VARSAYILAN = "kesfet";
 /* "presale" (9 Nov 2026): the ARCP presale behind its own tab, likewise after the phone bar four */
 /* "vitrin" (Market, 9 Nov 2026): every token on ten chains, bought from any of them; second, after Discover */
 const BIRINCIL = ["kesfet", "vitrin", "olustur", "terminal", "portfoy", "dao", "presale", "designs"];
+/* the top bar (9 Nov 2026 redesign): six tabs read at a glance; every other module, DAO and
+   NFT designs included, is one click away under "More", grouped as the rail groups them */
+const UST = ["kesfet", "vitrin", "olustur", "terminal", "portfoy", "presale"];
+const UST_DAHA = BIRINCIL.filter((y) => !UST.includes(y));
 
 const kIcerik = document.getElementById("icerik");
 const kRay = document.getElementById("ray");
@@ -104,21 +108,39 @@ function yolLinki(y, sinifEk = "") {
   ]);
 }
 
+/* The rail folds: thirty modules at once read as a wall. The group of the open page and
+   Market stay open; the others fold to their heading and open with a click. A visitor's own
+   folding is kept on this device only (a convenience, nothing else is stored). */
+const RAY_GRUP_RENK = { piyasa: "var(--renk-piyasa)", urunler: "var(--renk-urunler)", varlik: "var(--renk-varlik)", yonetisim: "var(--renk-yonetisim)", guven: "var(--renk-guven)" };
+const RAY_ANAHTAR = "arcpulse-ray";
+const rayOku = () => { try { return JSON.parse(localStorage.getItem(RAY_ANAHTAR) || "{}"); } catch (e) { return {}; } };
+const OK_SVG = '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 function rayiCiz() {
   temizle(kRay);
+  const secim = rayOku();
+  const aktif = yolBul(hashiCoz().yol);
   for (const g of GRUPLAR) {
     const ogeler = grubunYollari(g.anahtar);
     if (!ogeler.length) continue;
-    kRay.append(el("div", { sinif: "ray__grup" }, [
-      el("div", { sinif: "ray__baslik", yazi: g.ad }),
-      ...ogeler.map((y) => yolLinki(y))
-    ]));
+    const acik = g.anahtar in secim ? secim[g.anahtar] : (g.anahtar === "piyasa" || (aktif && aktif.grup === g.anahtar));
+    const grup = el("div", { sinif: "ray__grup", veri: { grup: g.anahtar, kapali: acik ? "0" : "1" } });
+    const baslik = el("button", { sinif: "ray__baslik ray__baslik--dugme", attr: { type: "button", "aria-expanded": String(acik), style: "--gr:" + (RAY_GRUP_RENK[g.anahtar] || "") } }, [
+      el("b", {}, [el("i"), g.ad]), el("span", { sinif: "ray__sayi", yazi: String(ogeler.length) }), el("span", { html: OK_SVG })]);
+    baslik.addEventListener("click", () => {
+      const kapali = grup.dataset.kapali !== "1";
+      grup.dataset.kapali = kapali ? "1" : "0";
+      baslik.setAttribute("aria-expanded", String(!kapali));
+      const yeni = rayOku(); yeni[g.anahtar] = !kapali;
+      try { localStorage.setItem(RAY_ANAHTAR, JSON.stringify(yeni)); } catch (e) { /* storage may be blocked */ }
+    });
+    grup.append(baslik, ...ogeler.map((y) => yolLinki(y)));
+    kRay.append(grup);
   }
 }
 
 function ustYoluCiz() {
   temizle(kUstYol);
-  for (const ad of BIRINCIL) {
+  for (const ad of UST) {
     const y = yolBul(ad);
     if (!y) continue;
     kUstYol.append(el("a", {
@@ -128,6 +150,26 @@ function ustYoluCiz() {
       yazi: y.kisa || y.ad
     }));
   }
+  /* "More": the tabs that left the bar first, then every module by group, each with its one-line purpose */
+  const menu = el("div", { sinif: "ust-daha__menu", attr: { role: "menu" } });
+  const satir = (y) => el("a", { attr: { href: y.site || "#/" + y.yol, role: "menuitem" }, veri: { yol: y.yol } },
+    [el("span", { html: ikon(y.ikon) }), el("span", {}, [y.ad, y.ozet ? el("small", { yazi: y.ozet.length > 90 ? y.ozet.slice(0, 88) + "…" : y.ozet }) : null])]);
+  menu.append(el("div", { sinif: "ust-daha__baslik", yazi: "Popular" }), ...UST_DAHA.map(yolBul).filter(Boolean).map(satir));
+  for (const g of GRUPLAR) {
+    const ogeler = grubunYollari(g.anahtar).filter((y) => !UST.includes(y.yol) && !UST_DAHA.includes(y.yol));
+    if (!ogeler.length) continue;
+    menu.append(el("div", { sinif: "ust-daha__baslik", yazi: g.ad }), ...ogeler.map(satir));
+  }
+  menu.append(el("div", { sinif: "ust-daha__baslik", yazi: "Everything" }), satir({ yol: "daha", ad: "All modules", ikon: "daha", ozet: "Every module, its state and what each one is for." }));
+  const kutu = el("div", { sinif: "ust-daha yol-oge", veri: { acik: "0" } });
+  const dugme = el("button", { sinif: "ust-daha__dugme", attr: { type: "button", "aria-haspopup": "menu", "aria-expanded": "false" } }, ["More", el("span", { html: OK_SVG })]);
+  const ac = (v) => { kutu.dataset.acik = v ? "1" : "0"; dugme.setAttribute("aria-expanded", String(v)); };
+  dugme.addEventListener("click", (e) => { e.stopPropagation(); ac(kutu.dataset.acik !== "1"); });
+  menu.addEventListener("click", () => ac(false));
+  document.addEventListener("click", (e) => { if (!kutu.contains(e.target)) ac(false); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") ac(false); });
+  kutu.append(dugme, menu);
+  kUstYol.append(kutu);
 }
 
 function sekmeleriCiz() {

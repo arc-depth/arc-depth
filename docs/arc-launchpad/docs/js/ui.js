@@ -8,6 +8,22 @@
  * =========================================================================== */
 
 import { ikon } from "./ikon.js";
+import { yolBul, GRUPLAR } from "./yol.js";
+
+/* each rail group has its colour; a page's cover takes the colour of its group */
+const GRUP_RENK = { piyasa: "var(--renk-piyasa)", urunler: "var(--renk-urunler)", varlik: "var(--renk-varlik)", yonetisim: "var(--renk-yonetisim)", guven: "var(--renk-guven)" };
+
+/** The cover art: an orb that breathes, two orbits, three sparks and the module's icon in the middle. */
+export function kapakSanati(ikonAdi) {
+  const sanat = `<svg viewBox="0 0 92 92" aria-hidden="true">
+    <defs><radialGradient id="ksG" cx="38%" cy="32%" r="70%"><stop offset="0" stop-color="#fff" stop-opacity=".55"/><stop offset=".35" stop-color="currentColor" stop-opacity=".9"/><stop offset="1" stop-color="currentColor" stop-opacity=".15"/></radialGradient></defs>
+    <circle class="ks-orb" cx="46" cy="46" r="27" fill="url(#ksG)"/>
+    <g class="ks-yorunge"><ellipse cx="46" cy="46" rx="42" ry="15" fill="none" stroke="currentColor" stroke-opacity=".45" stroke-width="1"/><circle cx="88" cy="46" r="3" fill="currentColor"/></g>
+    <g class="ks-yorunge2"><ellipse cx="46" cy="46" rx="15" ry="42" fill="none" stroke="currentColor" stroke-opacity=".25" stroke-width="1"/><circle cx="46" cy="4" r="2.2" fill="#fff"/></g>
+    <circle class="ks-kivilcim" cx="12" cy="20" r="1.6" fill="#fff"/><circle class="ks-kivilcim" cx="80" cy="14" r="1.2" fill="#fff"/><circle class="ks-kivilcim" cx="74" cy="80" r="1.5" fill="#fff"/>
+  </svg>`;
+  return el("div", { sinif: "kapak-sanat" }, [el("div", { sinif: "kapak-sanat__arka", html: sanat }), el("div", { sinif: "kapak-sanat__ikon", html: ikon(ikonAdi || "pusula") })]);
+}
 
 /** Create an element. `ozellik` takes class/text/html/attrs/on. */
 export function el(etiket, ozellik = {}, cocuklar = []) {
@@ -44,6 +60,27 @@ export function temizle(kap) {
 /* ---- page header ---------------------------------------------------- */
 
 export function sayfaUst(baslik, alt, eylemler = []) {
+  /* the page's own route gives the cover its group, colour, icon and a plain sentence on what the page is for */
+  const yol = (location.hash || "").replace(/^#\/?/, "").split(/[?/]/)[0];
+  const kayit = yol ? yolBul(yol) : yolBul("kesfet");
+  if (kayit) {
+    const grup = GRUPLAR.find((g) => g.anahtar === kayit.grup);
+    /* the plain sentence only when it says something the subtitle does not */
+    const yalin = (x) => String(x || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+    const aciklama = kayit.ozet && !yalin(kayit.ozet).startsWith(yalin(alt).slice(0, 24)) && !yalin(alt).includes(yalin(kayit.ozet).slice(0, 40)) ? kayit.ozet : null;
+    return el("div", { sinif: "sayfa-ust sayfa-ust--kapak", attr: { style: "--kr:" + (GRUP_RENK[kayit.grup] || GRUP_RENK.piyasa) } }, [
+      el("div", { sinif: "sayfa-ust__ic" }, [
+        kapakSanati(kayit.ikon),
+        el("div", { sinif: "sayfa-ust__yazi" }, [
+          grup ? el("div", { sinif: "sayfa-ust__ust", yazi: grup.ad }) : null,
+          el("h1", { yazi: baslik }),
+          alt ? el("div", { sinif: "sayfa-ust__alt", yazi: alt }) : null,
+          aciklama ? el("div", { sinif: "sayfa-ust__aciklama", yazi: aciklama }) : null
+        ])
+      ]),
+      eylemler.length ? el("div", { sinif: "sayfa-ust__eylem" }, eylemler) : null
+    ]);
+  }
   return el("div", { sinif: "sayfa-ust" }, [
     el("div", { sinif: "sayfa-ust__yazi" }, [
       el("h1", { yazi: baslik }),
@@ -51,6 +88,19 @@ export function sayfaUst(baslik, alt, eylemler = []) {
     ]),
     eylemler.length ? el("div", { sinif: "sayfa-ust__eylem" }, eylemler) : null
   ]);
+}
+
+/** Three (or more) steps in plain words, each with an icon that moves a little: how a page's thing works, at a glance. */
+export function adimlar(liste) {
+  return el("div", { sinif: "adimlar" }, liste.map((a, i) => el("div", { sinif: "adim" }, [
+    el("div", { sinif: "adim__ikon", html: ikon(a.ikon || "pusula") }),
+    el("div", {}, [el("div", { sinif: "adim__no", yazi: "Step " + (i + 1) }), el("div", { sinif: "adim__baslik", yazi: a.baslik }), el("div", { sinif: "adim__yazi", yazi: a.yazi })]),
+  ])));
+}
+
+/** Detail most visitors do not need, folded behind a plain question. */
+export function ayrinti(soru, govde) {
+  return el("details", { sinif: "ayrinti" }, [el("summary", { yazi: soru }), typeof govde === "string" ? el("div", { sinif: "ayrinti__govde", yazi: govde }) : govde]);
 }
 
 /* ---- panel ---------------------------------------------------------- */
@@ -73,7 +123,8 @@ export function panel(baslik, govde, sagUst = null, sifirDolgu = false) {
 export function olcum(etiket, deger, alt = null, sinif = "") {
   return el("div", { sinif: "olcum" }, [
     el("div", { sinif: "olcum__etiket", yazi: etiket }),
-    el("div", { sinif: "olcum__deger " + sinif, yazi: deger }),
+    /* a value may be an element (an address with its copy link): put it in, do not print it as text */
+    deger instanceof Node ? el("div", { sinif: "olcum__deger " + sinif }, [deger]) : el("div", { sinif: "olcum__deger " + sinif, yazi: deger }),
     alt ? el("div", { sinif: "olcum__alt", yazi: alt }) : null
   ]);
 }
@@ -126,7 +177,7 @@ export function dagitimBekliyor(yolKaydi) {
  */
 export function yapimda(yolKaydi) {
   return el("div", { sinif: "yok" }, [
-    el("div", { sinif: "etiket", yazi: "YAPILMADI" }),
+    el("div", { sinif: "etiket", yazi: "NOT BUILT YET" }),
     el("div", { sinif: "yok__baslik", yazi: yolKaydi.ad }),
     yolKaydi.ozet ? el("div", { sinif: "yok__yazi", yazi: yolKaydi.ozet }) : null,
     yolKaydi.gerekli ? el("div", { sinif: "yok__yazi", yazi: yolKaydi.gerekli }) : null,

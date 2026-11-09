@@ -1,0 +1,176 @@
+/* ===========================================================================
+ * gorsel.css — the visual layer (9 Nov 2026): page covers with animated art,
+ * a calmer rail (folding groups), the "More" menu in the top bar, and the
+ * small motions that make a static page feel alive. Loaded after bilesen.css;
+ * it changes how things look, never what they do. Motion stops for people who
+ * ask their system for less of it.
+ * =========================================================================== */
+
+:root {
+  --renk-piyasa: #7c5cff;
+  --renk-urunler: #2dd4bf;
+  --renk-varlik: #4da2ff;
+  --renk-yonetisim: #ffb020;
+  --renk-guven: #3ddc97;
+}
+
+/* ---- ambient background: two slow lights behind the content ---------- */
+body::before {
+  content: "";
+  position: fixed;
+  inset: -20vh -10vw auto auto;
+  width: 70vw;
+  height: 70vh;
+  pointer-events: none;
+  z-index: -1;
+  background:
+    radial-gradient(40% 50% at 70% 30%, rgba(124, 92, 255, 0.13), transparent 70%),
+    radial-gradient(35% 45% at 30% 60%, rgba(45, 212, 191, 0.07), transparent 70%);
+  filter: blur(10px);
+  animation: gAura 24s ease-in-out infinite alternate;
+}
+@keyframes gAura { to { transform: translate(-8vw, 10vh) scale(1.15); } }
+
+/* ---- page cover ------------------------------------------------------ */
+.sayfa-ust--kapak {
+  --kr: var(--renk-piyasa);
+  position: relative;
+  align-items: center;
+  padding: 22px 24px;
+  border: 1px solid color-mix(in srgb, var(--kr) 35%, var(--cizgi));
+  border-radius: 20px;
+  overflow: hidden;
+  background:
+    radial-gradient(120% 160% at 0% 0%, color-mix(in srgb, var(--kr) 22%, transparent), transparent 55%),
+    radial-gradient(90% 120% at 100% 100%, color-mix(in srgb, var(--kr) 12%, transparent), transparent 60%),
+    var(--yuzey-1, #0f1115);
+}
+.sayfa-ust--kapak::after {   /* a fine grid that fades out: depth without noise */
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px);
+  background-size: 28px 28px;
+  mask-image: linear-gradient(90deg, transparent, #000 40%, transparent 90%);
+}
+.sayfa-ust--kapak > * { position: relative; z-index: 1; }
+.sayfa-ust__ic { display: flex; align-items: center; gap: 20px; min-width: 0; flex: 1 1 420px; }
+.sayfa-ust__ust {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--kr);
+}
+.sayfa-ust--kapak h1 { font-size: clamp(24px, 2.4vw, 32px); letter-spacing: -.02em; line-height: 1.1; }
+.sayfa-ust__aciklama { font-size: 14px; color: var(--yazi-2); max-width: 760px; line-height: 1.5; }
+
+/* the art: an orb, two orbits, the module's icon, three sparks */
+.kapak-sanat { position: relative; width: 92px; height: 92px; flex: none; color: var(--kr); }
+.kapak-sanat__arka, .kapak-sanat__arka svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.kapak-sanat__ikon { position: absolute; inset: 0; display: grid; place-items: center; color: #fff; }
+.kapak-sanat__ikon svg { width: 30%; height: 30%; filter: drop-shadow(0 2px 6px rgba(0,0,0,.5)); }
+.kapak-sanat .ks-orb { animation: gNefes 5s ease-in-out infinite; transform-origin: 50% 50%; }
+.kapak-sanat .ks-yorunge { animation: gDon 18s linear infinite; transform-origin: 50% 50%; }
+.kapak-sanat .ks-yorunge2 { animation: gDon 26s linear infinite reverse; transform-origin: 50% 50%; }
+.kapak-sanat .ks-kivilcim { animation: gKivilcim 3.2s ease-in-out infinite; }
+.kapak-sanat .ks-kivilcim:nth-of-type(2) { animation-delay: 1.1s; }
+.kapak-sanat .ks-kivilcim:nth-of-type(3) { animation-delay: 2.2s; }
+@keyframes gNefes { 50% { transform: scale(1.06); } }
+@keyframes gDon { to { transform: rotate(360deg); } }
+@keyframes gKivilcim { 0%, 100% { opacity: .15; } 50% { opacity: 1; } }
+
+/* ---- the rail: folding groups --------------------------------------- */
+.ray__baslik--dugme {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  font-size: var(--boy-xs);
+  font-weight: var(--kalin-yari);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--yazi-3);
+  padding: 4px var(--bosluk-3) var(--bosluk-2);
+  border-radius: 8px;
+}
+.ray__baslik--dugme:hover { color: var(--yazi-1); }
+.ray__baslik--dugme i {
+  width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 8px;
+  background: var(--gr, var(--renk-piyasa)); box-shadow: 0 0 10px var(--gr, var(--renk-piyasa));
+}
+.ray__baslik--dugme b { font-weight: inherit; display: flex; align-items: center; }
+.ray__baslik--dugme svg { width: 12px; height: 12px; transition: transform .2s; }
+.ray__grup[data-kapali="1"] .ray__baslik--dugme svg { transform: rotate(-90deg); }
+.ray__grup[data-kapali="1"] .yol-oge { display: none; }
+.ray__sayi { font-size: 10px; opacity: .6; font-weight: 600; letter-spacing: 0; margin-left: auto; margin-right: 6px; }
+
+/* ---- top bar: "More" -------------------------------------------------- */
+.ust-daha { position: relative; }
+.ust-daha__dugme { background: transparent; border: 0; color: inherit; font: inherit; cursor: pointer; display: flex; align-items: center; gap: 4px; }
+.ust-daha__dugme svg { width: 12px; height: 12px; }
+.ust-daha__menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  width: 380px;
+  max-height: 70vh;
+  overflow-y: auto;
+  padding: 8px;
+  border: 1px solid var(--cizgi-guclu);
+  border-radius: 14px;
+  background: #121419;
+  box-shadow: 0 20px 50px rgba(0,0,0,.5);
+  z-index: 60;
+  display: none;
+}
+.ust-daha[data-acik="1"] .ust-daha__menu { display: block; animation: gBelir .15s ease-out; }
+@keyframes gBelir { from { opacity: 0; transform: translateY(-4px); } }
+.ust-daha__menu a { display: flex; gap: 10px; align-items: flex-start; padding: 8px 10px; border-radius: 10px; color: var(--yazi-1); text-decoration: none; }
+.ust-daha__menu a:hover { background: var(--yuzey-2); }
+.ust-daha__menu a svg { width: 16px; height: 16px; margin-top: 2px; flex: none; color: var(--yazi-2); }
+.ust-daha__menu small { display: block; color: var(--yazi-3); font-size: 12px; line-height: 1.35; margin-top: 2px; white-space: normal; }
+.ust-daha__baslik { font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--yazi-4); padding: 8px 10px 4px; }
+
+/* ---- life in the details --------------------------------------------- */
+.panel { transition: border-color .2s, transform .2s, box-shadow .2s; }
+.panel:hover { border-color: var(--cizgi-guclu); }
+.jeton-kart { transition: transform .18s, box-shadow .18s, border-color .18s; }
+.jeton-kart:hover { transform: translateY(-3px); box-shadow: 0 14px 34px rgba(0,0,0,.35); }
+.dugme--marka { background-image: linear-gradient(135deg, var(--marka), #9a6bff 60%, #6d8dff); box-shadow: 0 6px 22px rgba(124, 92, 255, .28); }
+.dugme--marka:hover { filter: brightness(1.08); }
+.icerik > * { animation: gGir .35s ease-out both; }
+@keyframes gGir { from { opacity: 0; transform: translateY(6px); } }
+
+@media (max-width: 860px) {
+  .sayfa-ust--kapak { padding: 16px; }
+  .kapak-sanat { width: 64px; height: 64px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+
+/* ---- steps, folded details, section headings -------------------------- */
+.adimlar { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; }
+.adim { display: flex; gap: 14px; align-items: flex-start; padding: 16px; border: 1px solid var(--cizgi); border-radius: 16px; background: linear-gradient(180deg, rgba(255,255,255,.025), transparent); }
+.adim__ikon { width: 42px; height: 42px; flex: none; border-radius: 12px; display: grid; place-items: center; color: #fff;
+  background: linear-gradient(135deg, var(--marka), #2dd4bf); box-shadow: 0 6px 20px rgba(124, 92, 255, .25); animation: gNefes 4s ease-in-out infinite; }
+.adim:nth-child(2) .adim__ikon { animation-delay: .6s; background: linear-gradient(135deg, #4da2ff, var(--marka)); }
+.adim:nth-child(3) .adim__ikon { animation-delay: 1.2s; background: linear-gradient(135deg, #3ddc97, #4da2ff); }
+.adim__ikon svg { width: 20px; height: 20px; }
+.adim__no { font-size: 10.5px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--yazi-3); }
+.adim__baslik { font-weight: 700; font-size: 15px; margin: 2px 0 4px; }
+.adim__yazi { font-size: 13px; color: var(--yazi-2); line-height: 1.45; }
+.ayrinti { border: 1px dashed var(--cizgi-guclu); border-radius: 12px; padding: 8px 12px; font-size: 13px; color: var(--yazi-2); }
+.ayrinti summary { cursor: pointer; color: var(--yazi-1); font-weight: 600; list-style: none; display: flex; align-items: center; gap: 8px; }
+.ayrinti summary::before { content: "?"; display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; font-size: 11px; font-weight: 800; background: var(--marka-zemin); color: var(--marka-parlak); }
+.ayrinti summary::-webkit-details-marker { display: none; }
+.ayrinti__govde { margin-top: 8px; line-height: 1.5; }
+.bolum-baslik { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.bolum-baslik h2 { font-size: 18px; letter-spacing: -.01em; }

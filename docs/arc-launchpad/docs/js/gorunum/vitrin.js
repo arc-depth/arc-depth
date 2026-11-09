@@ -408,6 +408,17 @@ function alKutusu(t) {
 }
 
 /* ---- page ----------------------------------------------------------- */
+/** The hottest tokens on our chains as a strip of cards (Discover shows it); a tap opens the buy box. */
+export async function trendSeridi(adet = 6) {
+  if (!document.getElementById("vt-stil")) document.head.append(el("style", { attr: { id: "vt-stil" }, yazi: STIL }));
+  const d = await veri(null);
+  const trend = d.trend.filter((t) => t.likidite >= ESIK).slice(0, adet);
+  if (!trend.length) return null;
+  return el("div", { sinif: "vt-trend" }, trend.map((t) => el("div", { sinif: "vt-sat", on: { click: () => alKutusu(t) } }, [
+    resim(t), el("div", { attr: { style: "min-width:0" } }, [el("div", { sinif: "vt-ad" }, [t.ad, el("span", { sinif: "vt-zincir", yazi: t.zincir.ad })]),
+      el("div", { sinif: "vt-k" }, [para(t.fdv) + " ", yuzde(t.degisim)])])])));
+}
+
 export async function ciz() {
   if (!document.getElementById("vt-stil")) document.head.append(el("style", { attr: { id: "vt-stil" }, yazi: STIL }));
   const kap = el("div", {});
