@@ -61,7 +61,10 @@ export const dolar = (ham, ondalik = 6) => Number(BigInt(ham || "0")) / 10 ** on
 export async function ciz() {
   const kap = el("div", { sinif: "yigin" });
   kap.append(sayfaUst("Platform analytics", "Launches, volume, fees and reserves"));
-  await v2Paneli(kap);
+  /* the live read can take a while on a busy RPC: the page opens at once and the panel fills in */
+  const v2Yer = el("div", { sinif: "yigin" });
+  kap.append(v2Yer);
+  v2Paneli(v2Yer).catch((e) => v2Yer.replaceChildren(panel("One pool on Arc (second generation, live)", bos("Could not read", e.message))));
   kap.append(el("h3", { yazi: "First generation (snapshot)" }));
 
   let o;

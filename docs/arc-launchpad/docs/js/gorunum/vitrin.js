@@ -53,7 +53,7 @@ const BIZIM_LP = ["0x52e600c8259ca44D9837B7b9E6BA1faee4bC040d"];   // PulseLaunc
 const LP_ABI = ["function launchCount() view returns (uint256)", "function launchAt(uint256) view returns ((address token, address acici, address kasa, uint256 teminat, address kurucu, uint256 kurucuToken, uint256 teklif, uint256 vergiPpm, uint64 zaman))"];
 const arcOkur = new YedekliOkur();
 let bizimOnbellek = null;
-async function bizimTokenler() {
+export async function bizimTokenler() {
   if (bizimOnbellek && Date.now() - bizimOnbellek.t < 300_000) return bizimOnbellek.v;
   const lpler = [...BIZIM_LP];
   for (const d of ["sepet-v2", "sepet-v9"]) {
