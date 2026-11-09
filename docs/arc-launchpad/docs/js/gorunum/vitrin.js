@@ -9,6 +9,9 @@
  *          typed in). appFees carries the ARC PULSE fee (0.5%) to the fee wallet;
  *          scripts/pazar-ucret.js collects it daily and splits it on Arc:
  *          0.20% ARCP burn, 0.15% developer pool, 0.10% marketing, 0.05% founder.
+ *   launchpads  DefiLlama's public DEX overview: every protocol in its Launchpad
+ *          category, 24 h and 30 d volume on our twelve chains, ranked; ARC PULSE
+ *          among them with the 24 h volume of its own pools (GeckoTerminal).
  * A top tab (ana.js BIRINCIL) and on the rail.
  * =========================================================================== */
 import { el, temizle } from "../ui.js";
@@ -25,17 +28,20 @@ const UCRET_ALICI = "0x89189C84DC95d0520AEeC9c8cF3BA5B9d42611D0";   // the fee w
 
 /* the chains shown: GeckoTerminal's network id, relay's chain id */
 const ZINCIRLER = [
-  { k: "arc", ad: "Arc", gecko: "arc", relay: 5042 },
-  { k: "base", ad: "Base", gecko: "base", relay: 8453 },
-  { k: "solana", ad: "Solana", gecko: "solana", relay: 792703809 },
-  { k: "bsc", ad: "BNB", gecko: "bsc", relay: 56 },
-  { k: "ethereum", ad: "Ethereum", gecko: "eth", relay: 1 },
-  { k: "arbitrum", ad: "Arbitrum", gecko: "arbitrum", relay: 42161 },
-  { k: "avalanche", ad: "Avalanche", gecko: "avax", relay: 43114 },
-  { k: "monad", ad: "Monad", gecko: "monad", relay: 143 },
-  { k: "hyperevm", ad: "HyperEVM", gecko: "hyperevm", relay: 999 },
-  { k: "robinhood", ad: "Robinhood", gecko: "robinhood", relay: 4663 },
+  { k: "arc", ad: "Arc", gecko: "arc", relay: 5042, llama: "arc" },
+  { k: "base", ad: "Base", gecko: "base", relay: 8453, llama: "base" },
+  { k: "solana", ad: "Solana", gecko: "solana", relay: 792703809, llama: "solana" },
+  { k: "bsc", ad: "BNB", gecko: "bsc", relay: 56, llama: "bsc" },
+  { k: "ethereum", ad: "Ethereum", gecko: "eth", relay: 1, llama: "ethereum" },
+  { k: "arbitrum", ad: "Arbitrum", gecko: "arbitrum", relay: 42161, llama: "arbitrum" },
+  { k: "avalanche", ad: "Avalanche", gecko: "avax", relay: 43114, llama: "avax" },
+  { k: "monad", ad: "Monad", gecko: "monad", relay: 143, llama: "monad" },
+  { k: "hyperevm", ad: "HyperEVM", gecko: "hyperevm", relay: 999, llama: "hyperliquid" },
+  { k: "robinhood", ad: "Robinhood", gecko: "robinhood", relay: 4663, llama: "robinhood" },
 ];
+/* the other two of our twelve: in the launchpad ranking only (relay does not reach them, so no token buying) */
+const LP_EK = [{ k: "sui", ad: "Sui", llama: "sui" }, { k: "aptos", ad: "Aptos", llama: "aptos" }];
+const LLAMA_AD = Object.fromEntries([...ZINCIRLER, ...LP_EK].map((z) => [z.llama, z.ad]));
 const geckodan = (id) => ZINCIRLER.find((z) => z.gecko === id);
 
 /* what is shown: a pool needs this much liquidity (USD) to be listed; fresh pools a little less */
@@ -111,6 +117,20 @@ const STIL = `
 .vt-yan{border:1px solid var(--cizgi,#2a2f3a);border-radius:16px;padding:14px;align-self:start;position:sticky;top:12px}
 .vt-sira{display:grid;grid-template-columns:22px 40px minmax(0,1fr) auto;gap:10px;align-items:center;padding:8px;border:1px solid transparent;border-radius:12px;cursor:pointer}
 .vt-sira .r{text-align:right;font-size:13px}
+.vt-mod{display:inline-flex;border:1px solid var(--cizgi,#2a2f3a);border-radius:12px;padding:3px;margin:6px 0 12px}
+.vt-mod button{border:0;background:transparent;color:inherit;padding:8px 16px;border-radius:9px;font-weight:600;font-size:14px;cursor:pointer;opacity:.7}
+.vt-mod button[aria-pressed="true"]{background:rgba(124,92,255,.25);opacity:1}
+.vt-lp{border:1px solid var(--cizgi,#2a2f3a);border-radius:16px;overflow:hidden}
+.vt-lp-sat{display:grid;grid-template-columns:44px 40px minmax(0,1.4fr) minmax(0,1.6fr) 130px 130px 90px;gap:12px;align-items:center;padding:10px 14px;border-top:1px solid var(--cizgi,#2a2f3a)}
+.vt-lp-sat:first-child{border-top:0;font-size:11px;letter-spacing:.06em;text-transform:uppercase;opacity:.6}
+.vt-lp-sat .r{text-align:right}
+.vt-lp-sat img{width:36px;height:36px;border-radius:10px;object-fit:cover;background:#222}
+.vt-lp-sat.biz{background:rgba(124,92,255,.12);box-shadow:inset 3px 0 0 #7c5cff}
+.vt-lp-z{display:flex;gap:4px;flex-wrap:wrap}.vt-lp-z span{font-size:11px;border:1px solid rgba(255,255,255,.18);border-radius:999px;padding:1px 7px}
+@media (max-width:900px){.vt-lp-sat{grid-template-columns:34px 36px minmax(0,1fr) 100px}.vt-lp-sat>:nth-child(4),.vt-lp-sat>:nth-child(6),.vt-lp-sat>:nth-child(7){display:none}}
+.vt-lp-ozet{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.vt-lp-ozet div{border:1px solid var(--cizgi,#2a2f3a);border-radius:14px;padding:12px 16px;min-width:150px}
+.vt-lp-ozet b{display:block;font-size:20px;margin-top:4px}
 .vt-perde{position:fixed;inset:0;background:rgba(0,0,0,.6);display:grid;place-items:center;z-index:50;padding:16px}
 .vt-modal{width:min(440px,100%);background:#14161b;border:1px solid var(--cizgi,#2a2f3a);border-radius:18px;padding:20px;max-height:92vh;overflow:auto}
 .vt-modal label{display:block;font-size:12px;opacity:.7;margin:14px 0 6px}
@@ -203,6 +223,33 @@ async function veri(z) {
   ]);
   if (trend.status === "rejected" && yeni.status === "rejected") throw trend.reason;
   return { trend: trend.value || [], yeni: yeni.value || [] };
+}
+
+/* ---- launchpads: DefiLlama's Launchpad category, volume on our twelve chains ---- */
+const LLAMA = "https://api.llama.fi/overview/dexs?excludeTotalDataChart=true&excludeTotalDataChartBreakdown=true";
+let lpOnbellek = null;
+async function lpVeri() {
+  if (lpOnbellek && Date.now() - lpOnbellek.t < 600_000) return lpOnbellek.v;
+  const r = await fetch(LLAMA).catch(() => null);
+  if (!r || !r.ok) { if (lpOnbellek) return lpOnbellek.v; throw new Error("Launchpad volumes are unavailable right now, try again in a minute."); }
+  const j = await r.json();
+  const v = (j.protocols || []).filter((p) => p.category === "Launchpad").map((p) => ({
+    ad: p.displayName || p.name, logo: p.logo, slug: p.slug, degisim: p.change_1d,
+    g24: p.breakdown24h || {}, g30: p.breakdown30d || {},
+  }));
+  lpOnbellek = { t: Date.now(), v };
+  return v;
+}
+/* the sum of a breakdown ({chain: {protocol: usd}}) over the chains asked */
+const topla = (b, anahtarlar) => anahtarlar.reduce((s, k) => s + Object.values(b[k] || {}).reduce((x, y) => x + Number(y || 0), 0), 0);
+/* ARC PULSE's own 24 h volume: its launches' pools on Arc, as GeckoTerminal counts them */
+async function bizimHacim() {
+  const b = await bizimTokenler().catch(() => []);
+  if (!b.length) return 0;
+  const r = await fetch(GECKO + "/networks/arc/tokens/multi/" + b.map((x) => x.adres).join(","), { headers: { accept: "application/json" } }).catch(() => null);
+  if (!r || !r.ok) return 0;
+  const j = await r.json();
+  return (j.data || []).reduce((s, t) => s + Number((t.attributes.volume_usd && t.attributes.volume_usd.h24) || 0), 0);
 }
 
 /* ---- buy box -------------------------------------------------------- */
@@ -315,12 +362,18 @@ export async function ciz() {
   if (!document.getElementById("vt-stil")) document.head.append(el("style", { attr: { id: "vt-stil" }, yazi: STIL }));
   const kap = el("div", {});
   const govde = el("div", {});
-  let secili = null;
+  let secili = null, mod = "token";
 
+  const modlar = el("div", { sinif: "vt-mod", attr: { role: "tablist" } });
+  const modCiz = () => {
+    temizle(modlar);
+    for (const [m, ad] of [["token", "Tokens"], ["lp", "Launchpads"]]) modlar.append(el("button", { attr: { type: "button", "aria-pressed": String(mod === m) }, yazi: ad,
+      on: { click: () => { if (mod === m) return; mod = m; if (mod === "token" && secili && !secili.gecko) secili = null; modCiz(); cipCiz(); yukle(); } } }));
+  };
   const cipler = el("div", { sinif: "vt-cipler" });
   const cipCiz = () => {
     temizle(cipler);
-    for (const z of [null, ...ZINCIRLER]) cipler.append(el("button", { sinif: "vt-cip", attr: { type: "button", "aria-pressed": String(z === secili) }, yazi: z ? z.ad : "All chains",
+    for (const z of [null, ...ZINCIRLER, ...(mod === "lp" ? LP_EK : [])]) cipler.append(el("button", { sinif: "vt-cip", attr: { type: "button", "aria-pressed": String(z === secili) }, yazi: z ? z.ad : "All chains",
       on: { click: () => { secili = z; cipCiz(); yukle(); } } }));
   };
 
@@ -328,7 +381,44 @@ export async function ciz() {
   async function yukle(sessiz = false) {
     if (yukleniyor) return;
     yukleniyor = true;
-    try { await ciz2(sessiz); } finally { yukleniyor = false; }
+    try { await (mod === "lp" ? lpCiz(sessiz) : ciz2(sessiz)); } finally { yukleniyor = false; }
+  }
+  async function lpCiz(sessiz) {
+    if (!sessiz) temizle(govde).append(el("div", { sinif: "vt-alt", yazi: "Loading launchpad volumes…" }));
+    let lp, biz;
+    try { [lp, biz] = await Promise.all([lpVeri(), (!secili || secili.k === "arc") ? bizimHacim() : Promise.resolve(0)]); }
+    catch (e) { if (!sessiz) temizle(govde).append(el("div", { sinif: "vt-alt", yazi: e.message })); return; }
+    const anahtar = secili ? [secili.llama] : [...ZINCIRLER, ...LP_EK].map((z) => z.llama);
+    const satirlar = lp.map((p) => ({ ...p, v24: topla(p.g24, anahtar), v30: topla(p.g30, anahtar),
+      zincirler: Object.keys(p.g24).filter((k) => LLAMA_AD[k] && topla(p.g24, [k]) > 0).map((k) => LLAMA_AD[k]) }))
+      .filter((p) => p.v24 > 0 || p.v30 > 0);
+    if (!secili || secili.k === "arc") satirlar.push({ ad: "ARC PULSE", biz: true, v24: biz, v30: null, degisim: null, zincirler: ["12 chains"] });
+    satirlar.sort((a, b) => b.v24 - a.v24 || (b.v30 || 0) - (a.v30 || 0));
+    const sira = satirlar.findIndex((p) => p.biz) + 1;
+    const toplam = satirlar.reduce((s, p) => s + p.v24, 0);
+    const lider = satirlar[0];
+    const ozet = el("div", { sinif: "vt-lp-ozet" }, [
+      el("div", {}, [el("span", { sinif: "vt-k", yazi: "Launchpads with volume" }), el("b", { yazi: String(satirlar.filter((p) => p.v24 > 0).length) })]),
+      el("div", {}, [el("span", { sinif: "vt-k", yazi: "24h launchpad volume" }), el("b", { yazi: para(toplam) })]),
+      lider ? el("div", {}, [el("span", { sinif: "vt-k", yazi: "#1 on " + (secili ? secili.ad : "our 12 chains") }), el("b", { yazi: lider.ad })]) : null,
+      sira ? el("div", {}, [el("span", { sinif: "vt-k", yazi: "ARC PULSE rank" }), el("b", { yazi: "#" + sira + " of " + satirlar.length })]) : null,
+    ]);
+    const bas = el("div", { sinif: "vt-lp-sat" }, [el("span", { yazi: "#" }), el("span"), el("span", { yazi: "Launchpad" }), el("span", { yazi: "Chains" }),
+      el("span", { sinif: "r", yazi: "Volume 24h" }), el("span", { sinif: "r", yazi: "Volume 30d" }), el("span", { sinif: "r", yazi: "24h" })]);
+    /* the top 60, and ARC PULSE always, at its real rank */
+    const gosterilen = satirlar.map((p, i) => ({ ...p, no: i + 1 })).filter((p) => p.no <= 60 || p.biz);
+    const govdeSat = gosterilen.map((p) => el("div", { sinif: "vt-lp-sat" + (p.biz ? " biz" : "") }, [
+      el("span", { sinif: "vt-k", yazi: String(p.no) }),
+      p.biz ? el("div", { sinif: "vt-ikon", attr: { style: "background:#7c5cff;width:36px;height:36px" }, yazi: "AP" })
+        : (p.logo ? el("img", { attr: { src: p.logo, alt: "", loading: "lazy", referrerpolicy: "no-referrer" } }) : el("span")),
+      el("div", { attr: { style: "min-width:0" } }, [el("div", { sinif: "vt-ad" }, [p.ad, p.biz ? el("span", { sinif: "vt-teminat", yazi: "OURS · COLLATERAL-BACKED" }) : null])]),
+      el("div", { sinif: "vt-lp-z" }, p.zincirler.slice(0, 5).map((z) => el("span", { yazi: z })).concat(p.zincirler.length > 5 ? [el("span", { yazi: "+" + (p.zincirler.length - 5) })] : [])),
+      el("b", { sinif: "r", yazi: p.v24 > 0 ? para(p.v24) : "$0" }),
+      el("span", { sinif: "r", yazi: p.v30 == null ? "—" : para(p.v30) }),
+      el("span", { sinif: "r" }, [p.degisim == null ? "—" : yuzde(p.degisim)]),
+    ]));
+    temizle(govde).append(ozet, el("div", { sinif: "vt-lp" }, [bas, ...govdeSat]),
+      el("p", { sinif: "vt-k", attr: { style: "margin-top:10px" }, yazi: "Volumes from DefiLlama (Launchpad category), counted on " + (secili ? secili.ad : "Arc, Base, Solana, BNB, Ethereum, Arbitrum, Avalanche, Monad, HyperEVM, Robinhood, Sui and Aptos") + ". ARC PULSE: the 24 h volume of its own pools on Arc. 24h change is the launchpad's total across all its chains." }));
   }
   async function ciz2(sessiz) {
     if (!sessiz) temizle(govde).append(el("div", { sinif: "vt-alt", yazi: "Loading live markets…" }));
@@ -378,7 +468,8 @@ export async function ciz() {
   kap.append(
     el("h1", { attr: { style: "margin:0;font-size:26px" } }, ["Market", el("span", { sinif: "vt-canli" }, [el("i"), "live"])]),
     el("p", { sinif: "vt-alt", yazi: "Every token on 10 chains in one place. Buy any of them with the dollars you hold on any chain, in one tap." }),
-    cipler, govde);
+    modlar, cipler, govde);
+  modCiz();
   cipCiz();
   yukle();
   /* live while the page is open: the market every 45 s (not while a buy box is open or the tab is hidden), the ages every second */
