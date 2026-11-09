@@ -38,6 +38,8 @@ const ZINCIRLER = [
   { k: "monad", ad: "Monad", gecko: "monad", relay: 143, llama: "monad" },
   { k: "hyperevm", ad: "HyperEVM", gecko: "hyperevm", relay: 999, llama: "hyperliquid" },
   { k: "robinhood", ad: "Robinhood", gecko: "robinhood", relay: 4663, llama: "robinhood" },
+  /* Elysium (9 Nov 2026): listed from GeckoTerminal; relay routes to it (chain 99901, native HYPE) though its chain list does not show it */
+  { k: "elysium", ad: "Elysium", gecko: "elysium", relay: 99901, llama: null },
 ];
 /* the other two of our twelve: in the launchpad ranking only (relay does not reach them, so no token buying) */
 const LP_EK = [{ k: "sui", ad: "Sui", llama: "sui" }, { k: "aptos", ad: "Aptos", llama: "aptos" }];
@@ -316,6 +318,25 @@ async function makbuz(ag, hash) {
 
 function alKutusu(t) {
   const perde = el("div", { sinif: "vt-perde", on: { click: (e) => { if (e.target === perde) perde.remove(); } } });
+  /* a chain relay cannot route to: the token's facts and its chart on its own chain, no payment form */
+  if (!t.zincir.relay) {
+    perde.append(el("div", { sinif: "vt-modal" }, [
+      el("button", { sinif: "dugme dugme--sade", attr: { type: "button", style: "float:right" }, yazi: "✕", on: { click: () => perde.remove() } }),
+      el("div", { sinif: "vt-one-ust" }, [resim(t), el("div", {}, [el("div", { sinif: "vt-ad", attr: { style: "font-size:20px" }, yazi: t.ad }),
+        el("div", { sinif: "vt-k" }, ["$" + t.sembol, el("span", { sinif: "vt-zincir", yazi: t.zincir.ad })])])]),
+      el("div", { sinif: "vt-ozet" }, [
+        el("div", {}, [el("span", { attr: { style: "opacity:.7" }, yazi: "Price" }), el("b", { yazi: para(t.fiyat) })]),
+        el("div", {}, [el("span", { attr: { style: "opacity:.7" }, yazi: "Market cap" }), el("b", { yazi: para(t.fdv) })]),
+        el("div", {}, [el("span", { attr: { style: "opacity:.7" }, yazi: "24h" }), yuzde(t.degisim)]),
+        el("div", {}, [el("span", { attr: { style: "opacity:.7" }, yazi: "24h volume" }), el("b", { yazi: para(t.hacim) })]),
+        el("div", {}, [el("span", { attr: { style: "opacity:.7" }, yazi: "Liquidity" }), el("b", { yazi: para(t.likidite) })]),
+      ]),
+      el("div", { sinif: "vt-uyari", yazi: "Buying " + t.zincir.ad + " tokens from another chain is not available yet: no cross-chain route reaches " + t.zincir.ad + " today. Trade it on " + t.zincir.ad + " itself; we add the route as soon as one exists." }),
+      el("a", { sinif: "dugme dugme--marka", attr: { href: "https://www.geckoterminal.com/" + t.zincir.gecko + "/pools/" + t.havuz, target: "_blank", rel: "noopener noreferrer", style: "width:100%;margin-top:14px;justify-content:center" }, yazi: "Open the chart on " + t.zincir.ad + " ↗" }),
+    ]));
+    document.body.append(perde);
+    return;
+  }
   const ben = cuzdan.hesap();
   const kaynak = el("select", {}, evmler().map((a) => el("option", { attr: { value: a.anahtar, selected: a.anahtar === (t.zincir.k === "solana" ? "base" : t.zincir.k) ? true : null }, yazi: a.ad + " · " + (a.dolarSembol || "USDC") })));
   if (!evmler().some((a) => a.anahtar === kaynak.value)) kaynak.value = "base";
@@ -443,21 +464,29 @@ export async function ciz() {
   const cipler = el("div", { sinif: "vt-cipler" });
   const cipCiz = () => {
     temizle(cipler);
-    for (const z of [null, ...ZINCIRLER, ...(mod === "lp" ? LP_EK : [])]) cipler.append(el("button", { sinif: "vt-cip", attr: { type: "button", "aria-pressed": String(z === secili) }, yazi: z ? z.ad : "All chains",
+    for (const z of [null, ...(mod === "lp" ? ZINCIRLER.filter((x) => x.llama) : ZINCIRLER), ...(mod === "lp" ? LP_EK : [])]) cipler.append(el("button", { sinif: "vt-cip", attr: { type: "button", "aria-pressed": String(z === secili) }, yazi: z ? z.ad : "All chains",
       on: { click: () => { secili = z; cipCiz(); yukle(); } } }));
   };
 
-  let yukleniyor = false;
+  /* one draw at a time; a chain or tab picked while one runs is drawn right after it (not dropped),
+     and a draw for a choice that changed meanwhile is discarded (sira) */
+  let yukleniyor = false, bekleyen = null, sira = 0;
   async function yukle(sessiz = false) {
-    if (yukleniyor) return;
+    if (yukleniyor) { if (!sessiz || bekleyen === null) bekleyen = sessiz; return; }
     yukleniyor = true;
-    try { await (mod === "lp" ? lpCiz(sessiz) : ciz2(sessiz)); } finally { yukleniyor = false; }
+    const bu = ++sira;
+    try { await (mod === "lp" ? lpCiz(sessiz, bu) : ciz2(sessiz, bu)); } finally {
+      yukleniyor = false;
+      if (bekleyen !== null) { const s = bekleyen; bekleyen = null; yukle(s); }
+    }
   }
-  async function lpCiz(sessiz) {
+  const eski = (bu) => bu !== sira || bekleyen !== null;
+  async function lpCiz(sessiz, bu) {
     if (!sessiz) temizle(govde).append(el("div", { sinif: "vt-alt", yazi: "Loading launchpad volumes…" }));
     let lp, biz;
     try { [lp, biz] = await Promise.all([lpVeri(), (!secili || secili.k === "arc") ? bizimHacim() : Promise.resolve(0)]); }
-    catch (e) { if (!sessiz) temizle(govde).append(el("div", { sinif: "vt-alt", yazi: e.message })); return; }
+    catch (e) { if (!sessiz && !eski(bu)) temizle(govde).append(el("div", { sinif: "vt-alt", yazi: e.message })); return; }
+    if (eski(bu)) return;
     const anahtar = secili ? [secili.llama] : [...ZINCIRLER, ...LP_EK].map((z) => z.llama);
     const satirlar = lp.map((p) => ({ ...p, v24: topla(p.g24, anahtar), v30: topla(p.g30, anahtar),
       zincirler: Object.keys(p.g24).filter((k) => LLAMA_AD[k] && topla(p.g24, [k]) > 0).map((k) => LLAMA_AD[k]) }))
@@ -490,10 +519,11 @@ export async function ciz() {
     temizle(govde).append(ozet, el("div", { sinif: "vt-lp" }, [bas, ...govdeSat]),
       el("p", { sinif: "vt-k", attr: { style: "margin-top:10px" }, yazi: "Volumes from DefiLlama (Launchpad category), counted on " + (secili ? secili.ad : "Arc, Base, Solana, BNB, Ethereum, Arbitrum, Avalanche, Monad, HyperEVM, Robinhood, Sui and Aptos") + ". ARC PULSE: the 24 h volume of its own pools on Arc. 24h change is the launchpad's total across all its chains." }));
   }
-  async function ciz2(sessiz) {
+  async function ciz2(sessiz, bu) {
     if (!sessiz) temizle(govde).append(el("div", { sinif: "vt-alt", yazi: "Loading live markets…" }));
     let d;
-    try { d = await veri(secili); } catch (e) { if (!sessiz) temizle(govde).append(el("div", { sinif: "vt-alt", yazi: e.message })); return; }
+    try { d = await veri(secili); } catch (e) { if (!sessiz && !eski(bu)) temizle(govde).append(el("div", { sinif: "vt-alt", yazi: e.message })); return; }
+    if (eski(bu)) return;
     const trend = d.trend.filter((t) => t.likidite >= ESIK);
     const yeni = d.yeni.filter((t) => t.likidite >= ESIK_YENI).sort((a, b) => Date.parse(b.kuruldu) - Date.parse(a.kuruldu));
     if (!trend.length && !yeni.length) { temizle(govde).append(el("div", { sinif: "vt-alt", yazi: "No markets on this chain right now." })); return; }
@@ -535,6 +565,7 @@ export async function ciz() {
       el("p", { sinif: "vt-alt", yazi: "One pool on Arc, a collateral basket behind every token, tradable from twelve chains." }),
       el("div", { sinif: "vt-bizim" }, bizim.map((b) => el("a", { attr: { href: "#/merkez?t=" + b.adres } }, [ikonYok({ adres: b.adres, sembol: b.sembol || "?" }),
         el("div", {}, [el("div", { sinif: "vt-ad", yazi: b.ad }), el("div", { sinif: "vt-k", yazi: "$" + b.sembol + " · " + once(new Date(b.zaman * 1000).toISOString()) })])])))] : [];
+    if (eski(bu)) return;
     temizle(govde).append(el("div", { sinif: "vt" }, [
       el("div", { attr: { style: "min-width:0" } }, [...serit, hero,
         el("h2", { sinif: "vt-h2", yazi: "Trending" }), el("p", { sinif: "vt-alt", yazi: "Moving on real volume in the last 24 hours. Tap any token to buy it from any chain." }), trendIzgara,
@@ -544,7 +575,7 @@ export async function ciz() {
 
   kap.append(
     el("h1", { attr: { style: "margin:0;font-size:26px" } }, ["Market", el("span", { sinif: "vt-canli" }, [el("i"), "live"])]),
-    el("p", { sinif: "vt-alt", yazi: "Every token on 10 chains in one place. Buy any of them with the dollars you hold on any chain, in one tap." }),
+    el("p", { sinif: "vt-alt", yazi: "Every token on 11 chains in one place. Buy any of them with the dollars you hold on any chain, in one tap." }),
     modlar, cipler, govde);
   modCiz();
   cipCiz();

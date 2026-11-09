@@ -51,7 +51,7 @@ export async function ciz({ param }) {
   if (!liste.length) {
     /* this terminal reads the first-generation registry, which is empty; the launches live on the
        one-pool registries, each traded on its own page, and every other token is in Market */
-    kap.append(sayfaUst("Trade", "Buy and sell any ARC PULSE token from twelve chains, or any token on ten chains in Market"));
+    kap.append(sayfaUst("Trade", "Buy and sell any ARC PULSE token from twelve chains, or any token on eleven chains in Market"));
     const bizim = await import("./vitrin.js").then((m) => m.bizimTokenler()).catch(() => []);
     if (bizim.length) {
       kap.append(panel("ARC PULSE tokens", el("div", { sinif: "izgara izgara--kart" }, bizim.map((b) => el("a", { sinif: "jeton-kart", attr: { href: "#/merkez?t=" + b.adres } }, [
@@ -59,8 +59,8 @@ export async function ciz({ param }) {
           el("div", { sinif: "jeton__yazi" }, [el("div", { sinif: "jeton__sembol", yazi: b.sembol || "?" }), el("div", { sinif: "jeton__ad", yazi: b.ad || "" })])]),
         el("div", { sinif: "yazi yazi--kucuk yazi--sessiz", yazi: "Buy, sell or redeem from any chain →" }),
       ])))));
-    } else kap.append(bos("No tokens yet", "The first launch appears here. Until then, every token on ten chains is one click away in Market."));
-    kap.append(el("a", { sinif: "dugme dugme--marka", attr: { href: "#/vitrin", style: "align-self:flex-start" }, yazi: "Open Market: every token on ten chains →" }));
+    } else kap.append(bos("No tokens yet", "The first launch appears here. Until then, every token on eleven chains is one click away in Market."));
+    kap.append(el("a", { sinif: "dugme dugme--marka", attr: { href: "#/vitrin", style: "align-self:flex-start" }, yazi: "Open Market: every token on eleven chains →" }));
     return kap;
   }
 

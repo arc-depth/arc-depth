@@ -159,7 +159,7 @@ export async function ciz({ param }) {
   /* the hottest tokens on our chains right now, bought from any chain (Market); never blocks the page */
   if (!arama) {
     const yer = el("div");
-    kap.append(el("div", { sinif: "yigin yigin--sik" }, [el("div", { sinif: "bolum-baslik" }, [el("h2", { yazi: "Hot right now on 10 chains" }),
+    kap.append(el("div", { sinif: "yigin yigin--sik" }, [el("div", { sinif: "bolum-baslik" }, [el("h2", { yazi: "Hot right now on 11 chains" }),
       el("a", { sinif: "dugme dugme--sade dugme--kucuk", attr: { href: "#/vitrin" }, yazi: "Open Market →" })]), yer]));
     import("./vitrin.js").then((m) => m.trendSeridi(8)).then((x) => { if (x) yer.replaceWith(x); else yer.remove(); }).catch(() => yer.remove());
   }
