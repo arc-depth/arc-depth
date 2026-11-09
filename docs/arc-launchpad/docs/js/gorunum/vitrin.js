@@ -131,6 +131,19 @@ const STIL = `
 .vt-lp-ozet{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px}
 .vt-lp-ozet div{border:1px solid var(--cizgi,#2a2f3a);border-radius:14px;padding:12px 16px;min-width:150px}
 .vt-lp-ozet b{display:block;font-size:20px;margin-top:4px}
+.vt-vitrin{position:relative;border-radius:18px;overflow:hidden;min-height:310px;background:#111}
+.vt-slayt{position:absolute;inset:0;opacity:0;pointer-events:none;transition:opacity .6s}
+.vt-slayt.acik{opacity:1;pointer-events:auto}
+.vt-vitrin .vt-one{position:absolute;inset:0;min-height:0;border-radius:0}
+.vt-noktalar{position:absolute;right:24px;bottom:18px;display:flex;gap:6px;z-index:2}
+.vt-noktalar button{width:18px;height:4px;border-radius:2px;border:0;background:rgba(255,255,255,.3);cursor:pointer;padding:0}
+.vt-noktalar button.acik{width:32px;background:#fff}
+.vt-os{align-items:flex-start;background:radial-gradient(120% 140% at 0% 0%,rgba(61,220,151,.28),transparent 55%),radial-gradient(120% 140% at 100% 100%,rgba(124,92,255,.35),transparent 55%),#101218}
+.vt-os-et{display:inline-flex;align-items:center;gap:7px;font-size:11px;font-weight:700;letter-spacing:.08em;color:#3ddc97;border:1px solid #3ddc9766;border-radius:999px;padding:4px 10px;margin-bottom:12px}
+.vt-os-et i{width:7px;height:7px;border-radius:50%;background:#3ddc97;animation:vtNabiz 1.6s infinite}
+.vt-os-cubuk{height:8px;border-radius:4px;background:rgba(255,255,255,.1);margin-top:16px;max-width:520px;overflow:hidden}
+.vt-os-cubuk i{display:block;height:100%;background:linear-gradient(90deg,#3ddc97,#7c5cff)}
+.vt-os-dugme{display:inline-block;margin-top:16px;background:#3ddc97;color:#05130c;font-weight:800;border-radius:10px;padding:9px 16px;text-decoration:none}
 .vt-perde{position:fixed;inset:0;background:rgba(0,0,0,.6);display:grid;place-items:center;z-index:50;padding:16px}
 .vt-modal{width:min(440px,100%);background:#14161b;border:1px solid var(--cizgi,#2a2f3a);border-radius:18px;padding:20px;max-height:92vh;overflow:auto}
 .vt-modal label{display:block;font-size:12px;opacity:.7;margin:14px 0 6px}
@@ -252,6 +265,43 @@ async function bizimHacim() {
   return (j.data || []).reduce((s, t) => s + Number((t.attributes.volume_usd && t.attributes.volume_usd.h24) || 0), 0);
 }
 
+/* ---- the ARCP presale, first slide of the showcase: read from Arc, a minute at most old ---- */
+let osOnbellek = null;
+async function onSatis() {
+  if (osOnbellek && Date.now() - osOnbellek.t < 60_000) return osOnbellek.v;
+  const k = await fetch("veri/arcp2.json").then((x) => (x.ok ? x.json() : null)).catch(() => null);
+  if (!k || !k.canli || !k.onSatis) return null;
+  const o = new Contract(k.onSatis, ["function tur() view returns (uint256)", "function turToplam(uint256) view returns (uint256)", "function turBitis(uint256) view returns (uint256)",
+    "function katilimciSayisi(uint256) view returns (uint256)", "function kuruldu() view returns (bool)", "function dolu() view returns (bool)"], arcOkur);
+  const tur = await o.tur();
+  const [toplam, bitis, kisi, kuruldu, dolu] = await Promise.all([o.turToplam(tur), o.turBitis(tur), o.katilimciSayisi(tur), o.kuruldu(), o.dolu()]);
+  const v = { tur: Number(tur) + 1, toplam: Number(toplam) / 1e6, bitis: Number(bitis), kisi: Number(kisi), kuruldu, dolu };
+  osOnbellek = { t: Date.now(), v };
+  return v;
+}
+function kalan(sn) {
+  const s = Math.max(0, sn - Date.now() / 1000), g = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600), m = Math.floor((s % 3600) / 60);
+  return g > 0 ? g + "d " + h + "h" : h + "h " + m + "m";
+}
+function osSlayt(o) {
+  const hedef = 15000, y = Math.min(100, (o.toplam / hedef) * 100);
+  const baslik = o.kuruldu ? "ARCP is trading" : o.dolu ? "The presale is full" : "Round " + o.tur + " is live";
+  return el("a", { sinif: "vt-one vt-os", attr: { href: "presale.html", style: "text-decoration:none;color:inherit" } }, [
+    el("div", { sinif: "vt-os-et" }, [el("i"), o.kuruldu ? "ARCP · LIVE ON ARC" : "ARCP PRESALE · " + baslik.toUpperCase()]),
+    el("div", { sinif: "vt-one-ad", yazi: o.kuruldu ? "ARCP is trading on Arc" : "250,000,000 ARCP for $15,000" }),
+    el("div", { sinif: "vt-k", attr: { style: "margin-top:6px;font-size:14px" }, yazi: o.kuruldu ? "The token every ARC PULSE trade buys and burns. Stake it for USDC." :
+      "$10 to $250 per wallet. Every dollar goes into the pool as locked liquidity. Not filled in 30 days: everyone is refunded." }),
+    o.kuruldu ? null : el("div", { sinif: "vt-os-cubuk" }, [el("i", { attr: { style: "width:" + Math.max(1.5, y) + "%" } })]),
+    o.kuruldu ? null : el("div", { sinif: "vt-one-stat" }, [
+      el("div", {}, ["Raised", el("b", { yazi: (o.toplam > 0 ? para(o.toplam) : "$0") + " of $15K" })]),
+      el("div", {}, ["Buyers", el("b", { yazi: String(o.kisi) })]),
+      el("div", {}, ["Ends in", el("b", { veri: { bitis: o.bitis }, yazi: kalan(o.bitis) })]),
+      el("div", {}, ["Presale price", el("b", { yazi: "$0.00006" })]),
+    ]),
+    el("span", { sinif: "vt-os-dugme", yazi: o.kuruldu ? "Buy ARCP" : "Join the presale" }),
+  ]);
+}
+
 /* ---- buy box -------------------------------------------------------- */
 const evmler = () => AGLAR.filter((a) => /^0x/.test(a.dolar || ""));
 const dolarHam = (ag, usd) => BigInt(Math.round(usd * 1e6)) * 10n ** BigInt(ag.anahtar === "bsc" ? 12 : 0);
@@ -363,6 +413,15 @@ export async function ciz() {
   const kap = el("div", {});
   const govde = el("div", {});
   let secili = null, mod = "token";
+  /* the showcase's slide survives the 45 s refresh; hovering holds it */
+  let heroNo = 0, heroDur = false;
+  const heroGoster = (i) => {
+    const s = govde.querySelectorAll(".vt-slayt"), n = govde.querySelectorAll(".vt-noktalar button");
+    if (!s.length) return;
+    heroNo = ((i % s.length) + s.length) % s.length;
+    s.forEach((x, j) => x.classList.toggle("acik", j === heroNo));
+    n.forEach((x, j) => x.classList.toggle("acik", j === heroNo));
+  };
 
   const modlar = el("div", { sinif: "vt-mod", attr: { role: "tablist" } });
   const modCiz = () => {
@@ -427,10 +486,8 @@ export async function ciz() {
     const trend = d.trend.filter((t) => t.likidite >= ESIK);
     const yeni = d.yeni.filter((t) => t.likidite >= ESIK_YENI).sort((a, b) => Date.parse(b.kuruldu) - Date.parse(a.kuruldu));
     if (!trend.length && !yeni.length) { temizle(govde).append(el("div", { sinif: "vt-alt", yazi: "No markets on this chain right now." })); return; }
-    const one = trend[0] || yeni[0];
     const ac = (t) => () => alKutusu(t);
-
-    const hero = el("div", { sinif: "vt-one", on: { click: ac(one) } }, [
+    const tokenSlayt = (one) => el("div", { sinif: "vt-one", on: { click: ac(one) } }, [
       one.resim ? el("img", { sinif: "bg", attr: { src: one.resim, alt: "", referrerpolicy: "no-referrer" } }) : null,
       el("div", { sinif: "vt-one-ust" }, [resim(one), el("div", {}, [el("div", { sinif: "vt-one-ad", yazi: one.ad }),
         el("div", { sinif: "vt-k" }, ["$" + one.sembol, el("span", { sinif: "vt-zincir", yazi: one.zincir.ad })])])]),
@@ -441,7 +498,16 @@ export async function ciz() {
         el("div", {}, ["Trades 24h", el("b", { yazi: Number(one.islem).toLocaleString("en-US") })]),
       ]),
     ]);
-    const trendIzgara = el("div", { sinif: "vt-trend" }, trend.slice(1, 13).map((t) => el("div", { sinif: "vt-sat", on: { click: ac(t) } }, [
+    /* the showcase: our presale first, then the five hottest tokens, turning every 6 s */
+    const os = await onSatis().catch(() => null);
+    const slaytlar = [...(os ? [osSlayt(os)] : []), ...(trend.length ? trend : yeni).slice(0, 5).map(tokenSlayt)];
+    heroNo = heroNo % slaytlar.length;
+    const noktalar = el("div", { sinif: "vt-noktalar" });
+    const hero = el("div", { sinif: "vt-vitrin", on: { mouseenter: () => { heroDur = true; }, mouseleave: () => { heroDur = false; } } },
+      [...slaytlar.map((x, i) => el("div", { sinif: "vt-slayt" + (i === heroNo ? " acik" : "") }, [x])), noktalar]);
+    slaytlar.forEach((x, i) => noktalar.append(el("button", { sinif: i === heroNo ? "acik" : "", attr: { type: "button", "aria-label": "Slide " + (i + 1) },
+      on: { click: (e) => { e.stopPropagation(); heroGoster(i); } } })));
+    const trendIzgara = el("div", { sinif: "vt-trend" }, trend.slice(0, 12).map((t) => el("div", { sinif: "vt-sat", on: { click: ac(t) } }, [
       resim(t), el("div", { attr: { style: "min-width:0" } }, [el("div", { sinif: "vt-ad" }, [t.ad, el("span", { sinif: "vt-zincir", yazi: t.zincir.ad })]),
         el("div", { sinif: "vt-k" }, [para(t.fdv) + " ", yuzde(t.degisim)])])])));
     const kartlar = el("div", { sinif: "vt-kartlar" }, yeni.slice(0, 16).map((t) => el("div", { sinif: "vt-kart", on: { click: ac(t) } }, [
@@ -482,6 +548,11 @@ export async function ciz() {
   const saat = setInterval(() => {
     if (!document.body.contains(kap)) return;
     for (const r of kap.querySelectorAll(".vt-rozet[data-zaman]")) r.textContent = once(r.dataset.zaman);
+    for (const r of kap.querySelectorAll("[data-bitis]")) r.textContent = kalan(Number(r.dataset.bitis));
   }, 1000);
+  const donme = setInterval(() => {
+    if (!document.body.contains(kap)) { clearInterval(donme); return; }
+    if (!heroDur && !document.hidden) heroGoster(heroNo + 1);
+  }, 6000);
   return kap;
 }
