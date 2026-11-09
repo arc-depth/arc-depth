@@ -160,6 +160,9 @@ export async function ciz() {
       "collateral in this project." })
   ]));
 
+  kap.append(panel("Elysium — paid through relay.link", [
+    el("p", { yazi: "Elysium (chain 99901, gas in HYPE) is the thirteenth chain. relay.link routes it both ways: an Elysium wallet pays HYPE or USDCe and the launch or the buy runs on Arc in the same request; Arc can also pay out to Elysium. LayerZero does not reach Elysium, so there is no twin and no basket vault there yet: what an Elysium wallet buys is delivered to the same address on Arc. Elysium tokens themselves are listed in Market and can be bought there from any chain." }),
+  ]));
   kap.append(panel("CCTP v2 — the only real path for USDC", [
     el("div", { sinif: "ikincil" }, [
       el("p", { yazi:

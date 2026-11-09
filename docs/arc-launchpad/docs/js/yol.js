@@ -117,7 +117,7 @@ export const YOLLAR = [
     grup: "piyasa",
     ikon: "pusula",
     durum: "canli",
-    ozet: "Buy ARCP with your chain's USDC or SOL from any chain, delivered on Arc; sell it in the same pool on Arc.",
+    ozet: "ARCP 2, the platform token: its presale live on Arc, its supply contract by contract; after the pool opens, bought from any of thirteen chains.",
     kaynak: "relay.link + ARCP pool (Uniswap v4, Arc) + SwapRouter",
     sekme: true
   },

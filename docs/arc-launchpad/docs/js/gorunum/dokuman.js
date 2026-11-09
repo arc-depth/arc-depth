@@ -28,6 +28,7 @@ export async function ciz() {
         "(the EVM twins in their Arc adapter, the Solana / Sui / Aptos twins in the twin hub) and the same amount minted there. " +
         "Supply is fixed at 1,000,000,000; there is no mint function, only burn. Twins are moved by LayerZero, dollars by Circle " +
         "(CCTP with forwarding) or relay.link; nothing waits on a machine of ours." }),
+      el("p", { attr: { style: "margin-top:10px" }, yazi: "The thirteenth chain, Elysium, is a pay-from chain: an Elysium wallet launches and buys in HYPE through relay.link and receives on Arc. LayerZero does not reach Elysium, so no twin and no vault live there yet; Elysium's own tokens are in Market, buyable from any chain." }),
     ]),
   ]));
 

@@ -13,7 +13,7 @@
  *         same pool, with a minimum enforced on chain: USDC to your address
  *         on Arc. The pool's USDC side is what buyers have put in.
  * =========================================================================== */
-import { el, sayfaUst, panel, not, temizle, olcum } from "../ui.js";
+import { el, sayfaUst, panel, not, temizle, olcum, ayrinti } from "../ui.js";
 import { FTHM as ARCP, fthmDurum as arcpDurum } from "../fthm-veri.js";
 import { AGLAR, ELYSIUM } from "../aglar.js";
 import { cuzdan } from "../cuzdan.js";
@@ -67,7 +67,80 @@ const tekSefer = (dugme, fn) => async () => {
   try { await fn(); } finally { dugme._mesgul = false; dugme.disabled = false; }
 };
 
-export async function ciz() {
+/* ===========================================================================
+ * ARCP 2 (9 Nov 2026): the page leads with the new ARCP, its presale and its supply, read live from
+ * Arc (docs/veri/arcp2.json + the token's balances). Its own buy box opens with its pool; until then
+ * buying ARCP is the presale. The previous ARCP contract, its figures and its buy / sell panels stay
+ * below, folded: nothing it did is taken away.
+ * =========================================================================== */
+const TUR_ABI = ["function tur() view returns (uint256)", "function turToplam(uint256) view returns (uint256)", "function turBitis(uint256) view returns (uint256)",
+  "function katilimciSayisi(uint256) view returns (uint256)", "function kuruldu() view returns (bool)", "function dolu() view returns (bool)"];
+export async function ciz(arg) {
+  const k = await fetch("veri/arcp2.json").then((x) => (x.ok ? x.json() : null)).catch(() => null);
+  if (!k || !k.canli) return eskiCiz(arg);
+  const kap = el("div", { sinif: "yigin" });
+  kap.append(sayfaUst("ARCP", "Arc Pulse — the token every ARC PULSE trade buys and burns, now in its second contract (ARCP 2)", [
+    el("a", { sinif: "dugme dugme--marka", attr: { href: "presale.html" }, yazi: "Join the presale" })]));
+  const ok = new YedekliOkur();
+  const os = new Contract(k.onSatis, TUR_ABI, ok);
+  const tk = new Contract(k.token, ["function balanceOf(address) view returns (uint256)", "function totalSupply() view returns (uint256)"], ok);
+  const sayi = (x) => Math.round(x).toLocaleString("en-US");
+  const kalan = (sn) => { const z = Math.max(0, sn - Date.now() / 1000); return Math.floor(z / 86400) + "d " + Math.floor((z % 86400) / 3600) + "h"; };
+
+  /* the presale, live */
+  const satis = el("div", { sinif: "izgara izgara--olcum" }, [olcum("Presale", "reading Arc…")]);
+  kap.append(panel("ARCP 2 presale, live from Arc", el("div", { sinif: "yigin" }, [satis,
+    el("p", { yazi: "250,000,000 ARCP for $15,000 in 30-day rounds, $10 to $250 per wallet. Every presale dollar goes into the Uniswap pool as locked liquidity; not one dollar goes to a wallet. A round that does not fill is refunded automatically and the next one starts." })])));
+  (async () => {
+    const tur = await os.tur();
+    const [top, bit, kisi, kur] = await Promise.all([os.turToplam(tur), os.turBitis(tur), os.katilimciSayisi(tur), os.kuruldu()]);
+    temizle(satis).append(
+      olcum("Round", String(Number(tur) + 1), kur ? "the pool is open" : "30 days each"),
+      olcum("Raised", "$" + sayi(Number(top) / 1e6) + " of $15,000", (Math.min(100, Number(top) / 1e6 / 150)).toFixed(1) + "%"),
+      olcum("Buyers", String(kisi), "this round"),
+      olcum("Ends in", kur ? "—" : kalan(Number(bit)), new Date(Number(bit) * 1000).toUTCString().slice(5, 22) + " UTC"),
+      olcum("Presale price", "$0.00006", "opening $0.00007"));
+  })().catch(() => { temizle(satis).append(olcum("Presale", "Arc RPC busy — reload in a moment")); });
+
+  /* the supply, where every token sits right now */
+  const PAY = [["Pool ladder", "one-sided, locked forever: 70k → 140k → 700k → ∞ FDV", k.acici, 300],
+    ["Presale", "250M for $15,000; half at the opening, half over 30 days", k.onSatis, 250],
+    ["Founder", "75M at the opening, 75M monthly over 12 months; nothing before the pool opens", k.kurucuPayi, 150],
+    ["Staking", "released weekly to stakers, slowing over time, on top of the USDC fee share", k.stake, 100],
+    ["Marketing", "locked creator grants; at most 30% in the first 3 months", k.pazarlama, 100],
+    ["Usage airdrop", "rounds for people who use ARC PULSE", k.kullanim, 60],
+    ["Post rewards", "weekly rewards for posts about ARC PULSE", k.tweet, 40]];
+  const govde = el("tbody");
+  const tablo = el("table", { sinif: "tablo" }, [el("thead", {}, [el("tr", {}, ["Allocation", "Share", "Now on chain", "Held by"].map((x, i) => el("th", { sinif: i === 1 || i === 2 ? "sayi" : "", yazi: x })))]), govde]);
+  for (const [ad, alt, adr, m] of PAY) {
+    const hucre = el("td", { sinif: "sayi", attr: { "data-et": "Now on chain" }, yazi: "…" });
+    govde.append(el("tr", {}, [el("td", {}, [el("div", { yazi: ad }), el("div", { sinif: "yazi yazi--kucuk yazi--sessiz", yazi: alt })]),
+      el("td", { sinif: "sayi", yazi: (m / 10) + "%" }), hucre,
+      el("td", { sinif: "mono" }, [el("a", { attr: { href: "https://explorer.arc.io/address/" + adr, target: "_blank", rel: "noopener" }, yazi: adr.slice(0, 6) + "…" + adr.slice(-4) })])]));
+    tk.balanceOf(adr).then((b) => { hucre.textContent = sayi(Number(b / 10n ** 18n)); }).catch(() => { hucre.textContent = "—"; });
+  }
+  kap.append(panel("Supply: 1,000,000,000 ARCP, every token born inside a contract", el("div", { sinif: "yigin" }, [
+    el("div", { sinif: "tablo-sarmal" }, [tablo]),
+    el("div", { sinif: "yazi yazi--kucuk yazi--sessiz", yazi: "No wallet holds ARCP before the pool opens, the founder's included. The token has no owner and no mint function." })])));
+
+  const exp = (adr, yazi) => el("a", { attr: { href: "https://explorer.arc.io/address/" + adr, target: "_blank", rel: "noopener" }, yazi });
+  kap.append(panel("Why ARCP", el("div", { sinif: "yigin" }, [
+    el("p", { yazi: "A slice of every trade on every ARC PULSE token, from all thirteen chains, buys ARCP from its pool on Arc and burns it: no team wallet in between, nobody has to press a button. More launches and more trading mean more ARCP bought and burned." }),
+    el("p", { yazi: "Stakers earn a share of the fees in USDC and vote in the DAO on how the developer pool is spent. The opening trades at $70k FDV on a ladder that is locked for good, with the presale's $15,000 below it as buy-side liquidity." }),
+    el("p", { yazi: "Buying ARCP: today through the presale. When the round fills and the pool opens, this page buys ARCP 2 from any of thirteen chains, paid in that chain's dollars or gas token." }),
+    el("p", {}, ["Contracts on Arc: ", exp(k.token, "ARCP token"), " · ", exp(k.onSatis, "presale"), " · ", exp(k.stake, "staking"), " · ", exp(k.governor, "governor"),
+      " · ", el("a", { attr: { href: "#/guvenlik" }, yazi: "every live contract" })]),
+  ])));
+  /* the previous contract: its live figures and its buy / sell panels, folded */
+  const eski = await eskiCiz(arg).catch(() => null);
+  if (eski) {
+    const ilk = eski.querySelector(".sayfa-ust"); if (ilk) ilk.remove();
+    kap.append(ayrinti("The previous ARCP contract (before ARCP 2): its figures, buy and sell", eski));
+  }
+  return kap;
+}
+
+async function eskiCiz() {
   const kap = el("div", { sinif: "yigin" });
   kap.append(sayfaUst("ARCP", "Arc Pulse — the token every ARC PULSE trade buys and burns. One market on Arc, reachable from every chain"));
 

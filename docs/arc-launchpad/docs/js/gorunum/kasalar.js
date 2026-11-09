@@ -29,7 +29,7 @@ import { kasaOzeti, ZINCIRLER, SEPET, saglayici } from "../teminat-izle.js";
 import { Contract } from "../../vendor/ethers.min.js";
 
 const ACIK = [26, 6, 3, 1, 15, 19, 17, 0, 35, 8, 9];
-const RENK = { Arc: "#7c5cff", Base: "#0052ff", Arbitrum: "#28a0f0", BNB: "#f0b90b", Avalanche: "#e84142", Monad: "#836ef9", HyperEVM: "#50e3c2", Sui: "#4da2ff", Aptos: "#2ed8a7", Ethereum: "#627eea", Robinhood: "#ccff00" };
+const RENK = { Elysium: "#c6f86b", Arc: "#7c5cff", Base: "#0052ff", Arbitrum: "#28a0f0", BNB: "#f0b90b", Avalanche: "#e84142", Monad: "#836ef9", HyperEVM: "#50e3c2", Sui: "#4da2ff", Aptos: "#2ed8a7", Ethereum: "#627eea", Robinhood: "#ccff00" };
 const cip = (z) => el("span", { sinif: "tk__zincir", attr: { style: "--z:" + (RENK[z] || "#888") }, yazi: z });
 const kisa = (a) => a.slice(0, 6) + "…" + a.slice(-4);
 const adresLinki = (d, a) => {
@@ -112,6 +112,8 @@ export async function ciz() {
       ]),
     ]);
   });
+  kartlar.push(el("div", { sinif: "jeton-kart" }, [el("div", { sinif: "tk__ust" }, [cip("Elysium"), el("span", { sinif: "etiket", yazi: "pay-from chain" })]),
+    el("div", { sinif: "yazi yazi--kucuk yazi--sessiz", yazi: "Elysium: no twin and no vault there yet, because LayerZero does not reach Elysium. An Elysium wallet still pays for launches and buys in HYPE, and what it buys is delivered to the same address on Arc." })]));
   kap.append(panel("Vaults", el("div", { sinif: "izgara izgara--kart" }, kartlar)));
 
   /* ---- open auctions ---- */

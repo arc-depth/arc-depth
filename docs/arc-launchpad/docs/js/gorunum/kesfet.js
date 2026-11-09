@@ -68,7 +68,7 @@ const yon = (x) => (x > 0.00005 ? "artis" : x < -0.00005 ? "dusus" : "sabit");
 const kucukPara = (x) => (x >= 0.01 ? para(x) : "$" + x.toPrecision(3));
 /* each chain in its own brand colour */
 const RENK = { Arc: "#7c5cff", Base: "#0052ff", Arbitrum: "#28a0f0", Ethereum: "#627eea", BNB: "#f0b90b", Avalanche: "#e84142",
-  Monad: "#836ef9", HyperEVM: "#50e3c2", Robinhood: "#ccff00", Solana: "#14f195", Sui: "#4da2ff", Aptos: "#2ed8a7" };
+  Monad: "#836ef9", HyperEVM: "#50e3c2", Robinhood: "#ccff00", Elysium: "#c6f86b", Solana: "#14f195", Sui: "#4da2ff", Aptos: "#2ed8a7" };
 const zincirCipi = (z) => el("span", { sinif: "tk__zincir", attr: { style: "--z:" + (RENK[z] || "#888") }, yazi: z });
 
 function teminatKarti(s, cfg) {
@@ -105,7 +105,8 @@ function teminatKarti(s, cfg) {
       import("./merkez.js").then((m) => m.havuzFiyati(s.token, cfg.lp5))]);
     if (!onceki) {
       if (tz.status === "fulfilled") {
-        zincirler.replaceChildren(...tz.value.zincirler.map(zincirCipi));
+        const ely = zincirCipi("Elysium"); ely.title = "Buy from an Elysium wallet; delivered to the same address on Arc";
+        zincirler.replaceChildren(...tz.value.zincirler.map(zincirCipi), ely);
         cikisZinciri(s.token, tz.value.adapter, s.zaman, cfg).then((c) => { nereden.replaceChildren(el("span", { yazi: "launched from " }), zincirCipi(c || "Arc")); })
           .catch(() => { nereden.textContent = ""; });
       } else { zincirler.replaceChildren(el("span", { sinif: "etiket etiket--uyari", yazi: "could not read" })); nereden.textContent = ""; }

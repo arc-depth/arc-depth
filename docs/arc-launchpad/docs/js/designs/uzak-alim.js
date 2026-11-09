@@ -49,6 +49,7 @@ export const KAYNAKLAR = [
   { anahtar: "monad", ad: "Monad", tur: "evm", id: 143, para: "0x754704Bc059F8C67012fEd69BC8A327a5aafb603", sembol: "USDC", gaz: "MON" },
   { anahtar: "hyperevm", ad: "HyperEVM", tur: "evm", id: 999, para: "0xb88339CB7199b77E23DB6E890353E22632Ba630f", sembol: "USDC", gaz: "HYPE" },
   { anahtar: "robinhood", ad: "Robinhood", tur: "evm", id: 4663, para: "0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168", sembol: "USDG", gaz: "ETH", not: "Robinhood Chain has no USDC; its dollar is USDG, which relay.link turns into USDC on Arc." },
+  { anahtar: "elysium", ad: "Elysium", tur: "evm", id: 99901, para: "0xb47c4C8F73F009CC0C0d3f92B388d13E293F0B65", sembol: "USDCe", gaz: "HYPE" },
   { anahtar: "bsc", ad: "BNB Chain", tur: "evm", id: 56, para: "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d", sembol: "USDC", gaz: "BNB" },
   { anahtar: "solana", ad: "Solana", tur: "solana", id: 792703809, para: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", sembol: "USDC", gaz: "SOL" },
   { anahtar: "sui", ad: "Sui", tur: "sui", domain: 8, sembol: "USDC", gaz: "SUI" },
@@ -143,8 +144,8 @@ async function evmMakbuz(ag, h, durum) {
 /** Run relay's steps from the paying wallet, then follow the request until it is done on Arc. */
 export async function relayOde(k, t, { cuzdan, durum }) {
   if (evmMi(k)) {
-    const { AGLAR } = await import("../aglar.js");
-    const ag = AGLAR.find((a) => a.id === k.id);
+    const { AGLAR, ELYSIUM } = await import("../aglar.js");
+    const ag = AGLAR.find((a) => a.id === k.id) || (k.id === ELYSIUM.id ? ELYSIUM : null);
     if (!ag) throw new Error("Unknown chain " + k.ad + ".");
     for (const s of t.q.steps) for (const it of s.items || []) {
       if (s.kind !== "transaction" || !it.data) continue;

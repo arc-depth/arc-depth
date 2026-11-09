@@ -14,7 +14,7 @@
  *          among them with the 24 h volume of its own pools (GeckoTerminal).
  * A top tab (ana.js BIRINCIL) and on the rail.
  * =========================================================================== */
-import { el, temizle } from "../ui.js";
+import { el, temizle, bos } from "../ui.js";
 import { AGLAR, ELYSIUM } from "../aglar.js";
 import { cuzdan } from "../cuzdan.js";
 import { rpcPost } from "../ag-okur.js";
@@ -464,7 +464,7 @@ export async function ciz() {
   const cipler = el("div", { sinif: "vt-cipler" });
   const cipCiz = () => {
     temizle(cipler);
-    for (const z of [null, ...(mod === "lp" ? ZINCIRLER.filter((x) => x.llama) : ZINCIRLER), ...(mod === "lp" ? LP_EK : [])]) cipler.append(el("button", { sinif: "vt-cip", attr: { type: "button", "aria-pressed": String(z === secili) }, yazi: z ? z.ad : "All chains",
+    for (const z of [null, ...ZINCIRLER, ...(mod === "lp" ? LP_EK : [])]) cipler.append(el("button", { sinif: "vt-cip", attr: { type: "button", "aria-pressed": String(z === secili) }, yazi: z ? z.ad : "All chains",
       on: { click: () => { secili = z; cipCiz(); yukle(); } } }));
   };
 
@@ -482,6 +482,10 @@ export async function ciz() {
   }
   const eski = (bu) => bu !== sira || bekleyen !== null;
   async function lpCiz(sessiz, bu) {
+    if (secili && !secili.llama) {   // Elysium: the launchpad volumes are not tracked by DefiLlama yet
+      temizle(govde).append(bos(secili.ad + " launchpads are not tracked yet", "DefiLlama does not publish launchpad volumes for " + secili.ad + " yet, so they cannot be ranked here honestly. Its tokens are live in the Tokens tab, buyable from any chain."));
+      return;
+    }
     if (!sessiz) temizle(govde).append(el("div", { sinif: "vt-alt", yazi: "Loading launchpad volumes…" }));
     let lp, biz;
     try { [lp, biz] = await Promise.all([lpVeri(), (!secili || secili.k === "arc") ? bizimHacim() : Promise.resolve(0)]); }
