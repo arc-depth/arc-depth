@@ -319,8 +319,13 @@ async function elysiumLaunchpadlari() {
     const r = await fetch(GECKO + "/networks/elysium/pools?sort=h24_volume_usd_desc&page=" + s, { headers: { accept: "application/json" } }).catch(() => null);
     if (!r || !r.ok) { if (havuz.length) break; throw new Error("The market data service is busy, try again in a minute."); }
     const j = await r.json();
-    for (const p of j.data || []) if (p.relationships.dex.data.id === "uniswap-v4-elysium")
-      havuz.push({ id: p.attributes.address.toLowerCase(), ad: p.attributes.name.split(" / ")[0], hacim: Number((p.attributes.volume_usd || {}).h24 || 0) });
+    for (const p of j.data || []) if (p.relationships.dex.data.id === "uniswap-v4-elysium") {
+      /* GeckoTerminal misprices some young Elysium pools (billions of "volume" from a dozen trades); a pool counts only
+         with real activity: 50+ trades in 24 h and an average trade under $20k */
+      const a = p.attributes, hacim = Number((a.volume_usd || {}).h24 || 0), tx = (a.transactions?.h24?.buys || 0) + (a.transactions?.h24?.sells || 0);
+      if (tx < 50 || hacim / tx > 20000) continue;
+      havuz.push({ id: a.address.toLowerCase(), ad: a.name.split(" / ")[0], hacim });
+    }
   }
   const r = await fetch(ELYSIUM.rpc, { method: "POST", headers: { "content-type": "application/json" },
     body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "eth_getLogs", params: [{ address: ELY_PM, fromBlock: "0x0", toBlock: "latest", topics: [ELY_INIT, havuz.map((h) => h.id)] }] }) }).then((x) => x.json());
@@ -332,7 +337,8 @@ async function elysiumLaunchpadlari() {
     if (!g.has(k)) g.set(k, { hook: k, ad: /^0x0+$/.test(k) ? "Plain Uniswap v4 pools" : ELY_HOOK[k] || "Unnamed launchpad", hacim: 0, n: 0, ornek: [] });
     const x = g.get(k); x.hacim += h.hacim; x.n++; if (x.ornek.length < 3 && !x.ornek.includes(h.ad)) x.ornek.push(h.ad);
   }
-  const v = { havuz: havuz.length, satirlar: [...g.values()].filter((x) => x.hook !== "?").sort((a, b) => b.hacim - a.hacim) };
+  /* only launchpads we have identified are ranked; unknown hooks and plain pools are not launchpads we can name */
+  const v = { havuz: havuz.length, satirlar: [...g.values()].filter((x) => ELY_HOOK[x.hook]).sort((a, b) => b.hacim - a.hacim) };
   elyOnbellek = { t: Date.now(), v };
   return v;
 }
@@ -642,7 +648,7 @@ export async function ciz() {
 
   kap.append(
     el("h1", { attr: { style: "margin:0;font-size:26px" } }, ["Market", el("span", { sinif: "vt-canli" }, [el("i"), "live"])]),
-    el("p", { sinif: "vt-alt", yazi: "Every token on 11 chains in one place. Buy any of them with the dollars you hold on any chain, in one tap." }),
+    el("p", { sinif: "vt-alt", yazi: "Every token on 13 chains in one place. Buy any of them with the dollars you hold on any chain, in one tap." }),
     modlar, cipler, govde);
   modCiz();
   cipCiz();
