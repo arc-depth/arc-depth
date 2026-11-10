@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval' 'sha256-xoTAmI0lMg3B40Rdwesy1IarSjMVcrIFQ5lT02DN1gY=' 'sha256-SNGnPSpHOzLe5CsUKQBgz1ugrSrZV55hwgTZi1AT8ZM='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://api.web3modal.org; font-src 'self' data:; connect-src 'self' https://rpc.mainnet.arc.io https://arc-rpc.publicnode.com https://rpc.drpc.mainnet.arc.io https://rpc.blockdaemon.mainnet.arc.io https://arc-mainnet.drpc.org https://mainnet.base.org https://base-rpc.publicnode.com https://base.drpc.org https://arb1.arbitrum.io https://arbitrum-one-rpc.publicnode.com https://arbitrum.drpc.org https://ethereum-rpc.publicnode.com https://eth.drpc.org https://api.avax.network https://avalanche-c-chain-rpc.publicnode.com https://avalanche.drpc.org https://rpc.monad.xyz https://monad.drpc.org https://monad-mainnet.drpc.org https://rpc.hyperliquid.xyz https://hyperliquid.drpc.org https://rpc.elysium.kinetiq.xyz https://bsc-dataseed.bnbchain.org https://bsc-dataseed1.bnbchain.org https://bsc-rpc.publicnode.com https://rpc.mainnet.chain.robinhood.com https://robinhood-rpc.publicnode.com https://robinhood.drpc.org https://robinhood-mainnet.drpc.org https://optimism-rpc.publicnode.com https://polygon-bor-rpc.publicnode.com https://unichain-rpc.publicnode.com https://solana-rpc.publicnode.com https://graphql.mainnet.sui.io https://api.mainnet.aptoslabs.com https://api.relay.link https://iris-api.circle.com https://api.dexscreener.com wss://relay.walletconnect.org https://relay.walletconnect.org https://verify.walletconnect.org https://verify.walletconnect.com https://api.web3modal.org; frame-src 'self' https://verify.walletconnect.org https://verify.walletconnect.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval' 'sha256-xoTAmI0lMg3B40Rdwesy1IarSjMVcrIFQ5lT02DN1gY=' 'sha256-N032SuacEZ79t3jQL9NWqz0OZ8hdfie1Br9YQD3wTY4='; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://api.web3modal.org; font-src 'self' data:; connect-src 'self' https://rpc.mainnet.arc.io https://arc-rpc.publicnode.com https://rpc.drpc.mainnet.arc.io https://rpc.blockdaemon.mainnet.arc.io https://arc-mainnet.drpc.org https://mainnet.base.org https://base-rpc.publicnode.com https://base.drpc.org https://arb1.arbitrum.io https://arbitrum-one-rpc.publicnode.com https://arbitrum.drpc.org https://ethereum-rpc.publicnode.com https://eth.drpc.org https://api.avax.network https://avalanche-c-chain-rpc.publicnode.com https://avalanche.drpc.org https://rpc.monad.xyz https://monad.drpc.org https://monad-mainnet.drpc.org https://rpc.hyperliquid.xyz https://hyperliquid.drpc.org https://rpc.elysium.kinetiq.xyz https://bsc-dataseed.bnbchain.org https://bsc-dataseed1.bnbchain.org https://bsc-rpc.publicnode.com https://rpc.mainnet.chain.robinhood.com https://robinhood-rpc.publicnode.com https://robinhood.drpc.org https://robinhood-mainnet.drpc.org https://optimism-rpc.publicnode.com https://polygon-bor-rpc.publicnode.com https://unichain-rpc.publicnode.com https://solana-rpc.publicnode.com https://graphql.mainnet.sui.io https://api.mainnet.aptoslabs.com https://api.relay.link https://iris-api.circle.com https://api.dexscreener.com wss://relay.walletconnect.org https://relay.walletconnect.org https://verify.walletconnect.org https://verify.walletconnect.com https://api.web3modal.org; frame-src 'self' https://verify.walletconnect.org https://verify.walletconnect.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%237c5cff'/%3E%3Cpath d='M6 17h5l3-7 4 14 3-7h5' stroke='%23fff' stroke-width='2.4' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -674,7 +674,8 @@ const A = {
   devPool:  "0x0C6Fe02146f46b6df581905A24dB4Bc8c9B48FF4",   // v8 DevPool, governed by the ARCP governor
   likidite: "0x0a35cfe06Ead3858375690993280Aff1f9aFbF69",
   pazar:    "0x3b6fb718DC0529645B20F10CC3013f14af2Ad68E",
-  fthm:     "0xbe98138311c2D89526eCD86B368A2B4B81cf840b",   // ARCP (dagitim-arcp.json)
+  fthm:     "0xbe98138311c2D89526eCD86B368A2B4B81cf840b",   // old ARCP (dagitim-arcp.json), retired
+  arcp2:    "0xfa80848710dD0bEba18a9f9c76312c5a4a1633A1",   // ARCP 2 (dagitim-arcp2.json)
   arcpStake:"0x7b5883Dc1744B3E793E64276F5e290F9FdB1B273",
   arcpGovernor:"0x846E0e9997ee900BcaFFAA79ad0B377FC907712c",
   arcpVesting:"0xD5b95DFf257A30188b8ff64450d6fB158f2De8b6",
@@ -783,7 +784,8 @@ function adresler(){
     r("Developer pool",A.devPool,"pays developers only through an ARCP DAO vote") +
     r("Liquidity vault",A.likidite,"adds its share back into the pools — cannot withdraw") +
     r("Marketplace",A.pazar,"launch services paid in USDC") +
-    r("ARCP",A.fthm,"the platform token — 1,000,000,000 fixed, no mint, no owner, no pause") +
+    r("ARCP 2",A.arcp2,"the platform token — fixed supply, no mint, no owner, no pause · presale live") +
+    r("Old ARCP",A.fthm,"retired — replaced by ARCP 2, do not buy") +
     r("PoolManager",A.poolManager,"Uniswap v4, not ours") +
     r("USDC",A.usdc,"Arc's native money and its gas") +
     rh("Launchpad · Robinhood",RH.launchpad,"the same launchpad, in USDG — has no owner") +
@@ -840,8 +842,8 @@ async function kesfet(){
   /* ARCP first: it is the platform token, and its other-chain side is shown
      with its real state rather than left out or dressed up. */
   const sabit = [
-    { sembol:"ARCP", ad:"Arc Pulse · platform token", zincir:"arc", token:A.fthm, link:"fathom.html", sabit:true },
-    { sembol:"ARCP", ad:"Arc Pulse · on 8 EVM chains, Solana, Sui and Aptos", zincir:"", etiket:"other chains", token:A.fthm, bekle:"Coming · buy it on Arc from any chain", sabit:true },
+    { sembol:"ARCP", ad:"Arc Pulse · platform token", zincir:"arc", token:A.arcp2, link:"presale.html", sabit:true },
+    { sembol:"ARCP", ad:"Arc Pulse · on 8 EVM chains, Solana, Sui and Aptos", zincir:"", etiket:"other chains", token:A.arcp2, bekle:"Coming · buy it on Arc from any chain", sabit:true },
   ];
   let zaman = "";
   try{

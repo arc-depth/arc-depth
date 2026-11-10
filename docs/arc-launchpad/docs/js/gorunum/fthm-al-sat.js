@@ -196,8 +196,9 @@ async function eskiCiz() {
   /* ---- buy: relay.link brings your chain's dollar to Arc, buys ARCP in its pool and delivers it to your address on Arc ---- */
   const alTutar = el("input", { sinif: "girdi girdi--sayi", attr: { type: "number", min: "1", step: "1", value: "10" } });
   const alDurum = el("div", { sinif: "yazi yazi--kucuk yazi--sessiz" });
-  const alDugme = el("button", { sinif: "dugme dugme--marka", attr: { type: "button" }, yazi: "Buy ARCP" });
+  const alDugme = el("button", { sinif: "dugme dugme--marka", attr: { type: "button" }, yazi: "Buy (closed · old ARCP)" });
   alDugme.addEventListener("click", tekSefer(alDugme, async () => {
+    alDurum.textContent = "This is the old, retired ARCP — buying it is closed. Buy ARCP 2 in the presale (arcpulse.app/presale.html)."; return;   // the old contract is retired
     try {
       const ben = cuzdan.hesap() || (await cuzdan.bagla());
       if (!ben) { alDurum.textContent = "Connect a wallet first."; return; }
@@ -262,8 +263,9 @@ async function eskiCiz() {
   const solTutar = el("input", { sinif: "girdi girdi--sayi", attr: { type: "number", min: "0.01", step: "0.01", value: "0.1" } });
   const solIade = el("input", { sinif: "girdi", attr: { placeholder: "your Arc / EVM address 0x… (the ARCP is delivered there on Arc)" } });
   const solDurum = el("div", { sinif: "yazi yazi--kucuk yazi--sessiz" });
-  const solDugme = el("button", { sinif: "dugme dugme--marka", attr: { type: "button" }, yazi: "Buy ARCP with SOL" });
+  const solDugme = el("button", { sinif: "dugme dugme--marka", attr: { type: "button" }, yazi: "Buy with SOL (closed · old ARCP)" });
   solDugme.addEventListener("click", tekSefer(solDugme, async () => {
+    solDurum.textContent = "This is the old, retired ARCP — buying it is closed. Buy ARCP 2 in the presale (arcpulse.app/presale.html)."; return;   // the old contract is retired
     try {
       const m = await import("../solana-ikiz.js");
       const ben = await m.solanaCuzdan.baglan();
