@@ -165,6 +165,13 @@ export async function ciz({ param }) {
     import("./vitrin.js").then((m) => m.trendSeridi(8)).then((x) => { if (x) yer.replaceWith(x); else yer.remove(); }).catch(() => yer.remove());
   }
 
+  /* ---- tokens launched through Warp on the other launchpads it connects (and the Pulse Squad's own): ARC PULSE launches too ---- */
+  if (!arama) {
+    const wlYer = el("div");
+    kap.append(wlYer);
+    import("../warp-liste.js").then(async (m) => wlYer.replaceWith(m.warpPaneli(await m.warpLaunchlari(), { baslik: "ARC PULSE launches through Warp · pump.fun, Raydium, Meteora, Montra, Flap, Pons", enFazla: 12 }))).catch(() => wlYer.remove());
+  }
+
   const sayfa = Number((param && param.get("s")) || 1) || 1;
   /* the second generation, once wired, is the main list; the first stays readable below it */
   const [v2, v9] = await Promise.all([sepetV2(), sepetV9()]);
@@ -217,13 +224,6 @@ export async function ciz({ param }) {
         if (n !== v.n || n9 !== v9N) { clearInterval(zamanlayici); window.dispatchEvent(new HashChangeEvent("hashchange")); }
       }, 30_000);
     }
-  }
-
-  /* ---- tokens launched through Warp on the other launchpads it connects (and the Pulse Squad's own): ARC PULSE launches too ---- */
-  if (!arama) {
-    const wlYer = el("div");
-    kap.append(wlYer);
-    import("../warp-liste.js").then(async (m) => wlYer.replaceWith(m.warpPaneli(await m.warpLaunchlari(), { baslik: "ARC PULSE launches through Warp · pump.fun, Raydium, Meteora, Montra, Flap, Pons", enFazla: 12 }))).catch(() => wlYer.remove());
   }
 
   /* ---- the v9 set (PulseHook6 with its time-weighted price): designer tokens launch here. Each card
