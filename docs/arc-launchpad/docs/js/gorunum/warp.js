@@ -32,13 +32,13 @@ const ZINCIRLER = [
 const ZAD = Object.fromEntries(ZINCIRLER.map((z) => [z.k, z]));
 
 /* Warp connections: "live" once tested with a real launch; "next" while being built */
-const WARP = { "pump.fun": "next", "Ascend Launchpad": "next", "Ascend": "next" };
+const WARP = { "Montra": "next", "pump.fun": "next" };
 /* where a launchpad lives when we know it for sure; otherwise its DefiLlama page, which links to it */
-const ADRES = { "pump.fun": "https://pump.fun", "Ascend Launchpad": "https://app.ascendlaunch.xyz", "Ascend": "https://app.ascendlaunch.xyz", "Volta": "https://www.volta.family" };
+const ADRES = { "pump.fun": "https://pump.fun", "Montra": "https://montramarkets.xyz", "Ascend Launchpad": "https://app.ascendlaunch.xyz", "Ascend": "https://app.ascendlaunch.xyz", "Volta": "https://www.volta.family" };
 
 /* the Pulse Squad: our own launches, one mascot per chain, five days apart at the earliest */
 const SQUAD = [
-  ["halo", "Halo", "Elysium", "Ascend", "13 Nov"], ["zappy", "Zappy", "Solana", "pump.fun", "18 Nov"], ["blu", "Blu", "Base", "Clanker", "23 Nov"],
+  ["halo", "Halo", "Elysium", "Montra", "13 Nov"], ["zappy", "Zappy", "Solana", "pump.fun", "18 Nov"], ["blu", "Blu", "Base", "Clanker", "23 Nov"],
   ["feather", "Feather", "Robinhood", "Pons", "28 Nov"], ["goldie", "Goldie", "BNB Chain", "Flap", "3 Dec"], ["vio", "Vio", "Monad", "nad.fun", "8 Dec"],
   ["pulsy", "Pulsy", "Arc", "ARC PULSE", "13 Dec"], ["turbo", "Turbo", "HyperEVM", "Alt Fun", "18 Dec"], ["drip", "Drip", "Sui", "Turbos", "23 Dec"],
   ["yeti", "Yeti", "Avalanche", "Arena", "28 Dec"], ["pebble", "Pebble", "Aptos", "Emojicoin", "2 Jan"], ["bolt", "Bolt", "Arbitrum", "ARC PULSE", "7 Jan"],
@@ -114,7 +114,7 @@ export async function ciz() {
 
   /* ---- the launch form, honest about its state ---- */
   kap.append(panel("Warp a launch", [
-    not("Warp launching is being connected, launchpad by launchpad: pump.fun (Solana) and Ascend (Elysium) first, then Clanker (Base) and the rest. A connection opens here only after a real launch through it has worked. Until then, every launchpad above has an Open link.", "uyari"),
+    not("Warp launching is being connected, launchpad by launchpad: Montra (Elysium) and pump.fun (Solana) first, then Clanker (Base) and the rest. A connection opens here only after a real launch through it has worked. Until then, every launchpad above has an Open link.", "uyari"),
     el("div", { sinif: "wp-form", attr: { "aria-disabled": "true" } }, [
       el("label", {}, ["Token name", el("input", { attr: { placeholder: "e.g. Halo", disabled: "" } })]),
       el("label", {}, ["Ticker", el("input", { attr: { placeholder: "HALO", disabled: "" } })]),
