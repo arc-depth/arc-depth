@@ -1,0 +1,37 @@
+docs/vendor/warp-raydium.mjs is licensed GPL-3.0: it bundles @raydium-io/raydium-sdk-v2 0.2.84-alpha (GPL-3.0, source: https://github.com/raydium-io/raydium-sdk-V2) with @solana/web3.js (MIT), bn.js (MIT) and buffer (MIT), plus ARC PULSE's entry code (raydiumLaunchHazirla / warpUcretTx), which is offered under GPL-3.0 as part of this file; its source is in this repository's history and below. Built with esbuild 0.24.0 on 11 Nov 2026. The rest of this site stays MIT; this file is a separate work it loads only for a Raydium LaunchLab launch.
+
+Entry source:
+/* the browser side of a Warp launch on Raydium LaunchLab under ARC PULSE's platform (D1xZ…, rapor/squad/raydium-platform.json):
+   Raydium's official SDK (GPL-3.0, so this bundle is GPL-3.0) builds the mint, the launch pool and the creator's first buy,
+   following Raydium's own demo (raydium-sdk-V2-demo, launchpad/createMint.ts). The mint key is made here and signs first. */
+import { Raydium, TxVersion, LAUNCHPAD_PROGRAM, getPdaLaunchpadConfigId, LaunchpadConfig } from "@raydium-io/raydium-sdk-v2";
+import { Connection, Keypair, PublicKey, SystemProgram, TransactionMessage, VersionedTransaction } from "@solana/web3.js";
+import BN from "bn.js";
+
+export const ARC_PULSE_RAYDIUM_PLATFORM = "D1xZncu1kM8z41dfGFj8LcyQD2Y9BvWCLV74ZkABgm3J";
+const WSOL = new PublicKey("So11111111111111111111111111111111111111112");
+
+export async function raydiumLaunchHazirla({ rpc, kullanici, ad, sembol, uri, solLamport }) {
+  const connection = new Connection(rpc, "confirmed"), ben = new PublicKey(kullanici);
+  const raydium = await Raydium.load({ connection, owner: ben, cluster: "mainnet", disableFeatureCheck: true, disableLoadToken: true, blockhashCommitment: "confirmed" });
+  const mint = Keypair.generate();
+  const configId = getPdaLaunchpadConfigId(LAUNCHPAD_PROGRAM, WSOL, 0, 0).publicKey;
+  const configInfo = LaunchpadConfig.decode((await connection.getAccountInfo(configId)).data);
+  const satin = Number(solLamport) > 0;
+  const { transactions, extInfo } = await raydium.launchpad.createLaunchpad({
+    programId: LAUNCHPAD_PROGRAM, mintA: mint.publicKey, decimals: 6, name: ad, symbol: sembol, uri, migrateType: "cpmm",
+    configId, configInfo, mintBDecimals: 9, platformId: new PublicKey(ARC_PULSE_RAYDIUM_PLATFORM),
+    txVersion: TxVersion.V0, slippage: new BN(100), buyAmount: new BN(satin ? String(solLamport) : "0"), createOnly: !satin, extraSigners: [mint],
+  });
+  const sim = [];
+  for (const t of transactions) { const r = await connection.simulateTransaction(t, { sigVerify: false, replaceRecentBlockhash: true, commitment: "confirmed" }); sim.push({ hata: r.value.err, kayit: (r.value.logs || []).slice(-3), boyut: t.serialize().length }); }
+  return { txler: transactions, mint: mint.publicKey.toBase58(), havuz: extInfo && extInfo.address && extInfo.address.poolId ? extInfo.address.poolId.toBase58() : null, sim };
+}
+
+export async function warpUcretTx({ rpc, kullanici, arcSol, lamport }) {
+  const conn = new Connection(rpc, "confirmed"), ben = new PublicKey(kullanici);
+  const { blockhash } = await conn.getLatestBlockhash("confirmed");
+  return new VersionedTransaction(new TransactionMessage({ payerKey: ben, recentBlockhash: blockhash, instructions: [SystemProgram.transfer({ fromPubkey: ben, toPubkey: new PublicKey(arcSol), lamports: BigInt(lamport) })] }).compileToV0Message());
+}
+
+GPL-3.0 full text: https://www.gnu.org/licenses/gpl-3.0.txt
