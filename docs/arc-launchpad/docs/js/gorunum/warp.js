@@ -225,6 +225,11 @@ export async function ciz() {
     el("p", { sinif: "vt-alt", attr: { style: "margin-top:10px" }, yazi: "Bags and letsbonk.fun run on Meteora and Raydium LaunchLab; ARC PULSE has its own platform on both, so a Warp launch there sits on the same engines." }),
   ]));
 
+  /* ---- every launch made through Warp (and the Pulse Squad's own) ---- */
+  const wlYer = el("div");
+  kap.append(wlYer);
+  import("../warp-liste.js").then(async (m) => wlYer.replaceWith(m.warpPaneli(await m.warpLaunchlari()))).catch(() => wlYer.remove());
+
   /* ---- the radar ---- */
   const radar = el("div", { sinif: "wp-radar" }, [el("div", { sinif: "vt-alt", yazi: "Reading launchpad volumes…" })]);
   const cipler = el("div", { sinif: "wp-cipler", attr: { role: "tablist" } });

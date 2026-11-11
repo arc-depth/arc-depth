@@ -219,6 +219,13 @@ export async function ciz({ param }) {
     }
   }
 
+  /* ---- tokens launched through Warp on the other launchpads it connects (and the Pulse Squad's own): ARC PULSE launches too ---- */
+  if (!arama) {
+    const wlYer = el("div");
+    kap.append(wlYer);
+    import("../warp-liste.js").then(async (m) => wlYer.replaceWith(m.warpPaneli(await m.warpLaunchlari(), { baslik: "ARC PULSE launches through Warp · pump.fun, Raydium, Meteora, Montra, Flap, Pons", enFazla: 12 }))).catch(() => wlYer.remove());
+  }
+
   /* ---- the v9 set (PulseHook6 with its time-weighted price): designer tokens launch here. Each card
      prices from the v9 launchpad's pool key (the PulseHook6 pool) and reads its collateral from the
      v9 Defter and the vaults bound to it (sepet-v9.json). ---- */

@@ -36,7 +36,9 @@ export async function launch(g, adim) {
   const params = { name: g.ad, symbol: g.sembol, logo: g.logo, description: g.aciklama || "",
     socials: { twitter: g.twitter || "", telegram: "", discord: "", website: g.website || "", farcaster: "" },
     creatorFeeRecipient: ben, creatorTaxBps: Math.min(Math.round(Number(g.ucret) * 100), tavan), buybackEnabled: true, expectedEconomics: eco, salt: hexlify(randomBytes(32)) };
-  const veri = R.encodeFunctionData("launchAndBuy", [params, cfg, ZeroAddress, ilk, 1n, ben, []]);
+  /* ARC PULSE in the opening-snipe exemption list: harmless (it only spares that wallet the first seconds' surcharge) and it
+     marks the launch as a Warp launch in its own calldata, which is how the Warp launch list finds it */
+  const veri = R.encodeFunctionData("launchAndBuy", [params, cfg, ZeroAddress, ilk, 1n, ben, biz ? [] : [ARC_PULSE]]);
   const deger = ucret + ilk;
 
   adim("Checking the launch on Robinhood Chain before you sign…");
