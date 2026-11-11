@@ -33,8 +33,8 @@ const ZAD = Object.fromEntries(ZINCIRLER.map((z) => [z.k, z]));
 
 /* Warp connections: "live" once tested with a real launch; "next" while being built */
 /* the Montra connection opens on the page once a real launch through it has worked (Halo, Pulse Squad #1) */
-const ACIK = { montra: false, clanker: false };
-const WARP = { "Montra": ACIK.montra ? "live" : "next" };
+const ACIK = { montra: false, flap: false, clanker: false };
+const WARP = { "Montra": ACIK.montra ? "live" : "next", "Flap sh": ACIK.flap ? "live" : "next" };
 /* where a launchpad lives when we know it for sure; otherwise its DefiLlama page, which links to it */
 const ADRES = { "pump.fun": "https://pump.fun", "Montra": "https://montramarkets.xyz", "Ascend Launchpad": "https://app.ascendlaunch.xyz", "Ascend": "https://app.ascendlaunch.xyz", "Volta": "https://www.volta.family" };
 
@@ -92,6 +92,7 @@ const STIL = `
 /* the launch form: one launchpad at a time; each opens only once a real launch through it has worked */
 const LAUNCHPADLER = {
   montra: { ad: "Montra", zincirler: ["elysium"], kalkan: true, acik: () => ACIK.montra, link: (t) => "https://montramarkets.xyz/token/" + t, bekliyor: "opens with Halo's launch on 13 Nov" },
+  flap: { ad: "Flap", zincirler: ["bsc", "robinhood", "monad"], kalkan: false, acik: () => ACIK.flap, link: null, bekliyor: "opens with the Pulse Squad's first Flap launch" },
   clanker: { ad: "Clanker", zincirler: ["base", "bsc", "monad", "robinhood", "arc", "elysium"], kalkan: false, acik: () => ACIK.clanker, link: null, bekliyor: "opens with Blu's launch on Base" },
 };
 const ZINCIR_AD = { elysium: ["Elysium", "HYPE"], base: ["Base", "ETH"], bsc: ["BNB Chain", "BNB"], monad: ["Monad", "MON"], robinhood: ["Robinhood", "ETH"], arc: ["Arc", "USDC"] };
@@ -123,7 +124,7 @@ function warpFormu() {
     kalkanEt.style.display = L.kalkan ? "" : "none";
     dugme.disabled = !L.acik(); dugme.textContent = L.acik() ? "Warp to " + L.ad + " ⚡" : L.ad + " " + L.bekliyor;
     temizle(notKutusu).append(not(L.acik() ? "Live: " + L.ad + " on " + zad + ". Signed in your own wallet; ARC PULSE never holds your token or your coins." : L.ad + " is connected and " + L.bekliyor + ": a connection opens only after a real launch through it has worked.", L.acik() ? "" : "uyari"));
-    ozet.textContent = L.ad + " on " + zad + " · " + ucret.value + "% fee per trade" + (lp.value === "montra" ? ": you keep 90% of the creator side, ARC PULSE 10%." : ": ARC PULSE takes Clanker's integrator share, 10% of the tax after Clanker's own; the rest is yours. Clanker adds its own 20-second anti-snipe.") +
+    ozet.textContent = L.ad + " on " + zad + " · " + ucret.value + "% fee per trade" + (lp.value === "montra" ? ": you keep 90% of the creator side, ARC PULSE 10%." : lp.value === "flap" ? " buy and sell tax to you; Flap pays ARC PULSE a commission its protocol sets on every taxed trade." : ": ARC PULSE takes Clanker's integrator share, 10% of the tax after Clanker's own; the rest is yours. Clanker adds its own 20-second anti-snipe.") +
       (h > 0 ? " Warp fee " + (h * 0.005).toFixed(6) + " " + birim + " (0.5% of your first buy)." : " No first buy, no Warp fee.");
   };
   const zincirleriDoldur = () => { temizle(zincir).append(...secim().zincirler.map((z) => el("option", { attr: { value: z }, yazi: ZINCIR_AD[z][0] }))); yaz(); };
@@ -135,14 +136,29 @@ function warpFormu() {
     try {
       const mm = await import("../warp-montra.js");
       if (!ad.value.trim() || !sembol.value.trim()) throw new Error("A name and a ticker are needed.");
+      const ortak = { ad: ad.value.trim(), sembol: sembol.value.trim().toUpperCase(), aciklama: aciklama.value.trim(), ilkAlim: Number(ilk.value || 0), website: site.value.trim(), twitter: x.value.trim() };
+      const adim = (t) => { durum.textContent = t; };
+      let sonuc;
+      if (lp.value === "flap") {
+        /* Flap pins the image itself, so it needs the file: the one chosen, or the one at the pasted address */
+        let gorselDosya = dosya.files[0];
+        if (!gorselDosya) {
+          const r = await fetch(mm.gorselAdresi(gorsel.value).replace(/^ipfs:\/\//i, "https://ipfs.filebase.io/ipfs/")).catch(() => null);
+          if (!r || !r.ok) throw new Error("Choose the image file for a Flap launch (that address could not be read here).");
+          const b = await r.blob(); gorselDosya = new File([b], "image." + ((b.type.split("/")[1] || "png").replace("jpeg", "jpg")), { type: b.type || "image/png" });
+        }
+        if (!/^image\/(png|jpeg|webp|gif)$/.test(gorselDosya.type) || gorselDosya.size > 2e6) throw new Error("The image must be PNG, JPG, WebP or GIF, under 2 MB.");
+        const mf = await import("../warp-flap.js");
+        sonuc = await mf.launch({ ...ortak, gorsel: gorselDosya, zincir: zincir.value, ucret: Number(ucret.value) }, adim);
+        temizle(durum).append("Launched ⚡ ", el("a", { attr: { href: sonuc.link, target: "_blank", rel: "noopener noreferrer" }, yazi: "Open your token on " + L.ad + " ↗" }));
+        return;
+      }
       let logo;
       if (dosya.files[0] && !gorsel.value.trim()) { durum.textContent = "Uploading your image (free, to nostr.build)…"; logo = await mm.gorselYukle(dosya.files[0]); gorsel.value = logo; }
       else logo = mm.gorselAdresi(gorsel.value);
       const yuklendi = await new Promise((ok) => { const i = new Image(); i.onload = () => ok(true); i.onerror = () => ok(false); i.src = logo.replace(/^ipfs:\/\//i, "https://ipfs.filebase.io/ipfs/"); });
       if (!yuklendi) throw new Error("That image address does not load. Check it opens in a new tab.");
-      const ortak = { ad: ad.value.trim(), sembol: sembol.value.trim().toUpperCase(), aciklama: aciklama.value.trim(), logo, ilkAlim: Number(ilk.value || 0), website: site.value.trim(), twitter: x.value.trim() };
-      const adim = (t) => { durum.textContent = t; };
-      let sonuc;
+      ortak.logo = logo;
       if (lp.value === "montra") {
         durum.textContent = "Reading Montra's launch menu…";
         const satir = await mm.satirBul(Number(ucret.value), Number(kalkan.value));
