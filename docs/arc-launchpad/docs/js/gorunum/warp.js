@@ -97,7 +97,7 @@ const LAUNCHPADLER = {
   meteora: { ad: "Meteora", zincirler: ["solana"], kalkan: false, acik: () => ACIK.meteora, link: null, bekliyor: "opens with the first Solana launch through it" },
   flap: { ad: "Flap", zincirler: ["bsc", "robinhood", "monad"], kalkan: false, acik: () => ACIK.flap, link: null, bekliyor: "opens with the Pulse Squad's first Flap launch" },
   pons: { ad: "Pons", zincirler: ["robinhood"], kalkan: false, acik: () => ACIK.pons, link: null, bekliyor: "opens with Feather's launch on Robinhood" },
-  clanker: { ad: "Clanker", zincirler: ["base", "bsc", "monad", "robinhood", "arc", "elysium"], kalkan: false, acik: () => ACIK.clanker, link: null, bekliyor: "opens with Blu's launch on Base" },
+  /* clanker: connected (warp-clanker.js) but off: its volume is too low to be worth offering (user, 11 Nov 2026) */
 };
 const ZINCIR_AD = { solana: ["Solana", "SOL"], elysium: ["Elysium", "HYPE"], base: ["Base", "ETH"], bsc: ["BNB Chain", "BNB"], monad: ["Monad", "MON"], robinhood: ["Robinhood", "ETH"], arc: ["Arc", "USDC"] };
 
@@ -207,6 +207,23 @@ export async function ciz() {
   kap.append(el("div", { sinif: "wp-hero" }, [el("div", { sinif: "wp-isin" }),
     el("h2", {}, ["Warp your launch to ", el("span", { yazi: "wherever the volume is." })]),
     el("p", { yazi: "Warp watches every memecoin launchpad on thirteen chains and shows you, live, where the traders are today. Pick one, or take the hottest, and launch there from here with your own wallet." })]));
+
+  /* ---- the launchpads Warp launches on ---- */
+  const BAGLI = [
+    ["pump", "pump.fun", "Solana", "#14f195", "pump.fun's fees; 0.5% of your first buy to Warp"],
+    ["raydium", "Raydium LaunchLab", "Solana", "#14f195", "ARC PULSE's own LaunchLab platform: 0.5% to you and 0.5% to ARC PULSE on every curve trade"],
+    ["meteora", "Meteora", "Solana", "#14f195", "ARC PULSE's own Meteora config: 1% fee, half of it (after Meteora's share) to you"],
+    ["montra", "Montra", "Elysium", "#c6f86b", "Montra's fee tiers: you keep 90% of the creator side"],
+    ["flap", "Flap", "BNB · Robinhood · Monad", "#f0b90b", "your buy and sell tax; Flap pays ARC PULSE a commission"],
+    ["pons", "Pons", "Robinhood", "#c3f53c", "your creator tax; the opening buy is made in the launch itself"],
+  ];
+  kap.append(panel("Connected to Warp · " + BAGLI.length + " launchpads", [
+    el("div", { sinif: "wp-radar" }, BAGLI.map(([k, ad, z, r, ne]) => el("div", { sinif: "wp-z", attr: { style: "--zr:" + r } }, [
+      el("div", { sinif: "ad", yazi: z }), el("div", { sinif: "lp", yazi: ad }), el("div", { sinif: "v", yazi: ne }),
+      el("div", { sinif: "v", attr: { style: "margin-top:6px;font-weight:700;opacity:1" }, yazi: ACIK[k] ? "⚡ Live" : "Ready · " + LAUNCHPADLER[k].bekliyor }),
+    ]))),
+    el("p", { sinif: "vt-alt", attr: { style: "margin-top:10px" }, yazi: "Bags and letsbonk.fun run on Meteora and Raydium LaunchLab; ARC PULSE has its own platform on both, so a Warp launch there sits on the same engines." }),
+  ]));
 
   /* ---- the radar ---- */
   const radar = el("div", { sinif: "wp-radar" }, [el("div", { sinif: "vt-alt", yazi: "Reading launchpad volumes…" })]);
