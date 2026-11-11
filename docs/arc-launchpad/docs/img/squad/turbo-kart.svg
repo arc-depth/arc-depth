@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1200" width="1200" height="1200">
+  <defs><radialGradient id="bg" cx="50%" cy="42%" r="75%"><stop offset="0" stop-color="#2a2150"/><stop offset="1" stop-color="#0b0a18"/></radialGradient></defs>
+  <rect width="1200" height="1200" fill="url(#bg)"/><radialGradient id="isik" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#50e3c2" stop-opacity=".28"/><stop offset="1" stop-color="#50e3c2" stop-opacity="0"/></radialGradient><circle cx="600" cy="520" r="420" fill="url(#isik)"/>
+  <g transform="translate(600 540) scale(3.6)">
+    <defs><radialGradient id="turbokg" cx="35%" cy="28%" r="85%"><stop offset="0" stop-color="#e0fff6"/><stop offset=".5" stop-color="#7ff0d4"/><stop offset="1" stop-color="#2fb894"/></radialGradient><radialGradient id="turboks" cx="40%" cy="30%" r="80%"><stop offset="0" stop-color="#3fd1ae"/><stop offset="1" stop-color="#0f6e58"/></radialGradient></defs>
+    <ellipse cx="0" cy="70" rx="58" ry="7" fill="#000" opacity=".3"/>
+    <ellipse cx="0" cy="0" rx="74" ry="64" fill="url(#turboks)"/>
+    <g stroke="#0b5444" stroke-width="3" fill="none" opacity=".7"><path d="M-20 -50 l20 -10 l20 10 v22 l-20 10 l-20 -10 z"/><path d="M-62 -18 l18 -14 l18 8 v20"/><path d="M62 -18 l-18 -14 l-18 8 v20"/></g>
+    <ellipse cx="-50" cy="56" rx="16" ry="10" fill="#2fb894"/><ellipse cx="50" cy="56" rx="16" ry="10" fill="#2fb894"/>
+    <ellipse cx="0" cy="22" rx="50" ry="46" fill="url(#turbokg)"/>
+    
+  <ellipse cx="-17" cy="12" rx="8" ry="10" fill="#fff"/><ellipse cx="17" cy="12" rx="8" ry="10" fill="#fff"/>
+  <circle cx="-15" cy="14" r="5" fill="#120b2e"/><circle cx="19" cy="14" r="5" fill="#120b2e"/>
+  <circle cx="-13" cy="11" r="1.8" fill="#fff"/><circle cx="21" cy="11" r="1.8" fill="#fff"/><path d="M-25 1 q8 -5 15 -1" stroke="#120b2e" stroke-width="3.4" stroke-linecap="round" fill="none"/><path d="M25 1 q-8 -5 -15 -1" stroke="#120b2e" stroke-width="3.4" stroke-linecap="round" fill="none"/><circle cx="-30" cy="30" r="7" fill="#ff8fb1" opacity=".55"/><circle cx="30" cy="30" r="7" fill="#ff8fb1" opacity=".55"/>
+    <path transform="translate(0 32) scale(0.85)" d="M-22 0 Q-12 12 -5 10 L-1 2 L4 15 L8 7 Q14 11 22 0" stroke="#120b2e" stroke-width="3.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <g transform="translate(0 -14)"><rect x="-46" y="-4" width="92" height="8" rx="4" fill="#ff5a5a"/><circle cx="-17" cy="0" r="12" fill="#bff3ff" stroke="#333" stroke-width="4"/><circle cx="17" cy="0" r="12" fill="#bff3ff" stroke="#333" stroke-width="4"/><path d="M-21 -4 l6 -2" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/><path d="M13 -4 l6 -2" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/></g></g>
+  <text x="600" y="960" fill="#fff" font-family="Inter, Arial Black, Arial, sans-serif" font-weight="900" font-size="120" text-anchor="middle">TURBO</text>
+  <text x="600" y="1035" fill="#50e3c2" font-family="Inter, Arial Black, Arial, sans-serif" font-weight="700" font-size="44" text-anchor="middle">Pulse Squad · on HyperEVM</text>
+  <text x="1170" y="1170" fill="#cfc6ff" font-family="Inter, Arial Black, Arial, sans-serif" font-weight="700" font-size="26" text-anchor="end">arcpulse.app</text>
+</svg>

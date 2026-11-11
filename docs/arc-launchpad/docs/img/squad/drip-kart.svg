@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1200" width="1200" height="1200">
+  <defs><radialGradient id="bg" cx="50%" cy="42%" r="75%"><stop offset="0" stop-color="#2a2150"/><stop offset="1" stop-color="#0b0a18"/></radialGradient></defs>
+  <rect width="1200" height="1200" fill="url(#bg)"/><radialGradient id="isik" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#4da2ff" stop-opacity=".28"/><stop offset="1" stop-color="#4da2ff" stop-opacity="0"/></radialGradient><circle cx="600" cy="520" r="420" fill="url(#isik)"/>
+  <g transform="translate(600 540) scale(3.6)">
+    <defs><radialGradient id="dripkg" cx="35%" cy="28%" r="85%"><stop offset="0" stop-color="#e3f2ff"/><stop offset=".5" stop-color="#6fb6ff"/><stop offset="1" stop-color="#1f6fd1"/></radialGradient></defs>
+    <ellipse cx="0" cy="70" rx="46" ry="7" fill="#000" opacity=".3"/>
+    <path d="M0 -70 C 28 -34, 58 -6, 58 20 C 58 48, 32 64, 0 64 C -32 64, -58 48, -58 20 C -58 -6, -28 -34, 0 -70 Z" fill="url(#dripkg)"/>
+    <path d="M-30 -14 C -38 0, -40 10, -38 20" stroke="#fff" stroke-opacity=".5" stroke-width="7" stroke-linecap="round" fill="none"/>
+    <path d="M-6 -66 q14 -20 30 -10 q-14 -2 -18 10 q-6 6 -12 0 z" fill="#bfe3ff"/>
+    
+  <ellipse cx="-18" cy="0" rx="8" ry="10" fill="#fff"/><ellipse cx="18" cy="0" rx="8" ry="10" fill="#fff"/>
+  <circle cx="-16" cy="2" r="5" fill="#120b2e"/><circle cx="20" cy="2" r="5" fill="#120b2e"/>
+  <circle cx="-14" cy="-1" r="1.8" fill="#fff"/><circle cx="22" cy="-1" r="1.8" fill="#fff"/><path d="M-26 -11 q8 -5 15 -1" stroke="#120b2e" stroke-width="3.4" stroke-linecap="round" fill="none"/><path d="M26 -11 q-8 -5 -15 -1" stroke="#120b2e" stroke-width="3.4" stroke-linecap="round" fill="none"/><circle cx="-32" cy="20" r="7" fill="#ff8fb1" opacity=".55"/><circle cx="32" cy="20" r="7" fill="#ff8fb1" opacity=".55"/>
+    <path transform="translate(0 22) scale(0.95)" d="M-22 0 Q-12 12 -5 10 L-1 2 L4 15 L8 7 Q14 11 22 0" stroke="#062a5a" stroke-width="3.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="-72" cy="-10" r="6" fill="#9fd0ff"/><circle cx="74" cy="4" r="4" fill="#9fd0ff"/><circle cx="66" cy="-20" r="3" fill="#9fd0ff"/></g>
+  <text x="600" y="960" fill="#fff" font-family="Inter, Arial Black, Arial, sans-serif" font-weight="900" font-size="120" text-anchor="middle">DRIP</text>
+  <text x="600" y="1035" fill="#4da2ff" font-family="Inter, Arial Black, Arial, sans-serif" font-weight="700" font-size="44" text-anchor="middle">Pulse Squad · on Sui</text>
+  <text x="1170" y="1170" fill="#cfc6ff" font-family="Inter, Arial Black, Arial, sans-serif" font-weight="700" font-size="26" text-anchor="end">arcpulse.app</text>
+</svg>

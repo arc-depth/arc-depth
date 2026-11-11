@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1200" width="1200" height="1200">
+  <defs><radialGradient id="bg" cx="50%" cy="42%" r="75%"><stop offset="0" stop-color="#2a2150"/><stop offset="1" stop-color="#0b0a18"/></radialGradient></defs>
+  <rect width="1200" height="1200" fill="url(#bg)"/><radialGradient id="isik" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#f0b90b" stop-opacity=".28"/><stop offset="1" stop-color="#f0b90b" stop-opacity="0"/></radialGradient><circle cx="600" cy="520" r="420" fill="url(#isik)"/>
+  <g transform="translate(600 540) scale(3.6)">
+    <defs><radialGradient id="goldiekg" cx="35%" cy="28%" r="85%"><stop offset="0" stop-color="#fff1bf"/><stop offset=".5" stop-color="#f0b90b"/><stop offset="1" stop-color="#a87600"/></radialGradient></defs>
+    <ellipse cx="0" cy="70" rx="50" ry="7" fill="#000" opacity=".3"/>
+    <circle cx="-42" cy="-36" r="17" fill="#d99f00"/><circle cx="42" cy="-36" r="17" fill="#d99f00"/>
+    <circle cx="-42" cy="-36" r="9" fill="#ffd9a0"/><circle cx="42" cy="-36" r="9" fill="#ffd9a0"/>
+    <ellipse cx="0" cy="12" rx="60" ry="56" fill="url(#goldiekg)"/>
+  <path d="M-34 -18 C -42 -6, -44 6, -42 16" stroke="#fff" stroke-opacity=".4" stroke-width="6" stroke-linecap="round" fill="none"/>
+    <ellipse cx="0" cy="18" rx="28" ry="20" fill="#fff4d6"/>
+    
+  <ellipse cx="-20" cy="-12" rx="8" ry="10" fill="#fff"/><ellipse cx="20" cy="-12" rx="8" ry="10" fill="#fff"/>
+  <circle cx="-18" cy="-10" r="5" fill="#120b2e"/><circle cx="22" cy="-10" r="5" fill="#120b2e"/>
+  <circle cx="-16" cy="-13" r="1.8" fill="#fff"/><circle cx="24" cy="-13" r="1.8" fill="#fff"/><g stroke="#120b2e" stroke-width="2.6" stroke-linecap="round" fill="none" transform="translate(-20 -12) scale(-1 1)">
+  <path d="M5 -9 l5 -5"/><path d="M8 -5 l6 -3"/><path d="M1 -10 l2 -6"/></g><g stroke="#120b2e" stroke-width="2.6" stroke-linecap="round" fill="none" transform="translate(20 -12) scale(1 1)">
+  <path d="M5 -9 l5 -5"/><path d="M8 -5 l6 -3"/><path d="M1 -10 l2 -6"/></g><circle cx="-36" cy="8" r="7" fill="#ff8fb1" opacity=".55"/><circle cx="36" cy="8" r="7" fill="#ff8fb1" opacity=".55"/>
+    <ellipse cx="0" cy="6" rx="8" ry="6" fill="#3a2400"/>
+    <path transform="translate(0 16) scale(0.85)" d="M-22 0 Q-12 12 -5 10 L-1 2 L4 15 L8 7 Q14 11 22 0" stroke="#120b2e" stroke-width="3.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/><g transform="translate(-44 -52) scale(1)"><path d="M0 0 L-18 -11 Q-22 0 -18 11 Z" fill="#ff5fa2"/><path d="M0 0 L18 -11 Q22 0 18 11 Z" fill="#ff5fa2"/><circle r="5" fill="#ff5fa2" stroke="#fff" stroke-opacity=".5" stroke-width="1.5"/></g>
+    <g transform="translate(62 46)"><path d="M-14 -10 Q-18 14 0 16 Q18 14 14 -10 Z" fill="#c97a1a"/><rect x="-16" y="-15" width="32" height="7" rx="3" fill="#8a4f0b"/><path d="M-6 -8 q2 10 0 12 q-2 -4 0 -12" fill="#ffd84d"/></g>
+    <ellipse cx="-22" cy="66" rx="12" ry="6" fill="#a87600"/><ellipse cx="22" cy="66" rx="12" ry="6" fill="#a87600"/></g>
+  <text x="600" y="960" fill="#fff" font-family="Inter, Arial Black, Arial, sans-serif" font-weight="900" font-size="120" text-anchor="middle">GOLDIE</text>
+  <text x="600" y="1035" fill="#f0b90b" font-family="Inter, Arial Black, Arial, sans-serif" font-weight="700" font-size="44" text-anchor="middle">Pulse Squad · on BNB Chain</text>
+  <text x="1170" y="1170" fill="#cfc6ff" font-family="Inter, Arial Black, Arial, sans-serif" font-weight="700" font-size="26" text-anchor="end">arcpulse.app</text>
+</svg>

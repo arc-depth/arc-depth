@@ -1,0 +1,176 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1100" width="1600" height="1100">
+  <defs><radialGradient id="bg" cx="50%" cy="40%" r="80%"><stop offset="0" stop-color="#241c48"/><stop offset="1" stop-color="#0b0a18"/></radialGradient></defs>
+  <rect width="1600" height="1100" fill="url(#bg)"/><text x="800" y="86" fill="#fff" font-family="Inter, Arial Black, Arial, sans-serif" font-weight="900" font-size="64" text-anchor="middle">THE PULSE SQUAD</text><text x="800" y="128" fill="#cfc6ff" font-family="Inter, Arial Black, Arial, sans-serif" font-weight="700" font-size="28" text-anchor="middle">one friend on every chain</text>
+  <g transform="translate(200 230) scale(1.05)">
+    <defs><radialGradient id="ahalog" cx="35%" cy="28%" r="85%"><stop offset="0" stop-color="#f6ffd8"/><stop offset=".5" stop-color="#c6f86b"/><stop offset="1" stop-color="#7fbf23"/></radialGradient>
+      <radialGradient id="ahaloh" cx="50%" cy="50%" r="50%"><stop offset=".6" stop-color="#fff3a6" stop-opacity=".9"/><stop offset="1" stop-color="#fff3a6" stop-opacity="0"/></radialGradient></defs>
+    <ellipse cx="0" cy="70" rx="50" ry="7" fill="#000" opacity=".3"/>
+    <g fill="#fff" stroke="#d9e2ff" stroke-width="2"><g><ellipse cx="-60" cy="-4" rx="24" ry="13" transform="rotate(-18 -60 -4)"/><ellipse cx="-80" cy="-14" rx="24" ry="12" transform="rotate(-26 -80 -14)"/><ellipse cx="-98" cy="-26" rx="19" ry="10" transform="rotate(-34 -98 -26)"/><ellipse cx="-64" cy="10" rx="22" ry="11" transform="rotate(-4 -64 10)"/><ellipse cx="-84" cy="4" rx="19" ry="9" transform="rotate(-10 -84 4)"/><ellipse cx="-100" cy="-6" rx="14" ry="8" transform="rotate(-18 -100 -6)"/></g><g transform="scale(-1 1)"><ellipse cx="-60" cy="-4" rx="24" ry="13" transform="rotate(-18 -60 -4)"/><ellipse cx="-80" cy="-14" rx="24" ry="12" transform="rotate(-26 -80 -14)"/><ellipse cx="-98" cy="-26" rx="19" ry="10" transform="rotate(-34 -98 -26)"/><ellipse cx="-64" cy="10" rx="22" ry="11" transform="rotate(-4 -64 10)"/><ellipse cx="-84" cy="4" rx="19" ry="9" transform="rotate(-10 -84 4)"/><ellipse cx="-100" cy="-6" rx="14" ry="8" transform="rotate(-18 -100 -6)"/></g></g>
+    <circle cx="-38" cy="-38" r="15" fill="#9fdc3c"/><circle cx="38" cy="-38" r="15" fill="#9fdc3c"/>
+    <circle cx="-38" cy="-38" r="8" fill="#ffb3c8"/><circle cx="38" cy="-38" r="8" fill="#ffb3c8"/>
+    <ellipse cx="0" cy="12" rx="60" ry="56" fill="url(#ahalog)"/>
+    <ellipse cx="0" cy="30" rx="36" ry="30" fill="#fffbe6"/>
+    <path d="M-34 -18 C -42 -6, -44 6, -42 16" stroke="#fff" stroke-opacity=".45" stroke-width="6" stroke-linecap="round" fill="none"/>
+    
+  <ellipse cx="-19" cy="-10" rx="8" ry="10" fill="#fff"/><ellipse cx="19" cy="-10" rx="8" ry="10" fill="#fff"/>
+  <circle cx="-17" cy="-8" r="5" fill="#120b2e"/><circle cx="21" cy="-8" r="5" fill="#120b2e"/>
+  <circle cx="-15" cy="-11" r="1.8" fill="#fff"/><circle cx="23" cy="-11" r="1.8" fill="#fff"/><g stroke="#120b2e" stroke-width="2.6" stroke-linecap="round" fill="none" transform="translate(-19 -10) scale(-1 1)">
+  <path d="M5 -9 l5 -5"/><path d="M8 -5 l6 -3"/><path d="M1 -10 l2 -6"/></g><g stroke="#120b2e" stroke-width="2.6" stroke-linecap="round" fill="none" transform="translate(19 -10) scale(1 1)">
+  <path d="M5 -9 l5 -5"/><path d="M8 -5 l6 -3"/><path d="M1 -10 l2 -6"/></g><circle cx="-34" cy="10" r="7" fill="#ff8fb1" opacity=".55"/><circle cx="34" cy="10" r="7" fill="#ff8fb1" opacity=".55"/>
+    <path d="M-4 0 h8 l-4 5 z" fill="#ff7aa2"/>
+    <path transform="translate(0 12) scale(0.9)" d="M-22 0 Q-12 12 -5 10 L-1 2 L4 15 L8 7 Q14 11 22 0" stroke="#120b2e" stroke-width="3.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <ellipse cx="-22" cy="66" rx="12" ry="6" fill="#9fdc3c"/><ellipse cx="22" cy="66" rx="12" ry="6" fill="#9fdc3c"/>
+    <ellipse cx="0" cy="-74" rx="44" ry="16" fill="url(#ahaloh)"/>
+    <ellipse cx="0" cy="-74" rx="32" ry="8" fill="none" stroke="#ffd84d" stroke-width="6"/>
+    <ellipse cx="-8" cy="-77" rx="10" ry="2" fill="#fff8c9" opacity=".9"/></g><text x="200" y="352" fill="#fff" font-family="Inter, Arial Black, Arial, sans-serif" font-weight="900" font-size="40" text-anchor="middle">Halo</text><text x="200" y="386" fill="#c6f86b" font-family="Inter, Arial Black, Arial, sans-serif" font-weight="700" font-size="24" text-anchor="middle">Elysium</text><g transform="translate(600 230) scale(1.05)">
+    <defs><radialGradient id="azappyg" cx="35%" cy="28%" r="85%"><stop offset="0" stop-color="#e2d0ff"/><stop offset=".5" stop-color="#9d5cff"/><stop offset="1" stop-color="#5a1fc0"/></radialGradient><linearGradient id="azappyt" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#9945ff"/><stop offset="1" stop-color="#14f195"/></linearGradient></defs>
+    <ellipse cx="0" cy="70" rx="50" ry="7" fill="#000" opacity=".3"/>
+    <path d="M44 24 L100 -6 L80 -8 L110 -54 L60 -12 L82 -10 L40 10 Z" fill="url(#azappyt)" stroke="#0d6b4a" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M-52 -14 L-44 -84 L-12 -46 Z" fill="#7a3ff0"/><path d="M52 -14 L44 -84 L12 -46 Z" fill="#7a3ff0"/>
+    <path d="M-44 -26 L-41 -66 L-22 -44 Z" fill="#14f195"/><path d="M44 -26 L41 -66 L22 -44 Z" fill="#14f195"/>
+    <ellipse cx="0" cy="12" rx="60" ry="56" fill="url(#azappyg)"/>
+  <path d="M-34 -18 C -42 -6, -44 6, -42 16" stroke="#fff" stroke-opacity=".4" stroke-width="6" stroke-linecap="round" fill="none"/>
+    <ellipse cx="0" cy="22" rx="32" ry="22" fill="#f2fffa"/>
+    
+  <ellipse cx="-19" cy="-10" rx="8" ry="10" fill="#fff"/><ellipse cx="19" cy="-10" rx="8" ry="10" fill="#fff"/>
+  <circle cx="-17" cy="-8" r="5" fill="#120b2e"/><circle cx="21" cy="-8" r="5" fill="#120b2e"/>
+  <circle cx="-15" cy="-11" r="1.8" fill="#fff"/><circle cx="23" cy="-11" r="1.8" fill="#fff"/><path d="M-27 -22 q8 -5 15 -1" stroke="#120b2e" stroke-width="3.4" stroke-linecap="round" fill="none"/><path d="M27 -22 q-8 -5 -15 -1" stroke="#120b2e" stroke-width="3.4" stroke-linecap="round" fill="none"/><circle cx="-34" cy="10" r="7" fill="#ff8fb1" opacity=".55"/><circle cx="34" cy="10" r="7" fill="#ff8fb1" opacity=".55"/>
+    <ellipse cx="0" cy="2" rx="5" ry="4" fill="#120b2e"/>
+    <path transform="translate(0 13) scale(0.9)" d="M-22 0 Q-12 12 -5 10 L-1 2 L4 15 L8 7 Q14 11 22 0" stroke="#120b2e" stroke-width="3.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/><ellipse cx="-22" cy="66" rx="12" ry="6" fill="#5a1fc0"/><ellipse cx="22" cy="66" rx="12" ry="6" fill="#5a1fc0"/></g><text x="600" y="352" fill="#fff" font-family="Inter, Arial Black, Arial, sans-serif" font-weight="900" font-size="40" text-anchor="middle">Zappy</text><text x="600" y="386" fill="#14f195" font-family="Inter, Arial Black, Arial, sans-serif" font-weight="700" font-size="24" text-anchor="middle">Solana</text><g transform="translate(1000 230) scale(1.05)">
+    <defs><radialGradient id="ablug" cx="35%" cy="28%" r="85%"><stop offset="0" stop-color="#cfe0ff"/><stop offset=".5" stop-color="#3d7bff"/><stop offset="1" stop-color="#0a3cc4"/></radialGradient></defs>
+    <ellipse cx="0" cy="70" rx="50" ry="7" fill="#000" opacity=".3"/><ellipse cx="0" cy="12" rx="60" ry="56" fill="url(#ablug)"/>
+  <path d="M-34 -18 C -42 -6, -44 6, -42 16" stroke="#fff" stroke-opacity=".4" stroke-width="6" stroke-linecap="round" fill="none"/>
+    <path d="M-50 -24 Q-48 -72 0 -74 Q48 -72 50 -24 Q0 -36 -50 -24 Z" fill="#fff"/>
+    <path d="M-48 -26 Q-74 -30 -84 -18 Q-66 -14 -46 -18 Z" fill="#e8eeff"/>
+    <rect x="-6" y="-72" width="12" height="7" rx="3" fill="#0a3cc4"/>
+    <path d="M-50 -24 Q0 -36 50 -24" stroke="#0a3cc4" stroke-width="3" fill="none"/>
+    
+  <ellipse cx="-19" cy="-6" rx="8" ry="10" fill="#fff"/><ellipse cx="19" cy="-6" rx="8" ry="10" fill="#fff"/>
+  <circle cx="-17" cy="-4" r="5" fill="#120b2e"/><circle cx="21" cy="-4" r="5" fill="#120b2e"/>
+  <circle cx="-15" cy="-7" r="1.8" fill="#fff"/><circle cx="23" cy="-7" r="1.8" fill="#fff"/><path d="M-27 -17 q8 -5 15 -1" stroke="#120b2e" stroke-width="3.4" stroke-linecap="round" fill="none"/><path d="M27 -17 q-8 -5 -15 -1" stroke="#120b2e" stroke-width="3.4" stroke-linecap="round" fill="none"/><circle cx="-34" cy="14" r="7" fill="#ff8fb1" opacity=".55"/><circle cx="34" cy="14" r="7" fill="#ff8fb1" opacity=".55"/>
+    <path transform="translate(0 16) scale(0.95)" d="M-22 0 Q-12 12 -5 10 L-1 2 L4 15 L8 7 Q14 11 22 0" stroke="#08144a" stroke-width="3.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/><ellipse cx="-22" cy="66" rx="12" ry="6" fill="#0a3cc4"/><ellipse cx="22" cy="66" rx="12" ry="6" fill="#0a3cc4"/></g><text x="1000" y="352" fill="#fff" font-family="Inter, Arial Black, Arial, sans-serif" font-weight="900" font-size="40" text-anchor="middle">Blu</text><text x="1000" y="386" fill="#3d7bff" font-family="Inter, Arial Black, Arial, sans-serif" font-weight="700" font-size="24" text-anchor="middle">Base</text><g transform="translate(1400 230) scale(1.05)">
+    <defs><radialGradient id="afeatherg" cx="35%" cy="28%" r="85%"><stop offset="0" stop-color="#f4ffc9"/><stop offset=".5" stop-color="#c3f53c"/><stop offset="1" stop-color="#6f9a00"/></radialGradient></defs>
+    <ellipse cx="0" cy="70" rx="50" ry="7" fill="#000" opacity=".3"/>
+    <path d="M-50 40 L-86 58 L-70 36 L-92 30 L-56 22 Z" fill="#7da800"/>
+    <ellipse cx="-58" cy="18" rx="16" ry="26" fill="#93c400" transform="rotate(20 -58 18)"/><ellipse cx="58" cy="18" rx="16" ry="26" fill="#93c400" transform="rotate(-20 58 18)"/>
+    <ellipse cx="0" cy="12" rx="60" ry="56" fill="url(#afeatherg)"/>
+  <path d="M-34 -18 C -42 -6, -44 6, -42 16" stroke="#fff" stroke-opacity=".4" stroke-width="6" stroke-linecap="round" fill="none"/>
+    <ellipse cx="0" cy="34" rx="32" ry="26" fill="#fbffe8"/>
+    <path d="M-52 -34 Q-10 -82 54 -40 L34 -30 Q-4 -46 -52 -34 Z" fill="#2f4d00"/>
+    <path d="M30 -48 Q58 -96 74 -86 Q58 -66 38 -40 Z" fill="#ff6b5a"/><path d="M40 -52 Q60 -84 68 -82" stroke="#fff" stroke-opacity=".6" stroke-width="2" fill="none"/>
+    
+  <ellipse cx="-19" cy="-10" rx="8" ry="10" fill="#fff"/><ellipse cx="19" cy="-10" rx="8" ry="10" fill="#fff"/>
+  <circle cx="-17" cy="-8" r="5" fill="#120b2e"/><circle cx="21" cy="-8" r="5" fill="#120b2e"/>
+  <circle cx="-15" cy="-11" r="1.8" fill="#fff"/><circle cx="23" cy="-11" r="1.8" fill="#fff"/><g stroke="#120b2e" stroke-width="2.6" stroke-linecap="round" fill="none" transform="translate(-19 -10) scale(-1 1)">
+  <path d="M5 -9 l5 -5"/><path d="M8 -5 l6 -3"/><path d="M1 -10 l2 -6"/></g><g stroke="#120b2e" stroke-width="2.6" stroke-linecap="round" fill="none" transform="translate(19 -10) scale(1 1)">
+  <path d="M5 -9 l5 -5"/><path d="M8 -5 l6 -3"/><path d="M1 -10 l2 -6"/></g><circle cx="-34" cy="10" r="7" fill="#ff8fb1" opacity=".55"/><circle cx="34" cy="10" r="7" fill="#ff8fb1" opacity=".55"/>
+    <path d="M-8 0 L8 0 L0 11 Z" fill="#ffa62b"/>
+    <path transform="translate(0 18) scale(0.75)" d="M-22 0 Q-12 12 -5 10 L-1 2 L4 15 L8 7 Q14 11 22 0" stroke="#120b2e" stroke-width="3.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/><ellipse cx="-22" cy="66" rx="12" ry="6" fill="#ffa62b"/><ellipse cx="22" cy="66" rx="12" ry="6" fill="#ffa62b"/></g><text x="1400" y="352" fill="#fff" font-family="Inter, Arial Black, Arial, sans-serif" font-weight="900" font-size="40" text-anchor="middle">Feather</text><text x="1400" y="386" fill="#c3f53c" font-family="Inter, Arial Black, Arial, sans-serif" font-weight="700" font-size="24" text-anchor="middle">Robinhood</text><g transform="translate(200 560) scale(1.05)">
+    <defs><radialGradient id="agoldieg" cx="35%" cy="28%" r="85%"><stop offset="0" stop-color="#fff1bf"/><stop offset=".5" stop-color="#f0b90b"/><stop offset="1" stop-color="#a87600"/></radialGradient></defs>
+    <ellipse cx="0" cy="70" rx="50" ry="7" fill="#000" opacity=".3"/>
+    <circle cx="-42" cy="-36" r="17" fill="#d99f00"/><circle cx="42" cy="-36" r="17" fill="#d99f00"/>
+    <circle cx="-42" cy="-36" r="9" fill="#ffd9a0"/><circle cx="42" cy="-36" r="9" fill="#ffd9a0"/>
+    <ellipse cx="0" cy="12" rx="60" ry="56" fill="url(#agoldieg)"/>
+  <path d="M-34 -18 C -42 -6, -44 6, -42 16" stroke="#fff" stroke-opacity=".4" stroke-width="6" stroke-linecap="round" fill="none"/>
+    <ellipse cx="0" cy="18" rx="28" ry="20" fill="#fff4d6"/>
+    
+  <ellipse cx="-20" cy="-12" rx="8" ry="10" fill="#fff"/><ellipse cx="20" cy="-12" rx="8" ry="10" fill="#fff"/>
+  <circle cx="-18" cy="-10" r="5" fill="#120b2e"/><circle cx="22" cy="-10" r="5" fill="#120b2e"/>
+  <circle cx="-16" cy="-13" r="1.8" fill="#fff"/><circle cx="24" cy="-13" r="1.8" fill="#fff"/><g stroke="#120b2e" stroke-width="2.6" stroke-linecap="round" fill="none" transform="translate(-20 -12) scale(-1 1)">
+  <path d="M5 -9 l5 -5"/><path d="M8 -5 l6 -3"/><path d="M1 -10 l2 -6"/></g><g stroke="#120b2e" stroke-width="2.6" stroke-linecap="round" fill="none" transform="translate(20 -12) scale(1 1)">
+  <path d="M5 -9 l5 -5"/><path d="M8 -5 l6 -3"/><path d="M1 -10 l2 -6"/></g><circle cx="-36" cy="8" r="7" fill="#ff8fb1" opacity=".55"/><circle cx="36" cy="8" r="7" fill="#ff8fb1" opacity=".55"/>
+    <ellipse cx="0" cy="6" rx="8" ry="6" fill="#3a2400"/>
+    <path transform="translate(0 16) scale(0.85)" d="M-22 0 Q-12 12 -5 10 L-1 2 L4 15 L8 7 Q14 11 22 0" stroke="#120b2e" stroke-width="3.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/><g transform="translate(-44 -52) scale(1)"><path d="M0 0 L-18 -11 Q-22 0 -18 11 Z" fill="#ff5fa2"/><path d="M0 0 L18 -11 Q22 0 18 11 Z" fill="#ff5fa2"/><circle r="5" fill="#ff5fa2" stroke="#fff" stroke-opacity=".5" stroke-width="1.5"/></g>
+    <g transform="translate(62 46)"><path d="M-14 -10 Q-18 14 0 16 Q18 14 14 -10 Z" fill="#c97a1a"/><rect x="-16" y="-15" width="32" height="7" rx="3" fill="#8a4f0b"/><path d="M-6 -8 q2 10 0 12 q-2 -4 0 -12" fill="#ffd84d"/></g>
+    <ellipse cx="-22" cy="66" rx="12" ry="6" fill="#a87600"/><ellipse cx="22" cy="66" rx="12" ry="6" fill="#a87600"/></g><text x="200" y="682" fill="#fff" font-family="Inter, Arial Black, Arial, sans-serif" font-weight="900" font-size="40" text-anchor="middle">Goldie</text><text x="200" y="716" fill="#f0b90b" font-family="Inter, Arial Black, Arial, sans-serif" font-weight="700" font-size="24" text-anchor="middle">BNB Chain</text><g transform="translate(600 560) scale(1.05)">
+    <defs><radialGradient id="aviog" cx="35%" cy="28%" r="85%"><stop offset="0" stop-color="#ebe4ff"/><stop offset=".5" stop-color="#8a74ff"/><stop offset="1" stop-color="#4a35c4"/></radialGradient></defs>
+    <ellipse cx="0" cy="74" rx="56" ry="7" fill="#000" opacity=".3"/>
+    <g stroke="#6550e6" stroke-width="14" stroke-linecap="round" fill="none">
+      <path d="M-40 40 Q-62 62 -78 50"/><path d="M-22 48 Q-30 74 -48 74"/><path d="M-4 52 Q-6 76 -18 82"/>
+      <path d="M40 40 Q62 62 78 50"/><path d="M22 48 Q30 74 48 74"/><path d="M4 52 Q6 76 18 82"/></g>
+    <ellipse cx="0" cy="4" rx="58" ry="54" fill="url(#aviog)"/>
+  <path d="M-34 -18 C -42 -6, -44 6, -42 16" stroke="#fff" stroke-opacity=".4" stroke-width="6" stroke-linecap="round" fill="none"/>
+    <circle cx="-30" cy="-30" r="5" fill="#fff" opacity=".35"/><circle cx="34" cy="-22" r="7" fill="#fff" opacity=".25"/><circle cx="20" cy="-40" r="4" fill="#fff" opacity=".3"/>
+    
+  <ellipse cx="-19" cy="-8" rx="8" ry="10" fill="#fff"/><ellipse cx="19" cy="-8" rx="8" ry="10" fill="#fff"/>
+  <circle cx="-17" cy="-6" r="5" fill="#120b2e"/><circle cx="21" cy="-6" r="5" fill="#120b2e"/>
+  <circle cx="-15" cy="-9" r="1.8" fill="#fff"/><circle cx="23" cy="-9" r="1.8" fill="#fff"/><g stroke="#120b2e" stroke-width="2.6" stroke-linecap="round" fill="none" transform="translate(-19 -8) scale(-1 1)">
+  <path d="M5 -9 l5 -5"/><path d="M8 -5 l6 -3"/><path d="M1 -10 l2 -6"/></g><g stroke="#120b2e" stroke-width="2.6" stroke-linecap="round" fill="none" transform="translate(19 -8) scale(1 1)">
+  <path d="M5 -9 l5 -5"/><path d="M8 -5 l6 -3"/><path d="M1 -10 l2 -6"/></g><circle cx="-34" cy="12" r="7" fill="#ff8fb1" opacity=".55"/><circle cx="34" cy="12" r="7" fill="#ff8fb1" opacity=".55"/>
+    <path transform="translate(0 14) scale(0.9)" d="M-22 0 Q-12 12 -5 10 L-1 2 L4 15 L8 7 Q14 11 22 0" stroke="#120b2e" stroke-width="3.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/><g transform="translate(38 -44) scale(1.2)"><ellipse cx="0" cy="-8" rx="5.5" ry="8" fill="#ff8fd0" transform="rotate(0)"/><ellipse cx="0" cy="-8" rx="5.5" ry="8" fill="#ff8fd0" transform="rotate(72)"/><ellipse cx="0" cy="-8" rx="5.5" ry="8" fill="#ff8fd0" transform="rotate(144)"/><ellipse cx="0" cy="-8" rx="5.5" ry="8" fill="#ff8fd0" transform="rotate(216)"/><ellipse cx="0" cy="-8" rx="5.5" ry="8" fill="#ff8fd0" transform="rotate(288)"/><circle r="4.5" fill="#ffd84d"/></g></g><text x="600" y="682" fill="#fff" font-family="Inter, Arial Black, Arial, sans-serif" font-weight="900" font-size="40" text-anchor="middle">Vio</text><text x="600" y="716" fill="#a08cff" font-family="Inter, Arial Black, Arial, sans-serif" font-weight="700" font-size="24" text-anchor="middle">Monad</text><g transform="translate(1000 560) scale(1.05)">
+    <defs><radialGradient id="apulsyg" cx="35%" cy="28%" r="85%"><stop offset="0" stop-color="#c8b8ff"/><stop offset=".5" stop-color="#8b6cff"/><stop offset="1" stop-color="#4b2fd6"/></radialGradient></defs>
+    <ellipse cx="0" cy="70" rx="46" ry="7" fill="#000" opacity=".3"/>
+    <path d="M0 -62 C 30 -30, 56 -8, 56 18 C 56 46, 30 62, 0 62 C -30 62, -56 46, -56 18 C -56 -8, -30 -30, 0 -62 Z" fill="url(#apulsyg)"/>
+    <path d="M-30 -20 C -36 -6, -38 6, -36 16" stroke="#fff" stroke-opacity=".35" stroke-width="6" stroke-linecap="round" fill="none"/>
+    <path d="M-56 22 q-16 2 -20 14" stroke="#6a4cf0" stroke-width="9" stroke-linecap="round" fill="none"/><path d="M56 22 q16 2 20 14" stroke="#6a4cf0" stroke-width="9" stroke-linecap="round" fill="none"/>
+    
+  <ellipse cx="-17" cy="-2" rx="8" ry="10" fill="#fff"/><ellipse cx="17" cy="-2" rx="8" ry="10" fill="#fff"/>
+  <circle cx="-15" cy="0" r="5" fill="#120b2e"/><circle cx="19" cy="0" r="5" fill="#120b2e"/>
+  <circle cx="-13" cy="-3" r="1.8" fill="#fff"/><circle cx="21" cy="-3" r="1.8" fill="#fff"/><circle cx="-30" cy="16" r="7" fill="#ff8fb1" opacity=".55"/><circle cx="30" cy="16" r="7" fill="#ff8fb1" opacity=".55"/>
+    <path transform="translate(0 18) scale(1)" d="M-22 0 Q-12 12 -5 10 L-1 2 L4 15 L8 7 Q14 11 22 0" stroke="#120b2e" stroke-width="3.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <g transform="translate(14 -66) rotate(14)"><path d="M-18 8 L-18 -10 L-9 -2 L0 -14 L9 -2 L18 -10 L18 8 Z" fill="#ffd84d" stroke="#c99a06" stroke-width="2" stroke-linejoin="round"/><circle cx="0" cy="-14" r="3" fill="#ff5fa2"/></g></g><text x="1000" y="682" fill="#fff" font-family="Inter, Arial Black, Arial, sans-serif" font-weight="900" font-size="40" text-anchor="middle">Pulsy</text><text x="1000" y="716" fill="#8b6cff" font-family="Inter, Arial Black, Arial, sans-serif" font-weight="700" font-size="24" text-anchor="middle">Arc</text><g transform="translate(1400 560) scale(1.05)">
+    <defs><radialGradient id="aturbog" cx="35%" cy="28%" r="85%"><stop offset="0" stop-color="#e0fff6"/><stop offset=".5" stop-color="#7ff0d4"/><stop offset="1" stop-color="#2fb894"/></radialGradient><radialGradient id="aturbos" cx="40%" cy="30%" r="80%"><stop offset="0" stop-color="#3fd1ae"/><stop offset="1" stop-color="#0f6e58"/></radialGradient></defs>
+    <ellipse cx="0" cy="70" rx="58" ry="7" fill="#000" opacity=".3"/>
+    <ellipse cx="0" cy="0" rx="74" ry="64" fill="url(#aturbos)"/>
+    <g stroke="#0b5444" stroke-width="3" fill="none" opacity=".7"><path d="M-20 -50 l20 -10 l20 10 v22 l-20 10 l-20 -10 z"/><path d="M-62 -18 l18 -14 l18 8 v20"/><path d="M62 -18 l-18 -14 l-18 8 v20"/></g>
+    <ellipse cx="-50" cy="56" rx="16" ry="10" fill="#2fb894"/><ellipse cx="50" cy="56" rx="16" ry="10" fill="#2fb894"/>
+    <ellipse cx="0" cy="22" rx="50" ry="46" fill="url(#aturbog)"/>
+    
+  <ellipse cx="-17" cy="12" rx="8" ry="10" fill="#fff"/><ellipse cx="17" cy="12" rx="8" ry="10" fill="#fff"/>
+  <circle cx="-15" cy="14" r="5" fill="#120b2e"/><circle cx="19" cy="14" r="5" fill="#120b2e"/>
+  <circle cx="-13" cy="11" r="1.8" fill="#fff"/><circle cx="21" cy="11" r="1.8" fill="#fff"/><path d="M-25 1 q8 -5 15 -1" stroke="#120b2e" stroke-width="3.4" stroke-linecap="round" fill="none"/><path d="M25 1 q-8 -5 -15 -1" stroke="#120b2e" stroke-width="3.4" stroke-linecap="round" fill="none"/><circle cx="-30" cy="30" r="7" fill="#ff8fb1" opacity=".55"/><circle cx="30" cy="30" r="7" fill="#ff8fb1" opacity=".55"/>
+    <path transform="translate(0 32) scale(0.85)" d="M-22 0 Q-12 12 -5 10 L-1 2 L4 15 L8 7 Q14 11 22 0" stroke="#120b2e" stroke-width="3.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <g transform="translate(0 -14)"><rect x="-46" y="-4" width="92" height="8" rx="4" fill="#ff5a5a"/><circle cx="-17" cy="0" r="12" fill="#bff3ff" stroke="#333" stroke-width="4"/><circle cx="17" cy="0" r="12" fill="#bff3ff" stroke="#333" stroke-width="4"/><path d="M-21 -4 l6 -2" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/><path d="M13 -4 l6 -2" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/></g></g><text x="1400" y="682" fill="#fff" font-family="Inter, Arial Black, Arial, sans-serif" font-weight="900" font-size="40" text-anchor="middle">Turbo</text><text x="1400" y="716" fill="#50e3c2" font-family="Inter, Arial Black, Arial, sans-serif" font-weight="700" font-size="24" text-anchor="middle">HyperEVM</text><g transform="translate(200 890) scale(1.05)">
+    <defs><radialGradient id="adripg" cx="35%" cy="28%" r="85%"><stop offset="0" stop-color="#e3f2ff"/><stop offset=".5" stop-color="#6fb6ff"/><stop offset="1" stop-color="#1f6fd1"/></radialGradient></defs>
+    <ellipse cx="0" cy="70" rx="46" ry="7" fill="#000" opacity=".3"/>
+    <path d="M0 -70 C 28 -34, 58 -6, 58 20 C 58 48, 32 64, 0 64 C -32 64, -58 48, -58 20 C -58 -6, -28 -34, 0 -70 Z" fill="url(#adripg)"/>
+    <path d="M-30 -14 C -38 0, -40 10, -38 20" stroke="#fff" stroke-opacity=".5" stroke-width="7" stroke-linecap="round" fill="none"/>
+    <path d="M-6 -66 q14 -20 30 -10 q-14 -2 -18 10 q-6 6 -12 0 z" fill="#bfe3ff"/>
+    
+  <ellipse cx="-18" cy="0" rx="8" ry="10" fill="#fff"/><ellipse cx="18" cy="0" rx="8" ry="10" fill="#fff"/>
+  <circle cx="-16" cy="2" r="5" fill="#120b2e"/><circle cx="20" cy="2" r="5" fill="#120b2e"/>
+  <circle cx="-14" cy="-1" r="1.8" fill="#fff"/><circle cx="22" cy="-1" r="1.8" fill="#fff"/><path d="M-26 -11 q8 -5 15 -1" stroke="#120b2e" stroke-width="3.4" stroke-linecap="round" fill="none"/><path d="M26 -11 q-8 -5 -15 -1" stroke="#120b2e" stroke-width="3.4" stroke-linecap="round" fill="none"/><circle cx="-32" cy="20" r="7" fill="#ff8fb1" opacity=".55"/><circle cx="32" cy="20" r="7" fill="#ff8fb1" opacity=".55"/>
+    <path transform="translate(0 22) scale(0.95)" d="M-22 0 Q-12 12 -5 10 L-1 2 L4 15 L8 7 Q14 11 22 0" stroke="#062a5a" stroke-width="3.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="-72" cy="-10" r="6" fill="#9fd0ff"/><circle cx="74" cy="4" r="4" fill="#9fd0ff"/><circle cx="66" cy="-20" r="3" fill="#9fd0ff"/></g><text x="200" y="1012" fill="#fff" font-family="Inter, Arial Black, Arial, sans-serif" font-weight="900" font-size="40" text-anchor="middle">Drip</text><text x="200" y="1046" fill="#4da2ff" font-family="Inter, Arial Black, Arial, sans-serif" font-weight="700" font-size="24" text-anchor="middle">Sui</text><g transform="translate(600 890) scale(1.05)">
+    <defs><radialGradient id="ayetig" cx="35%" cy="28%" r="85%"><stop offset="0" stop-color="#ffffff"/><stop offset=".5" stop-color="#eef3fb"/><stop offset="1" stop-color="#b9c6dc"/></radialGradient></defs>
+    <ellipse cx="0" cy="70" rx="52" ry="7" fill="#000" opacity=".3"/>
+    <g fill="#e9eef8"><circle cx="58.0" cy="12.0" r="13"/><circle cx="54.5" cy="30.5" r="13"/><circle cx="44.4" cy="46.7" r="13"/><circle cx="29.0" cy="58.8" r="13"/><circle cx="10.1" cy="65.2" r="13"/><circle cx="-10.1" cy="65.2" r="13"/><circle cx="-29.0" cy="58.8" r="13"/><circle cx="-44.4" cy="46.7" r="13"/><circle cx="-54.5" cy="30.5" r="13"/><circle cx="-58.0" cy="12.0" r="13"/><circle cx="-54.5" cy="-6.5" r="13"/><circle cx="-44.4" cy="-22.7" r="13"/><circle cx="-29.0" cy="-34.8" r="13"/><circle cx="-10.1" cy="-41.2" r="13"/><circle cx="10.1" cy="-41.2" r="13"/><circle cx="29.0" cy="-34.8" r="13"/><circle cx="44.4" cy="-22.7" r="13"/><circle cx="54.5" cy="-6.5" r="13"/></g>
+    <ellipse cx="0" cy="12" rx="60" ry="56" fill="url(#ayetig)"/>
+  <path d="M-34 -18 C -42 -6, -44 6, -42 16" stroke="#fff" stroke-opacity=".4" stroke-width="6" stroke-linecap="round" fill="none"/>
+    <ellipse cx="0" cy="-2" rx="36" ry="30" fill="#cfe0f2"/>
+    <path d="M-26 -50 q-4 -16 6 -22 q-2 10 6 16 z" fill="#dfe7f3"/><path d="M26 -50 q4 -16 -6 -22 q2 10 -6 16 z" fill="#dfe7f3"/>
+    
+  <ellipse cx="-16" cy="-10" rx="8" ry="10" fill="#fff"/><ellipse cx="16" cy="-10" rx="8" ry="10" fill="#fff"/>
+  <circle cx="-14" cy="-8" r="5" fill="#120b2e"/><circle cx="18" cy="-8" r="5" fill="#120b2e"/>
+  <circle cx="-12" cy="-11" r="1.8" fill="#fff"/><circle cx="20" cy="-11" r="1.8" fill="#fff"/><path d="M-24 -22 q8 -5 15 -1" stroke="#5a6a85" stroke-width="3.4" stroke-linecap="round" fill="none"/><path d="M24 -22 q-8 -5 -15 -1" stroke="#5a6a85" stroke-width="3.4" stroke-linecap="round" fill="none"/><circle cx="-30" cy="8" r="7" fill="#ff8fb1" opacity=".55"/><circle cx="30" cy="8" r="7" fill="#ff8fb1" opacity=".55"/>
+    <path transform="translate(0 10) scale(0.85)" d="M-22 0 Q-12 12 -5 10 L-1 2 L4 15 L8 7 Q14 11 22 0" stroke="#120b2e" stroke-width="3.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M-48 28 Q0 46 48 28 L48 40 Q0 58 -48 40 Z" fill="#e84142"/><path d="M24 40 l6 30 l12 -2 l-6 -30 z" fill="#c92f30"/>
+    <g stroke="#c92f30" stroke-width="2"><path d="M-30 38 v8"/><path d="M-10 42 v8"/><path d="M10 42 v8"/></g>
+    <ellipse cx="-22" cy="66" rx="12" ry="6" fill="#b9c6dc"/><ellipse cx="22" cy="66" rx="12" ry="6" fill="#b9c6dc"/><path transform="translate(-80 -40) scale(1.1)" d="M0 -8 L2 -2 L8 0 L2 2 L0 8 L-2 2 L-8 0 L-2 -2 Z" fill="#cfe6ff"/><path transform="translate(82 -30) scale(0.8)" d="M0 -8 L2 -2 L8 0 L2 2 L0 8 L-2 2 L-8 0 L-2 -2 Z" fill="#cfe6ff"/></g><text x="600" y="1012" fill="#fff" font-family="Inter, Arial Black, Arial, sans-serif" font-weight="900" font-size="40" text-anchor="middle">Yeti</text><text x="600" y="1046" fill="#e84142" font-family="Inter, Arial Black, Arial, sans-serif" font-weight="700" font-size="24" text-anchor="middle">Avalanche</text><g transform="translate(1000 890) scale(1.05)">
+    <defs><radialGradient id="apebbleg" cx="35%" cy="28%" r="85%"><stop offset="0" stop-color="#eefaf5"/><stop offset=".5" stop-color="#a9d9c9"/><stop offset="1" stop-color="#5e9c88"/></radialGradient></defs>
+    <ellipse cx="0" cy="70" rx="50" ry="7" fill="#000" opacity=".3"/>
+    <ellipse cx="-20" cy="-62" rx="13" ry="34" fill="#8fc4b2" transform="rotate(-12 -20 -62)"/><ellipse cx="20" cy="-62" rx="13" ry="34" fill="#8fc4b2" transform="rotate(12 20 -62)"/>
+    <ellipse cx="-20" cy="-60" rx="6" ry="24" fill="#ffc2d4" transform="rotate(-12 -20 -60)"/><ellipse cx="20" cy="-60" rx="6" ry="24" fill="#ffc2d4" transform="rotate(12 20 -60)"/>
+    <path d="M-58 20 C -62 -20, -40 -40, 0 -40 C 44 -40, 64 -16, 58 22 C 54 54, 30 66, 0 66 C -32 66, -54 50, -58 20 Z" fill="url(#apebbleg)"/>
+    <g fill="#5e9c88" opacity=".45"><circle cx="-38" cy="30" r="3"/><circle cx="40" cy="36" r="2.5"/><circle cx="-24" cy="48" r="2"/><circle cx="30" cy="-24" r="2.5"/><circle cx="-40" cy="-14" r="2"/></g>
+    
+  <ellipse cx="-18" cy="-6" rx="8" ry="10" fill="#fff"/><ellipse cx="18" cy="-6" rx="8" ry="10" fill="#fff"/>
+  <circle cx="-16" cy="-4" r="5" fill="#120b2e"/><circle cx="20" cy="-4" r="5" fill="#120b2e"/>
+  <circle cx="-14" cy="-7" r="1.8" fill="#fff"/><circle cx="22" cy="-7" r="1.8" fill="#fff"/><g stroke="#120b2e" stroke-width="2.6" stroke-linecap="round" fill="none" transform="translate(-18 -6) scale(-1 1)">
+  <path d="M5 -9 l5 -5"/><path d="M8 -5 l6 -3"/><path d="M1 -10 l2 -6"/></g><g stroke="#120b2e" stroke-width="2.6" stroke-linecap="round" fill="none" transform="translate(18 -6) scale(1 1)">
+  <path d="M5 -9 l5 -5"/><path d="M8 -5 l6 -3"/><path d="M1 -10 l2 -6"/></g><circle cx="-32" cy="14" r="7" fill="#ff8fb1" opacity=".55"/><circle cx="32" cy="14" r="7" fill="#ff8fb1" opacity=".55"/>
+    <path d="M-4 4 h8 l-4 5 z" fill="#ff7aa2"/>
+    <path transform="translate(0 16) scale(0.85)" d="M-22 0 Q-12 12 -5 10 L-1 2 L4 15 L8 7 Q14 11 22 0" stroke="#120b2e" stroke-width="3.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/><g transform="translate(-36 -40) scale(1.1)"><ellipse cx="0" cy="-8" rx="5.5" ry="8" fill="#2ed8a7" transform="rotate(0)"/><ellipse cx="0" cy="-8" rx="5.5" ry="8" fill="#2ed8a7" transform="rotate(72)"/><ellipse cx="0" cy="-8" rx="5.5" ry="8" fill="#2ed8a7" transform="rotate(144)"/><ellipse cx="0" cy="-8" rx="5.5" ry="8" fill="#2ed8a7" transform="rotate(216)"/><ellipse cx="0" cy="-8" rx="5.5" ry="8" fill="#2ed8a7" transform="rotate(288)"/><circle r="4.5" fill="#ffd84d"/></g><ellipse cx="-22" cy="66" rx="12" ry="6" fill="#5e9c88"/><ellipse cx="22" cy="66" rx="12" ry="6" fill="#5e9c88"/></g><text x="1000" y="1012" fill="#fff" font-family="Inter, Arial Black, Arial, sans-serif" font-weight="900" font-size="40" text-anchor="middle">Pebble</text><text x="1000" y="1046" fill="#2ed8a7" font-family="Inter, Arial Black, Arial, sans-serif" font-weight="700" font-size="24" text-anchor="middle">Aptos</text><g transform="translate(1400 890) scale(1.05)">
+    <defs><radialGradient id="aboltg" cx="35%" cy="28%" r="85%"><stop offset="0" stop-color="#d6eeff"/><stop offset=".5" stop-color="#4fb3f5"/><stop offset="1" stop-color="#1366a8"/></radialGradient></defs>
+    <ellipse cx="0" cy="70" rx="50" ry="7" fill="#000" opacity=".3"/>
+    <path d="M0 -62 v-16" stroke="#9fb6c8" stroke-width="4"/><circle cx="0" cy="-82" r="7" fill="#ffd84d"/>
+    <rect x="-62" y="-60" width="124" height="124" rx="30" fill="url(#aboltg)"/>
+    <circle cx="-66" cy="0" r="9" fill="#9fb6c8"/><circle cx="66" cy="0" r="9" fill="#9fb6c8"/>
+    <rect x="-44" y="-36" width="88" height="68" rx="20" fill="#eaf6ff"/>
+    
+  <ellipse cx="-17" cy="-12" rx="8" ry="10" fill="#fff"/><ellipse cx="17" cy="-12" rx="8" ry="10" fill="#fff"/>
+  <circle cx="-15" cy="-10" r="5" fill="#0a4f86"/><circle cx="19" cy="-10" r="5" fill="#0a4f86"/>
+  <circle cx="-13" cy="-13" r="1.8" fill="#fff"/><circle cx="21" cy="-13" r="1.8" fill="#fff"/><path d="M-25 -25 q8 -5 15 -1" stroke="#0a4f86" stroke-width="3.4" stroke-linecap="round" fill="none"/><path d="M25 -25 q-8 -5 -15 -1" stroke="#0a4f86" stroke-width="3.4" stroke-linecap="round" fill="none"/><circle cx="-30" cy="8" r="7" fill="#ff8fb1" opacity=".55"/><circle cx="30" cy="8" r="7" fill="#ff8fb1" opacity=".55"/>
+    <path transform="translate(0 10) scale(0.85)" d="M-22 0 Q-12 12 -5 10 L-1 2 L4 15 L8 7 Q14 11 22 0" stroke="#0a4f86" stroke-width="3.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M-4 58 l7 -10 h-6 l6 -9" stroke="#ffd84d" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <ellipse cx="-22" cy="66" rx="12" ry="6" fill="#1366a8"/><ellipse cx="22" cy="66" rx="12" ry="6" fill="#1366a8"/></g><text x="1400" y="1012" fill="#fff" font-family="Inter, Arial Black, Arial, sans-serif" font-weight="900" font-size="40" text-anchor="middle">Bolt</text><text x="1400" y="1046" fill="#28a0f0" font-family="Inter, Arial Black, Arial, sans-serif" font-weight="700" font-size="24" text-anchor="middle">Arbitrum</text><text x="1570" y="1080" fill="#cfc6ff" font-family="Inter, Arial Black, Arial, sans-serif" font-weight="700" font-size="24" text-anchor="end">arcpulse.app</text></svg>

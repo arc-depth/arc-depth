@@ -145,6 +145,17 @@ export const YOLLAR = [
     kaynak: "GeckoTerminal public API + relay.link"
   },
   {
+    /* 11 Nov 2026: Warp — every launchpad on our thirteen chains ranked live, launches sent to the one the creator picks */
+    yol: "warp",
+    ad: "Warp",
+    kisa: "Warp",
+    grup: "piyasa",
+    ikon: "grafik",
+    durum: "canli",
+    ozet: "Every memecoin launchpad on thirteen chains, ranked by live volume; launch on the one you pick from your own wallet.",
+    kaynak: "DefiLlama (Launchpad category) + Elysium chain records"
+  },
+  {
     yol: "move-token",
     ad: "Aptos & Sui launches",
     kisa: "Aptos & Sui",
