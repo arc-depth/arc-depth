@@ -33,8 +33,8 @@ const ZAD = Object.fromEntries(ZINCIRLER.map((z) => [z.k, z]));
 
 /* Warp connections: "live" once tested with a real launch; "next" while being built */
 /* the Montra connection opens on the page once a real launch through it has worked (Halo, Pulse Squad #1) */
-const MONTRA_ACIK = false;
-const WARP = { "Montra": MONTRA_ACIK ? "live" : "next" };
+const ACIK = { montra: false, clanker: false };
+const WARP = { "Montra": ACIK.montra ? "live" : "next" };
 /* where a launchpad lives when we know it for sure; otherwise its DefiLlama page, which links to it */
 const ADRES = { "pump.fun": "https://pump.fun", "Montra": "https://montramarkets.xyz", "Ascend Launchpad": "https://app.ascendlaunch.xyz", "Ascend": "https://app.ascendlaunch.xyz", "Volta": "https://www.volta.family" };
 
@@ -89,8 +89,17 @@ const STIL = `
 .wp-m.ilk{border-color:#c6f86b;box-shadow:0 0 0 1px #c6f86b55,0 10px 30px -12px #c6f86b88}
 `;
 
-function montraFormu() {
+/* the launch form: one launchpad at a time; each opens only once a real launch through it has worked */
+const LAUNCHPADLER = {
+  montra: { ad: "Montra", zincirler: ["elysium"], kalkan: true, acik: () => ACIK.montra, link: (t) => "https://montramarkets.xyz/token/" + t, bekliyor: "opens with Halo's launch on 13 Nov" },
+  clanker: { ad: "Clanker", zincirler: ["base", "bsc", "monad", "robinhood", "arc", "elysium"], kalkan: false, acik: () => ACIK.clanker, link: null, bekliyor: "opens with Blu's launch on Base" },
+};
+const ZINCIR_AD = { elysium: ["Elysium", "HYPE"], base: ["Base", "ETH"], bsc: ["BNB Chain", "BNB"], monad: ["Monad", "MON"], robinhood: ["Robinhood", "ETH"], arc: ["Arc", "USDC"] };
+
+function warpFormu() {
   const gir = (ph, ek = {}) => el("input", { attr: { placeholder: ph, ...ek } });
+  const lp = el("select", {}, Object.entries(LAUNCHPADLER).map(([k, v]) => el("option", { attr: { value: k }, yazi: v.ad + " · " + v.zincirler.map((z) => ZINCIR_AD[z][0]).join(", ") })));
+  const zincir = el("select");
   const ad = gir("e.g. Halo", { maxlength: "32" }), sembol = gir("HALO", { maxlength: "12" }), aciklama = el("textarea", { attr: { placeholder: "What it is, in a sentence or two", maxlength: "280", rows: "2" } });
   const dosya = el("input", { attr: { type: "file", accept: "image/png,image/jpeg,image/webp,image/gif" } });
   const gorsel = gir("…or paste an https:// or ipfs:// address");
@@ -99,37 +108,61 @@ function montraFormu() {
   gorsel.addEventListener("change", () => { const u = gorsel.value.trim().replace(/^ipfs:\/\//i, "https://ipfs.filebase.io/ipfs/"); onizle.style.display = u ? "block" : "none"; onizle.src = u; });
   const ucret = el("select", {}, [1, 2, 3, 5, 10].map((u) => el("option", { attr: { value: String(u), selected: u === 2 ? "" : null }, yazi: u + "% per trade" })));
   const kalkan = el("select", {}, [[0, "None"], [5, "5 seconds"], [10, "10 seconds"], [30, "30 seconds"], [60, "1 minute"], [300, "5 minutes"], [900, "15 minutes"], [1800, "30 minutes"]].map(([v, t]) => el("option", { attr: { value: String(v), selected: v === 60 ? "" : null }, yazi: t })));
-  const ilk = gir("0.5", { type: "number", min: "0", step: "0.01" });
+  const kalkanEt = el("label", {}, ["Anti-snipe", kalkan]);
+  const ilk = gir("0.5", { type: "number", min: "0", step: "0.000001" });
+  const ilkEt = el("span", { yazi: "First buy" });
   const site = gir("https:// (optional)"), x = gir("https://x.com/… (optional)");
   const ozet = el("div", { sinif: "vt-alt", attr: { style: "margin:10px 0 0" } });
+  const notKutusu = el("div");
   const durum = el("div", { attr: { style: "margin-top:10px;font-weight:600" } });
-  const dugme = el("button", { sinif: "dugme dugme--marka", attr: { type: "button", disabled: MONTRA_ACIK ? null : "" }, yazi: MONTRA_ACIK ? "Warp to Montra ⚡" : "Opens with Halo's launch" });
-  const yaz = () => { const h = Number(ilk.value || 0); ozet.textContent = "Montra (Elysium) · " + ucret.value + "% fee per trade: you keep 90% of the creator side, ARC PULSE 10%." + (h > 0 ? " Warp fee " + (h * 0.005).toFixed(4) + " HYPE (0.5% of your " + h + " HYPE first buy)." : " No first buy, no Warp fee."); };
-  [ilk, ucret].forEach((e) => e.addEventListener("input", yaz)); yaz();
+  const dugme = el("button", { sinif: "dugme dugme--marka", attr: { type: "button" } });
+  const secim = () => LAUNCHPADLER[lp.value];
+  const yaz = () => {
+    const L = secim(), [zad, birim] = ZINCIR_AD[zincir.value] || ["", ""], h = Number(ilk.value || 0);
+    ilkEt.textContent = "First buy (" + birim + ")";
+    kalkanEt.style.display = L.kalkan ? "" : "none";
+    dugme.disabled = !L.acik(); dugme.textContent = L.acik() ? "Warp to " + L.ad + " ⚡" : L.ad + " " + L.bekliyor;
+    temizle(notKutusu).append(not(L.acik() ? "Live: " + L.ad + " on " + zad + ". Signed in your own wallet; ARC PULSE never holds your token or your coins." : L.ad + " is connected and " + L.bekliyor + ": a connection opens only after a real launch through it has worked.", L.acik() ? "" : "uyari"));
+    ozet.textContent = L.ad + " on " + zad + " · " + ucret.value + "% fee per trade" + (lp.value === "montra" ? ": you keep 90% of the creator side, ARC PULSE 10%." : ": ARC PULSE takes Clanker's integrator share, 10% of the tax after Clanker's own; the rest is yours. Clanker adds its own 20-second anti-snipe.") +
+      (h > 0 ? " Warp fee " + (h * 0.005).toFixed(6) + " " + birim + " (0.5% of your first buy)." : " No first buy, no Warp fee.");
+  };
+  const zincirleriDoldur = () => { temizle(zincir).append(...secim().zincirler.map((z) => el("option", { attr: { value: z }, yazi: ZINCIR_AD[z][0] }))); yaz(); };
+  lp.addEventListener("change", zincirleriDoldur); [ilk, ucret].forEach((e) => e.addEventListener("input", yaz)); zincir.addEventListener("change", yaz);
+  zincirleriDoldur();
   dugme.addEventListener("click", async () => {
     dugme.disabled = true;
+    const L = secim();
     try {
-      const m = await import("../warp-montra.js");
+      const mm = await import("../warp-montra.js");
       if (!ad.value.trim() || !sembol.value.trim()) throw new Error("A name and a ticker are needed.");
       let logo;
-      if (dosya.files[0] && !gorsel.value.trim()) { durum.textContent = "Uploading your image (free, to nostr.build)…"; logo = await m.gorselYukle(dosya.files[0]); gorsel.value = logo; }
-      else logo = m.gorselAdresi(gorsel.value);
+      if (dosya.files[0] && !gorsel.value.trim()) { durum.textContent = "Uploading your image (free, to nostr.build)…"; logo = await mm.gorselYukle(dosya.files[0]); gorsel.value = logo; }
+      else logo = mm.gorselAdresi(gorsel.value);
       const yuklendi = await new Promise((ok) => { const i = new Image(); i.onload = () => ok(true); i.onerror = () => ok(false); i.src = logo.replace(/^ipfs:\/\//i, "https://ipfs.filebase.io/ipfs/"); });
       if (!yuklendi) throw new Error("That image address does not load. Check it opens in a new tab.");
-      durum.textContent = "Reading Montra's launch menu…";
-      const satir = await m.satirBul(Number(ucret.value), Number(kalkan.value));
-      if (satir == null) throw new Error("Montra does not offer that fee with that anti-snipe window right now.");
-      const sonuc = await m.launch({ ad: ad.value.trim(), sembol: sembol.value.trim().toUpperCase(), aciklama: aciklama.value.trim(), logo,
-        configId: satir, ilkAlim: Number(ilk.value || 0), website: site.value.trim(), twitter: x.value.trim() }, (t) => { durum.textContent = t; });
-      temizle(durum).append("Launched ⚡ ", el("a", { attr: { href: "https://montramarkets.xyz/token/" + sonuc.token, target: "_blank", rel: "noopener noreferrer" }, yazi: "Open your token on Montra ↗" }));
+      const ortak = { ad: ad.value.trim(), sembol: sembol.value.trim().toUpperCase(), aciklama: aciklama.value.trim(), logo, ilkAlim: Number(ilk.value || 0), website: site.value.trim(), twitter: x.value.trim() };
+      const adim = (t) => { durum.textContent = t; };
+      let sonuc;
+      if (lp.value === "montra") {
+        durum.textContent = "Reading Montra's launch menu…";
+        const satir = await mm.satirBul(Number(ucret.value), Number(kalkan.value));
+        if (satir == null) throw new Error("Montra does not offer that fee with that anti-snipe window right now.");
+        sonuc = await mm.launch({ ...ortak, configId: satir }, adim);
+        sonuc.link = L.link(sonuc.token);
+      } else {
+        const mc = await import("../warp-clanker.js");
+        sonuc = await mc.launch({ ...ortak, zincir: zincir.value, ucret: Number(ucret.value) }, adim);
+      }
+      temizle(durum).append("Launched ⚡ ", el("a", { attr: { href: sonuc.link, target: "_blank", rel: "noopener noreferrer" }, yazi: "Open your token on " + L.ad + " ↗" }));
     } catch (e) { durum.textContent = e.shortMessage || e.message; }
-    finally { dugme.disabled = !MONTRA_ACIK; }
+    finally { dugme.disabled = !L.acik(); }
   });
   return [
-    not(MONTRA_ACIK ? "Live: Montra on Elysium. Signed in your own wallet; ARC PULSE never holds your token or your HYPE." : "Montra (Elysium) is connected and opens here with the Pulse Squad's first launch, Halo, on 13 Nov: a connection opens only after a real launch through it has worked. Next: Clanker and Zora (Base), then Raydium LaunchLab and Meteora (Solana).", MONTRA_ACIK ? "" : "uyari"),
+    notKutusu,
     el("div", { sinif: "wp-form wp-form--acik" }, [
+      el("label", {}, ["Launchpad", lp]), el("label", {}, ["Chain", zincir]),
       el("label", {}, ["Token name", ad]), el("label", {}, ["Ticker", sembol]), el("label", {}, ["Image", dosya, gorsel, onizle]),
-      el("label", {}, ["Fee per trade", ucret]), el("label", {}, ["Anti-snipe", kalkan]), el("label", {}, ["First buy (HYPE)", ilk]),
+      el("label", {}, ["Fee per trade", ucret]), kalkanEt, el("label", {}, [ilkEt, ilk]),
       el("label", { attr: { style: "grid-column:1/-1" } }, ["Description", aciklama]), el("label", {}, ["Website", site]), el("label", {}, ["X", x]),
     ]),
     ozet, el("div", { attr: { style: "margin-top:12px" } }, [dugme]), durum,
@@ -162,7 +195,7 @@ export async function ciz() {
   ]));
 
   /* ---- the launch form, honest about its state ---- */
-  kap.append(panel("Warp a launch", montraFormu()));
+  kap.append(panel("Warp a launch", warpFormu()));
 
   kap.append(panel("How Warp works", adimlar([
     { ikon: "grafik", baslik: "See where the volume is", yazi: "The radar ranks every launchpad on thirteen chains by what traded there in the last 24 hours." },
