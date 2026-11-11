@@ -1,0 +1,1 @@
+docs/vendor/warp-pump.mjs bundles @pump-fun/pump-sdk 4.3.1 (MIT, github.com/pump-fun/pump-sdk), @solana/web3.js 1.99.0 (MIT), bn.js and buffer, built with esbuild 0.24.0 on 11 Nov 2026. Entry: pumpLaunchHazirla / warpUcretTx / onayla (ARC PULSE's own code around the SDK).

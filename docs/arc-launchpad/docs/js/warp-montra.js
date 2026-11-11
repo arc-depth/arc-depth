@@ -76,6 +76,21 @@ export async function gorselYukle(dosya) {
   return url[1];
 }
 
+/* a small JSON document (token metadata) to a Blossom server for free (BUD-02): blossom.primal.net takes JSON and allows
+   any site; the upload is signed by a throwaway Nostr key (kind 24242) made for it and dropped. Returns its https address. */
+const BLOSSOM = "https://blossom.primal.net";
+export async function metaYukle(belge) {
+  const { schnorr, sha256, bytesToHex } = await import("../vendor/nostr-imza.mjs");
+  const govde = new TextEncoder().encode(JSON.stringify(belge));
+  const x = bytesToHex(sha256(govde)), sk = schnorr.utils.randomPrivateKey(), simdi = Math.floor(Date.now() / 1000);
+  const ev = { pubkey: bytesToHex(schnorr.getPublicKey(sk)), created_at: simdi, kind: 24242, tags: [["t", "upload"], ["x", x], ["expiration", String(simdi + 600)]], content: "Upload metadata" };
+  const id = bytesToHex(sha256(new TextEncoder().encode(JSON.stringify([0, ev.pubkey, ev.created_at, ev.kind, ev.tags, ev.content]))));
+  const r = await fetch(BLOSSOM + "/upload", { method: "PUT", headers: { Authorization: "Nostr " + btoa(JSON.stringify({ ...ev, id, sig: bytesToHex(schnorr.sign(id, sk)) })), "Content-Type": "application/json" }, body: govde });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok || !j.url) throw new Error("The token details could not be stored (" + (j.message || r.status) + ").");
+  return j.url;
+}
+
 /* the launch. adim(text) reports progress; returns { token, hash } */
 export async function launch(g, adim) {
   const f = await fabrika();
