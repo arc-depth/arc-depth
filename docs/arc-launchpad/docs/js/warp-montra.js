@@ -2,7 +2,8 @@
  *
  * Montra's factory makes the token, its pool, its locked liquidity, the fee split and the first buy in one call
  * (montramarkets.xyz/docs/build#launch-a-token). This page cannot reach Montra's image service (it answers servers
- * only), so the image travels inside the launch: a 128 px WebP as a data URI, on the token and in its metadata.
+ * only), and Montra shows only https:// and ipfs:// images, so the creator gives an image address; it goes on the token
+ * as its logo, which Montra's site shows when a launch names no metadata document.
  *
  * What Warp adds, shown before anything is signed:
  *   - 0.5% of the first buy, sent to ARC PULSE in its own transaction, only after the launch has simulated cleanly
@@ -48,13 +49,11 @@ export async function satirBul(ucret, kalkan) {
   return null;
 }
 
-/* an image file -> a 128 px WebP data URI */
-export async function kucukGorsel(dosya) {
-  const bmp = await createImageBitmap(dosya);
-  const c = document.createElement("canvas"); c.width = c.height = 128;
-  const k = Math.min(bmp.width, bmp.height), x = (bmp.width - k) / 2, y = (bmp.height - k) / 2;
-  c.getContext("2d").drawImage(bmp, x, y, k, k, 0, 0, 128, 128);
-  return c.toDataURL("image/webp", 0.8);
+/* an image address Montra can show: https:// or ipfs://, and it must load as an image */
+export function gorselAdresi(u) {
+  u = String(u || "").trim();
+  if (!/^(https:\/\/|ipfs:\/\/)\S+$/i.test(u)) throw new Error("The image must be an https:// or ipfs:// address.");
+  return u;
 }
 
 /* the launch. adim(text) reports progress; returns { token, hash } */
@@ -64,9 +63,8 @@ export async function launch(g, adim) {
   if (!ben) throw new Error("Connect a wallet first.");
   const biz = ben.toLowerCase() === ARC_PULSE.toLowerCase();
   const ilk = parseEther(String(g.ilkAlim || 0));
-  const meta = "data:application/json;base64," + btoa(unescape(encodeURIComponent(JSON.stringify({ name: g.ad, symbol: g.sembol, description: g.aciklama, image: g.logo, website: g.website || "" }))));
   const params = {
-    name: g.ad, symbol: g.sembol, metadataURI: meta,
+    name: g.ad, symbol: g.sembol, metadataURI: "",   // no document: Montra shows the logo
     profile: { logo: g.logo, description: g.aciklama, socials: { telegram: g.telegram || "", twitter: g.twitter || "", discord: "", website: g.website || "", extra: "" } },
     configId: g.configId, supply: 0n, salt: hexlify(randomBytes(32)),
     feeRecipients: biz ? [] : [ben, ARC_PULSE], feeShares: biz ? [] : [10000 - ARC_PAY, ARC_PAY],

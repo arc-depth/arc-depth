@@ -92,7 +92,9 @@ const STIL = `
 function montraFormu() {
   const gir = (ph, ek = {}) => el("input", { attr: { placeholder: ph, ...ek } });
   const ad = gir("e.g. Halo", { maxlength: "32" }), sembol = gir("HALO", { maxlength: "12" }), aciklama = el("textarea", { attr: { placeholder: "What it is, in a sentence or two", maxlength: "280", rows: "2" } });
-  const gorsel = el("input", { attr: { type: "file", accept: "image/png,image/jpeg,image/webp,image/gif" } });
+  const gorsel = gir("https://… or ipfs://… (PNG, JPG, WebP, GIF)");
+  const onizle = el("img", { attr: { alt: "", style: "width:56px;height:56px;border-radius:12px;object-fit:cover;display:none;margin-top:6px" } });
+  gorsel.addEventListener("change", () => { const u = gorsel.value.trim().replace(/^ipfs:\/\//i, "https://ipfs.filebase.io/ipfs/"); onizle.style.display = u ? "block" : "none"; onizle.src = u; });
   const ucret = el("select", {}, [1, 2, 3, 5, 10].map((u) => el("option", { attr: { value: String(u), selected: u === 2 ? "" : null }, yazi: u + "% per trade" })));
   const kalkan = el("select", {}, [[0, "None"], [5, "5 seconds"], [10, "10 seconds"], [30, "30 seconds"], [60, "1 minute"], [300, "5 minutes"], [900, "15 minutes"], [1800, "30 minutes"]].map(([v, t]) => el("option", { attr: { value: String(v), selected: v === 60 ? "" : null }, yazi: t })));
   const ilk = gir("0.5", { type: "number", min: "0", step: "0.01" });
@@ -107,12 +109,13 @@ function montraFormu() {
     try {
       const m = await import("../warp-montra.js");
       if (!ad.value.trim() || !sembol.value.trim()) throw new Error("A name and a ticker are needed.");
-      if (!gorsel.files[0]) throw new Error("Choose an image.");
-      if (gorsel.files[0].size > 2e6) throw new Error("The image must be under 2 MB.");
+      const logo = m.gorselAdresi(gorsel.value);
+      const yuklendi = await new Promise((ok) => { const i = new Image(); i.onload = () => ok(true); i.onerror = () => ok(false); i.src = logo.replace(/^ipfs:\/\//i, "https://ipfs.filebase.io/ipfs/"); });
+      if (!yuklendi) throw new Error("That image address does not load. Check it opens in a new tab.");
       durum.textContent = "Reading Montra's launch menu…";
       const satir = await m.satirBul(Number(ucret.value), Number(kalkan.value));
       if (satir == null) throw new Error("Montra does not offer that fee with that anti-snipe window right now.");
-      const sonuc = await m.launch({ ad: ad.value.trim(), sembol: sembol.value.trim().toUpperCase(), aciklama: aciklama.value.trim(), logo: await m.kucukGorsel(gorsel.files[0]),
+      const sonuc = await m.launch({ ad: ad.value.trim(), sembol: sembol.value.trim().toUpperCase(), aciklama: aciklama.value.trim(), logo,
         configId: satir, ilkAlim: Number(ilk.value || 0), website: site.value.trim(), twitter: x.value.trim() }, (t) => { durum.textContent = t; });
       temizle(durum).append("Launched ⚡ ", el("a", { attr: { href: "https://montramarkets.xyz/token/" + sonuc.token, target: "_blank", rel: "noopener noreferrer" }, yazi: "Open your token on Montra ↗" }));
     } catch (e) { durum.textContent = e.shortMessage || e.message; }
@@ -121,7 +124,7 @@ function montraFormu() {
   return [
     not(MONTRA_ACIK ? "Live: Montra on Elysium. Signed in your own wallet; ARC PULSE never holds your token or your HYPE." : "Montra (Elysium) is connected and opens here with the Pulse Squad's first launch, Halo, on 13 Nov: a connection opens only after a real launch through it has worked. Next: Clanker and Zora (Base), then Raydium LaunchLab and Meteora (Solana).", MONTRA_ACIK ? "" : "uyari"),
     el("div", { sinif: "wp-form wp-form--acik" }, [
-      el("label", {}, ["Token name", ad]), el("label", {}, ["Ticker", sembol]), el("label", {}, ["Image", gorsel]),
+      el("label", {}, ["Token name", ad]), el("label", {}, ["Ticker", sembol]), el("label", {}, ["Image address", gorsel, onizle]),
       el("label", {}, ["Fee per trade", ucret]), el("label", {}, ["Anti-snipe", kalkan]), el("label", {}, ["First buy (HYPE)", ilk]),
       el("label", { attr: { style: "grid-column:1/-1" } }, ["Description", aciklama]), el("label", {}, ["Website", site]), el("label", {}, ["X", x]),
     ]),
