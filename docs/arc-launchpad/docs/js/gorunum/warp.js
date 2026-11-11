@@ -33,8 +33,8 @@ const ZAD = Object.fromEntries(ZINCIRLER.map((z) => [z.k, z]));
 
 /* Warp connections: "live" once tested with a real launch; "next" while being built */
 /* the Montra connection opens on the page once a real launch through it has worked (Halo, Pulse Squad #1) */
-const ACIK = { montra: false, flap: false, clanker: false };
-const WARP = { "Montra": ACIK.montra ? "live" : "next", "Flap sh": ACIK.flap ? "live" : "next" };
+const ACIK = { montra: false, flap: false, pons: false, clanker: false };
+const WARP = { "Montra": ACIK.montra ? "live" : "next", "Flap sh": ACIK.flap ? "live" : "next", "Pons V2": ACIK.pons ? "live" : "next" };
 /* where a launchpad lives when we know it for sure; otherwise its DefiLlama page, which links to it */
 const ADRES = { "pump.fun": "https://pump.fun", "Montra": "https://montramarkets.xyz", "Ascend Launchpad": "https://app.ascendlaunch.xyz", "Ascend": "https://app.ascendlaunch.xyz", "Volta": "https://www.volta.family" };
 
@@ -93,6 +93,7 @@ const STIL = `
 const LAUNCHPADLER = {
   montra: { ad: "Montra", zincirler: ["elysium"], kalkan: true, acik: () => ACIK.montra, link: (t) => "https://montramarkets.xyz/token/" + t, bekliyor: "opens with Halo's launch on 13 Nov" },
   flap: { ad: "Flap", zincirler: ["bsc", "robinhood", "monad"], kalkan: false, acik: () => ACIK.flap, link: null, bekliyor: "opens with the Pulse Squad's first Flap launch" },
+  pons: { ad: "Pons", zincirler: ["robinhood"], kalkan: false, acik: () => ACIK.pons, link: null, bekliyor: "opens with Feather's launch on Robinhood" },
   clanker: { ad: "Clanker", zincirler: ["base", "bsc", "monad", "robinhood", "arc", "elysium"], kalkan: false, acik: () => ACIK.clanker, link: null, bekliyor: "opens with Blu's launch on Base" },
 };
 const ZINCIR_AD = { elysium: ["Elysium", "HYPE"], base: ["Base", "ETH"], bsc: ["BNB Chain", "BNB"], monad: ["Monad", "MON"], robinhood: ["Robinhood", "ETH"], arc: ["Arc", "USDC"] };
@@ -124,7 +125,7 @@ function warpFormu() {
     kalkanEt.style.display = L.kalkan ? "" : "none";
     dugme.disabled = !L.acik(); dugme.textContent = L.acik() ? "Warp to " + L.ad + " ⚡" : L.ad + " " + L.bekliyor;
     temizle(notKutusu).append(not(L.acik() ? "Live: " + L.ad + " on " + zad + ". Signed in your own wallet; ARC PULSE never holds your token or your coins." : L.ad + " is connected and " + L.bekliyor + ": a connection opens only after a real launch through it has worked.", L.acik() ? "" : "uyari"));
-    ozet.textContent = L.ad + " on " + zad + " · " + ucret.value + "% fee per trade" + (lp.value === "montra" ? ": you keep 90% of the creator side, ARC PULSE 10%." : lp.value === "flap" ? " buy and sell tax to you; Flap pays ARC PULSE a commission its protocol sets on every taxed trade." : ": ARC PULSE takes Clanker's integrator share, 10% of the tax after Clanker's own; the rest is yours. Clanker adds its own 20-second anti-snipe.") +
+    ozet.textContent = L.ad + " on " + zad + " · " + ucret.value + "% fee per trade" + (lp.value === "montra" ? ": you keep 90% of the creator side, ARC PULSE 10%." : lp.value === "pons" ? " creator tax to you (Pons caps it); your opening buy is made in the launch itself, so no one buys before you. Pons adds its own launch fee." : lp.value === "flap" ? " buy and sell tax to you; Flap pays ARC PULSE a commission its protocol sets on every taxed trade." : ": ARC PULSE takes Clanker's integrator share, 10% of the tax after Clanker's own; the rest is yours. Clanker adds its own 20-second anti-snipe.") +
       (h > 0 ? " Warp fee " + (h * 0.005).toFixed(6) + " " + birim + " (0.5% of your first buy)." : " No first buy, no Warp fee.");
   };
   const zincirleriDoldur = () => { temizle(zincir).append(...secim().zincirler.map((z) => el("option", { attr: { value: z }, yazi: ZINCIR_AD[z][0] }))); yaz(); };
@@ -165,6 +166,9 @@ function warpFormu() {
         if (satir == null) throw new Error("Montra does not offer that fee with that anti-snipe window right now.");
         sonuc = await mm.launch({ ...ortak, configId: satir }, adim);
         sonuc.link = L.link(sonuc.token);
+      } else if (lp.value === "pons") {
+        const mp = await import("../warp-pons.js");
+        sonuc = await mp.launch({ ...ortak, ucret: Number(ucret.value) }, adim);
       } else {
         const mc = await import("../warp-clanker.js");
         sonuc = await mc.launch({ ...ortak, zincir: zincir.value, ucret: Number(ucret.value) }, adim);
