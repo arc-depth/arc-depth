@@ -32,7 +32,9 @@ const ZINCIRLER = [
 const ZAD = Object.fromEntries(ZINCIRLER.map((z) => [z.k, z]));
 
 /* Warp connections: "live" once tested with a real launch; "next" while being built */
-const WARP = { "Montra": "next", "pump.fun": "next" };
+/* the Montra connection opens on the page once a real launch through it has worked (Halo, Pulse Squad #1) */
+const MONTRA_ACIK = false;
+const WARP = { "Montra": MONTRA_ACIK ? "live" : "next" };
 /* where a launchpad lives when we know it for sure; otherwise its DefiLlama page, which links to it */
 const ADRES = { "pump.fun": "https://pump.fun", "Montra": "https://montramarkets.xyz", "Ascend Launchpad": "https://app.ascendlaunch.xyz", "Ascend": "https://app.ascendlaunch.xyz", "Volta": "https://www.volta.family" };
 
@@ -77,15 +79,55 @@ const STIL = `
 .wp-ucret{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
 .wp-u{border-radius:14px;padding:16px;background:var(--yuzey-1,#12141b);border:1px solid var(--cizgi,#2a2f3a)}
 .wp-u b{display:block;font-size:30px;font-weight:900;line-height:1;margin-bottom:6px}.wp-u span{font-size:13px;opacity:.8}
-.wp-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;opacity:.55;pointer-events:none}
+.wp-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
 .wp-form label{display:grid;gap:5px;font-size:12px;font-weight:700;opacity:.8}
-.wp-form input,.wp-form select{border:1px solid var(--cizgi,#2a2f3a);background:var(--yuzey-0,#0d0f14);color:inherit;border-radius:10px;padding:10px}
+.wp-form input,.wp-form select,.wp-form textarea{border:1px solid var(--cizgi,#2a2f3a);background:var(--yuzey-0,#0d0f14);color:inherit;border-radius:10px;padding:10px}
 .wp-squad{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
 .wp-m{border-radius:16px;padding:12px;text-align:center;background:var(--yuzey-1,#12141b);border:1px solid var(--cizgi,#2a2f3a)}
 .wp-m img{width:100%;max-width:150px;aspect-ratio:6/5;object-fit:contain}
 .wp-m .ad{font-weight:900;font-size:17px}.wp-m .z{font-size:12px;font-weight:700}.wp-m .t{font-size:12px;opacity:.65;margin-top:3px}
 .wp-m.ilk{border-color:#c6f86b;box-shadow:0 0 0 1px #c6f86b55,0 10px 30px -12px #c6f86b88}
 `;
+
+function montraFormu() {
+  const gir = (ph, ek = {}) => el("input", { attr: { placeholder: ph, ...ek } });
+  const ad = gir("e.g. Halo", { maxlength: "32" }), sembol = gir("HALO", { maxlength: "12" }), aciklama = el("textarea", { attr: { placeholder: "What it is, in a sentence or two", maxlength: "280", rows: "2" } });
+  const gorsel = el("input", { attr: { type: "file", accept: "image/png,image/jpeg,image/webp,image/gif" } });
+  const ucret = el("select", {}, [1, 2, 3, 5, 10].map((u) => el("option", { attr: { value: String(u), selected: u === 2 ? "" : null }, yazi: u + "% per trade" })));
+  const kalkan = el("select", {}, [[0, "None"], [5, "5 seconds"], [10, "10 seconds"], [30, "30 seconds"], [60, "1 minute"], [300, "5 minutes"], [900, "15 minutes"], [1800, "30 minutes"]].map(([v, t]) => el("option", { attr: { value: String(v), selected: v === 60 ? "" : null }, yazi: t })));
+  const ilk = gir("0.5", { type: "number", min: "0", step: "0.01" });
+  const site = gir("https:// (optional)"), x = gir("https://x.com/… (optional)");
+  const ozet = el("div", { sinif: "vt-alt", attr: { style: "margin:10px 0 0" } });
+  const durum = el("div", { attr: { style: "margin-top:10px;font-weight:600" } });
+  const dugme = el("button", { sinif: "dugme dugme--marka", attr: { type: "button", disabled: MONTRA_ACIK ? null : "" }, yazi: MONTRA_ACIK ? "Warp to Montra ⚡" : "Opens with Halo's launch" });
+  const yaz = () => { const h = Number(ilk.value || 0); ozet.textContent = "Montra (Elysium) · " + ucret.value + "% fee per trade: you keep 90% of the creator side, ARC PULSE 10%." + (h > 0 ? " Warp fee " + (h * 0.005).toFixed(4) + " HYPE (0.5% of your " + h + " HYPE first buy)." : " No first buy, no Warp fee."); };
+  [ilk, ucret].forEach((e) => e.addEventListener("input", yaz)); yaz();
+  dugme.addEventListener("click", async () => {
+    dugme.disabled = true;
+    try {
+      const m = await import("../warp-montra.js");
+      if (!ad.value.trim() || !sembol.value.trim()) throw new Error("A name and a ticker are needed.");
+      if (!gorsel.files[0]) throw new Error("Choose an image.");
+      if (gorsel.files[0].size > 2e6) throw new Error("The image must be under 2 MB.");
+      durum.textContent = "Reading Montra's launch menu…";
+      const satir = await m.satirBul(Number(ucret.value), Number(kalkan.value));
+      if (satir == null) throw new Error("Montra does not offer that fee with that anti-snipe window right now.");
+      const sonuc = await m.launch({ ad: ad.value.trim(), sembol: sembol.value.trim().toUpperCase(), aciklama: aciklama.value.trim(), logo: await m.kucukGorsel(gorsel.files[0]),
+        configId: satir, ilkAlim: Number(ilk.value || 0), website: site.value.trim(), twitter: x.value.trim() }, (t) => { durum.textContent = t; });
+      temizle(durum).append("Launched ⚡ ", el("a", { attr: { href: "https://montramarkets.xyz/token/" + sonuc.token, target: "_blank", rel: "noopener noreferrer" }, yazi: "Open your token on Montra ↗" }));
+    } catch (e) { durum.textContent = e.shortMessage || e.message; }
+    finally { dugme.disabled = !MONTRA_ACIK; }
+  });
+  return [
+    not(MONTRA_ACIK ? "Live: Montra on Elysium. Signed in your own wallet; ARC PULSE never holds your token or your HYPE." : "Montra (Elysium) is connected and opens here with the Pulse Squad's first launch, Halo, on 13 Nov: a connection opens only after a real launch through it has worked. Next: Clanker and Zora (Base), then Raydium LaunchLab and Meteora (Solana).", MONTRA_ACIK ? "" : "uyari"),
+    el("div", { sinif: "wp-form wp-form--acik" }, [
+      el("label", {}, ["Token name", ad]), el("label", {}, ["Ticker", sembol]), el("label", {}, ["Image", gorsel]),
+      el("label", {}, ["Fee per trade", ucret]), el("label", {}, ["Anti-snipe", kalkan]), el("label", {}, ["First buy (HYPE)", ilk]),
+      el("label", { attr: { style: "grid-column:1/-1" } }, ["Description", aciklama]), el("label", {}, ["Website", site]), el("label", {}, ["X", x]),
+    ]),
+    ozet, el("div", { attr: { style: "margin-top:12px" } }, [dugme]), durum,
+  ];
+}
 
 export async function ciz() {
   if (!document.getElementById("wp-stil")) document.head.append(el("style", { attr: { id: "wp-stil" }, yazi: STIL }));
@@ -113,16 +155,7 @@ export async function ciz() {
   ]));
 
   /* ---- the launch form, honest about its state ---- */
-  kap.append(panel("Warp a launch", [
-    not("Warp launching is being connected, launchpad by launchpad: Montra (Elysium) and pump.fun (Solana) first, then Clanker (Base) and the rest. A connection opens here only after a real launch through it has worked. Until then, every launchpad above has an Open link.", "uyari"),
-    el("div", { sinif: "wp-form", attr: { "aria-disabled": "true" } }, [
-      el("label", {}, ["Token name", el("input", { attr: { placeholder: "e.g. Halo", disabled: "" } })]),
-      el("label", {}, ["Ticker", el("input", { attr: { placeholder: "HALO", disabled: "" } })]),
-      el("label", {}, ["Chain", el("select", { attr: { disabled: "" } }, ZINCIRLER.map((z) => el("option", { yazi: z.ad })))]),
-      el("label", {}, ["Launchpad", el("select", { attr: { disabled: "" } }, [el("option", { yazi: "The hottest on that chain" })])]),
-      el("label", {}, ["Opening buy (USD)", el("input", { attr: { type: "number", placeholder: "100", disabled: "" } })]),
-    ]),
-  ]));
+  kap.append(panel("Warp a launch", montraFormu()));
 
   kap.append(panel("How Warp works", adimlar([
     { ikon: "grafik", baslik: "See where the volume is", yazi: "The radar ranks every launchpad on thirteen chains by what traded there in the last 24 hours." },
