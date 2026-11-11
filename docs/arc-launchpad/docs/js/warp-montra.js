@@ -56,6 +56,26 @@ export function gorselAdresi(u) {
   return u;
 }
 
+/* a free image upload from the browser: nostr.build's free plan (NIP-96, files kept with no expiry), which allows this
+   site's origin. It asks each upload to be signed by a Nostr key (NIP-98); a throwaway key is made for that one upload
+   and dropped. No account, no key of ours, no fee. Returns the image's https address. */
+const NOSTR_YUKLE = "https://nostr.build/api/v2/nip96/upload";
+export async function gorselYukle(dosya) {
+  if (!/^image\/(png|jpeg|webp|gif)$/.test(dosya.type)) throw new Error("The image must be PNG, JPG, WebP or GIF.");
+  if (dosya.size > 2e6) throw new Error("The image must be under 2 MB.");
+  const { schnorr, sha256, bytesToHex } = await import("../vendor/nostr-imza.mjs");
+  const sk = schnorr.utils.randomPrivateKey();
+  const ev = { pubkey: bytesToHex(schnorr.getPublicKey(sk)), created_at: Math.floor(Date.now() / 1000), kind: 27235, tags: [["u", NOSTR_YUKLE], ["method", "POST"]], content: "" };
+  const id = bytesToHex(sha256(new TextEncoder().encode(JSON.stringify([0, ev.pubkey, ev.created_at, ev.kind, ev.tags, ev.content]))));
+  const yetki = "Nostr " + btoa(JSON.stringify({ ...ev, id, sig: bytesToHex(schnorr.sign(id, sk)) }));
+  const fd = new FormData(); fd.append("file", dosya, dosya.name || "image");
+  const r = await fetch(NOSTR_YUKLE, { method: "POST", headers: { Authorization: yetki }, body: fd });
+  const j = await r.json().catch(() => ({}));
+  const url = ((j.nip94_event && j.nip94_event.tags) || []).find((t) => t[0] === "url");
+  if (!r.ok || !url) throw new Error("The image upload failed (" + (j.message || r.status) + "). You can paste an image address instead.");
+  return url[1];
+}
+
 /* the launch. adim(text) reports progress; returns { token, hash } */
 export async function launch(g, adim) {
   const f = await fabrika();
