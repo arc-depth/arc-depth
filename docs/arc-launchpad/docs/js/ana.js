@@ -24,42 +24,25 @@
  *   and mean it.
  * =========================================================================== */
 
-import { YOLLAR, GRUPLAR, yolBul, grubunYollari } from "./yol.js";
-import { ikon } from "./ikon.js";
-import { el, temizle, dagitimBekliyor, yapimda, hata, iskelet } from "./ui.js";
-import { geriDugmesi } from "./geri.js";
+import { YOLLAR, GRUPLAR, yolBul, grubunYollari, ustSayfa } from "./yol.js";
+import { el, temizle, dagitimBekliyor, yapimda, hata, iskelet, ikon, GRUP_RENK } from "./ui.js";
+import { sponsorYeri } from "./sponsor.js";
 import { cuzdan, cuzdanUygulamalari, mobilMi, tarayiciCuzdani, WC_ACIK } from "./cuzdan.js";
 import { davetYakala } from "./davet.js";
 
 const VARSAYILAN = "kesfet";
 
-/* The four things somebody opens the app to do. Everything else is one tap
-   further, behind "Daha" — a bar with eight targets on a phone is a bar
-   nobody hits accurately. */
-/* The top-level tabs, in the order they are read.
-   DAO IS ONE OF THEM NOW
-     It was reachable only through the overflow menu, which put live
-     governance — propose, vote, queue, execute, all on chain — behind the
-     same door as the unbuilt screens. A product whose rules can only be
-     changed by a vote should not hide the vote.
-
-   WHY THE PHONE BAR STILL SHOWS FOUR
-     The bar is four icons plus "Daha"; five plus one does not fit a phone
-     without shrinking the labels past reading. So on a phone the DAO sits
-     under "Daha" and on a desktop it is a tab. Stated rather than
-     silently truncated, because a tab that exists on one screen size and
-     not the other is the kind of thing nobody notices until somebody
-     cannot find it. */
-/* "designs" (1 Nov 2026): the owner wants the designer NFT section behind its
-   own button. It is the sixth entry, so the phone bar (first four) is unchanged. */
-/* "presale" (9 Nov 2026): the ARCP presale behind its own tab, likewise after the phone bar four */
-/* "vitrin" (Market, 9 Nov 2026): every token on ten chains, bought from any of them; second, after Discover */
-const BIRINCIL = ["kesfet", "vitrin", "warp", "launches", "olustur", "terminal", "portfoy", "dao", "presale", "designs"];
-/* the top bar (9 Nov 2026 redesign): six tabs read at a glance; every other module, DAO and
-   NFT designs included, is one click away under "More", grouped as the rail groups them */
-/* "warp" (11 Nov 2026): launch on the hottest launchpad of thirteen chains */
-const UST = ["kesfet", "vitrin", "warp", "olustur", "terminal", "portfoy", "presale"];
-const UST_DAHA = BIRINCIL.filter((y) => !UST.includes(y));
+/* ---- the shell (12 Nov 2026 redesign) ---------------------------------------
+   ONE NAVIGATION PER SCREEN SIZE
+     Desktop: the left rail is the navigation, grouped by what a visitor came to do
+     (Explore, Launch, Launch for…, You, ARCP & DAO, Build, Trust & data; yol.js GRUPLAR).
+     The top bar holds only search, the presale chip, Create and the wallet: it used to
+     list seven routes and a "More" menu of twenty-five, the same list as the rail in a
+     different order.
+     Phone: a bottom bar of five equal columns (Discover, Trade, Create, Portfolio, More);
+     More (#/daha) is quick access plus every group. Every route has a home in both, which
+     scripts/ray-kapsami.js checks. */
+const ALT_BAR = ["kesfet", "terminal", "olustur", "portfoy"];
 
 const kIcerik = document.getElementById("icerik");
 const kRay = document.getElementById("ray");
@@ -70,61 +53,58 @@ const kCuzdanDugme = document.getElementById("cuzdan-dugme");
 
 /* ---- phone layout ---------------------------------------------------------
    Phones open the phone layout (12 Nov 2026, user: phone first; app.html's viewport is width=device-width).
-   A button next to the wallet offers the full desktop layout instead; the choice is kept on this device and the
-   button switches back. */
+   The switch to the full desktop layout lives in More (#/daha) and in the wallet menu; in the desktop
+   layout on a phone, the foot of the rail switches back. The choice is kept on this device only. */
 const GORUNUM = "arcpulse-gorunum";
 const gorunumOku = () => { try { return localStorage.getItem(GORUNUM); } catch (e) { return null; } };
 if (gorunumOku() === "masaustu") {
   const m = document.querySelector('meta[name="viewport"]');
   if (m) m.setAttribute("content", "width=1280, viewport-fit=cover");
 }
-if (mobilMi() && kCuzdanDugme) {
-  const masaustunde = gorunumOku() === "masaustu";
-  kCuzdanDugme.before(el("button", { sinif: "dugme dugme--sade", attr: { type: "button", title: masaustunde ? "Show the phone layout" : "Show the full desktop layout",
-    "aria-label": masaustunde ? "Phone layout" : "Desktop layout", style: "flex:none;padding:6px 8px;min-width:0" },
-    yazi: masaustunde ? "\u{1F4F1}" : "\u{1F5A5}",
-    on: { click: () => { try { localStorage.setItem(GORUNUM, masaustunde ? "mobil" : "masaustu"); } catch (e) { /* storage may be blocked */ } location.reload(); } } }));
+function gorunumDegistir() {
+  try { localStorage.setItem(GORUNUM, gorunumOku() === "masaustu" ? "mobil" : "masaustu"); } catch (e) { /* storage may be blocked */ }
+  location.reload();
 }
+window.addEventListener("arcpulse-gorunum", gorunumDegistir);
 
 /* ---- navigation ------------------------------------------------------ */
 
+const DURUM_ROZET = { dagitim: "Soon", yapim: "Soon" };
 function yolLinki(y, sinifEk = "") {
   return el("a", {
-    sinif: "yol-oge" + (y.durum === "yapim" ? " yol-oge--yapim" : "") + sinifEk,
+    sinif: "yol-oge" + (y.durum === "yapim" ? " yol-oge--yapim" : "") + (y.ebeveyn ? " yol-oge--alt" : "") + sinifEk,
     /* a route with its own site (y.site, e.g. Designs -> designs/) opens it; its #/ route stays */
     attr: { href: y.site || "#/" + y.yol, title: y.ozet || y.ad },
     veri: { yol: y.yol }
   }, [
     el("span", { sinif: "yol-oge__ikon", html: ikon(y.ikon, "yol-oge__ikon") }),
-    el("span", { sinif: "yol-oge__etiket", yazi: y.ad }),
-    /* The rail marks state before anybody clicks. A dot is enough: a word
-       on every row would turn the rail into a changelog. */
-    y.durum === "canli" ? null
-      : el("span", {
-          sinif: "etiket" + (y.durum === "dagitim" ? " etiket--uyari" : ""),
-          yazi: y.durum === "dagitim" ? "soon" : "—",
-          attr: { title: y.durum === "dagitim" ? "Awaiting deployment" : "Not built" }
-        })
+    el("span", { sinif: "yol-oge__etiket", yazi: y.ad + (y.site && y.site !== "presale.html" ? " ↗" : "") }),
+    /* the rail marks state before anybody clicks, in the two words used everywhere: Live (no badge) and Coming soon */
+    DURUM_ROZET[y.durum] ? el("span", { sinif: "etiket etiket--uyari", yazi: DURUM_ROZET[y.durum], attr: { title: "Coming soon" } }) : null
   ]);
 }
 
-/* The rail folds: thirty modules at once read as a wall. The group of the open page and
-   Market stay open; the others fold to their heading and open with a click. A visitor's own
-   folding is kept on this device only (a convenience, nothing else is stored). */
-const RAY_GRUP_RENK = { piyasa: "var(--renk-piyasa)", urunler: "var(--renk-urunler)", varlik: "var(--renk-varlik)", yonetisim: "var(--renk-yonetisim)", guven: "var(--renk-guven)" };
-const RAY_ANAHTAR = "arcpulse-ray";
+/* The rail folds: thirty-seven modules at once read as a wall. Explore and the group of the open page
+   stay open; the others fold to their heading and open with a click. A visitor's own folding is kept on
+   this device only (a convenience, nothing else is stored). */
+const RAY_ANAHTAR = "arcpulse-ray2";
 const rayOku = () => { try { return JSON.parse(localStorage.getItem(RAY_ANAHTAR) || "{}"); } catch (e) { return {}; } };
 const OK_SVG = '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+/* the rail's sponsor tile shows only on browsing pages: never on money or trust pages, and not where the page has its own slot */
+const RAY_SPONSOR_YOLLARI = ["launches", "liderlik", "analitik", "genesis", "pazar", "gelistirici",
+  "communities", "creators", "agents", "projects", "daos", "games", "baskets"];
+let kRaySponsor = null;
 function rayiCiz() {
   temizle(kRay);
   const secim = rayOku();
   const aktif = yolBul(hashiCoz().yol);
+  const nav = el("nav", { sinif: "ray__nav", attr: { "aria-label": "Main navigation" } });
   for (const g of GRUPLAR) {
     const ogeler = grubunYollari(g.anahtar);
     if (!ogeler.length) continue;
-    const acik = g.anahtar in secim ? secim[g.anahtar] : (g.anahtar === "piyasa" || (aktif && aktif.grup === g.anahtar));
+    const acik = g.anahtar in secim ? secim[g.anahtar] : (g.anahtar === "kesif" || (aktif && aktif.grup === g.anahtar));
     const grup = el("div", { sinif: "ray__grup", veri: { grup: g.anahtar, kapali: acik ? "0" : "1" } });
-    const baslik = el("button", { sinif: "ray__baslik ray__baslik--dugme", attr: { type: "button", "aria-expanded": String(acik), style: "--gr:" + (RAY_GRUP_RENK[g.anahtar] || "") } }, [
+    const baslik = el("button", { sinif: "ray__baslik ray__baslik--dugme", attr: { type: "button", "aria-expanded": String(acik), style: "--gr:" + (GRUP_RENK[g.anahtar] || "") } }, [
       el("b", {}, [el("i"), g.ad]), el("span", { sinif: "ray__sayi", yazi: String(ogeler.length) }), el("span", { html: OK_SVG })]);
     baslik.addEventListener("click", () => {
       const kapali = grup.dataset.kapali !== "1";
@@ -134,56 +114,39 @@ function rayiCiz() {
       try { localStorage.setItem(RAY_ANAHTAR, JSON.stringify(yeni)); } catch (e) { /* storage may be blocked */ }
     });
     grup.append(baslik, ...ogeler.map((y) => yolLinki(y)));
-    kRay.append(grup);
+    nav.append(grup);
   }
+  /* the foot: every module, a sponsor tile when one is booked, and the way back to the phone layout */
+  kRaySponsor = el("div", { sinif: "ray__sponsor" }, [sponsorYeri("rail", "rail")]);
+  const ayak = el("div", { sinif: "ray__ayak" }, [
+    yolLinki({ yol: "daha", ad: "All modules", ikon: "daha", durum: "canli", ozet: "Every module, its state and what each one is for." }),
+    kRaySponsor,
+    mobilMi() && gorunumOku() === "masaustu"
+      ? el("button", { sinif: "dugme dugme--sade dugme--kucuk", attr: { type: "button" }, yazi: "Phone layout", on: { click: gorunumDegistir } }) : null,
+  ]);
+  kRay.append(nav, ayak);
 }
 
+/* the top bar: the presale chip (the one persistent ARCP entry) and Create, beside search and the wallet */
 function ustYoluCiz() {
   temizle(kUstYol);
-  for (const ad of UST) {
-    const y = yolBul(ad);
-    if (!y) continue;
-    kUstYol.append(el("a", {
-      sinif: "yol-oge",
-      attr: { href: y.site || "#/" + y.yol },
-      veri: { yol: y.yol },
-      yazi: y.kisa || y.ad
-    }));
-  }
-  /* "More": the tabs that left the bar first, then every module by group, each with its one-line purpose */
-  const menu = el("div", { sinif: "ust-daha__menu", attr: { role: "menu" } });
-  const satir = (y) => el("a", { attr: { href: y.site || "#/" + y.yol, role: "menuitem" }, veri: { yol: y.yol } },
-    [el("span", { html: ikon(y.ikon) }), el("span", {}, [y.ad, y.ozet ? el("small", { yazi: y.ozet.length > 90 ? y.ozet.slice(0, 88) + "…" : y.ozet }) : null])]);
-  menu.append(el("div", { sinif: "ust-daha__baslik", yazi: "Popular" }), ...UST_DAHA.map(yolBul).filter(Boolean).map(satir));
-  for (const g of GRUPLAR) {
-    const ogeler = grubunYollari(g.anahtar).filter((y) => !UST.includes(y.yol) && !UST_DAHA.includes(y.yol));
-    if (!ogeler.length) continue;
-    menu.append(el("div", { sinif: "ust-daha__baslik", yazi: g.ad }), ...ogeler.map(satir));
-  }
-  menu.append(el("div", { sinif: "ust-daha__baslik", yazi: "Everything" }), satir({ yol: "daha", ad: "All modules", ikon: "daha", ozet: "Every module, its state and what each one is for." }));
-  const kutu = el("div", { sinif: "ust-daha yol-oge", veri: { acik: "0" } });
-  const dugme = el("button", { sinif: "ust-daha__dugme", attr: { type: "button", "aria-haspopup": "menu", "aria-expanded": "false" } }, ["More", el("span", { html: OK_SVG })]);
-  const ac = (v) => { kutu.dataset.acik = v ? "1" : "0"; dugme.setAttribute("aria-expanded", String(v)); };
-  dugme.addEventListener("click", (e) => { e.stopPropagation(); ac(kutu.dataset.acik !== "1"); });
-  menu.addEventListener("click", () => ac(false));
-  document.addEventListener("click", (e) => { if (!kutu.contains(e.target)) ac(false); });
-  document.addEventListener("keydown", (e) => { if (e.key === "Escape") ac(false); });
-  kutu.append(dugme, menu);
-  kUstYol.append(kutu);
+  kUstYol.append(
+    el("a", { sinif: "ust-cip", attr: { href: "presale.html", title: "ARCP 2 presale on Arc" }, veri: { yol: "presale" } }, [el("i", { attr: { "aria-hidden": "true" } }), el("span", { sinif: "ust-cip__uzun", yazi: "ARCP presale" }), el("span", { sinif: "ust-cip__kisa", yazi: "Presale" })]),
+    el("a", { sinif: "dugme dugme--marka ust-olustur", attr: { href: "#/olustur" }, veri: { yol: "olustur" } }, [el("span", { html: ikon("arti", "yol-oge__ikon") }), el("span", { yazi: "Create" })]));
 }
 
 function sekmeleriCiz() {
   temizle(kSekme);
-  for (const ad of ["kesfet", "terminal", "olustur", "portfoy"]) {   // the phone bar (12 Nov 2026): every launch in Trade; Market and the rest under More
+  for (const ad of ALT_BAR) {   // the phone bar: Discover, Trade, Create (raised, centre), Portfolio, then More
     const y = yolBul(ad);
     if (!y) continue;
     kSekme.append(el("a", {
-      sinif: "sekme-oge",
+      sinif: "sekme-oge" + (ad === "olustur" ? " sekme-oge--olustur" : ""),
       attr: { href: "#/" + y.yol },
       veri: { yol: y.yol }
     }, [
-      el("span", { html: ikon(y.ikon, "sekme-oge__ikon") }),
-      el("span", { yazi: y.kisa || y.ad })
+      el("span", { sinif: "sekme-oge__kap", html: ikon(ad === "olustur" ? "arti" : y.ikon, "sekme-oge__ikon") }),
+      el("span", { yazi: ad === "olustur" ? "Create" : y.kisa || y.ad })
     ]));
   }
   kSekme.append(el("a", {
@@ -191,27 +154,54 @@ function sekmeleriCiz() {
     attr: { href: "#/daha" },
     veri: { yol: "daha" }
   }, [
-    el("span", { html: ikon("daha", "sekme-oge__ikon") }),
+    el("span", { sinif: "sekme-oge__kap", html: ikon("daha", "sekme-oge__ikon") }),
     el("span", { yazi: "More" })
   ]));
 }
 
+/* Search: tokens by name, symbol or address (Enter), and pages by name (the list under the box).
+   On a phone the box is an icon that opens a full-width row under the bar. */
+function sayfaAra(q) {
+  q = q.toLowerCase();
+  if (q.length < 2) return [];
+  const puan = (y) => {
+    const ad = (y.ad + " " + (y.kisa || "")).toLowerCase();
+    if (ad.startsWith(q)) return 3;
+    if (ad.split(/[\s/&…·-]+/).some((w) => w.startsWith(q))) return 2;
+    return (y.ozet || "").toLowerCase().includes(q) && q.length >= 4 ? 1 : 0;
+  };
+  return YOLLAR.map((y) => ({ y, p: puan(y) })).filter((x) => x.p).sort((a, b) => b.p - a.p).slice(0, 6).map((x) => x.y);
+}
 function aramayiCiz() {
   temizle(kAra);
+  const oneri = el("div", { sinif: "ust-ara__oneri", attr: { role: "listbox", hidden: true } });
+  const kapat = () => { oneri.hidden = true; };
   const girdi = el("input", {
     sinif: "girdi",
     attr: {
       type: "search",
-      placeholder: "Token name, symbol or address",
-      "aria-label": "Search tokens",
+      placeholder: "Search tokens, launches or pages",
+      "aria-label": "Search tokens and pages",
       autocomplete: "off",
       spellcheck: "false"
     },
     on: {
+      input: () => {
+        const bul = sayfaAra(girdi.value.trim());
+        temizle(oneri);
+        if (!bul.length) { kapat(); return; }
+        oneri.append(el("div", { sinif: "ust-ara__et", yazi: "Pages" }), ...bul.map((y) => el("a", { attr: { href: y.site || "#/" + y.yol, role: "option" },
+          on: { click: () => { kapat(); aramaKapat(); } } }, [el("span", { html: ikon(y.ikon) }), el("span", { yazi: y.ad })])),
+          el("div", { sinif: "ust-ara__et", yazi: "Enter: search tokens for “" + girdi.value.trim() + "”" }));
+        oneri.hidden = false;
+      },
+      blur: () => setTimeout(kapat, 200),
       keydown: (ev) => {
+        if (ev.key === "Escape") { kapat(); aramaKapat(); return; }
         if (ev.key !== "Enter") return;
         const q = girdi.value.trim();
         if (!q) return;
+        kapat(); aramaKapat();
         /* An address goes straight to its terminal; anything else filters
            the discovery list. Guessing which one the user meant is worse
            than deciding by shape. */
@@ -221,7 +211,18 @@ function aramayiCiz() {
       }
     }
   });
-  kAra.append(girdi);
+  const ustbar = kAra.closest(".ustbar");
+  const aramaKapat = () => { if (ustbar) ustbar.dataset.ara = "0"; acDugme.setAttribute("aria-expanded", "false"); };
+  const acDugme = el("button", { sinif: "ust-ara__ac", attr: { type: "button", "aria-label": "Search", "aria-expanded": "false" }, html: ikon("ara"),
+    on: { click: () => {
+      const acik = ustbar && ustbar.dataset.ara === "1";
+      if (ustbar) ustbar.dataset.ara = acik ? "0" : "1";
+      acDugme.setAttribute("aria-expanded", String(!acik));
+      if (!acik) setTimeout(() => girdi.focus(), 0);
+    } } });
+  kAra.before(acDugme);
+  kAra.append(girdi, oneri);
+  window.addEventListener("hashchange", aramaKapat);
 }
 
 function etkinIsaretle(aktif) {
@@ -229,6 +230,30 @@ function etkinIsaretle(aktif) {
     if (a.dataset.yol === aktif) a.setAttribute("aria-current", "page");
     else a.removeAttribute("aria-current");
   }
+}
+
+/* ---- Back --------------------------------------------------------------
+   Context-aware: back through this visit's own trail when there is one (the visitor came here by
+   a link inside the app), otherwise to the page's parent: its group's home (Proposals → Platform DAO,
+   Collateral vaults → Security, a launch form → Create …), never always to Discover. The trail lives
+   in memory only. */
+const iz = [location.hash || "#/"];
+window.addEventListener("hashchange", () => {
+  const h = location.hash || "#/";
+  if (iz.length > 1 && iz[iz.length - 2] === h) iz.pop();   // the browser's or our Back
+  else if (iz[iz.length - 1] !== h) iz.push(h);
+});
+function geriSatiri(yol) {
+  const ust = ustSayfa(yol);
+  const gecmis = iz.length > 1;
+  if (!gecmis && !ust) return [];
+  const dugme = el("button", {
+    sinif: "geri-dugme", attr: { type: "button", "aria-label": gecmis ? "Back" : "Back to " + ust.ad },
+    html: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>',
+    on: { click: () => { if (iz.length > 1) history.back(); else location.hash = ust.site && !GORUNUMLER[ust.yol] ? ust.site : "#/" + ust.yol; } }
+  });
+  dugme.append(el("span", { yazi: gecmis ? "Back" : ust.ad }));
+  return [el("div", { sinif: "geri-satir" }, [dugme])];
 }
 
 /* ---- routing -------------------------------------------------------- */
@@ -273,6 +298,8 @@ const GORUNUMLER = {
   teklifler: () => import("./gorunum/teklifler.js"),
   dokuman: () => import("./gorunum/dokuman.js"),
   daha: () => import("./gorunum/daha.js"),
+  advertise: () => import("./gorunum/advertise.js"),   // the sponsor menu (12 Nov 2026)
+  squad: () => import("./gorunum/squad.js"),   // the Pulse Squad (12 Nov 2026)
   /* products (1 Nov 2026): one page per TurKaydi type, shared code in urun.js.
      "designs" (TasarimNFT, live 1 Nov 2026) has its own view, below. */
   communities: () => import("./gorunum/communities.js"),
@@ -299,7 +326,8 @@ function sayfaIcindekiler(parca) {
   basliklar.forEach((b, i) => {
     const bolum = b.closest(".panel");
     if (!bolum.id) bolum.id = "bolum-" + (i + 1);
-    const yazi = (b.textContent || "").trim().replace(/\s+/g, " ").slice(0, 48);
+    const tam = (b.textContent || "").trim().replace(/\s+/g, " ").split(" · ")[0];   // the short title, cut at a word, never mid-word
+    const yazi = tam.length > 40 ? tam.slice(0, 40).replace(/\s+\S*$/, "") + "…" : tam;
     serit.append(el("button", { attr: { type: "button" }, yazi, on: { click: () => bolum.scrollIntoView({ behavior: "smooth", block: "start" }) } }));
   });
   const kapak = parca.querySelector(".sayfa-ust");
@@ -314,8 +342,11 @@ async function ciz() {
 
   etkinIsaretle(yol);
   document.body.classList.toggle("terminal-acik", yol === "terminal");
-  /* every page but the home and the full-screen terminal opens with a Back button */
-  const geri = () => yol === "kesfet" || yol === "terminal" ? [] : [el("div", { sinif: "geri-satir" }, [geriDugmesi("#/kesfet")])];
+  document.body.dataset.yol = yol;
+  /* the rail's sponsor tile: browsing pages only (never money or trust pages) */
+  if (kRaySponsor) kRaySponsor.hidden = !RAY_SPONSOR_YOLLARI.includes(yol);
+  /* every page but the home and Trade (a bottom-bar tab; a token page has its own way back) opens with Back */
+  const geri = () => yol === "kesfet" || yol === "terminal" ? [] : geriSatiri(yol);
 
   if (!kayit) {
     temizle(kIcerik).append(...geri(), hata("No such page", "You asked for: /" + yol));
@@ -354,7 +385,7 @@ async function ciz() {
     const parca = await mod.ciz({ kayit, param, cuzdan });
     if (bu !== sonCizim) return;
     temizle(kIcerik).append(...geri(), parca);
-    sayfaIcindekiler(parca);
+    if (yol !== "kesfet") sayfaIcindekiler(parca);   // Discover leads with its live board
   } catch (e) {
     if (bu !== sonCizim) return;
     temizle(kIcerik).append(...geri(),
@@ -374,7 +405,7 @@ function cuzdanDugmesiniTazele() {
     kCuzdanDugme.classList.remove("dugme--marka");
     kCuzdanDugme.classList.add("mono");
   } else {
-    kCuzdanDugme.textContent = "Connect wallet";
+    kCuzdanDugme.replaceChildren("Connect", el("span", { sinif: "cuzdan-uzun", yazi: "wallet" }));   // the button's own gap spaces the two words
     kCuzdanDugme.classList.add("dugme--marka");
     kCuzdanDugme.classList.remove("mono");
   }
@@ -401,6 +432,7 @@ function hesapMenusu() {
     satir("Copy address", async () => { try { await navigator.clipboard.writeText(h); } catch (e) { /* clipboard blocked */ } kapat(); }),
     satir("Disconnect", async () => { kapat(); await cuzdan.kes(); }),
     satir("Disconnect and forget this device", async () => { kapat(); await cuzdan.unut(); }),
+    mobilMi() ? satir(gorunumOku() === "masaustu" ? "Phone layout" : "Desktop layout", () => { kapat(); gorunumDegistir(); }) : null,
   ]);
   document.body.append(menu);
   setTimeout(() => document.addEventListener("click", disari, true), 0);

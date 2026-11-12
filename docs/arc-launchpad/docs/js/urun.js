@@ -19,6 +19,7 @@
  * it is cleared as soon as the Create page reads it.
  * =========================================================================== */
 import { el, sayfaUst, panel, bos, not, ayrinti } from "./ui.js";
+import { stil, maskotBos, ornekKart, dugmeLink } from "./gorunum/squad.js";
 import { ikon } from "./ikon.js";
 import { TUR_KAYDI, TUR_KAYDI_ESKI } from "./adresler.js";
 import { YedekliOkur } from "./yedekli-okur.js";
@@ -74,7 +75,7 @@ export const TURLER = [
     ] },
   { tur: 7, ad: "Basket", cogul: "basket", yol: "baskets",
     metin: [
-      "A token where the collateral basket is the point: it holds up to five assets chosen by the founder, from any of twelve chains.",
+      "A token where the collateral basket is the point: it holds up to five assets chosen by the founder, from any of the 12 chains that have a collateral vault.",
       "Holders can redeem their share of the basket without selling in the pool.",
       "For people who want one token that is backed by a set of assets they can see and redeem. It is not an index fund or an investment product."
     ] },
@@ -241,7 +242,7 @@ function turOfOku(token) {
  * from TurKaydi.turOf. Meme or no record: the badge stays empty and hidden.
  */
 export function turRozeti(token) {
-  const r = el("span", { sinif: "etiket etiket--marka", attr: { style: "display:none", title: "Product type saved by the founder in TurKaydi on Arc" } });
+  const r = el("span", { sinif: "etiket etiket--marka", attr: { style: "display:none", title: "Product type saved by the founder in the product type record on Arc" } });
   r._yenile = (t) => {
     r.style.display = "none"; r.textContent = "";
     if (!adresMi(t)) return;
@@ -371,7 +372,7 @@ function tokenKarti(x, kartEk) {
       ? el("div", { sinif: "yazi yazi--kucuk yazi--sessiz mono", yazi: "Agent wallet: " + b.agentWallet }) : null,
     kartEk ? kartEk(x) : null,
     el("div", { sinif: "yazi yazi--kucuk yazi--sessiz mono", yazi: x.token }),
-    el("a", { sinif: "dugme dugme--kucuk", attr: { href: "#/merkez?t=" + x.token }, yazi: "Trade" }),
+    el("a", { sinif: "dugme dugme--kucuk", attr: { href: "#/terminal?t=" + x.token }, yazi: "Trade" }),
   ]);
 }
 
@@ -414,6 +415,30 @@ export function kodBlogu(kod) {
 /** "$1,234.56" */
 export const dolarYaz = (x) => "$" + Number(x || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
+/* what an empty product page shows: a mascot, a faded example of a listing, one action, and live content nearby */
+const ORNEK = {
+  1: { maskot: "blu", sembol: "CREW", ad: "Harbor Crew", yazi: "Our Discord's own token. Holders get the members-only channels.", link: "discord.gg/…" },
+  2: { maskot: "feather", sembol: "INKY", ad: "Inky Draws", yazi: "Support my weekly comic. The founder's 0.30% of each trade comes to my wallet in USDC.", link: "x.com/…" },
+  3: { maskot: "bolt", sembol: "SCOUT", ad: "Scout Agent", yazi: "An AI agent that pays its own server bills from its trading income.", link: "Agent wallet 0x…" },
+  4: { maskot: "turbo", sembol: "BUILD", ad: "Buildspace Labs", yazi: "Founder tokens vest over 12 months in a lock on Arc.", link: "github.com/…" },
+  5: { maskot: "pulsy", sembol: "CLUB", ad: "Night Owls Club", yazi: "Founder tokens and trading income go to the club's DAO treasury; holders vote on spending.", link: "Token DAO on Arc" },
+  6: { maskot: "zappy", sembol: "GEMS", ad: "Pixel Quest Gems", yazi: "The in-game currency of Pixel Quest. Players earn and spend it.", link: "pixelquest.example" },
+  7: { maskot: "goldie", sembol: "TRIO", ad: "Gold, BTC, ETH basket", yazi: "Backed by a basket of three assets on three chains; redeem your share any time.", link: "Basket: XAUM · cirBTC · WETH" },
+};
+
+function ornekListe(t) {
+  const o = ORNEK[t.tur] || ORNEK[1];
+  return ornekKart([
+    el("div", { sinif: "jeton" }, [
+      el("div", { sinif: "jeton__logo jeton__logo--bos", yazi: o.sembol.slice(0, 3) }),
+      el("div", { sinif: "jeton__yazi" }, [el("div", { sinif: "jeton__sembol", yazi: o.sembol }), el("div", { sinif: "jeton__ad", yazi: o.ad })]),
+    ]),
+    el("div", { sinif: "yazi yazi--kucuk", attr: { style: "margin-top:8px" }, yazi: o.yazi }),
+    el("div", { sinif: "yazi yazi--kucuk yazi--sessiz", attr: { style: "margin-top:4px" }, yazi: o.link }),
+    el("span", { sinif: "dugme dugme--kucuk", attr: { style: "margin-top:10px", "aria-hidden": "true" }, yazi: "Trade" }),
+  ]);
+}
+
 /* `ek` (optional), what one product page adds to the shared page:
      kartEk(x)  a node added to each token card (x: token, ad, sembol, bilgi)
      oncesi     nodes after the description, before the token list
@@ -421,25 +446,36 @@ export const dolarYaz = (x) => "$" + Number(x || 0).toLocaleString("en-US", { mi
 export async function urunSayfasi(n, ek = {}) {
   const t = turBul(n);
   const kap = el("div", { sinif: "yigin" });
+  const bir = (/^[AEIOU]/i.test(t.cogul) ? "an " : "a ") + t.cogul;
   const olusturDugme = el("a", { sinif: "dugme dugme--marka", attr: { href: "#/olustur" }, on: { click: () => turSec(t.tur) } }, [
-    el("span", { html: ikon("arti", "yol-oge__ikon") }), el("span", { yazi: "Create " + (/^[AEIOU]/i.test(t.cogul) ? "an " : "a ") + t.cogul + " token" })]);
-  kap.append(sayfaUst(t.ad + " tokens", "Same launch engine, same rules: one pool on Arc, collateral basket, tradable from thirteen chains", [olusturDugme]));
+    el("span", { html: ikon("arti", "yol-oge__ikon") }), el("span", { yazi: "Create " + bir + " token" })]);
+  kap.append(sayfaUst(t.ad + " tokens", "Same launch engine and rules as every token: one pool on Arc, a collateral basket, bought from any of 13 chains", [olusturDugme]));
   /* what it is for, as cards a visitor reads in seconds; the same sentences as before */
   const ikonlar = ["hediye", "insanlar", "kupa", "zincir"];
   kap.append(el("div", { sinif: "urun-kartlar" }, (t.metin || []).map((s, i) => el("div", { sinif: "urun-kart" }, [
     el("div", { sinif: "urun-kart__ikon", html: ikon(ikonlar[i % ikonlar.length]) }), el("p", { yazi: s })]))));
-  kap.append(ayrinti("How is " + (/^[AEIOU]/i.test(t.cogul) ? "an " : "a ") + t.cogul + " token launched?", "Every " + t.cogul + " token launches through the same MerkezKapi as every other: first buy $20–500, a collateral basket the founder chooses (each line at least 5% of the first buy), a 1–5% collateral tax and the same 2.2% trading fee. What makes it a " + t.cogul + " token is the type its founder writes into the TurKaydi record on Arc."));
+  kap.append(ayrinti("How is " + bir + " token launched?", "Every " + t.cogul + " token launches through the same launch gate as every other: a first buy of $20–500, a collateral basket the founder chooses (each line at least 5% of the first buy), a 1–5% collateral tax and the same 2.2% trading fee. What makes it " + bir + " token is the product type its founder saves in the product type record on Arc, at launch or later from the token's page."));
   for (const b of ek.oncesi || []) kap.append(b);
 
   const BASLIK = t.ad + " tokens on Arc";
   try {
     const liste = await turTokenlari(t.tur);
-    kap.append(panel(BASLIK, liste.length
-      ? el("div", { sinif: "izgara izgara--kart" }, liste.map((x) => tokenKarti(x, ek.kartEk)))
-      : bos("No " + t.cogul + " tokens yet — be the first", "Launch a token and save its type as " + t.ad + "; it appears here as soon as the record on Arc has it.",
-          el("a", { sinif: "dugme dugme--marka", attr: { href: "#/olustur" }, on: { click: () => turSec(t.tur) }, yazi: "Create " + (/^[AEIOU]/i.test(t.cogul) ? "an " : "a ") + t.cogul + " token" }))));
+    if (liste.length) kap.append(panel(BASLIK, el("div", { sinif: "izgara izgara--kart" }, liste.map((x) => tokenKarti(x, ek.kartEk)))));
+    else {
+      stil();
+      const o = ORNEK[t.tur] || ORNEK[1];
+      kap.append(panel(BASLIK, el("div", { sinif: "yigin" }, [
+        maskotBos(o.maskot, "No " + t.cogul + " tokens yet. Yours could be the first.",
+          "Launch a token and choose " + t.ad + " as its type; it is listed here as soon as the record on Arc has it. This is what a listing looks like:",
+          [el("a", { sinif: "dugme dugme--marka", attr: { href: "#/olustur" }, on: { click: () => turSec(t.tur) }, yazi: "Create " + bir + " token" })]),
+        el("div", { sinif: "izgara izgara--kart" }, [ornekListe(t)]),
+        el("div", { sinif: "satir", attr: { style: "flex-wrap:wrap;gap:8px;align-items:center" } }, [
+          el("span", { sinif: "yazi yazi--kucuk yazi--sessiz", yazi: "Meanwhile, live on ARC PULSE:" }),
+          dugmeLink("Trade", "#/terminal"), dugmeLink("All launches", "#/launches"), dugmeLink("Pulse Squad", "#/squad")]),
+      ])));
+    }
   } catch (e) {
-    kap.append(panel(BASLIK, bos("Could not read the type record", String((e && e.message) || e))));
+    kap.append(panel(BASLIK, bos("Could not read the product records just now", "Reload the page in a minute. (" + String((e && e.message) || e) + ")")));
   }
   for (const b of ek.sonrasi || []) kap.append(b);
   return kap;

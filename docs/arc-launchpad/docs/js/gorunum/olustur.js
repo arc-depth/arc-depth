@@ -14,7 +14,7 @@
  *   do not work as active buttons", taken literally.
  * =========================================================================== */
 
-import { el, sayfaUst, panel, not, dagitimBekliyor, temizle } from "../ui.js";
+import { el, sayfaUst, panel, not, dagitimBekliyor, temizle, ayrinti } from "../ui.js";
 import { EKONOMI, PULSE, PULSE_KURAL, launchpadCanli, canli } from "../adresler.js";
 import { ABI, cagriVerisi } from "../zincir.js";
 import { cuzdan } from "../cuzdan.js";
@@ -50,13 +50,30 @@ async function makbuzBekle(ag, hash) {
   }
   throw new Error("No receipt yet for " + hash);
 }
+/* the success card (launch-basari.js), shown only once the launch is read back from the chain */
+async function basari(o) {
+  const m = await import("../launch-basari.js").catch(() => null);
+  if (!m) return el("div", { sinif: "yazi mono", yazi: "Token: " + o.token });
+  return m.basariKarti({ ...o, paylasYazi: "I just launched $" + String(o.sembol || "").toUpperCase() + " (" + o.ad + ") on ARC PULSE, " + o.nerede.replace(/^ARC PULSE /, "") + "." });
+}
+const OM_STIL = `
+.om-ust{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.om-ust .dugme{height:auto;min-height:30px;white-space:normal;text-align:left;text-decoration:none;padding-top:4px;padding-bottom:4px}
+.om-gizli{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.om-dosya{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.om-dosya label{cursor:pointer}
+.om-gizli:focus-visible + label{outline:2px solid var(--marka-parlak);outline-offset:2px}
+`;
 const gazBirim = (wei, ag) => (Number(BigInt(wei)) / 1e18).toPrecision(3) + " " + ag.gaz;
 
 export async function ciz({ kayit, param }) {
   const kap = el("div", { sinif: "yigin" });
-  kap.append(sayfaUst("Create a token", "Collateral-backed, fixed supply, no free founder share"));
-  /* the one-pool launch: up to five collateral tokens from any chain, paid with any chain's gas token */
-  kap.append(el("a", { sinif: "dugme dugme--marka", attr: { href: "#merkez" }, yazi: "Launch with a 5-token collateral basket from any chain →" }));
+  if (!document.getElementById("om-stil")) document.head.append(el("style", { attr: { id: "om-stil" }, yazi: OM_STIL }));
+  kap.append(sayfaUst("Launch from a Sui or Aptos wallet", "Collateral-backed, fixed supply, no free founder share; the token lives on Sui or Aptos"));
+  /* the one-pool launch: up to five collateral tokens from any chain, paid with any chain's gas token (a quiet link now, not the page's biggest button) */
+  kap.append(el("div", { sinif: "om-ust" }, [
+    el("a", { sinif: "dugme dugme--sade dugme--kucuk", attr: { href: "#/olustur" }, yazi: "← All launch options" }),
+    el("a", { sinif: "dugme dugme--sade dugme--kucuk", attr: { href: "#/merkez" }, yazi: "Paying from an EVM chain? ARC PULSE launch: one pool on Arc, a 5-token basket from any chain →" })]));
 
   /* State for the live payment summary.
      TWO AMOUNTS, AND THEY ARE NOT THE OLD ONES
@@ -118,10 +135,12 @@ export async function ciz({ kayit, param }) {
   /* ---- 0. chain ------------------------------------------------------ */
   const agNotu = el("div");
   const agDugmeleri = el("div", { sinif: "satir", attr: { style: "flex-wrap:wrap;gap:8px" } });
+  /* the EVM chains: launches there are paused or spread-only on this page, so they sit apart, with the way that works today */
+  const digerDugmeler = el("div", { sinif: "satir", attr: { style: "flex-wrap:wrap;gap:8px" } });
   const agiCiz = () => {
-    temizle(agDugmeleri);
+    temizle(agDugmeleri); temizle(digerDugmeler);
     for (const a of AGLAR) {
-      agDugmeleri.append(el("button", {
+      digerDugmeler.append(el("button", {
         sinif: "dugme " + (a.id === durum.ag.id ? "dugme--marka" : "dugme--sessiz"),
         attr: { type: "button" }, yazi: DURAKLATILAN.has(a.anahtar) ? a.ad + " (paused)" : LAUNCH_YOK[a.anahtar] ? a.ad + " (spread only)" : a.ad,
         on: { click: () => { durum.ag = a; durum.teminatToken = null; durum.rota = null; agiCiz(); teminatiCiz(); } }
@@ -144,7 +163,7 @@ export async function ciz({ kayit, param }) {
       on: { click: () => { durum.ag = SUI; durum.teminatToken = null; durum.rota = null; agiCiz(); teminatiCiz(); } }
     }));
     /* product types (TurKaydi2) are written from an EVM wallet on Arc; a Move founder has none, so the platform records them on request */
-    const moveTurNotu = () => not("Product type (Community, Creator, Designer…): it is saved in the TurKaydi2 record on Arc by the token's founder, and a founder paying from a Sui or Aptos wallet cannot sign on Arc. For Move launches the platform sets the type on request: TurKaydi2's owner can write it. Ask after launching, with your token's address and the type you want.", "bilgi");
+    const moveTurNotu = () => not("Product type (Community, Creator, Designer…): it is saved in a record on Arc by the token's founder, and a founder paying from a Sui or Aptos wallet cannot sign on Arc. For Sui and Aptos launches ARC PULSE sets the type on request: after launching, send us your token's address and the type you want.", "bilgi");
     if (durum.ag.anahtar === "sui") {
       temizle(agNotu).append(not("Sui: pay in native USDC with a Sui wallet (Slush, Suiet, Phantom…). Two approvals: first your coin is created (its own package, made immutable at once), then the launch. Back the token with any coin that has a PulseSwap pool on Sui at least 24 hours old, or leave the field empty to keep dollars.", "bilgi"), moveTurNotu());
       return;
@@ -160,8 +179,14 @@ export async function ciz({ kayit, param }) {
             ". The collateral stays in " + durum.ag.dolarSembol + " on " + durum.ag.ad + "."), "bilgi"));
   };
   agiCiz();
+  const digerKutu = ayrinti("Other chains: use ARC PULSE launch instead", el("div", { sinif: "yigin" }, [
+    el("div", { sinif: "alan__ipucu", yazi: "Launches from these chains are paused on this page (or the chain can only receive a token spread from elsewhere). The ARC PULSE launch takes payment from all of them today: one pool on Arc, tradable from 13 chains." }),
+    el("a", { sinif: "dugme dugme--marka dugme--kucuk", attr: { href: "#/merkez", style: "align-self:flex-start" }, yazi: "Open ARC PULSE launch →" }),
+    digerDugmeler]));
+  if (AGLAR.some((a) => a.id === durum.ag.id)) digerKutu.open = true;
   kap.append(panel("Chain", el("div", { sinif: "yigin" }, [
-    agDugmeleri, agNotu,
+    el("div", { sinif: "alan__etiket", yazi: "Available here" }),
+    agDugmeleri, agNotu, digerKutu,
     el("div", { sinif: "alan__ipucu", yazi: "On the EVM chains, one more transaction after the launch makes the token appear on the other chains at the same address." })
   ])));
 
@@ -173,10 +198,13 @@ export async function ciz({ kayit, param }) {
     sinif: "girdi mono", attr: { type: "text", placeholder: "EXMPL", maxlength: "8" }
   });
 
+  const logoGirdi = el("input", { sinif: "om-gizli", attr: { id: "om-logo", type: "file", accept: "image/*" } });
+  const logoAd = el("span", { sinif: "alan__ipucu", yazi: "No image chosen" });
+  logoGirdi.addEventListener("change", () => { logoAd.textContent = logoGirdi.files[0] ? logoGirdi.files[0].name : "No image chosen"; });
   kap.append(panel("Identity", el("div", { sinif: "yigin" }, [
     el("div", { sinif: "alan" }, [
-      el("label", { sinif: "alan__etiket", yazi: "Logo" }),
-      el("input", { sinif: "girdi", attr: { type: "file", accept: "image/*" } }),
+      el("div", { sinif: "alan__etiket", yazi: "Logo" }),
+      el("div", { sinif: "om-dosya" }, [logoGirdi, el("label", { sinif: "dugme dugme--sessiz", attr: { for: "om-logo" }, yazi: "Choose image" }), logoAd]),
       el("div", { sinif: "alan__ipucu", yazi: "Square, at least 256x256. Not written to the chain." })
     ]),
     el("div", { sinif: "izgara izgara--genis" }, [
@@ -400,7 +428,7 @@ export async function ciz({ kayit, param }) {
   if (launchpadCanli() || durum.ag.anahtar !== "arc") {
     const dugme = el("button", {
       sinif: "dugme dugme--marka dugme--buyuk dugme--tam",
-      yazi: "CREATE TOKEN",
+      yazi: "Launch",
       attr: { type: "button" }
     });
 
@@ -486,7 +514,8 @@ export async function ciz({ kayit, param }) {
           try { const e = olay.parseLog(l); if (e && e.name === "Launched") token = e.args.token; } catch (x) { /* another event */ }
         }
         if (!token) throw new Error("Launched, but the token address could not be read from " + hash);
-        durumSatiri.textContent = "Live on " + ag.ad + ": " + token;
+        durumSatiri.textContent = "Launched on " + ag.ad + ".";
+        yayKap.append(await basari({ ad, sembol, token, nerede: "ARC PULSE on " + ag.ad, dis: ag.kasif ? { ad: ag.ad + "'s explorer", link: ag.kasif + "/address/" + token } : null }));
         yayKap.append(yayPaneli(ag, token));
       } catch (e) {
         durumSatiri.className = "yazi yazi--kucuk yazi--hata";
@@ -529,9 +558,11 @@ async function suiLaunch({ ad, sembol, durum, durumSatiri, yayKap }) {
     }
     const r = await suiLaunchEt({ ad, sembol, teminat, ilkAlim, vergiPpm: durum.vergiPpm, yapistir, durum: (m) => { durumSatiri.textContent = m; } });
     durumSatiri.className = "yazi yazi--kucuk";
-    durumSatiri.textContent = "Live on Sui: " + r.tip + " — you hold about " + (Number(suiAcilis(ilkAlim)) / 1e6).toLocaleString("en-US") + " " + sembol + ".";
-    if (r.kasa) yayKap.append(el("a", { sinif: "dugme dugme--marka", attr: { href: "#/move-token?zincir=sui&kasa=" + r.kasa }, yazi: "Open the token page" }));
-    yayKap.append(el("a", { sinif: "dugme dugme--sessiz", attr: { href: SUI.gezgin + "/coin/" + r.tip, target: "_blank", rel: "noopener" }, yazi: "Open on Suiscan" }));
+    durumSatiri.textContent = "Launched on Sui.";
+    yayKap.append(await basari({ ad, sembol, token: r.tip, nerede: "ARC PULSE on Sui",
+      sayfa: r.kasa ? "#/move-token?zincir=sui&kasa=" + r.kasa : "#/move-token?zincir=sui",
+      alt: "You hold about " + (Number(suiAcilis(ilkAlim)) / 1e6).toLocaleString("en-US") + " " + sembol + ".",
+      dis: { ad: "Suiscan", link: SUI.gezgin + "/coin/" + r.tip } }));
   } catch (e) {
     durumSatiri.className = "yazi yazi--kucuk yazi--hata";
     durumSatiri.textContent = (e && e.message) || "The transaction could not be sent.";
@@ -575,9 +606,11 @@ async function aptosLaunch({ ad, sembol, durum, durumSatiri, yayKap }) {
     if (!tx.success) throw new Error("The launch failed on chain: " + tx.vm_status);
     const token = launchTokeni(tx);
     if (!token) throw new Error("Launched, but the token address could not be read from " + hash);
-    durumSatiri.textContent = "Live on Aptos: " + token + " — you hold about " + (Number(acilisTokeni(ilkAlim)) / 1e6).toLocaleString("en-US") + " " + sembol + ".";
-    yayKap.append(el("a", { sinif: "dugme dugme--marka", attr: { href: "#/move-token?zincir=aptos&token=" + token }, yazi: "Open the token page" }));
-    yayKap.append(el("a", { sinif: "dugme dugme--sessiz", attr: { href: APTOS.gezgin + "/fungible_asset/" + token + "?network=mainnet", target: "_blank", rel: "noopener" }, yazi: "Open on the Aptos explorer" }));
+    durumSatiri.textContent = "Launched on Aptos.";
+    yayKap.append(await basari({ ad, sembol, token, nerede: "ARC PULSE on Aptos",
+      sayfa: "#/move-token?zincir=aptos&token=" + token,
+      alt: "You hold about " + (Number(acilisTokeni(ilkAlim)) / 1e6).toLocaleString("en-US") + " " + sembol + ".",
+      dis: { ad: "the Aptos explorer", link: APTOS.gezgin + "/fungible_asset/" + token + "?network=mainnet" } }));
   } catch (e) {
     durumSatiri.className = "yazi yazi--kucuk yazi--hata";
     durumSatiri.textContent = (e && e.message) || "The transaction could not be sent.";
@@ -594,7 +627,7 @@ function yayPaneli(ag, token) {
   const hedefler = AGLAR.filter((a) => a.id !== ag.id);
   const durum = el("div", { sinif: "yazi yazi--kucuk yazi--sessiz", yazi: "Reading the fee…" });
   const dugme = el("button", { sinif: "dugme dugme--marka dugme--tam", attr: { type: "button", disabled: "" },
-    yazi: "MAKE IT LIVE ON ALL " + hedefler.length + " OTHER CHAINS" });
+    yazi: "Make it live on all " + hedefler.length + " other chains" });
   const eids = hedefler.map((a) => a.eid);
   let ucret = null;
   (async () => {

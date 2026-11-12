@@ -125,7 +125,7 @@ async function kasaDurumlari(V, r, sorunlar) {
       out.push({ ag: ag.ad, varlik, bekleyen, birim, yolVar: yol[0], simdiAlinir: yol[2] });
       if (bekleyen > 0n) sorunlar.push(yol[2]
         ? { tur: "kasa", metin: d6(bekleyen) + " wait in the " + ag.ad + " vault to buy " + varlik.slice(0, 10) + "…; its pool is inside the price bound now.",
-            duzelt: { ad: "Buy it now on " + ag.ad + " (SepetKasasi.dene)", ag, hedef: z[1].kasa, veri: new Interface(KASA).encodeFunctionData("dene", [r.id, varlik]), bahsis: "$0.05 when at least $1 is spent" } }
+            duzelt: { ad: "Buy it now on " + ag.ad + "", ag, hedef: z[1].kasa, veri: new Interface(KASA).encodeFunctionData("dene", [r.id, varlik]), bahsis: "$0.05 when at least $1 is spent" } }
         : { tur: "kasa", metin: d6(bekleyen) + " wait in the " + ag.ad + " vault: its pool's price is outside the bound (or its oracle is young); the next delivery or anyone's retry buys when it returns." });
     } catch (e) { out.push({ ag: ag.ad, varlik, hata: String(e.shortMessage || e.message).slice(0, 80) }); }
   }
@@ -152,14 +152,14 @@ export async function teshisEt(V, token) {
 
   for (const s of r.satirlar) if (s.lotHazir) sorunlar.push({ tur: "lot", metin: "Basket line on " + zincirAdi(Number(s.zincir)) + " holds " + d6(s.biriken) +
     " (at or above the $50 lot) and is still in the collateral ledger" + (s.bekliyor ? "; its last send failed less than an hour ago" : "") + ".",
-    duzelt: { ad: "Send waiting lines (Defter.bekleyenleriGonder)", hedef: V.defter, veri: new Interface(["function bekleyenleriGonder(uint64)"]).encodeFunctionData("bekleyenleriGonder", [r.id]), bahsis: "$0.05 per line sent" } });
+    duzelt: { ad: "Send waiting lines", hedef: V.defter, veri: new Interface(["function bekleyenleriGonder(uint64)"]).encodeFunctionData("bekleyenleriGonder", [r.id]), bahsis: "$0.05 per line sent" } });
   for (const e of emirler) sorunlar.push({ tur: "emir", metin: "Redemption order #" + e.sira + " to " + zincirAdi(Number(e.zincir)) + " is queued; sending it costs " + d6(e.ucret) + " now.",
-    duzelt: { ad: "Send queued order #" + e.sira + " (Defter.emirGonder)", hedef: V.defter, veri: new Interface(["function emirGonder(uint256)"]).encodeFunctionData("emirGonder", [e.sira]),
+    duzelt: { ad: "Send queued order #" + e.sira + "", hedef: V.defter, veri: new Interface(["function emirGonder(uint256)"]).encodeFunctionData("emirGonder", [e.sira]),
       onay: { token: USDC, harcayan: V.defter, miktar: (BigInt(e.ucret) * 11n) / 10n + 1n }, bahsis: "$0.05" } });
   if (r.kovaGonderir) sorunlar.push({ tur: "kova", metin: "The tax bucket holds " + d6(r.kovaDolar) + " that should already be in the basket.",
     duzelt: { ad: "Pass the tax to the basket (VergiKovasi.gonder)", hedef: r.kova, veri: new Interface(["function gonder()"]).encodeFunctionData("gonder", []), gaz: "0x3d0900" } });
   if (r.vekilDolar >= 1_000_000n) sorunlar.push({ tur: "vekil", metin: "Founder income of " + d6(r.vekilDolar) + " is waiting in the launch's KurucuVekili (it can only go to the founder).",
-    duzelt: { ad: "Send it to the founder (KurucuVekili.ilet)", hedef: r.vekil, veri: new Interface(["function ilet(uint256)"]).encodeFunctionData("ilet", [r.vekilDolar / 20n]) } });
+    duzelt: { ad: "Send it to the founder", hedef: r.vekil, veri: new Interface(["function ilet(uint256)"]).encodeFunctionData("ilet", [r.vekilDolar / 20n]) } });
 
   /* v7+: the gate's upkeep (depth and liquidity into the pool, the platform token's burner — ARCP from v8 — a founder paid on Arc).
      Every trade through the gate does it; shown here only if something is due now, with the same
@@ -173,7 +173,7 @@ export async function teshisEt(V, token) {
         ilan && "open the " + pt + " burner's auction", doldur && "fill the " + pt + " auction from " + pt + "'s pool (if the pool pays its ask)",
         kurucu && "the founder's income on Arc"].filter(Boolean);
       if (ne.length) sorunlar.push({ tur: "bakim", metin: "Upkeep due (the next trade does it by itself): " + ne.join("; ") + ".",
-        duzelt: { ad: "Run the upkeep now (MerkezKapi.bakim)", hedef: V.kapi, veri: new Interface(["function bakim(address)"]).encodeFunctionData("bakim", [token]),
+        duzelt: { ad: "Run the upkeep now", hedef: V.kapi, veri: new Interface(["function bakim(address)"]).encodeFunctionData("bakim", [token]),
           gaz: "0x" + (BigInt(gaz) + 600_000n).toString(16) } });
     } catch (e) { /* an older gate has no upkeep view */ }
   }

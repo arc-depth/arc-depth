@@ -73,8 +73,8 @@ export async function ciz() {
     "Which routes are genuinely open, and which are not"));
 
   kap.append(not(
-    "Collateral can COME IN from 25 chains and that works today. There " +
-    "is no way OUT and there will not be: all four ways an asset leaves " +
+    "Collateral can come in from 25 chains, and that works today. It cannot " +
+    "leave the vault for another chain, by design: all four ways an asset leaves " +
     "the vault pay msg.sender, and none of them takes a destination. " +
     "Sending collateral to another chain would need a function where the " +
     "caller names the destination, and whatever that function is called, " +
@@ -82,7 +82,7 @@ export async function ciz() {
     "at the target, so the vault's balance would be short in between — " +
     "Fast Transfer shrinks that window to seconds but not to zero, and " +
     "the claim has to be whole at every moment.",
-    "uyari"
+    "bilgi"
   ));
 
   /* ---- what can be collateral, with live prices -------------------- */
@@ -140,7 +140,7 @@ export async function ciz() {
   izgara.append(olcum("CCIP lanes", String(CCIP_HATLAR.length), "out of Arc, both directions"));
   izgara.append(olcum("CCIP + USDC", "none", "no lane carries USDC"));
   izgara.append(olcum("CCTP domain", "26", "Arc's own domain id"));
-  izgara.append(olcum("CCTP links", "~" + CCTP_DOMAINLER.length, "native USDC burn and mint"));
+  izgara.append(olcum("CCTP chains", "25", "native USDC into Arc; " + CCTP_DOMAINLER.length + " of them named below"));
   kap.append(izgara);
 
   const hatlar = el("div", { sinif: "yigin yigin--sik" });
@@ -171,7 +171,7 @@ export async function ciz() {
         "and mint path — no third-party bridge risk." }),
       el("p", { attr: { style: "margin-top:10px" }, yazi:
         "Arc's token-pairing events were scanned: CCTP can mint exactly " +
-        "ONE token here, USDC, from 25 separate chains. No other asset is " +
+        "one token here, USDC, from 25 separate chains. No other asset is " +
         "paired. Circle has a \"CCTP for non-USDC\" product but it needs " +
         "the issuer to grant mint authority, and it is not set up on Arc." })
     ]),
@@ -182,21 +182,21 @@ export async function ciz() {
 
   /* The finding the whole design rests on, and the one that reverses the
      usual conclusion: inflow is already live. */
-  kap.append(panel("Collateral COMING IN across chains — working today", [
+  kap.append(panel("Collateral coming in across chains: working today", [
     el("div", { sinif: "ikincil" }, [
       el("p", { yazi:
         "A CCTP mint calls nothing — it mints the money straight to the " +
         "recipient. And the vault does not track deposits, it counts its " +
-        "BALANCE. Put together: USDC sent to a vault's address from any " +
+        "balance. Put together: USDC sent to a vault's address from any " +
         "of 25 chains is added to that token's floor with zero new code." }),
       el("p", { attr: { style: "margin-top:10px" }, yazi:
-        "Measured: $250 sent without besle() ever being called raised " +
+        "Measured: $250 sent without the vault's deposit function ever being called raised " +
         "the vault's balance, the claim per token and the basket value by " +
         "exactly $250. There is no new trust assumption either, because " +
         "on this path the vault sends nobody anything." })
     ]),
     el("div", { sinif: "not not--uyari", attr: { style: "margin-top:12px" }, yazi:
-      "This holds only for an asset that is IN that vault's basket. An " +
+      "This holds only for an asset that is in that vault's basket. An " +
       "asset outside the basket that is sent to the vault is not " +
       "distributed by a redemption and is not counted in the basket " +
       "value — it stays there and cannot be taken out." })

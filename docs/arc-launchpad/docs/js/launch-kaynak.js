@@ -23,13 +23,23 @@ const arc = new YedekliOkur();
 const yol = (f) => new URL("../veri/launches/" + f, import.meta.url).href;
 const taze = () => "?t=" + Math.floor(Date.now() / 300000);
 
+/* 12 Nov 2026: the protocol's own test launches (proof that the contracts work) are shown, marked "Demo"
+   and sorted after real launches, never hidden: a name with "Test" in it, or one of these tickers */
+const DEMO_SEMBOL = ["PTEST1", "APDT", "PROOF"];
+/** is this launch row one of the protocol's demo tokens? */
+export const demoMu = (s) => !!s && (/\btest\b/i.test(String(s.ad || "")) || DEMO_SEMBOL.includes(String(s.sembol || "").toUpperCase()));
+/** the same rows, real launches first and demo tokens after them, each part in its own order */
+export const demoSonda = (rows) => [...rows.filter((x) => !demoMu(x)), ...rows.filter(demoMu)];
+
 /* index row -> page row */
 function satir(r, cfg) {
   const zincir = ZINCIR[r.zk] || r.zk;
   const tok = String(r.t);
   const git = r.zk === "arc" ? "#/merkez?t=" + tok : r.zk === "sui" ? "#/move-token?zincir=sui&kasa=" + (r.x || "") : r.zk === "aptos" ? "#/move-token?zincir=aptos&token=" + tok : null;
-  return { tur: r.k === "warp" ? "warp" : "biz", kaynak: r.k, token: tok, ad: r.a, sembol: r.s, zaman: r.z || 0, lp: r.lp, zk: r.zk, zincir,
+  const row = { tur: r.k === "warp" ? "warp" : "biz", kaynak: r.k, token: tok, ad: r.a, sembol: r.s, zaman: r.z || 0, lp: r.lp, zk: r.zk, zincir,
     nereden: r.zk === "arc" ? null : zincir, link: "#/terminal?t=" + encodeURIComponent(tok), git, dis: r.d || null, gorsel: r.g || null, biz: !!r.b, cfg: cfg[r.k] || null };
+  row.demo = demoMu(row);
+  return row;
 }
 
 async function arcCanli(k, lp, n0, cfg) {

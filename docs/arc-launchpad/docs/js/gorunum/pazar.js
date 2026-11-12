@@ -24,6 +24,7 @@
  *   anyone can check it at any time.
  * =========================================================================== */
 
+import { arsiv, maskotBos, dugmeLink, ornekKart } from "./squad.js";
 import { el, sayfaUst, panel, bos, not, olcum, hata } from "../ui.js";
 import { oku, cokluCagri, cagriVerisi, sonucCoz, ABI } from "../zincir.js";
 import { PAZAR, PAZAR_KURAL, EKONOMI, canli } from "../adresler.js";
@@ -100,18 +101,12 @@ export async function ciz({ kayit, cuzdan }) {
     zincirPpm != null && zincirPpm !== PAZAR_KURAL.platformPpm
       ? not("The rate on this page (" + ppmYuzde(PAZAR_KURAL.platformPpm) +
             ") and the contract's rate (" + ppmYuzde(zincirPpm) +
-            ") DO NOT MATCH. The contract's rate is the one that applies.", "uyari")
-      : not(
-        "This rate is not a copy kept on the page — it was read from " +
-        PAZAR.pazar + ". It is a constant in the contract: no setter, and " +
-        "it cannot be changed.", "bilgi"),
-    not(
-      "Payment and the split happen in one transaction: the contract " +
-      "HOLDS NOTHING in between. With no balance to withdraw there is no " +
-      "withdraw, sweep or rescue function — and because there is none, " +
-      "nobody can use one. The remainder of an uneven division goes to " +
-      "the DEVELOPER, not the platform.", "bilgi")
-  ])));
+            ") do not match. The contract's rate is the one that applies.", "uyari")
+      : null,
+    arsiv("Verify: how the split is enforced", [
+      not("This rate is read from the marketplace contract (" + PAZAR.pazar + "), not kept on the page. It is a constant there: no setter, and it cannot be changed.", "bilgi"),
+      not("Payment and the split happen in one transaction: the contract holds nothing in between. With no balance to withdraw there is no withdraw, sweep or rescue function, so nobody can use one. The remainder of an uneven division goes to the developer, not the platform.", "bilgi")])
+  ].filter(Boolean))));
 
   /* ---- 2. the revenue book, including the zero that matters ------- */
   kap.append(panel("Revenue", el("div", { sinif: "yigin yigin--sik" }, [
@@ -133,31 +128,28 @@ export async function ciz({ kayit, cuzdan }) {
         "zero by design, always")
     ]),
     v.tutulan != null && BigInt(v.tutulan) !== 0n
-      ? not("THE CONTRACT IS HOLDING MONEY. This should not happen: " +
+      ? not("The contract is holding money. This should not happen: " +
             "payment and the split occur in one transaction and there is " +
             "no withdraw function. A token may have been sent here by " +
             "mistake.", "uyari")
-      : not("The contract's balance is zero — \"it holds nothing\" is not " +
-            "a promise but a number anyone can check.", "bilgi"),
+      : el("div", { sinif: "yazi yazi--kucuk yazi--sessiz", yazi: "The contract's balance is zero, as designed; anyone can check it on chain." }),
     v.toplamHasilat != null && BigInt(v.toplamHasilat) === 0n
-      ? not("No sales yet. These zeros are real: the marketplace was " +
-            "just deployed and nobody has published a product.", "bilgi")
+      ? el("div", { sinif: "yazi yazi--kucuk yazi--sessiz", yazi: "No sales yet: the first product sold shows up here." })
       : null
   ].filter(Boolean))));
 
   /* ---- 3. the listing -------------------------------------------- */
   const sayi = Number(v.urunSayisi);
   if (sayi === 0) {
-    kap.append(panel("Products", bos(
-      "No products yet",
-      "The contract is deployed and answering; nobody has published a " +
-      "product. Publishing happens from the developer portal, with no " +
-      "permission needed.",
-      el("a", {
-        sinif: "dugme dugme--marka", yazi: "Developer portal",
-        attr: { href: "#/gelistirici" }
-      })
-    )));
+    kap.append(panel("Products", el("div", { sinif: "yigin" }, [
+      maskotBos("bolt", "No products yet. Yours could be the first.",
+        "Trading bots, analytics, alerts, launch kits: publish a tool from the developer portal, no permission needed, and keep 80% of every sale in USDC. This is what a listing looks like:",
+        [dugmeLink("Publish from the developer portal", "#/gelistirici", true)]),
+      el("div", { sinif: "izgara izgara--kart" }, [ornekKart([
+        el("strong", { yazi: "Launch Alert Bot" }),
+        el("div", { sinif: "yazi yazi--kucuk", attr: { style: "margin-top:6px" }, yazi: "A Telegram bot that posts every new ARC PULSE launch on your chain." }),
+        el("div", { sinif: "yazi yazi--kucuk yazi--sessiz", attr: { style: "margin-top:6px" }, yazi: "$15.00 USDC · licence on chain" })])])
+    ])));
     return kap;
   }
 

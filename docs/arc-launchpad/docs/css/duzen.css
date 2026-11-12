@@ -29,6 +29,7 @@
   min-height: 100dvh;      /* dvh, so mobile browser chrome cannot clip it */
   display: grid;
   grid-template-rows: var(--ust-bar) 1fr;
+  grid-template-columns: minmax(0, 1fr);   /* the top bar's own width can never widen the page */
 }
 
 /* ---- top bar -------------------------------------------------------- */
@@ -68,18 +69,23 @@
 
 /* The primary nav sits in the top bar on desktop and disappears on mobile,
    where the tab bar takes over. */
+/* 12 Nov 2026: the top bar holds no route list any more (the rail is the navigation):
+   search, then the presale chip and Create, then install and the wallet. */
 .ustbar__yol {
   display: flex;
   align-items: center;
-  gap: var(--bosluk-1);
-  margin-left: var(--bosluk-4);
+  gap: var(--bosluk-2);
+  flex: 0 0 auto;
 }
 
 .ustbar__ara {
+  position: relative;
   flex: 1 1 auto;
-  max-width: 420px;
+  max-width: 460px;
   margin-left: auto;
 }
+.ustbar__ara .girdi { width: 100%; }
+.ust-ara__ac { display: none; }
 
 .ustbar__sag {
   flex: 0 0 auto;
@@ -201,7 +207,6 @@
 @media (max-width: 860px) {
   .govde { grid-template-columns: minmax(0, 1fr); }
   .ray { display: none; }
-  .ustbar__yol { display: none; }
   .ustbar__ara { max-width: none; }
 
   .icerik {
@@ -270,4 +275,40 @@
 
 @media (min-width: 861px) {
   .islem-dock { display: none; }
+}
+
+/* ---- 12 Nov 2026: phone header, search row, rail foot, raised Create ---- */
+.ray { gap: var(--bosluk-6); }
+.ray__nav { display: flex; flex-direction: column; gap: var(--bosluk-4); }
+.ray__ayak { margin-top: auto; display: flex; flex-direction: column; gap: var(--bosluk-3); padding-top: var(--bosluk-3); border-top: 1px solid var(--cizgi); }
+.ray__sponsor[hidden] { display: none; }
+
+@media (max-width: 860px) {
+  .ustbar { gap: var(--bosluk-2); }
+  .ustbar__yol { display: flex; margin-left: auto; }
+  .ust-ara__ac {
+    display: inline-grid; place-items: center; flex: none;
+    width: 40px; height: 40px; border-radius: 10px;
+    border: 1px solid var(--cizgi-guclu); background: var(--yuzey-1); color: var(--yazi-2); cursor: pointer;
+  }
+  .ust-ara__ac svg { width: 18px; height: 18px; }
+  .ust-ara__ac[aria-expanded="true"] { color: var(--yazi-1); border-color: var(--marka-cizgi); background: var(--marka-zemin); }
+  /* the search box: a full-width row under the bar, opened by the icon */
+  .ustbar__ara { display: none; }
+  .ustbar[data-ara="1"] .ustbar__ara {
+    display: block; position: absolute; left: 0; right: 0; top: var(--ust-bar);
+    max-width: none; margin: 0; padding: var(--bosluk-2) var(--oluk);
+    background: rgba(10, 11, 13, 0.97); border-bottom: 1px solid var(--cizgi);
+  }
+  .ustbar[data-ara="1"] .ustbar__ara .girdi { height: 44px; font-size: 16px; }   /* 16px: iOS does not zoom the page */
+
+  /* Create in the middle of the bottom bar, raised and violet */
+  .sekme-oge--olustur .sekme-oge__kap {
+    display: grid; place-items: center; width: 44px; height: 34px; border-radius: 12px; margin-top: -10px;
+    background: linear-gradient(135deg, var(--marka), #9a6bff); color: #fff; box-shadow: 0 6px 18px rgba(124, 92, 255, .35);
+  }
+  .sekme-oge--olustur { color: var(--yazi-1); }
+}
+@media (max-width: 480px) {
+  .ustbar__marka > span { display: none; }
 }

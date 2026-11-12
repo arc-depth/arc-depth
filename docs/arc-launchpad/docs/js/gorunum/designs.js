@@ -224,7 +224,7 @@ async function profil({ cuzdan }, adres) {
   const jetonlar = el("div", { sinif: "ds-dugmeler" }, [el("span", { sinif: "ds-cihaz", yazi: "Reading designer tokens…" })]);
   tasarimciJetonlari(adres).then((js) => {
     temizle(jetonlar);
-    if (!js.length) { jetonlar.append(el("span", { sinif: "ds-cihaz", yazi: "No designer token (TurKaydi type 8) founded by this wallet." })); return; }
+    if (!js.length) { jetonlar.append(el("span", { sinif: "ds-cihaz", yazi: "No designer token founded by this wallet." })); return; }
     for (const j of js) jetonlar.append(el("a", { sinif: "dugme dugme--kucuk", attr: { href: "#/merkez?t=" + j.token, title: "Trade " + (j.sembol || "") }, yazi: "$" + (j.sembol || kisa(j.token)) + " · Trade" }));
   }).catch(() => { temizle(jetonlar); jetonlar.append(el("span", { sinif: "ds-cihaz", yazi: "Could not read the type record." })); });
 
@@ -433,8 +433,8 @@ async function satisKutusu({ cuzdan, t, ay, j, sym }) {
   if (!ay || !ay.fiyatCanli || q == null) {
     kutu.append(el("div", { sinif: "ds-dugmeler" }, [dugme("Buy with $" + sym, null, "dugme dugme--marka", { disabled: "" }), dugme("Buy with USDC", null, "dugme", { disabled: "" })]));
     kutu.append(not(!ay || !ay.fiyatCanli
-      ? "Buying opens when the price feed is live (PulseHook6). The listing is real and stays; nothing can be bought below or above its USDC price."
-      : "Buying opens when the price feed is live for $" + sym + ": the time-weighted price comes from PulseHook6 pools, and this token's pool has no price there yet (tokens launched before v9 trade in an older pool). The listing is real and stays.", "uyari"));
+      ? "Buying opens when the price feed is live. The listing is real and stays; nothing can be bought below or above its USDC price."
+      : "Buying opens when the price feed is live for $" + sym + ": the time-weighted price comes from the designer-token pools, and this token's pool has no price there yet (tokens launched before the designer-token launchpad trade in an older pool). The listing is real and stays.", "uyari"));
     return kutu;
   }
   if (esit(t.ilan.satici, ben)) { kutu.append(el("div", { sinif: "ds-cihaz", yazi: "This is your listing." })); return kutu; }
@@ -672,7 +672,7 @@ async function yayinlaSayfasi({ cuzdan }) {
     durumYaz(fiyatNotu, "Checking the price feed for this token…");
     const q = await S.tokenKarsiligi(jetonSec.value, 1_000_000n);
     durumYaz(fiyatNotu, q != null ? "Buyers can pay in this token now ($1 ≈ " + jetonYaz(q, 18) + " at the time-weighted price)."
-      : "You can publish and list now. Buying opens when the price feed is live for this token (its pool needs a time-weighted price on PulseHook6; tokens launched before v9 trade in an older pool).", q != null ? "ok" : null);
+      : "You can publish and list now. Buying opens when the price feed is live for this token (its pool needs a time-weighted price on the designer-token launchpad; tokens launched before it trade in an older pool).", q != null ? "ok" : null);
   };
   jetonSec.addEventListener("change", fiyatBak);
   fiyatBak();

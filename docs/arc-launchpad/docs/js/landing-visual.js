@@ -1,14 +1,15 @@
 import { JsonRpcProvider, Contract } from '../vendor/ethers.min.js';
 import { fthmDurum } from './fthm-veri.js';
 
-// Figures are loaded only when the token section approaches the viewport.
 // 9 Nov 2026: ARCP 2 first (docs/veri/arcp2.json): its presale price and how much the round has raised,
 // its supply from the token; the previous ARCP's figures are the fallback if that record is missing.
-const panel=document.querySelector('#fthm');
+// 12 Nov 2026: the figures load shortly after the page does, not when the section scrolls into view,
+// and nothing on the page is hidden waiting for a scroll (the old reveal effect left sections blank).
 let started=false;
 async function loadFthm(){
  if(started)return;started=true;
  const status=document.querySelector('#fthm-status');
+ if(!status)return;
  try{
   const provider=new JsonRpcProvider('https://rpc.mainnet.arc.io',5042,{staticNetwork:true,batchMaxCount:1});
   const k=await fetch('veri/arcp2.json').then(r=>r.ok?r.json():null).catch(()=>null);
@@ -29,9 +30,15 @@ async function loadFthm(){
   status.textContent='Read directly from Arc · '+new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',timeZone:'UTC'})+' UTC';
  }catch{status.textContent='Live figures unavailable. Open ARCP to retry.';document.querySelectorAll('.fthm-metrics b').forEach(x=>x.textContent='Unavailable');}
 }
-if('IntersectionObserver'in window){
- const observer=new IntersectionObserver(entries=>{if(entries.some(e=>e.isIntersecting)){loadFthm();observer.disconnect();}},{rootMargin:'250px'});
- if(panel)observer.observe(panel);
- const reveal=new IntersectionObserver(entries=>{for(const e of entries)if(e.isIntersecting){e.target.classList.add('is-visible');reveal.unobserve(e.target);}},{threshold:.08});
- if(!matchMedia('(prefers-reduced-motion: reduce)').matches)document.querySelectorAll('.journey-card,.fthm-panel,.eco .ec').forEach(el=>{el.classList.add('reveal-ready');reveal.observe(el);});
-}else loadFthm();
+setTimeout(loadFthm,600);
+
+// The phone menu is a <details>: it opens without script. This only closes it after a link
+// is chosen, when Escape is pressed, or when a tap lands outside it.
+const menu=document.querySelector('details.mmenu');
+if(menu){
+ menu.addEventListener('click',e=>{if(e.target.closest('a'))menu.open=false;});
+ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&menu.open){menu.open=false;menu.querySelector('summary').focus();}});
+ document.addEventListener('click',e=>{if(menu.open&&!menu.contains(e.target))menu.open=false;});
+}
+// The desktop "More" panel opens on hover and focus (CSS); Escape moves focus out so it closes.
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){const d=document.activeElement&&document.activeElement.closest('.drop');if(d)document.activeElement.blur();}});

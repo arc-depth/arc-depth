@@ -15,6 +15,7 @@ import { Contract } from "../../vendor/ethers.min.js";
 import { warpLaunchlari } from "../warp-liste.js";
 import { squadOf, squadResim } from "../squad.js";
 import { islemZincirleri, cikisZinciri, sepetV2, sepetV9, SEPET } from "../teminat-izle.js";
+import { demoMu, demoSonda } from "../launch-kaynak.js";
 
 const arc = new YedekliOkur();
 const LP_ABI = [
@@ -120,7 +121,8 @@ export async function ciz({ param } = {}) {
     return el("tr", {}, [
       el("td", {}, [el("a", { sinif: "ll-tok", attr: { href: s.link, style: "color:inherit;text-decoration:none" } }, [
         res ? el("img", { attr: { src: res, alt: "", loading: "lazy", referrerpolicy: "no-referrer" } }) : el("span", { sinif: "b", yazi: String(s.sembol || "?").slice(0, 4).toUpperCase() }),
-        el("span", { attr: { style: "min-width:0" } }, [el("b", {}, [s.ad || s.sembol || "?", m ? el("span", { sinif: "ll-sq", yazi: "Pulse Squad" }) : null]), el("small", { yazi: s.sembol ? "$" + s.sembol : "" })])])]),
+        el("span", { attr: { style: "min-width:0" } }, [el("b", {}, [s.ad || s.sembol || "?", m ? el("span", { sinif: "ll-sq", yazi: "Pulse Squad" }) : null,
+          demoMu(s) ? el("span", { sinif: "rozet-demo", attr: { style: "margin-left:6px", title: "A protocol demo token: launched by ARC PULSE to prove the contracts work" }, yazi: "Demo" }) : null]), el("small", { yazi: s.sembol ? "$" + s.sembol : "" })])])]),
       el("td", { attr: { "data-e": "Route" } }, [el("span", { sinif: "ll-yol " + s.tur, yazi: s.tur === "warp" ? "Warp ⚡" : "ARC PULSE" })]),
       el("td", { attr: { "data-e": "Launchpad" }, yazi: s.lp }),
       el("td", { attr: { "data-e": "Lives on" } }, [zc(s.zincir)]),
@@ -133,8 +135,9 @@ export async function ciz({ param } = {}) {
     const bu = ++sira;
     const q = ara.value.trim().toLowerCase();
     const uyar = (s) => (secili === "hepsi" || s.tur === secili) && (!q || [s.ad, s.sembol, s.zincir, s.lp, s.token].some((v) => String(v || "").toLowerCase().includes(q)));
-    const { liste, tam } = await K.sec(uyar, gosterilen + 1);
+    const { liste: ham, tam } = await K.sec(uyar, gosterilen + 1);
     if (bu !== sira) return;
+    const liste = demoSonda(ham);   // protocol demo tokens after real launches, never hidden
     ozetCiz();
     temizle(daha);
     if (!liste.length) { temizle(govde).append(bos("Nothing here yet", secili === "warp" ? "Tokens launched through Warp appear here as soon as their launch is on chain." : "No launch matches.")); return; }

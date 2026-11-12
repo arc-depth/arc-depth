@@ -19,7 +19,7 @@
  * Nothing about the visitor is stored or sent: the cache holds the site's
  * public files only, and the worker makes no request the page did not make.
  * =========================================================================== */
-const SURUM = "arcpulse-v2";   // v2 (9 Nov 2026): pages and scripts revalidate with the server on every load
+const SURUM = "arcpulse-v3";   // v3 (12 Nov 2026): redesign; v2 (9 Nov 2026): pages and scripts revalidate with the server on every load
 const KABUK = ["./", "./index.html", "./app.html", "./designs/", "./app.webmanifest", "./designs/manifest.webmanifest",
   "./ikon/app-192.png", "./ikon/designs-192.png"];
 

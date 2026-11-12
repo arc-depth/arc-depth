@@ -9,7 +9,7 @@
  *   - the creator's profiles: the links in the token's TurKaydi description,
  *     opened with rel="noopener nofollow".
  */
-import { el, not } from "../ui.js";
+import { el, not, panel } from "../ui.js";
 import { urunSayfasi, kurucuBekleyen, dolarYaz } from "../urun.js";
 
 const PROFIL = [[/(^|\.)x\.com$|(^|\.)twitter\.com$/, "X"], [/youtube\.com$|youtu\.be$/, "YouTube"], [/twitch\.tv$/, "Twitch"],
@@ -40,9 +40,20 @@ export function kartEk(x) {
   ]);
 }
 
+/* a neutral fee calculator: the visitor types an amount; nothing is preset or projected */
+function hesapKutusu() {
+  const girdi = el("input", { sinif: "girdi mono", attr: { type: "number", min: "0", step: "100", placeholder: "e.g. 1000", inputmode: "decimal", "aria-label": "Trading volume in dollars", style: "max-width:160px" } });
+  const sonuc = el("strong", { sinif: "mono", yazi: "$0.00" });
+  girdi.addEventListener("input", () => { sonuc.textContent = dolarYaz(Math.max(0, Number(girdi.value) || 0) * 0.003); });
+  return el("div", { sinif: "yigin yigin--sik" }, [
+    el("label", { sinif: "yazi", attr: { style: "display:flex;flex-wrap:wrap;gap:8px;align-items:center" } }, ["If a creator token trades $", girdi, " in total, the creator receives ", sonuc, " in USDC (0.30%)."]),
+    el("div", { sinif: "yazi yazi--kucuk yazi--sessiz", yazi: "Arithmetic only, not a forecast: income depends entirely on how much people actually trade." }),
+  ]);
+}
+
 export function ciz() {
   return urunSayfasi(2, {
     kartEk,
-    sonrasi: [not("A creator's earnings are paid in USDC on every trade: 0.30% of each buy and sell collects for the token on Arc and can only go to the creator, on the creator's chain. The amount shown is what is waiting now; what was already sent is in the creator's wallet. Profile links are written by the creator in the token's public description and are not verified by ARC PULSE.", "bilgi")]
+    sonrasi: [panel("How creators are paid", el("div", { sinif: "yigin" }, [hesapKutusu(), not("A creator's earnings are paid in USDC on every trade: 0.30% of each buy and sell collects for the token on Arc and can only go to the creator, on the creator's chain. The amount shown is what is waiting now; what was already sent is in the creator's wallet. Profile links are written by the creator in the token's public description and are not verified by ARC PULSE.", "bilgi")]))],
   });
 }

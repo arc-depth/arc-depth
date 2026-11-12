@@ -1,0 +1,24 @@
+{
+  "_readme": [
+    "EXAMPLE ONLY. The live file is docs/veri/sponsorlar.json: a plain JSON array of entries shaped like `example` below.",
+    "An empty array [] (the default) means no sponsor anywhere: every placement renders nothing.",
+    "An entry shows from `start` (inclusive) to `end` (exclusive), ISO dates in UTC, and only on the `placements` it lists.",
+    "placements: discover | market-slide | market-launchpads | rail | more | trade | token (see #/advertise).",
+    "url and image must be https. title up to 40 characters, text up to 90; longer text is cut.",
+    "Every unit is labelled Sponsored. Nothing is counted or tracked: slots are flat-fee and time-based.",
+    "Several live entries on one placement take turns by the hour."
+  ],
+  "example": [
+    {
+      "id": "example-launchpad-2026-11",
+      "name": "Example Launchpad",
+      "title": "Launch on Example in one click",
+      "text": "A short line about the product. No price promises, no guarantees.",
+      "url": "https://example.com/",
+      "image": "https://example.com/logo.png",
+      "placements": ["market-slide", "rail", "more"],
+      "start": "2026-11-15T00:00:00Z",
+      "end": "2026-11-22T00:00:00Z"
+    }
+  ]
+}

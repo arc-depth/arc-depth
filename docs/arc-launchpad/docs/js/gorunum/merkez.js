@@ -18,8 +18,9 @@
  * relay.link simulates the Arc calls before it quotes, so a route that
  * would fail is refused before anything is signed.
  * =========================================================================== */
-import { el, sayfaUst, panel, not, adimlar, temizle } from "../ui.js";
-import { EKONOMI } from "../adresler.js";
+import { el, sayfaUst, panel, not, adimlar, temizle, ayrinti, sekmeler } from "../ui.js";
+import { ACIK as WARP_ACIK, WARP_LISTE } from "../warp-durum.js";
+import { EKONOMI, PULSE_KURAL } from "../adresler.js";
 import { para } from "../bicim.js";
 import { AGLAR } from "../aglar.js";
 import { ELYSIUM } from "../elysium.js";
@@ -359,9 +360,64 @@ const tekSefer = (dugme, fn) => async () => {
   try { await fn(); } finally { dugme._mesgul = false; dugme.disabled = false; }
 };
 
+/* the Create page's chooser, wizard and fee card (12 Nov 2026 redesign); colours from the shared variables */
+const MK_STIL = `
+.mk-kok [hidden]{display:none!important}
+.mk-sekmeler{align-self:flex-start;max-width:100%;overflow-x:auto}
+.mk-secim{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,270px),1fr));gap:14px}
+.mk-kart{display:flex;flex-direction:column;gap:10px;min-width:0;border:1px solid var(--cizgi-guclu);border-radius:18px;padding:18px;background:var(--yuzey-1)}
+.mk-kart--ana{border-color:var(--marka-cizgi);background:radial-gradient(130% 90% at 0% 0%,var(--marka-zemin),transparent 60%),var(--yuzey-1)}
+.mk-kart__ust{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.mk-kart h3{margin:0;font-size:19px;font-weight:800;color:var(--yazi-1)}
+.mk-kart__ozet{margin:0;font-size:15px;line-height:1.45;color:var(--yazi-1)}
+.mk-kart dl{margin:0 0 6px;display:grid;gap:3px}
+.mk-kart dt{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--yazi-3);margin-top:8px}
+.mk-kart dd{margin:0;font-size:14px;line-height:1.45;color:var(--yazi-2)}
+.mk-kart > .dugme{margin-top:auto;text-decoration:none}
+.mk-rozet{font-size:12px;font-weight:700;border-radius:999px;padding:3px 10px;border:1px solid var(--cizgi-guclu);color:var(--yazi-2);white-space:nowrap}
+.mk-rozet--canli{color:var(--mint,#9be8bd);border-color:rgba(155,232,189,.4);background:rgba(155,232,189,.08)}
+.mk-rozet--canli::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:currentColor;margin-right:6px;vertical-align:1px}
+.mk-baglar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.mk-baglar .dugme{height:auto;min-height:30px;white-space:normal;text-align:left;text-decoration:none;padding-top:4px;padding-bottom:4px}
+.mk-ust{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.mk-adimlar{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.mk-adim{width:100%;display:flex;gap:8px;align-items:center;border:1px solid var(--cizgi-guclu);background:var(--yuzey-1);color:var(--yazi-2);border-radius:14px;padding:10px 12px;font:inherit;font-size:14px;font-weight:600;cursor:pointer;text-align:left;min-width:0}
+.mk-adim span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mk-adim__no{flex:none;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:var(--yuzey-3);font-size:12px;font-weight:800}
+.mk-adim--etkin{border-color:var(--marka);color:var(--yazi-1);background:var(--marka-zemin)}
+.mk-adim--etkin .mk-adim__no{background:var(--marka);color:#fff}
+.mk-adim--bitti .mk-adim__no{background:rgba(155,232,189,.15);color:var(--mint,#9be8bd)}
+.mk-adim:focus-visible{outline:2px solid var(--marka-parlak);outline-offset:2px}
+@media (max-width:520px){.mk-adim{padding:8px;font-size:13px;flex-direction:column;align-items:flex-start;gap:4px}.mk-adim span:last-child{white-space:normal}}
+.mk-nav{display:flex;justify-content:space-between;gap:8px;margin-top:6px}
+.mk-gizli{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.mk-dosya{display:flex;gap:10px;align-items:center;flex-wrap:wrap;min-width:0}
+.mk-dosya label{cursor:pointer}
+.mk-dosya .alan__ipucu{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.mk-gizli:focus-visible + label{outline:2px solid var(--marka-parlak);outline-offset:2px}
+.mk-sosyal{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));gap:8px}
+.mk-yalin{margin:0;font-size:14px;line-height:1.45;color:var(--yazi-1)}
+.mk-toplam{display:grid;gap:6px;border:1px solid var(--cizgi-guclu);border-radius:14px;padding:12px 14px;background:var(--yuzey-2)}
+.mk-toplam__satir{display:flex;justify-content:space-between;gap:10px;font-size:14px;color:var(--yazi-2)}
+.mk-toplam__satir b{color:var(--yazi-1);font-family:var(--yazi-tipi-mono);white-space:nowrap}
+.mk-toplam__satir--top{border-top:1px solid var(--cizgi-guclu);padding-top:6px;color:var(--yazi-1);font-weight:700}
+.mk-uyari{font-size:13px;color:var(--uyari)}
+.mk-ucret{display:grid;gap:2px;border:1px solid var(--marka-cizgi);border-radius:18px;padding:16px;background:radial-gradient(120% 100% at 100% 0%,var(--marka-zemin),transparent 60%),var(--yuzey-1)}
+.mk-ucret__ana{display:grid;gap:2px;padding-bottom:10px;margin-bottom:6px;border-bottom:1px solid var(--cizgi-guclu)}
+.mk-ucret__ana span{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--yazi-3)}
+.mk-ucret__ana b{font-size:32px;font-weight:800;font-family:var(--yazi-tipi-mono);line-height:1.1;color:var(--yazi-1)}
+.mk-ucret__ana small,.mk-ucret__satir small{font-size:12px;line-height:1.4;color:var(--yazi-3)}
+.mk-ucret__satir{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;padding:7px 0}
+.mk-ucret__satir > div{display:grid;gap:2px;min-width:0}
+.mk-ucret__satir span{font-size:14px;color:var(--yazi-1);font-weight:600}
+.mk-ucret__satir b{font-size:14px;font-family:var(--yazi-tipi-mono);white-space:nowrap;text-align:right;color:var(--yazi-1)}
+@media (max-width:620px){.mk-sepet .girdi-grup{flex-wrap:wrap;row-gap:6px}.mk-sepet .girdi-grup > .girdi:nth-child(2){order:3;flex:1 1 100%;border-radius:10px}.mk-sepet .girdi-grup > *{min-width:0}.mk-sepet .girdi-grup > select{flex:1 1 0}.mk-sepet .girdi-grup > .girdi--sayi{flex:0 0 96px;width:96px}}
+@media (max-width:520px){.mk-ucret__satir{flex-direction:column;gap:2px}.mk-ucret__satir b{text-align:left;white-space:normal}}
+`;
+
 /* "Your token": a live card beside the launch form, read from the form as it is filled. It sends
    nothing and decides nothing; the numbers it shows are the ones the launch itself uses. */
-function onizlemeKarti({ ad, sembol, alim, vergi, zincirSec, turSecim }) {
+function onizlemeKarti({ ad, sembol, alim, vergi, zincirSec, turSecim, gorsel = {} }) {
   const avatar = el("div", { sinif: "onz__avatar" });
   const baslik = el("div", { sinif: "onz__ad" }), alt = el("div", { sinif: "onz__alt" });
   const satirlar = el("div", { sinif: "onz__satirlar" });
@@ -369,8 +425,8 @@ function onizlemeKarti({ ad, sembol, alim, vergi, zincirSec, turSecim }) {
   const ciz = () => {
     const s = (sembol.value || "").trim().toUpperCase(), n = (ad.value || "").trim();
     let h = 0; for (const c of (s || "ARC")) h = (h * 37 + c.charCodeAt(0)) % 360;
-    avatar.style.background = "linear-gradient(135deg,hsl(" + h + " 75% 55%),hsl(" + ((h + 80) % 360) + " 70% 40%))";
-    avatar.textContent = (s || "?").slice(0, 4);
+    avatar.style.background = gorsel.url ? "center / cover no-repeat url(\"" + gorsel.url + "\")" : "linear-gradient(135deg,hsl(" + h + " 75% 55%),hsl(" + ((h + 80) % 360) + " 70% 40%))";
+    avatar.textContent = gorsel.url ? "" : (s || "?").slice(0, 4);
     baslik.textContent = n || "Your token";
     const zincir = zincirSec.selectedOptions[0] ? zincirSec.selectedOptions[0].textContent.replace(/\s*\(.*\)/, "") : "";
     alt.textContent = "$" + (s || "TICKER") + " · launched from " + zincir;
@@ -388,6 +444,7 @@ function onizlemeKarti({ ad, sembol, alim, vergi, zincirSec, turSecim }) {
     );
   };
   for (const x of [ad, sembol, alim, vergi, zincirSec, turSecim]) { x.addEventListener("input", ciz); x.addEventListener("change", ciz); }
+  gorsel.ciz = ciz;
   ciz();
   return el("aside", { sinif: "onz" }, [
     el("div", { sinif: "onz__ust" }, [avatar, el("div", { attr: { style: "min-width:0" } }, [baslik, alt])]),
@@ -398,7 +455,7 @@ function onizlemeKarti({ ad, sembol, alim, vergi, zincirSec, turSecim }) {
   ]);
 }
 
-export async function ciz({ param } = {}) {
+export async function ciz({ param, kayit } = {}) {
   await v2Yukle();
   await v9Yukle();
   if (!V2) {
@@ -416,22 +473,26 @@ export async function ciz({ param } = {}) {
       if (z.domain === 5 && V2.uzak && V2.uzak.solana && V2.uzak.solana.kasa) { delete z.kapali; z.tur = "solana"; z.ds = "solana"; }
     }
   }
-  const kap = el("div", { sinif: "yigin" });
-  kap.append(sayfaUst("Launch on any chain", "One pool on Arc, every chain's door to it"));
-  kap.append(adimlar([
-    { ikon: "zincir", baslik: "Pick your chain", yazi: "Pay from the wallet you already use: Base, BNB, Arbitrum, Robinhood, Elysium and more, or Solana, Sui and Aptos below." },
+  const kap = el("div", { sinif: "yigin mk-kok" });
+  if (!document.getElementById("mk-stil")) document.head.append(el("style", { attr: { id: "mk-stil" }, yazi: MK_STIL }));
+  kap.append(sayfaUst("Create a token", "Launch a token three ways, or manage one you already have"));
+  /* 12 Nov 2026 redesign: the page is two tabs (Launch a token / Manage tokens); the launch tab opens with a
+     three-way chooser and the ARC PULSE launch is a three-step wizard over the same form and handlers below.
+     Every control that was on this page is still here; only where it is shown changed. */
+  const nasilCalisir = (adimlar([
+    { ikon: "zincir", baslik: "Pick your chain", yazi: "Pay from the wallet you already use: Base, BNB, Arbitrum, Robinhood, Elysium and more, or Solana, Sui and Aptos from their own panel under Manage tokens." },
     { ikon: "arti", baslik: "Name it, set the first buy", yazi: "Name, ticker and a first buy from $20. You get your tokens at the opening price, before anyone else." },
     { ikon: "kasa", baslik: "Back it and launch", yazi: "Pick up to five tokens as its collateral basket, sign once, and it trades on thirteen chains." },
   ]));
-  kap.append(not("Every token here has one pool and one price, on Arc. You launch, buy and sell from your own chain with its own gas token, in one signature. The token lives on your chain as its twin. Fees are shown before you sign.", "bilgi"));
+  const birHavuzNotu = not("Every token here has one pool and one price, on Arc. You launch, buy and sell from your own chain with its own gas token, in one signature. The token lives on your chain as its twin. Fees are shown before you sign.", "bilgi");
 
   let ag = odemeAglari().find((a) => a.anahtar === "base");
   const zincirSec = el("select", { sinif: "girdi", attr: { id: "merkez-zincir" } }, odemeAglari().map((a) => el("option", { attr: { value: a.anahtar }, yazi: a.ad + " (pay in " + a.gaz + ")" })));
   zincirSec.value = ag.anahtar;
   const elysiumNotu = el("div", { sinif: "alan__ipucu", attr: { hidden: true }, yazi: "Elysium: you pay in HYPE on Elysium and your tokens are delivered to your same address on Arc. There is no twin on Elysium yet (LayerZero does not reach it), so to sell or redeem later, switch to Arc." });
   zincirSec.addEventListener("change", () => { ag = odemeAglari().find((a) => a.anahtar === zincirSec.value); elysiumNotu.hidden = !ag.sadeceOdeme; });
-  kap.append(panel("Your chain", el("div", { sinif: "yigin" }, [zincirSec, elysiumNotu,
-    el("div", { sinif: "alan__ipucu", yazi: V2 ? "EVM chains here. A Solana, Sui or Aptos wallet has its own panel at the bottom of this page." : "Solana, Sui and Aptos wallets come next; today the doors are the EVM chains." })])));
+  const zincirKutusu = el("div", { sinif: "yigin" }, [zincirSec, elysiumNotu,
+    el("div", { sinif: "alan__ipucu", yazi: V2 ? "EVM chains and Elysium here. A Solana, Sui or Aptos wallet has its own panel under Manage tokens." : "Solana, Sui and Aptos wallets come next; today the doors are the EVM chains." })]);
 
   /* ================= launch ================= */
   const ad = el("input", { sinif: "girdi", attr: { id: "merkez-ad", placeholder: "Name", maxlength: "32" } });
@@ -440,7 +501,7 @@ export async function ciz({ param } = {}) {
   const vergi = el("select", { sinif: "girdi", attr: { id: "merkez-vergi" } }, [1, 2, 3, 4, 5].map((v) => el("option", { attr: { value: String(v) }, yazi: v + "% collateral tax" })));
   vergi.value = "2";
   /* five collateral slots, always on the page; a slot left without an address is not used */
-  const satirlar = el("div", { sinif: "yigin" });
+  const satirlar = el("div", { sinif: "yigin mk-sepet" });
   const VARSAYILAN = [[26, "", 20], [6, "", 4], [3, "", 4], [8, "", 4], [9, "", 4]];   // empty: the founder chooses every token
   VARSAYILAN.forEach(([zd, adres, dolar], i) => {
     const z = el("select", { sinif: "girdi" }, SEPET_ZINCIR.map((s) => el("option", { attr: { value: String(s.domain), disabled: !!s.kapali }, yazi: s.ad + (s.kapali ? " — " + s.kapali : "") })));
@@ -467,30 +528,35 @@ export async function ciz({ param } = {}) {
   const urunKurucu = await import("../urun-kurucu.js");
   const kurucuSecimKutusu = urunKurucu.secimKutusu();
   const turSecim = el("select", { sinif: "girdi", attr: { id: "merkez-tur", "aria-label": "Product type" } },
-    urun.TURLER.map((t) => el("option", { attr: { value: String(t.tur) }, yazi: t.ad + (t.tur === 8 ? " (launches on the v9 set, PulseHook6)" : "") })));
+    urun.TURLER.map((t) => el("option", { attr: { value: String(t.tur) }, yazi: t.ad + (t.tur === 8 ? " (Designs marketplace)" : "") })));
   turSecim.value = String(urun.secilenTuruAl());
   const turBilgi = el("textarea", { sinif: "girdi", attr: { id: "merkez-tur-bilgi", rows: "3", maxlength: "1000",
     placeholder: "Optional. Public description and links (https://...), e.g. your Discord, X or website. Written on chain, visible to everyone." } });
   const ajanCuzdan = el("input", { sinif: "girdi", attr: { id: "merkez-ajan", placeholder: "Agent wallet 0x... (optional, public)" } });
+  /* socials: added to the public description as links (urun.bilgiYap keeps https:// links), saved with the product type */
+  const sosyal = [["X", "merkez-x", "https://x.com/…"], ["Telegram", "merkez-tg", "https://t.me/…"], ["Website", "merkez-web", "https://…"]]
+    .map(([etiket, id, ph]) => { const g = el("input", { sinif: "girdi", attr: { id, type: "url", placeholder: ph, "aria-label": etiket } }); g._etiket = etiket; return g; });
+  const aciklamaMetni = () => [turBilgi.value.trim(), ...sosyal.map((g) => g.value.trim()).filter((v) => /^https:\/\//.test(v))].filter(Boolean).join("\n");
   const turIpucu = el("div", { sinif: "alan__ipucu" });
   const turTazele = () => {
     const n = Number(turSecim.value);
     ajanCuzdan.style.display = n === 3 ? "" : "none";
-    const b = urun.baytBoyu(urun.bilgiYap(turBilgi.value, n === 3 ? ajanCuzdan.value : ""));
+    const b = urun.baytBoyu(urun.bilgiYap(aciklamaMetni(), n === 3 ? ajanCuzdan.value : ""));
     turIpucu.textContent = n === 0
-      ? "Meme: nothing more to save after the launch."
+      ? "Meme: nothing more to save after the launch (a description and links are saved only with another product type)."
       : "After the launch, one more confirmation from your wallet on Arc saves this type" + (b ? " and the description (" + b + " of 1024 bytes)" : "") + ", so the token shows on the " + urun.turBul(n).ad + " page. Optional; it does not change the launch or its fees.";
   };
-  for (const g of [turSecim, turBilgi, ajanCuzdan]) { g.addEventListener("input", turTazele); g.addEventListener("change", turTazele); }
+  for (const g of [turSecim, turBilgi, ajanCuzdan, ...sosyal]) { g.addEventListener("input", turTazele); g.addEventListener("change", turTazele); }
   turTazele();
   /* designer (8): the v9 gate, and its basket lines on the chains bound to the v9 Defter */
   const tasarimciMi = () => Number(turSecim.value) === 8;
   const C = () => (tasarimciMi() ? V9 : V2);
   const v9Domainler = () => new Set(Object.values((V9 && V9.zincir) || {}).map((z) => String(z.domain)));
-  const tasarimNotu = el("div", { sinif: "not not--bilgi", attr: { style: "display:none" } }, [el("span", { yazi:
-    "Designer tokens launch on the v9 set (PulseHook6), whose time-weighted price lets buyers pay for your designs in your token. " +
+  const tasarimNotu = el("div", { sinif: "not not--bilgi", attr: { style: "display:none" } }, [el("div", { sinif: "yigin yigin--sik" }, [
+    el("span", { yazi: "Designer tokens let buyers pay for your designs in your token. Their collateral can't sit on Solana, Sui or Aptos yet; everything else (rules, fees, buying from all thirteen chains) is the same." }),
+    ayrinti("Details", "Designer tokens launch on a newer contract set (v9, with the PulseHook6 hook), whose time-weighted price lets buyers pay for your designs in your token. " +
     "Its basket can use Arc, Base, Arbitrum, Ethereum, Avalanche, Monad, HyperEVM, Robinhood and BNB; Solana, Sui and Aptos are not connected to the v9 set yet, so they are switched off below. " +
-    "Everything else is the same: the rules, the fees, and buying from all thirteen chains." })]);
+    "Everything else is the same: the rules, the fees, and buying from all thirteen chains.")])]);
   const sepetKisitla = () => {
     const t = tasarimciMi();
     tasarimNotu.style.display = t ? "" : "none";
@@ -511,7 +577,7 @@ export async function ciz({ param } = {}) {
   const turAdimi = (yeniToken) => {
     const n = Number(turSecim.value);
     if (!n) return;
-    const bilgi = urun.bilgiYap(turBilgi.value, n === 3 ? ajanCuzdan.value : "");
+    const bilgi = urun.bilgiYap(aciklamaMetni(), n === 3 ? ajanCuzdan.value : "");
     const tDurum = el("div", { sinif: "yazi yazi--kucuk yazi--sessiz" });
     const tDugme = el("button", { sinif: "dugme dugme--marka", attr: { type: "button" }, yazi: "Save product type: " + urun.turBul(n).ad });
     tDugme.addEventListener("click", tekSefer(tDugme, async () => {
@@ -579,7 +645,8 @@ export async function ciz({ param } = {}) {
           : ag.sadeceOdeme ? "Launched on Arc. Your tokens are at your same address on Arc. Any LayerZero fee not used comes back there too."
           : "Launched on Arc. Your tokens arrive on " + ag.ad + " in a few minutes. Any LayerZero fee not used comes back to your address on Arc.") +
           (yeni ? "  " + tokenBaglantilari(yeni) : "  (The token's address could not be read yet: find it on Discover.)"));
-        if (yeni && !urunKurucu.launchSonrasi({ token: yeni, kap: turKutu, cuzdan, bilgi: urun.bilgiYap(turBilgi.value, "") })) turAdimi(yeni);
+        if (yeni) basariGoster(yeni);
+        if (yeni && !urunKurucu.launchSonrasi({ token: yeni, kap: turKutu, cuzdan, bilgi: urun.bilgiYap(aciklamaMetni(), "") })) turAdimi(yeni);
         return;
       }
       if (!ad.value.trim() || !sembol.value.trim()) return durum("Give the token a name and a symbol.");
@@ -678,7 +745,7 @@ export async function ciz({ param } = {}) {
         const d6 = (x) => "$" + (Number(x) / 1e6).toFixed(2);
         const net = Number(toplam) / 1e6 + Number(deger2) / 1e18;
         const satirlarOzet = [
-          ...(tasarimciMi() ? ["Designer token: launched on the v9 set (PulseHook6)"] : []),
+          ...(tasarimciMi() ? ["Designer token: launched on the designer contract set"] : []),
           "First buy " + d6(alim6) + " · collateral " + d6(teminat) + " (" + ss.length + " line" + (ss.length > 1 ? "s" : "") + ")",
           "Twins on " + evmIkiz.length + " EVM chain(s): LayerZero " + usd(evmGercek) + (uzak.length ? " · on " + uzak.length + " of Solana/Sui/Aptos: " + usd(uzakGercek) : ""),
           kurucuArcta ? (urunKurucu.secim().tur === "kilit" ? "Your founder tokens go to your founder lock on Arc (no LayerZero delivery)" : "Your founder tokens go to the token's DAO treasury on Arc (no LayerZero delivery)")
@@ -706,21 +773,221 @@ export async function ciz({ param } = {}) {
       durum("Paid. relay launches on Arc within seconds; your tokens arrive on " + (urunKurucu.secim() ? "the founder lock or DAO treasury on Arc" : ag.ad) + " in a few minutes" + (v6mu() ? "; each basket line is bought from its chain's pool when it reaches $50." : ", the basket is bought by auction over the next hours."));
     } catch (x) { durum((x && x.message) || "Could not launch."); } finally { lMesgul = false; lDugme.disabled = false; }
   });
-  const launchPaneli = panel("Launch", el("div", { sinif: "yigin" }, [
-    V2 ? el("div", { sinif: "alan__ipucu", yazi: "Paying from a Solana, Sui or Aptos wallet? Use the panel \"From a Solana, Sui or Aptos wallet\" at the bottom of this page." })
-      : el("a", { sinif: "alan__ipucu", attr: { href: "#olustur-move" }, yazi: "Paying from a Sui or Aptos wallet? Use the Sui / Aptos launch form →" }),
-    el("div", { sinif: "girdi-grup" }, [ad, sembol]),
-    el("div", { sinif: "alan__etiket", yazi: "Product type" }), turSecim, turBilgi, ajanCuzdan, turIpucu, tasarimNotu, kurucuSecimKutusu,
+  /* ================= the ARC PULSE launch: three steps over the same form =================
+     Only where the controls are shown changed (12 Nov 2026). The inputs, their handlers and the
+     Launch button's code path above are the ones the page always had. */
+  const yuzde = (ppm) => String(Number((ppm / 10_000).toFixed(2))) + "%";
+  const ISLEM_UCRETI = yuzde(Object.values(EKONOMI.dilimler).reduce((a, b) => a + b, 0) + 2_000);   // the hook's five slices + 0.20% ARCP burn = 2.2%
+  const KURUCU_PAYI = (EKONOMI.dilimler.kurucu / 10_000).toFixed(2) + "%";                          // 0.30%
+  const LAUNCH_UCRETI = yuzde(EKONOMI.ucretPpm);                                                    // 2% of the first buy
+  const dolar = (x) => "$" + (Number(x) || 0).toFixed(2);
+
+  /* step 1 extras: an image for the preview, and the step's own message line */
+  const gorsel = {};
+  const gorselGirdi = el("input", { sinif: "mk-gizli", attr: { id: "merkez-gorsel", type: "file", accept: "image/png,image/jpeg,image/webp,image/gif" } });
+  const gorselAd = el("span", { sinif: "alan__ipucu", yazi: "No image chosen" });
+  gorselGirdi.addEventListener("change", () => {
+    const f = gorselGirdi.files[0];
+    if (gorsel.url) URL.revokeObjectURL(gorsel.url);
+    gorsel.url = f ? URL.createObjectURL(f) : null;
+    gorselAd.textContent = f ? f.name : "No image chosen";
+    if (gorsel.ciz) gorsel.ciz();
+  });
+  const adim1Mesaj = el("div", { sinif: "yazi yazi--kucuk", attr: { role: "alert", style: "color:var(--uyari)" } });
+
+  /* step 2: what the basket adds up to, against the first buy */
+  const teminatOzet = el("div", { sinif: "mk-toplam", attr: { "aria-live": "polite" } });
+  /* step 3: one fee card */
+  const ucretKarti = el("div", { sinif: "mk-ucret", attr: { "aria-live": "polite" } });
+  const ozetTazele = () => {
+    const alimUsd = Math.max(0, Number(alim.value) || 0);
+    const hat = [...satirlar.children].map((x) => x._oku && x._oku()).filter((x) => x && x.adres);
+    const tem = hat.reduce((a, x) => a + (Number(x.dolar) || 0), 0);
+    const kisa = hat.filter((x) => !(x.dolar >= kalemAsgari(alimUsd, x.zincir)));
+    const uyar = [];
+    if (!hat.length) uyar.push("Add at least one collateral token: paste its address in a row. Rows without an address are skipped.");
+    if (kisa.length) uyar.push("Each line needs at least " + dolar(kalemAsgari(alimUsd, kisa[0].zincir)) + " (5% of the first buy).");
+    if (alimUsd < ASGARI_ALIM() || alimUsd > 500) uyar.push("The first buy is between $" + ASGARI_ALIM() + " and $500.");
+    temizle(teminatOzet).append(
+      el("div", { sinif: "mk-toplam__satir" }, [el("span", { yazi: "Your first buy" }), el("b", { yazi: dolar(alimUsd) })]),
+      el("div", { sinif: "mk-toplam__satir" }, [el("span", { yazi: "Collateral in use (" + hat.length + " of 5 rows have a token)" }), el("b", { yazi: dolar(tem) })]),
+      el("div", { sinif: "mk-toplam__satir mk-toplam__satir--top" }, [el("span", { yazi: "You put in, before network fees" }), el("b", { yazi: dolar(alimUsd + tem) })]),
+      el("div", { sinif: "alan__ipucu", yazi: "The collateral is paid on top of the first buy. The suggested amounts in the rows count only once you paste a token address." }),
+      ...uyar.map((u) => el("div", { sinif: "mk-uyari", yazi: u })));
+    const ikiz = ikizSecimi().length;
+    const satir = (a, b, c) => el("div", { sinif: "mk-ucret__satir" }, [el("div", {}, [el("span", { yazi: a }), c ? el("small", { yazi: c }) : null]), el("b", { yazi: b })]);
+    temizle(ucretKarti).append(
+      ...uyar.map((u) => el("div", { sinif: "mk-uyari", yazi: u })),
+      el("div", { sinif: "mk-ucret__ana" }, [el("span", { yazi: "You pay now" }), el("b", { yazi: dolar(alimUsd + tem) }),
+        el("small", { yazi: "+ network fees, shown exactly when you press Launch, before you sign" })]),
+      satir("First buy", dolar(alimUsd), LAUNCH_UCRETI + " launch fee (" + dolar(alimUsd * EKONOMI.ucretPpm / 1e6) + "); the rest becomes your tokens at the opening price"),
+      satir("Collateral basket", dolar(tem), hat.length + " line" + (hat.length === 1 ? "" : "s") + "; it backs every token and holders can redeem from it"),
+      satir("Network fees", "Before you sign", "LayerZero for " + ikiz + " twin chain" + (ikiz === 1 ? "" : "s") + (ag.anahtar === "arc" ? "" : ", plus relay's bridge fee from " + ag.ad) + "; unused LayerZero fee comes back"),
+      satir("Every trade", ISLEM_UCRETI + " + " + (vergi.value || "2") + "% tax", "the collateral tax goes into the basket"),
+      satir("Your share", KURUCU_PAYI + " of every trade", "paid to you in USDC"));
+  };
+  for (const g of [alim, vergi, zincirSec]) { g.addEventListener("input", ozetTazele); g.addEventListener("change", ozetTazele); }
+  satirlar.addEventListener("input", ozetTazele); satirlar.addEventListener("change", ozetTazele);
+  ikizKutular.forEach((l) => l.firstChild.addEventListener("change", ozetTazele));
+
+  const basariYer = el("div");
+  const basariGoster = (yeni) => {
+    import("../launch-basari.js").then((m) => basariYer.replaceChildren(m.basariKarti({
+      ad: ad.value.trim(), sembol: sembol.value.trim().toUpperCase(), token: yeni,
+      nerede: "ARC PULSE · one pool on Arc, buyable from 13 chains",
+      sayfa: "#/terminal?t=" + yeni,
+      dis: { ad: "the Arc explorer", link: "https://explorer.arc.io/address/" + yeni },
+      paylasYazi: "I just launched $" + sembol.value.trim().toUpperCase() + " (" + ad.value.trim() + ") on ARC PULSE: one pool on Arc, buyable from 13 chains.",
+      adimlar: [
+        { yazi: "Share the launch on X (button above)" },
+        { yazi: "Open your token page and check its details", href: "#/terminal?t=" + yeni },
+        ...(Number(turSecim.value) ? [{ yazi: "Save the product type and description (the button under this card, optional)" }] : []),
+        { yazi: "Open a DAO for your token's holders", href: "#/daos" },
+        { yazi: "Post the token page link in your community (Telegram, Discord)" },
+        { yazi: "Buy, sell, redeem or upkeep it later from Manage tokens", href: "#/merkez?t=" + yeni },
+      ],
+    }))).catch(() => {});
+  };
+
+  const etiket = (y) => el("div", { sinif: "alan__etiket", yazi: y });
+  const adimNav = (geri, ileri) => el("div", { sinif: "mk-nav" }, [
+    geri ? el("button", { sinif: "dugme dugme--sessiz", attr: { type: "button" }, yazi: "← Back", on: { click: () => adimGit(geri) } }) : el("span"),
+    ileri ? el("button", { sinif: "dugme dugme--marka", attr: { type: "button" }, yazi: ileri[1], on: { click: () => adimGit(ileri[0]) } }) : null]);
+
+  const uzakYer = el("div", { sinif: "yigin" });
+  const uzakAc = () => { sekmeGec("yonet"); requestAnimationFrame(() => uzakYer.scrollIntoView({ behavior: "smooth", block: "start" })); };
+  const adim1 = panel("Step 1 · Name your token", el("div", { sinif: "yigin" }, [
+    etiket("Name and ticker"), el("div", { sinif: "girdi-grup" }, [ad, sembol]),
+    etiket("Image"),
+    el("div", { sinif: "mk-dosya" }, [gorselGirdi, el("label", { sinif: "dugme dugme--sessiz", attr: { for: "merkez-gorsel" }, yazi: "Choose image" }), gorselAd]),
+    el("div", { sinif: "alan__ipucu", yazi: "Shown in the preview here only: an ARC PULSE launch does not store an image on chain yet, so the token page shows a generated badge." }),
+    etiket("Product type"), turSecim, tasarimNotu, kurucuSecimKutusu,
+    etiket("Description"), turBilgi, ajanCuzdan,
+    etiket("Socials (optional)"), el("div", { sinif: "mk-sosyal" }, sosyal),
+    turIpucu,
+    adim1Mesaj,
+    adimNav(null, [2, "Next: collateral →"]),
+  ]));
+  const adim2 = panel("Step 2 · First buy and collateral", el("div", { sinif: "yigin" }, [
+    etiket("Your first buy"),
+    el("div", { sinif: "girdi-grup" }, [alim, el("span", { sinif: "girdi-grup__son", yazi: "$ first buy" })]),
     el("div", { sinif: "alan__ipucu", yazi: "First buy $" + ASGARI_ALIM() + "–$500 (2% launch fee; the rest becomes your tokens at the opening price: $3,500 for the whole supply of 1,000,000,000)." }),
-    el("div", { sinif: "girdi-grup" }, [alim, el("span", { sinif: "girdi-grup__son", yazi: "$ first buy" })]), vergi,
-    el("div", { sinif: "alan__ipucu", yazi: v4mu()
+    etiket("Collateral tax"), vergi,
+    el("div", { sinif: "alan__ipucu", yazi: "Chosen once: this share of every trade goes into the collateral basket." }),
+    etiket("Collateral basket"),
+    el("p", { sinif: "mk-yalin", yazi: "Pick 1 to 5 tokens to back your token. Holders can redeem their share of this basket at any time instead of selling." }),
+    ayrinti("Details: how the basket is bought and kept", v4mu()
       ? "Collateral basket: up to 5 tokens, mixed as you like across the chains below, " + (v8mu() ? "each line at least 5% of the first buy ($1 on a $20 launch, $25 on $500)." : "at least $4 a line, at least $20 in total.") + " Each line waits as USDC on Arc until it reaches $50 (every trade's collateral tax adds to it); then its vault buys the token from that chain's pool" + (v6mu() ? " (Uniswap v3 / v4, PancakeSwap v3 on BNB, Raydium, Cetus, Hyperion), within ~3% of a protected price; a token with no pool on its chain is refused here before you sign." : " (by auction on Arc, BNB, Monad and Robinhood, which have no pool with an average price).") + " Until then the line is redeemable as USDC."
-      : "Collateral basket: up to 5 tokens, mixed as you like across the chains below, at least $4 a line ($25 on Ethereum), at least $20 in total. Bought into the vaults by auction; every trade's collateral tax re-buys it every $50." }),
+      : "Collateral basket: up to 5 tokens, mixed as you like across the chains below, at least $4 a line ($25 on Ethereum), at least $20 in total. Bought into the vaults by auction; every trade's collateral tax re-buys it every $50."),
     satirlar,
+    teminatOzet,
+    adimNav(1, [3, "Next: review →"]),
+  ]));
+  const adim3 = panel("Step 3 · Review and launch", el("div", { sinif: "yigin" }, [
+    ucretKarti,
+    ayrinti("See the split of every trade", "Every trade: 2.2% (0.30% you, the creator · 0.30% developer pool · 0.50% protocol liquidity · 0.70% back into the pool · 0.20% ARCP bought and burned · 0.20% operations) plus your 1–5% collateral tax."),
+    etiket("Pay from"), zincirKutusu,
+    el("div", { sinif: "mk-baglar" }, [
+      el("button", { sinif: "dugme dugme--sade dugme--kucuk", attr: { type: "button" }, yazi: "Paying from a Solana, Sui or Aptos wallet? Open its panel →", on: { click: uzakAc } }),
+      el("a", { sinif: "dugme dugme--sade dugme--kucuk", attr: { href: "#/olustur-move" }, yazi: "Want the token to live on Sui or Aptos? →" })]),
     V2 ? uzakEtiket : el("span"),
-    el("div", { sinif: "alan__ipucu", yazi: "Every trade: 2.2% (0.30% you, the creator · 0.30% developer pool · 0.50% protocol liquidity · 0.70% back into the pool · 0.20% ARCP bought and burned · 0.20% operations) plus your 1–5% collateral tax." }),
-    lDugme, lDurum, turKutu]));
-  kap.append(el("div", { sinif: "olustur-izgara" }, [launchPaneli, onizlemeKarti({ ad, sembol, alim, vergi, zincirSec, turSecim })]));
+    lDugme, lDurum, basariYer, turKutu,
+    adimNav(2, null),
+  ]));
+  lDugme.classList.add("dugme--buyuk", "dugme--tam");
+
+  const ADIMLAR = [[1, "Name"], [2, "Collateral"], [3, "Review & launch"]];
+  const ilerleme = el("ol", { sinif: "mk-adimlar", attr: { "aria-label": "Launch steps" } });
+  const adimPanelleri = { 1: adim1, 2: adim2, 3: adim3 };
+  let suankiAdim = 1;
+  const adimGit = (n) => {
+    if (n > 1 && suankiAdim === 1 && (!ad.value.trim() || !sembol.value.trim())) {
+      adim1Mesaj.textContent = "Give the token a name and a ticker first.";
+      (ad.value.trim() ? sembol : ad).focus();
+      return;
+    }
+    adim1Mesaj.textContent = "";
+    const ilk = suankiAdim !== n;
+    suankiAdim = n;
+    for (const [k, p] of Object.entries(adimPanelleri)) p.hidden = Number(k) !== n;
+    temizle(ilerleme).append(...ADIMLAR.map(([k, y]) => el("li", {}, [el("button", {
+      sinif: "mk-adim" + (k === n ? " mk-adim--etkin" : k < n ? " mk-adim--bitti" : ""),
+      attr: { type: "button", "aria-current": k === n ? "step" : null }, on: { click: () => adimGit(k) } },
+      [el("span", { sinif: "mk-adim__no", yazi: k < n ? "✓" : String(k) }), el("span", { yazi: y })])])));
+    ozetTazele();
+    if (ilk && kap.isConnected) ilerleme.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  };
+
+  const sihirbaz = el("div", { sinif: "yigin" }, [
+    el("div", { sinif: "mk-ust" }, [
+      el("button", { sinif: "dugme dugme--sade dugme--kucuk", attr: { type: "button" }, yazi: "← All launch options", on: { click: () => launchGorunum("secim") } }),
+      el("span", { sinif: "mk-rozet mk-rozet--canli", yazi: "Live" }), el("b", { yazi: "ARC PULSE launch" })]),
+    ilerleme,
+    ayrinti("How an ARC PULSE launch works", el("div", { sinif: "yigin" }, [nasilCalisir, birHavuzNotu])),
+    el("div", { sinif: "olustur-izgara" }, [el("div", { sinif: "yigin" }, [adim1, adim2, adim3]), onizlemeKarti({ ad, sembol, alim, vergi, zincirSec, turSecim, gorsel })]),
+  ]);
+  adimGit(1);
+
+  /* ---- the chooser: three ways to launch ---- */
+  const warpCanli = WARP_LISTE.filter((x) => WARP_ACIK[x.k]), warpSirada = WARP_LISTE.filter((x) => !WARP_ACIK[x.k]);
+  const secimKart = ({ ana, baslik, rozet, canli, ozet, satirlar: ss, dugme }) => el("article", { sinif: "mk-kart" + (ana ? " mk-kart--ana" : "") }, [
+    el("div", { sinif: "mk-kart__ust" }, [el("h3", { yazi: baslik }), el("span", { sinif: "mk-rozet" + (canli ? " mk-rozet--canli" : ""), yazi: rozet })]),
+    el("p", { sinif: "mk-kart__ozet", yazi: ozet }),
+    el("dl", {}, ss.flatMap(([a, b]) => [el("dt", { yazi: a }), el("dd", { yazi: b })])),
+    dugme]);
+  const secimEkrani = el("div", { sinif: "yigin" }, [
+    el("div", { sinif: "mk-secim" }, [
+      secimKart({ ana: true, baslik: "ARC PULSE launch", rozet: "Live", canli: true,
+        ozet: "A collateral-backed token with one pool on Arc, buyable from 13 chains.",
+        satirlar: [
+          ["What you get", "A fixed supply of 1,000,000,000, liquidity locked in the pool contract from block one, and a collateral basket holders can redeem from."],
+          ["Fees", LAUNCH_UCRETI + " of your first buy. Every trade: " + ISLEM_UCRETI + " (" + KURUCU_PAYI + " to you) plus your 1–5% collateral tax, which goes into the basket."],
+          ["Chains", "Pay from " + odemeAglari().map((a) => a.ad).join(", ") + ", or a Solana, Sui or Aptos wallet. The pool is on Arc."],
+          ["Next step", "Three steps: name it, back it, review and launch. First buy from $" + ASGARI_ALIM() + "."]],
+        dugme: el("button", { sinif: "dugme dugme--marka dugme--tam", attr: { type: "button" }, yazi: "Start an ARC PULSE launch", on: { click: () => launchGorunum("sihirbaz") } }) }),
+      secimKart({ baslik: "Warp", rozet: warpCanli.length ? "Live: " + warpCanli.map((x) => x.ad).join(", ") : "Coming soon", canli: !!warpCanli.length,
+        ozet: "Launch on another launchpad's own contracts, signed in your own wallet.",
+        satirlar: [
+          ["What you get", "Your token on that launchpad, with its own pool and rules. ARC PULSE never holds your token or your coins."],
+          ["Fees", "0.5% of your first buy to ARC PULSE (0.3% platform, 0.2% to buy and burn ARCP). The launchpad's own fees are unchanged; on Montra you keep 90% of the creator side."],
+          ["Launchpads", (warpCanli.length ? "Live: " + warpCanli.map((x) => x.ad + " (" + x.zincir + ")").join(", ") + ". " : "") + (warpSirada.length ? "Coming soon: " + warpSirada.map((x) => x.ad + " (" + x.zincir + ")").join(", ") + "." : "")],
+          ["Next step", "Fill the Warp form, then sign in your wallet."]],
+        dugme: el("a", { sinif: "dugme dugme--sessiz dugme--tam", attr: { href: "#/warp?lp=" + (warpCanli[0] ? warpCanli[0].k : "montra") }, yazi: "Open Warp" }) }),
+      secimKart({ baslik: "Sui / Aptos wallet", rozet: "Live", canli: true,
+        ozet: "A token that lives on Sui or Aptos, paid in native USDC from that wallet.",
+        satirlar: [
+          ["What you get", "Your token and its pool on Sui or Aptos, with a vault holding its collateral."],
+          ["Fees", yuzde(PULSE_KURAL.launchUcretPpm) + " of your buy ($" + PULSE_KURAL.asgariAlim + "–$" + PULSE_KURAL.azamiAlim + "), plus at least $" + PULSE_KURAL.asgariTeminat + " set aside for the vault. Every trade: your 1–5% collateral tax to the vault, plus the pool's trading fee."],
+          ["Chains", "Sui (Slush, Suiet, Phantom…) and Aptos (Petra, Nightly, OKX…)."],
+          ["Next step", "One form; two wallet approvals on Sui, one on Aptos."]],
+        dugme: el("a", { sinif: "dugme dugme--sessiz dugme--tam", attr: { href: "#/olustur-move" }, yazi: "Open the Sui / Aptos form" }) }),
+    ]),
+    el("div", { sinif: "mk-baglar" }, [el("span", { sinif: "alan__ipucu", yazi: "Already launched?" }),
+      el("button", { sinif: "dugme dugme--sade dugme--kucuk", attr: { type: "button" }, yazi: "Buy, sell, redeem or upkeep a token in Manage tokens →", on: { click: () => sekmeGec("yonet") } })]),
+  ]);
+
+  const launchBolum = el("div", { sinif: "yigin", attr: { role: "tabpanel" } }, [secimEkrani, sihirbaz]);
+  const yonetBolum = el("div", { sinif: "yigin", attr: { role: "tabpanel" } }, [
+    not("Tools for a token that already exists: paste its address on Arc, or open it here from its token page. Buying and selling are also on every token page.", "bilgi")]);
+  const launchGorunum = (g) => {
+    secimEkrani.hidden = g !== "secim"; sihirbaz.hidden = g === "secim";
+    if (kap.isConnected) kap.scrollIntoView({ behavior: "auto", block: "start" });
+  };
+  const SEKMELER = [{ anahtar: "launch", ad: "Launch a token" }, { anahtar: "yonet", ad: "Manage tokens" }];
+  const sekmeGec = (k) => {
+    launchBolum.hidden = k !== "launch"; yonetBolum.hidden = k !== "yonet";
+    [...sekmeCubugu.children].forEach((b, i) => b.setAttribute("aria-selected", String(SEKMELER[i].anahtar === k)));
+  };
+  const sekmeCubugu = sekmeler(SEKMELER, "launch", (k) => sekmeGec(k));
+  sekmeCubugu.classList.add("mk-sekmeler");
+  kap.append(sekmeCubugu, launchBolum, yonetBolum);
+  /* where the page opens: a token (?t=) opens Manage tokens, as the Trade page's "Buy, sell or redeem" link
+     expects; #/merkez, a preselected product type or founder lock, or any other link with parameters opens the
+     ARC PULSE launch itself (where those links landed before); plain #/olustur opens the chooser */
+  const acilisTokeni = /^0x[0-9a-fA-F]{40}$/.test(((param && param.get("t")) || "").trim());
+  const dogrudanLaunch = (kayit && kayit.yol === "merkez") || Number(turSecim.value) !== 0 || !!urunKurucu.secim() || !!(param && [...param.keys()].length);
+  sekmeGec(acilisTokeni ? "yonet" : "launch");
+  launchGorunum(dogrudanLaunch ? "sihirbaz" : "secim");
 
   /* ================= trade ================= */
   const token = el("input", { sinif: "girdi", attr: { id: "merkez-token", placeholder: "token address on Arc", value: (param && param.get("t")) || "" } });
@@ -738,7 +1005,7 @@ export async function ciz({ param } = {}) {
         fiyatYazi.textContent = "Price $" + o.fiyat.toPrecision(4) + " per token · market cap " + usd(o.piyasaDegeri) +
           " · real USDC in the pool " + usd(o.gercekDolar) + " · pool liquidity " + usd(o.likidite) +
           " (one pool on Arc, the same from every chain) · collateral tax " + (st.vergi * 100).toFixed(0) + "%" +
-          (TV && TV === V9 ? " · v9 set (PulseHook6)" : "");
+          (TV && TV === V9 ? " · designer contract set" : "");
         return;
       }
       const f = await havuzFiyati(token.value.trim());
@@ -1036,31 +1303,35 @@ export async function ciz({ param } = {}) {
   satDugme.addEventListener("click", tekSefer(satDugme, () => gonder(0)));
   itfaDugme.addEventListener("click", tekSefer(itfaDugme, () => gonder(1)));
 
-  kap.append(panel("Buy, sell, redeem", el("div", { sinif: "yigin" }, [
+  yonetBolum.append(panel("Buy, sell, redeem", el("div", { sinif: "yigin" }, [
     token, fiyatYazi, teminatYazi, el("div", {}, [turRozet]), turAyar,
     el("div", { sinif: "girdi-grup" }, [kayma, el("span", { sinif: "girdi-grup__son", yazi: "% slippage limit" })]),
     el("div", { sinif: "alan__ipucu", yazi: "Buy: pay on your chain in its gas token; the tokens arrive on your chain." }),
     el("div", { sinif: "girdi-grup" }, [alTutar, el("span", { sinif: "girdi-grup__son", yazi: "$" })]), alDugme, alDurum,
     el("div", { sinif: "alan__ipucu", yazi: "Sell or redeem tokens you hold on your chain. A sale that cannot meet its minimum returns the tokens to your address on Arc instead; nothing is left in the gate." }),
     el("div", { sinif: "girdi-grup" }, [satTutar, el("span", { sinif: "girdi-grup__son", yazi: "tokens" })]),
-    el("div", { sinif: "girdi-grup" }, [satDugme, itfaDugme]), satDurum,
-    ...(V2 ? [el("div", { sinif: "alan__ipucu", yazi: "Move tokens you hold on Arc to Solana, Sui or Aptos. The first one to move a token to a chain creates its twin there." }),
+    el("div", { sinif: "girdi-grup" }, [satDugme, itfaDugme]), satDurum])));
+  /* moving to Solana / Sui / Aptos and the upkeep anyone may do for a token: the same controls, in their own panel */
+  if (V2) yonetBolum.append(panel("Move and upkeep", el("div", { sinif: "yigin" }, [
+    el("div", { sinif: "alan__ipucu", yazi: "These act on the token address in \"Buy, sell, redeem\" above." }),
+    ...[el("div", { sinif: "alan__ipucu", yazi: "Move tokens you hold on Arc to Solana, Sui or Aptos. The first one to move a token to a chain creates its twin there." }),
       el("div", { sinif: "girdi-grup" }, [tasZincir, tasTutar, el("span", { sinif: "girdi-grup__son", yazi: "tokens" })]), tasAlici, tasDugme, tasDurum,
       el("div", { sinif: "alan__ipucu", yazi: "On Sui a coin is its own type: once per token, anyone publishes it (4 approvals in a Sui wallet). Until then transfers to Sui wait there, safe, and are delivered by the same step." }),
       suiDugme, suiDurum,
       el("div", { sinif: "alan__ipucu", yazi: "The founder's 0.3% of every trade collects on Arc for this token. Anyone can send it on; it can only go to the founder, on the founder's chain." }),
       kpDugme, kpDurum,
       ...(V2.surum >= 4 ? [el("div", { sinif: "alan__ipucu", yazi: "Every trade's collateral tax goes to the basket in the same transaction. When several lines cross $50 at once it may need more gas than a trade gives it; then it waits, safe, and anyone passes it on here." }),
-        kovaDugme, kovaDurum] : [])] : [])])));
+        kovaDugme, kovaDurum] : [])]])));
   /* limit orders on Arc, right under the trade panel (LimitEmir: docs/js/limit-panel.js, docs/js/limit-emir.js) */
   const limitYer = el("div", { sinif: "yigin" });
-  kap.append(limitYer);
+  yonetBolum.append(limitYer);
   import("../limit-panel.js").then((m) => limitYer.append(m.limitPaneli({ tokenGirdi: token }))).catch(() => limitYer.append(not("The limit order panel could not be loaded. Reload the page to use it.", "uyari")));
   /* the token page's price chart, top holders and recent trades, following the address above (docs/js/token-etkinlik.js) */
   const etkinlikYer = el("div", { sinif: "yigin" });
-  kap.append(etkinlikYer);
+  yonetBolum.append(etkinlikYer);
   import("../token-etkinlik.js").then((m) => etkinlikYer.append(m.etkinlikPaneli(token))).catch(() => {});
   /* Solana / Sui / Aptos wallets (docs/js/uzak-cuzdan.js) */
-  if (V2) import("../uzak-cuzdan.js").then((m) => kap.append(m.uzakCuzdanPaneli({ token, V2, kaymaOrani }))).catch(() => kap.append(not("The Solana / Sui / Aptos wallet panel could not be loaded. Reload the page to use it.", "uyari")));
+  yonetBolum.append(uzakYer);
+  if (V2) import("../uzak-cuzdan.js").then((m) => uzakYer.append(m.uzakCuzdanPaneli({ token, V2, kaymaOrani }))).catch(() => uzakYer.append(not("The Solana / Sui / Aptos wallet panel could not be loaded. Reload the page to use it.", "uyari")));
   return kap;
 }

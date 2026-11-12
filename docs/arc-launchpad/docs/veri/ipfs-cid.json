@@ -1,5 +1,5 @@
 {
- "cid": "bafybeifhdqpv4mlcivqln2ir4bnhcrp3cxmk4e6kjecj7guwgsvaanxejq",
+ "cid": "bafybeifcrymiyazo57zka7zodic5kudrhxayov6rnwiuz2o33a5how6r6a",
  "tarih": "2026-11-12",
  "dosya": 29,
  "aciklama": "IPFS CIDv1 of docs/ without model/ and this file, as `ipfs add -r --cid-version=1 --only-hash` builds it"

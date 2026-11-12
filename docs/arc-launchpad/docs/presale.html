@@ -18,11 +18,12 @@
 <meta name="twitter:image" content="https://arcpulse.app/arc-launchpad/docs/img/og-presale.png">
 <style>
 :root{
-  --bg:#090a0c; --panel:#12141a; --panel2:#171a21; --raise:#1d212a;
+  --bg:#0a0b0f; --panel:#111319; --panel2:#171a21; --raise:#1d212a;
   --line:#242934; --line2:#2f3542;
   --tx:#e9ebf0; --dim:#8d95a4; --dim2:#646c7a;
-  --acc:#4fe3a3; --acc-dim:#1d7a58; --acc-bg:rgba(79,227,163,.10);
-  --vio:#7d8cff; --vio-bg:rgba(125,140,255,.11);
+  --acc:#9be8bd; --acc-dim:#4c8f6c; --acc-bg:rgba(155,232,189,.10);
+  --vio:#7c5cff; --vio-bg:rgba(124,92,255,.12);
+  --marka:#7c5cff; --marka-parlak:#9a80ff; --marka-zemin:rgba(124,92,255,.12); --marka-cizgi:rgba(124,92,255,.42); --link:#b6a6ff;
   --warn:#ffb65c; --bad:#ff6f6f; --pink:#ff7ac6; --sky:#6ec3ff; --lime:#c7e05a;
   --r:16px; --r2:11px;
   --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
@@ -32,7 +33,7 @@ html,body{margin:0;padding:0}
 body{background:var(--bg);color:var(--tx);
   font:400 15px/1.55 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
   -webkit-font-smoothing:antialiased;overflow-x:hidden}
-a{color:var(--acc);text-decoration:none}
+a{color:var(--link);text-decoration:none}
 a:hover{text-decoration:underline}
 .wrap{max-width:1080px;margin:0 auto;padding:0 16px}
 .mono{font-family:var(--mono);font-size:.92em}
@@ -42,19 +43,37 @@ a:hover{text-decoration:underline}
 header.top{border-bottom:1px solid var(--line);background:rgba(9,10,12,.9);
   backdrop-filter:blur(10px);position:sticky;top:0;z-index:40}
 .topin{display:flex;align-items:center;gap:14px;height:62px}
-.brand{display:flex;align-items:center;gap:10px;font:700 16px Inter,sans-serif;color:var(--tx)}
+.brand{display:flex;align-items:center;gap:10px;font:700 16px Inter,-apple-system,"Segoe UI",system-ui,sans-serif;color:var(--tx)}
 .brand:hover{text-decoration:none}
-.mark{width:22px;height:22px;border-radius:7px;background:linear-gradient(135deg,var(--acc),var(--vio))}
+.brand svg{width:28px;height:28px;flex:none}
 .spacer{flex:1}
 nav.top{display:flex;gap:2px}
-nav.top a{color:var(--dim);font:500 14px Inter,sans-serif;padding:8px 11px;border-radius:9px}
+nav.top a{color:var(--dim);font:500 14px Inter,-apple-system,"Segoe UI",system-ui,sans-serif;padding:8px 11px;border-radius:9px}
 nav.top a:hover{color:var(--tx);background:rgba(255,255,255,.04);text-decoration:none}
-@media(max-width:760px){nav.top{display:none}}
+@media(max-width:860px){nav.top{display:none}}
+/* phone menu: details/summary, opens without script */
+.pmenu{display:none}
+@media(max-width:860px){.pmenu{display:block}}
+.pmenu summary{list-style:none;cursor:pointer;width:42px;height:42px;display:grid;place-items:center;border-radius:11px;border:1px solid var(--line2);color:var(--tx)}
+.pmenu summary::-webkit-details-marker{display:none}
+.pburger{display:grid;gap:4px;width:18px}.pburger i{display:block;height:2px;border-radius:2px;background:currentColor}
+.pmenu[open] .pburger i:nth-child(1){transform:translateY(6px) rotate(45deg)}
+.pmenu[open] .pburger i:nth-child(2){opacity:0}
+.pmenu[open] .pburger i:nth-child(3){transform:translateY(-6px) rotate(-45deg)}
+.pmenu:not([open]) .pmenu__panel{display:none}
+.pmenu__panel{position:absolute;left:0;right:0;top:100%;background:#15171e;border-bottom:1px solid var(--line2);box-shadow:0 30px 60px rgba(0,0,0,.6);
+  padding:10px 16px 18px;display:grid;grid-template-columns:1fr 1fr;column-gap:16px;max-height:calc(100dvh - 90px);overflow-y:auto}
+.pmenu__panel p{grid-column:1/-1;margin:12px 0 2px;font:600 12px/1.4 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--dim2)}
+.pmenu__panel a{display:block;color:var(--tx);font-size:15.5px;padding:10px 2px;border-bottom:1px solid var(--line)}
+.pmenu__panel a:hover{text-decoration:none;color:var(--link)}
+@media(max-width:420px){.wbtn{padding:9px 10px;font-size:13px}}
+@media(max-width:340px){.brand span{display:none}}
 .wbtn{background:var(--panel2);border:1px solid var(--line2);color:var(--tx);
-  border-radius:var(--r2);padding:9px 14px;font:600 13.5px Inter,sans-serif;cursor:pointer;white-space:nowrap}
+  border-radius:var(--r2);padding:9px 14px;font:600 13.5px Inter,-apple-system,"Segoe UI",system-ui,sans-serif;cursor:pointer;white-space:nowrap}
 .wbtn:hover{background:var(--raise)}
 .wbtn.conn{border-color:var(--acc-dim)}
 .wdot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--acc);margin-right:7px}
+a:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible{outline:2px solid var(--marka-parlak);outline-offset:3px}
 
 /* ---- hero ---- */
 .hero{position:relative;padding:46px 0 26px;overflow:hidden}
@@ -73,40 +92,46 @@ nav.top a:hover{color:var(--tx);background:rgba(255,255,255,.04);text-decoration
 .paylas{display:inline-flex;align-items:center;gap:8px;margin-top:16px;padding:9px 14px;border-radius:10px;border:1px solid rgba(255,255,255,.18);color:#e8eaed;text-decoration:none;font-weight:700;font-size:14px}
 .paylas:hover{background:rgba(255,255,255,.06)}
 @media (prefers-reduced-motion:reduce){.hero-pulsy,.hero-pulsy::after{animation:none}}
-.kicker{display:inline-flex;align-items:center;gap:8px;font:700 11.5px Inter,sans-serif;letter-spacing:.14em;
-  color:var(--acc);background:var(--acc-bg);border:1px solid rgba(79,227,163,.25);border-radius:99px;padding:6px 12px}
-.kicker i{width:7px;height:7px;border-radius:50%;background:var(--acc);box-shadow:0 0 0 0 rgba(79,227,163,.6);animation:puls 1.8s infinite}
+.kicker{display:inline-flex;align-items:center;gap:8px;font:700 12px Inter,-apple-system,"Segoe UI",system-ui,sans-serif;letter-spacing:.12em;
+  color:var(--acc);background:var(--acc-bg);border:1px solid rgba(155,232,189,.3);border-radius:99px;padding:6px 12px}
+.kicker i{width:7px;height:7px;border-radius:50%;background:var(--acc);box-shadow:0 0 10px rgba(155,232,189,.7)}
 @keyframes puls{0%{box-shadow:0 0 0 0 rgba(79,227,163,.55)}70%{box-shadow:0 0 0 10px rgba(79,227,163,0)}100%{box-shadow:0 0 0 0 rgba(79,227,163,0)}}
-h1{font:800 clamp(34px,6vw,60px)/1.03 Inter,sans-serif;letter-spacing:-.035em;margin:18px 0 14px;max-width:16ch}
+h1{font:700 clamp(34px,5.4vw,56px)/1.06 Inter,-apple-system,"Segoe UI",system-ui,sans-serif;letter-spacing:-.035em;margin:18px 0 14px;max-width:18ch}
 h1 em{font-style:normal;background:linear-gradient(90deg,var(--acc),var(--vio));-webkit-background-clip:text;background-clip:text;color:transparent}
-.lead{color:var(--dim);font-size:17px;max-width:62ch;margin:0 0 26px}
+.lead{color:var(--dim);font-size:17px;max-width:62ch;margin:0 0 22px}
+.hero-cta{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin:0 0 26px}
+.hero-cta .btn{width:auto;padding:13px 22px;text-decoration:none;display:inline-flex;align-items:center;gap:8px}
+.hero-cta .paylas{margin-top:0}
+.hero-cta .btn:hover{text-decoration:none}
 .lead b{color:var(--tx)}
 
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:0 0 26px}
 @media(max-width:760px){.stats{grid-template-columns:repeat(2,1fr)}}
 .stat{background:var(--panel);border:1px solid var(--line);border-radius:var(--r2);padding:14px}
-.stat b{display:block;font:800 22px Inter,sans-serif;letter-spacing:-.02em}
-.stat span{color:var(--dim2);font:600 11px Inter,sans-serif;letter-spacing:.08em;text-transform:uppercase}
+.stat b{display:block;font:700 22px Inter,-apple-system,"Segoe UI",system-ui,sans-serif;letter-spacing:-.02em}
+.stat span{color:var(--dim2);font:600 12px Inter,-apple-system,"Segoe UI",system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase}
 .stat.acc b{color:var(--acc)}
 
 /* ---- layout ---- */
 .grid{display:grid;grid-template-columns:1.15fr .85fr;gap:16px;align-items:start}
 @media(max-width:900px){.grid{grid-template-columns:1fr}}
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:20px}
-.panel.glow{border-color:rgba(79,227,163,.28);box-shadow:0 0 0 1px rgba(79,227,163,.06),0 18px 60px -30px rgba(79,227,163,.35)}
-h2{font:800 22px/1.2 Inter,sans-serif;letter-spacing:-.02em;margin:0 0 12px}
-h3{font:700 15.5px Inter,sans-serif;margin:0 0 8px}
+.panel.glow{border-color:var(--marka-cizgi);box-shadow:0 0 0 1px rgba(124,92,255,.08),0 18px 60px -30px rgba(124,92,255,.45)}
+.ilerleme{margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
+.ilerleme .sec-k{margin:0}
+h2{font:700 22px/1.2 Inter,-apple-system,"Segoe UI",system-ui,sans-serif;letter-spacing:-.02em;margin:0 0 12px}
+h3{font:700 15.5px Inter,-apple-system,"Segoe UI",system-ui,sans-serif;margin:0 0 8px}
 section{margin:44px 0 0}
-.sec-k{font:700 11.5px Inter,sans-serif;letter-spacing:.14em;color:var(--dim2);text-transform:uppercase;margin:0 0 8px}
+.sec-k{font:700 12px Inter,-apple-system,"Segoe UI",system-ui,sans-serif;letter-spacing:.12em;color:var(--dim2);text-transform:uppercase;margin:0 0 8px}
 p{margin:0 0 12px}
 .dim{color:var(--dim)}
 .small{font-size:13px;color:var(--dim)}
 
 /* round */
 .round-top{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
-.round-top .tag{font:700 12px Inter,sans-serif;color:var(--vio);background:var(--vio-bg);border-radius:99px;padding:4px 10px}
-.raised{font:800 clamp(30px,5vw,42px) Inter,sans-serif;letter-spacing:-.03em;margin:10px 0 2px}
-.raised small{font:600 16px Inter,sans-serif;color:var(--dim)}
+.round-top .tag{font:700 12px Inter,-apple-system,"Segoe UI",system-ui,sans-serif;color:var(--link);background:var(--vio-bg);border-radius:99px;padding:4px 10px}
+.raised{font:700 clamp(24px,3.6vw,30px) Inter,-apple-system,"Segoe UI",system-ui,sans-serif;letter-spacing:-.02em;margin:8px 0 2px}
+.raised small{font:600 16px Inter,-apple-system,"Segoe UI",system-ui,sans-serif;color:var(--dim)}
 .bar{height:14px;background:var(--raise);border-radius:99px;overflow:hidden;margin:12px 0 8px;position:relative}
 .bar i{display:block;height:100%;width:0;border-radius:99px;
   background:linear-gradient(90deg,var(--acc-dim),var(--acc) 60%,#9ff5cf);transition:width .8s cubic-bezier(.2,.8,.2,1)}
@@ -114,8 +139,8 @@ p{margin:0 0 12px}
 .barlab{display:flex;justify-content:space-between;font-size:12.5px;color:var(--dim)}
 .clock{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:16px 0 4px}
 .clock div{background:var(--panel2);border:1px solid var(--line);border-radius:var(--r2);padding:10px 6px;text-align:center}
-.clock b{display:block;font:800 26px var(--mono);letter-spacing:-.02em}
-.clock span{font:600 10.5px Inter,sans-serif;color:var(--dim2);letter-spacing:.1em;text-transform:uppercase}
+.clock b{display:block;font:700 20px var(--mono);letter-spacing:-.02em}
+.clock span{font:600 12px Inter,-apple-system,"Segoe UI",system-ui,sans-serif;color:var(--dim2);letter-spacing:.06em;text-transform:uppercase}
 
 .rows{display:flex;flex-direction:column;gap:7px;font-size:13.5px;margin-top:14px}
 .row{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding-bottom:7px;border-bottom:1px solid var(--line)}
@@ -124,29 +149,30 @@ p{margin:0 0 12px}
 .row b{font-variant-numeric:tabular-nums;text-align:right}
 
 .field{margin:14px 0 12px}
-label{display:block;font:600 12.5px Inter,sans-serif;color:var(--dim);margin:0 0 6px}
+label{display:block;font:600 12.5px Inter,-apple-system,"Segoe UI",system-ui,sans-serif;color:var(--dim);margin:0 0 6px}
 .inrow{display:flex;gap:8px}
 input{width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--tx);
   border-radius:var(--r2);padding:12px 13px;font:600 17px var(--mono)}
-input:focus{outline:none;border-color:var(--acc-dim);background:var(--raise)}
+input:focus{outline:none;border-color:var(--marka);background:var(--raise)}
 .chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
-.chip{background:var(--panel2);border:1px solid var(--line2);color:var(--tx);border-radius:99px;padding:6px 12px;font:600 12.5px Inter,sans-serif;cursor:pointer}
+.chip{background:var(--panel2);border:1px solid var(--line2);color:var(--tx);border-radius:99px;padding:6px 12px;font:600 12.5px Inter,-apple-system,"Segoe UI",system-ui,sans-serif;cursor:pointer}
 .chip:hover{background:var(--raise)}
 .hint{color:var(--dim2);font-size:12.5px;margin-top:7px;line-height:1.5}
-.get{display:flex;justify-content:space-between;align-items:center;background:var(--acc-bg);border:1px solid rgba(79,227,163,.22);
+.get{display:flex;justify-content:space-between;align-items:center;background:var(--marka-zemin);border:1px solid var(--marka-cizgi);
   border-radius:var(--r2);padding:12px 14px;margin:4px 0 12px}
 .get span{color:var(--dim);font-size:13px}
-.get b{font:800 19px Inter,sans-serif;color:var(--acc)}
-.btn{width:100%;background:var(--acc);color:#04120c;border:0;border-radius:var(--r2);
-  padding:13px;font:800 15px Inter,sans-serif;cursor:pointer}
+.get b{font:700 19px Inter,-apple-system,"Segoe UI",system-ui,sans-serif;color:var(--tx)}
+.btn{width:100%;background:var(--marka);color:#fff;border:0;border-radius:var(--r2);
+  padding:13px;font:700 15px Inter,-apple-system,"Segoe UI",system-ui,sans-serif;cursor:pointer;min-height:44px}
+.btn:hover:not(:disabled){background:var(--marka-parlak)}
 .btn:hover:not(:disabled){filter:brightness(1.08)}
 .btn:disabled{opacity:.38;cursor:not-allowed}
 .btn.alt{background:var(--panel2);color:var(--tx);border:1px solid var(--line2)}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:9px}
 
 .msg{border-radius:var(--r2);padding:11px 13px;font-size:13.5px;margin-top:12px;line-height:1.5}
-.msg.info{background:var(--vio-bg);border:1px solid rgba(125,140,255,.25)}
-.msg.ok{background:var(--acc-bg);border:1px solid rgba(79,227,163,.28)}
+.msg.info{background:var(--vio-bg);border:1px solid rgba(124,92,255,.3)}
+.msg.ok{background:var(--acc-bg);border:1px solid rgba(155,232,189,.3)}
 .msg.err{background:rgba(255,111,111,.08);border:1px solid rgba(255,111,111,.26);color:#ffb3b3}
 .msg.uyari{background:rgba(255,182,92,.08);border:1px solid rgba(255,182,92,.28);color:#ffd9a8}
 
@@ -156,7 +182,7 @@ input:focus{outline:none;border-color:var(--acc-dim);background:var(--raise)}
 @media(max-width:520px){.steps{grid-template-columns:1fr}}
 .step{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px;position:relative}
 .step::before{counter-increment:s;content:counter(s);display:inline-grid;place-items:center;width:28px;height:28px;border-radius:9px;
-  background:var(--acc-bg);color:var(--acc);font:800 14px Inter,sans-serif;margin-bottom:10px}
+  background:var(--marka-zemin);color:var(--link);font:700 14px Inter,-apple-system,"Segoe UI",system-ui,sans-serif;margin-bottom:10px}
 .step p{color:var(--dim);font-size:13.5px;margin:0}
 
 /* supply */
@@ -166,24 +192,25 @@ input:focus{outline:none;border-color:var(--acc-dim);background:var(--raise)}
 @media(max-width:760px){.legend{grid-template-columns:1fr 1fr}}
 @media(max-width:460px){.legend{grid-template-columns:1fr}}
 .lg{background:var(--panel);border:1px solid var(--line);border-radius:var(--r2);padding:12px 14px}
-.lg .h{display:flex;align-items:center;gap:8px;font:700 13.5px Inter,sans-serif}
+.lg .h{display:flex;align-items:center;gap:8px;font:700 13.5px Inter,-apple-system,"Segoe UI",system-ui,sans-serif}
 .lg .h i{width:10px;height:10px;border-radius:3px}
 .lg .h b{margin-left:auto;font-variant-numeric:tabular-nums}
 .lg p{color:var(--dim);font-size:12.5px;margin:6px 0 0}
 
 /* ladder svg */
 .lad svg{width:100%;height:auto;display:block}
-.lad text{font:600 11px Inter,sans-serif;fill:var(--dim)}
+.lad text{font:600 12px Inter,-apple-system,"Segoe UI",system-ui,sans-serif;fill:var(--dim)}
 
 /* rewards */
 .code{display:flex;align-items:center;gap:10px;background:var(--panel2);border:1px dashed var(--acc-dim);border-radius:var(--r2);padding:12px 14px;margin:8px 0 12px}
-.code b{font:800 20px var(--mono);color:var(--acc);letter-spacing:.04em;flex:1}
+.code b{font:700 20px var(--mono);color:var(--acc);letter-spacing:.04em;flex:1}
 .claims{display:flex;flex-direction:column;gap:8px;margin-top:10px}
 .cl{display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--panel2);border:1px solid var(--line);border-radius:var(--r2);padding:10px 12px;font-size:13.5px}
 .cl button{width:auto;padding:8px 14px;font-size:13px}
 
 details{background:var(--panel);border:1px solid var(--line);border-radius:var(--r2);padding:13px 16px;margin-bottom:8px}
-summary{cursor:pointer;font:700 14.5px Inter,sans-serif}
+details.pmenu{background:none;border:0;border-radius:0;padding:0;margin:0}
+summary{cursor:pointer;font:700 14.5px Inter,-apple-system,"Segoe UI",system-ui,sans-serif}
 details p{color:var(--dim);font-size:14px;margin:10px 0 0}
 
 .ort{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:60;padding:16px}
@@ -191,12 +218,14 @@ details p{color:var(--dim);font-size:14px;margin:10px 0 0}
 .kutubas{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
 .kapat{background:none;border:0;color:var(--dim);font-size:24px;cursor:pointer;line-height:1}
 .cz{display:flex;align-items:center;gap:11px;width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:var(--r2);
-  padding:11px 13px;margin-bottom:8px;color:var(--tx);font:600 14px Inter,sans-serif;cursor:pointer;text-align:left}
+  padding:11px 13px;margin-bottom:8px;color:var(--tx);font:600 14px Inter,-apple-system,"Segoe UI",system-ui,sans-serif;cursor:pointer;text-align:left}
 .cz:hover{background:var(--raise)}
 .cz img{width:24px;height:24px;border-radius:6px}
 
 footer{border-top:1px solid var(--line);margin-top:56px;padding:26px 0 40px;color:var(--dim2);font-size:12.5px}
-.adr{display:flex;flex-direction:column;gap:5px;margin-top:10px;font-family:var(--mono);font-size:11.5px;word-break:break-all}
+.adr{display:flex;flex-direction:column;gap:5px;margin-top:10px;font-family:var(--mono);font-size:12px;word-break:break-all}
+.ayak{display:flex;flex-wrap:wrap;gap:8px 18px;margin:0 0 14px}
+.ayak a{color:var(--dim);font-size:13.5px}
 .adr a{color:var(--dim)}
 </style>
 </head>
@@ -204,9 +233,9 @@ footer{border-top:1px solid var(--line);margin-top:56px;padding:26px 0 40px;colo
 
 <header class="top">
   <div class="wrap topin">
-    <a class="brand" href="index.html"><div class="mark"></div>ARC PULSE</a>
+    <a class="brand" href="index.html"><svg viewBox="0 0 40 40" aria-hidden="true"><defs><linearGradient id="gP" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#9be8bd"/><stop offset=".6" stop-color="#7c5cff"/><stop offset="1" stop-color="#7c5cff"/></linearGradient></defs><path d="M20 4 34 34h-6.2L20 16.5 12.2 34H6Z" fill="url(#gP)"/><path d="M4 26h8l3-5 4 9 4-12 3 8h10" fill="none" stroke="#eef3ff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>ARC PULSE</span></a>
     <div class="spacer"></div>
-    <nav class="top">
+    <nav class="top" aria-label="Presale">
       <a href="#al">Presale</a>
       <a href="#nasil">How it works</a>
       <a href="#arz">Supply</a>
@@ -215,6 +244,13 @@ footer{border-top:1px solid var(--line);margin-top:56px;padding:26px 0 40px;colo
       <a href="app.html">App</a>
     </nav>
     <button id="wallet" class="wbtn">Connect wallet</button>
+    <details class="pmenu">
+      <summary aria-label="Menu"><span class="pburger" aria-hidden="true"><i></i><i></i><i></i></span></summary>
+      <nav class="pmenu__panel" aria-label="Menu">
+        <p>This page</p><a href="#al">Join the presale</a><a href="#nasil">How it works</a><a href="#arz">Supply</a><a href="#odul">Rewards</a><a href="#sss">FAQ</a><a href="#adresler">Contracts</a>
+        <p>ARC PULSE</p><a href="index.html">Home</a><a href="app.html">Open app</a><a href="app.html#/olustur">Launch a token</a><a href="app.html#/terminal">Launches &amp; trade</a><a href="app.html#/vitrin">Market</a><a href="app.html#/warp">Warp</a><a href="app.html#/fthm">ARCP token</a><a href="app.html#/dao">Staking &amp; governance</a>
+      </nav>
+    </details>
   </div>
 </header>
 
@@ -222,20 +258,23 @@ footer{border-top:1px solid var(--line);margin-top:56px;padding:26px 0 40px;colo
   <div class="hero">
     <div class="hero-pulsy" aria-hidden="true"><img src="img/pulsy.svg" width="360" height="360" alt=""></div>
     <span class="kicker"><i></i><span id="kickerMetin">ARCP PRESALE · ON ARC</span></span>
-    <h1>Own the token that <em>every trade burns.</em></h1>
+    <h1>The ARCP presale: <em>$10 to $250 per wallet.</em></h1>
     <p class="lead">
-      ARCP is the ARC PULSE platform token: a share of every trade on every token, on all thirteen chains,
-      buys ARCP and burns it. The presale sells <b>250,000,000 ARCP (25% of the supply) for $15,000</b>,
-      below the opening price, and <b>every presale dollar goes into the Uniswap pool</b> as locked
-      buy-side liquidity. Not one dollar goes to a wallet.
+      ARCP is the ARC PULSE platform token: a share of every trade on ARC PULSE's pool tokens is set aside to buy ARCP and burn it.
+      This round sells <b>250,000,000 ARCP (25% of the supply) for $15,000</b>, below the opening price, and
+      <b>every presale dollar goes into the Uniswap pool</b> as locked buy-side liquidity. Not one dollar goes to a wallet.
+      If the round does not fill in 30 days, every buyer is refunded automatically.
     </p>
+    <div class="hero-cta">
+      <a class="btn" href="#al">Join the presale <span aria-hidden="true">&darr;</span></a>
+    <a class="paylas" href="https://x.com/intent/post?text=The%20%24ARCP%20presale%20is%20live%20on%20%40arc%3A%20250%2C000%2C000%20ARCP%20for%20%2415%2C000%2C%20every%20dollar%20into%20the%20pool%2C%20refunded%20if%20the%20round%20does%20not%20fill.%0A%0Ahttps%3A%2F%2Farcpulse.app%2Farc-launchpad%2Fdocs%2Fpresale.html" target="_blank" rel="noopener noreferrer"><svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4l16 16M20 4 4 20" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>Share the presale on X</a>
+    </div>
     <div class="stats">
-      <div class="stat acc"><b>$0.00006</b><span>Presale price</span></div>
+      <div class="stat acc"><b>$10 – $250</b><span>Per wallet</span></div>
+      <div class="stat"><b>$0.00006</b><span>Presale price</span></div>
       <div class="stat"><b>$0.00007</b><span>Opening price</span></div>
       <div class="stat"><b>$15,000</b><span>Into the pool</span></div>
-      <div class="stat"><b>$10 – $250</b><span>Per wallet</span></div>
     </div>
-    <a class="paylas" href="https://x.com/intent/post?text=The%20%24ARCP%20presale%20is%20live%20on%20%40arc%3A%20250%2C000%2C000%20ARCP%20for%20%2415%2C000%2C%20every%20dollar%20into%20the%20pool%2C%20refunded%20if%20the%20round%20does%20not%20fill.%0A%0Ahttps%3A%2F%2Farcpulse.app%2Farc-launchpad%2Fdocs%2Fpresale.html" target="_blank" rel="noopener noreferrer"><svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4l16 16M20 4 4 20" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>Share the presale on X</a>
   </div>
 
   <div id="durumMesaj"></div>
@@ -246,21 +285,11 @@ footer{border-top:1px solid var(--line);margin-top:56px;padding:26px 0 40px;colo
         <h2 id="turBaslik">Round 1</h2>
         <span class="tag" id="turEtiket">30-day round</span>
       </div>
-      <div class="raised num"><span id="toplanan">$0</span> <small>of $15,000</small></div>
-      <div class="bar"><i id="cubuk"></i></div>
-      <div class="barlab"><span id="yuzde">0%</span><span id="kisi">0 buyers</span></div>
-      <div class="clock" id="saat">
-        <div><b id="sG">--</b><span>days</span></div>
-        <div><b id="sS">--</b><span>hours</span></div>
-        <div><b id="sD">--</b><span>min</span></div>
-        <div><b id="sSn">--</b><span>sec</span></div>
-      </div>
-      <p class="small" id="saatNot" style="margin-top:8px">If the round does not reach $15,000 before the clock runs out, every buyer gets their USDC back automatically and the next round starts at once.</p>
-
+      <p class="small" style="margin:6px 0 0">250,000,000 ARCP for $15,000 at $0.00006 · $10 to $250 per wallet · refunded if the round does not fill.</p>
       <div id="alPanel">
         <div class="field">
           <label for="miktar">USDC to put in (Arc)</label>
-          <input id="miktar" placeholder="100" inputmode="decimal" spellcheck="false" autocomplete="off">
+          <input id="miktar" placeholder="Amount in USDC, e.g. 100" inputmode="decimal" spellcheck="false" autocomplete="off">
           <div class="chips">
             <button class="chip" data-v="10">$10</button><button class="chip" data-v="50">$50</button>
             <button class="chip" data-v="100">$100</button><button class="chip" data-v="250">$250</button>
@@ -278,10 +307,24 @@ footer{border-top:1px solid var(--line);margin-top:56px;padding:26px 0 40px;colo
         <button class="btn" id="kurBtn" disabled>Open the pool now</button>
       </div>
       <div id="islemMesaj"></div>
+      <div class="ilerleme">
+      <p class="sec-k">Round progress</p>
+      <div class="raised num"><span id="toplanan">$0</span> <small>of $15,000</small></div>
+      <div class="bar"><i id="cubuk"></i></div>
+      <div class="barlab"><span id="yuzde">0%</span><span id="kisi">0 buyers</span></div>
+      <div class="clock" id="saat">
+        <div><b id="sG">--</b><span>days</span></div>
+        <div><b id="sS">--</b><span>hours</span></div>
+        <div><b id="sD">--</b><span>min</span></div>
+        <div><b id="sSn">--</b><span>sec</span></div>
+      </div>
+      <p class="small" id="saatNot" style="margin-top:8px">If the round does not reach $15,000 before the clock runs out, every buyer gets their USDC back automatically and the next round starts at once.</p>
+      </div>
     </div>
 
     <div class="panel">
       <h2>Your presale</h2>
+      <p class="small">Connect a wallet on Arc to see what you put in, the ARCP you will receive, any refund and what you can claim.</p>
       <div class="rows" id="benim"><div class="row"><span>wallet</span><b>not connected</b></div></div>
       <div id="teslimPanel" class="hid" style="margin-top:14px">
         <button class="btn" id="teslimBtn" disabled>Claim unlocked ARCP</button>
@@ -332,9 +375,9 @@ footer{border-top:1px solid var(--line);margin-top:56px;padding:26px 0 40px;colo
           <div class="row"><span>ARCP ladder, 140k → 700k</span><b>100,000,000</b></div>
           <div class="row"><span>ARCP ladder, 700k → ∞</span><b>50,000,000</b></div>
           <div class="row"><span>pool liquidity removable</span><b>never</b></div>
-          <div class="row"><span>trading fee</span><b>0.50%</b></div>
+          <div class="row"><span>ARCP pool trading fee</span><b>0.50%</b></div>
         </div>
-        <p class="hint" style="margin-top:12px">The sell fee splits 0.15% founder, 0.15% stakers (USDC), 0.20% pool depth; on a buy the whole fee becomes depth. Measured on an Arc fork: if every presale buyer sold everything at once, the price would still stand near $51k FDV.</p>
+        <p class="hint" style="margin-top:12px">This is the fee of ARCP's own pool, not of the launchpad's tokens. The sell fee splits 0.15% founder, 0.15% stakers (USDC), 0.20% pool depth; on a buy the whole fee becomes depth. Measured on an Arc fork: if every presale buyer sold everything at once, the price would still stand near $51k FDV.</p>
       </div>
     </div>
   </section>
@@ -400,6 +443,7 @@ footer{border-top:1px solid var(--line);margin-top:56px;padding:26px 0 40px;colo
 
 <footer>
   <div class="wrap">
+    <nav class="ayak" aria-label="Footer"><a href="index.html">Home</a><a href="app.html">Open app</a><a href="app.html#/olustur">Launch a token</a><a href="app.html#/terminal">Launches</a><a href="app.html#/vitrin">Market</a><a href="app.html#/warp">Warp</a><a href="app.html#/fthm">ARCP token</a><a href="app.html#/dao">Staking &amp; governance</a><a href="app.html#/guvenlik">Security</a><a href="app.html#/dokuman">Docs</a><a href="https://x.com/ArcPulseApp" target="_blank" rel="noopener">@ArcPulseApp</a></nav>
     Arc mainnet, chain 5042. No contract here is upgradeable; none has a withdraw, pause or mint function.
     <div class="adr" id="adresler"></div>
   </div>

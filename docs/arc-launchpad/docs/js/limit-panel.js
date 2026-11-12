@@ -60,7 +60,7 @@ async function gonder(to, data) {
 
 const hataMetni = (x) => {
   const d = x && (x.data || (x.info && x.info.error && x.info.error.data));
-  try { const e = d && IL.parseError(d); if (e) return "LimitEmir: " + e.name; } catch (_) { /* fall through */ }
+  try { const e = d && IL.parseError(d); if (e) return "Limit order contract: " + e.name; } catch (_) { /* fall through */ }
   return (x && (x.shortMessage || x.message)) || String(x);
 };
 
@@ -69,7 +69,7 @@ export function limitPaneli({ tokenGirdi }) {
   const govde = el("div", { sinif: "yigin" });
   const tokenAl = () => String(tokenGirdi.value || "").trim();
   if (!adresMi(LM.LIMIT.adres)) {
-    govde.append(not("Limit orders open once LimitEmir is deployed on Arc.", "bilgi"));
+    govde.append(not("Limit orders open once the limit order contract is deployed on Arc.", "bilgi"));
     return panel("Limit orders", govde);
   }
 
@@ -168,7 +168,7 @@ export function limitPaneli({ tokenGirdi }) {
           await gonder(varlik, IE.encodeFunctionData("approve", [LM.LIMIT.adres, girdi]));
           adim = 2;
         }
-        yaz("Place the order (" + adim + "/" + toplam + "): the deposit is held by LimitEmir until it fills or you cancel…");
+        yaz("Place the order (" + adim + "/" + toplam + "): the deposit is held by the limit order contract until it fills or you cancel…");
         const m = await gonder(LM.LIMIT.adres, IL.encodeFunctionData("emirVer", [t, alim, girdi, asgari, bah, bitis]));
         const lg = m.logs.map((l) => { try { return IL.parseLog(l); } catch (_) { return null; } }).find((e) => e && e.name === "EmirVerildi");
         yaz("Order #" + (lg ? lg.args.id : "?") + " placed. Anyone running the keeper fills it once the pool reaches your price; cancel any time under My limit orders.");
@@ -245,7 +245,7 @@ export function limitPaneli({ tokenGirdi }) {
     if (k === "liste") liste._yenile(); else (k === "al" ? alForm : satForm)._ac();
   };
   govde.append(
-    not("Set a price and walk away: the deposit waits in the LimitEmir contract on Arc and fills only at your price or better. Anyone can fill it (a public keeper earns your tip), nobody can fill it worse, and you can cancel any time for the whole deposit back. Orders are placed from a wallet on Arc.", "bilgi"),
+    not("Set a price and walk away: the deposit waits in the limit order contract on Arc and fills only at your price or better. Anyone can fill it (a public keeper earns your tip), nobody can fill it worse, and you can cancel any time for the whole deposit back. Orders are placed from a wallet on Arc.", "bilgi"),
     sekmeler([{ anahtar: "al", ad: "Limit buy" }, { anahtar: "sat", ad: "Limit sell" }, { anahtar: "liste", ad: "My limit orders" }], "al", sekmeAc),
     icerik,
     ipucu,

@@ -13,6 +13,8 @@
  * =========================================================================== */
 import { el, panel, temizle } from "../ui.js";
 import { squadOf, squadResim, SQUAD } from "../squad.js";
+import { sponsorYeri } from "../sponsor.js";
+import { demoMu } from "../launch-kaynak.js";
 
 /* DexScreener's and GeckoTerminal's chain ids where they differ from ours */
 const DS = { bsc: "bsc", elysium: "elysium", solana: "solana", base: "base", monad: "monad", robinhood: "robinhood", arc: "arc" };
@@ -162,6 +164,10 @@ export function tokenDetay(x) {
   else kap.append(panel("About", el("p", { sinif: "vt-alt", yazi: x.zk === "arc"
     ? "Launched on ARC PULSE's own launchpad: one pool on Arc with the same price on every chain, liquidity locked from the first block, and a collateral basket behind it that holders can redeem against. Memecoins are risky: buy only what you can afford to lose."
     : "Launched on ARC PULSE's Move launchpad on " + x.zincir + ", traded against its own vault there." })));
+  /* a protocol demo token says so where people read about it */
+  if (demoMu(x)) kap.append(el("p", { sinif: "vt-alt" }, [el("span", { sinif: "rozet-demo", yazi: "Demo" }), " A protocol demo token: launched by ARC PULSE to prove the contracts work on mainnet. It is not a project and nobody promotes it."]));
+  /* a booked cross-promo: below About, away from the buy box; never on a Pulse Squad page (no mascot next to a sponsor) */
+  if (!m) kap.append(sponsorYeri("token", "row", (k) => el("section", { sinif: "sponsor-bolum", attr: { "aria-label": "Sponsored" } }, [k])));
   return kap;
 }
 

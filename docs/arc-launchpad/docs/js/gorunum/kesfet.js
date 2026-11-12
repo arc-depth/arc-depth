@@ -26,6 +26,7 @@ import { para } from "../bicim.js";
 import { JsonRpcProvider, Contract } from "../../vendor/ethers.min.js";
 import { teminatDurumu, islemZincirleri, cikisZinciri, sepetV2, sepetV9, SEPET } from "../teminat-izle.js";
 import { turRozeti } from "../urun.js";
+import { sponsorYeri } from "../sponsor.js";
 
 const LP5 = "0x52e600c8259ca44D9837B7b9E6BA1faee4bC040d";   // PulseLaunchpad5, the one pool's registry (dagitim-sepet.json)
 const LP5_ABI = [
@@ -151,18 +152,41 @@ export async function ciz({ param }) {
       el("span", { html: ikon("arti", "yol-oge__ikon") }), el("span", { yazi: "Create a token" })]),
   ]));
 
-  /* what this is, in three steps, before any number */
-  kap.append(adimlar([
-    { ikon: "arti", baslik: "Launch from any chain", yazi: "Name it, pick up to five tokens from any chain as its collateral, pay from the wallet you already use." },
-    { ikon: "zincir", baslik: "One pool, one price", yazi: "Every token trades in one pool on Arc. Buyers on thirteen chains see the same price." },
-    { ikon: "kasa", baslik: "Backed, not just hyped", yazi: "A slice of every trade fills the token's collateral basket. Holders can redeem their share without selling." },
-  ]));
+  /* 12 Nov 2026 redesign: Discover leads with what is happening now (the Squad spotlight and the newest
+     launches); the how-it-works steps fold below, and the counters and older lists sit further down */
   /* the newest live Pulse Squad mascot (Halo first), with its live price */
   if (!arama) {
     const spot = el("div");
     kap.append(spot);
     import("./warp-token.js").then((m) => { const k = m.squadSpot(); if (k) spot.replaceWith(k); else spot.remove(); }).catch(() => spot.remove());
   }
+  /* the live board: the newest launches from ARC PULSE (Warp and our own launchpad), protocol demo tokens
+     after real ones; with a search (?q=) it shows the launches that match */
+  /* ?zincir=<key> (the landing's "Which chain are you?" tiles): the board shows that chain's launches */
+  const zk0 = String((param && param.get("zincir")) || "").toLowerCase();
+  const zk = zk0 === "bnb" ? "bsc" : zk0;
+  const ZAD = { arc: "Arc", base: "Base", solana: "Solana", bsc: "BNB Chain", robinhood: "Robinhood", arbitrum: "Arbitrum", ethereum: "Ethereum",
+    avalanche: "Avalanche", monad: "Monad", hyperevm: "HyperEVM", sui: "Sui", aptos: "Aptos", elysium: "Elysium" };
+  const zAd = ZAD[zk] || null;
+  {
+    const ic = el("div", { sinif: "tr-izgara" }, [el("div", { sinif: "ucuncul", yazi: "Loading the newest launches…" })]);
+    kap.append(el("div", { sinif: "yigin yigin--sik" }, [el("div", { sinif: "bolum-baslik" }, [
+      el("h2", {}, [arama ? "Launches matching “" + arama + "”" : zAd ? "Just launched on " + zAd : "Just launched", el("span", { sinif: "tk__canli", attr: { style: "margin-left:10px;font-size:12px" }, yazi: "live" })]),
+      el("a", { sinif: "dugme dugme--sade dugme--kucuk", attr: { href: "#/terminal" + (zAd ? "?zincir=" + zk : "") }, yazi: zAd ? zAd + " in Trade →" : "Every launch in Trade →" })]), ic]));
+    Promise.all([import("./terminal.js"), import("../launch-kaynak.js")]).then(async ([t, lk]) => {
+      t.launchStil();
+      const K = await lk.launchKaynagi();
+      const satirlar = lk.demoSonda(K.satirlar.filter((x) => (!arama || [x.ad, x.sembol, x.token, x.lp, x.zincir].join(" ").toLowerCase().includes(arama)) && (!zAd || x.zk === zk)).slice(0, 12)).slice(0, 8);
+      if (!satirlar.length) { ic.replaceWith(bos(arama ? "No launch matches" : zAd ? "No launches on " + zAd + " yet" : "No launches yet",
+        arama ? "Nothing launched from ARC PULSE matches “" + arama + "”. Market has every other token." : zAd ? "Be the first: launch on " + zAd + " from ARC PULSE, or see every chain in Trade." : "The first token launched from ARC PULSE appears here.",
+        el("a", { sinif: "dugme dugme--marka", attr: { href: arama ? "#/vitrin" : zAd ? "#/olustur" : "#/olustur" }, yazi: arama ? "Open Market" : "Create a token" }))); return; }
+      const kartlar = satirlar.map((s) => t.launchKarti(s));
+      ic.replaceChildren(...kartlar);
+      const v = await t.launchPiyasa(satirlar).catch(() => ({}));
+      kartlar.forEach((k, i) => k._doldur(v[String(satirlar[i].token).toLowerCase()]));
+    }).catch(() => ic.replaceChildren(el("div", { sinif: "ucuncul", yazi: "The launch list could not be read right now; Trade has every launch." })));
+  }
+
   /* the hottest tokens on our chains right now, bought from any chain (Market); never blocks the page */
   if (!arama) {
     const yer = el("div");
@@ -171,11 +195,24 @@ export async function ciz({ param }) {
     import("./vitrin.js").then((m) => m.trendSeridi(8)).then((x) => { if (x) yer.replaceWith(x); else yer.remove(); }).catch(() => yer.remove());
   }
 
+  /* a booked sponsor: its own labelled row after the organic lists, never inside them */
+  if (!arama) kap.append(sponsorYeri("discover", "row", (k) => el("section", { sinif: "sponsor-bolum", attr: { "aria-label": "Sponsored" } }, [k])));
+
   /* ---- tokens launched through Warp on the other launchpads it connects (and the Pulse Squad's own): ARC PULSE launches too ---- */
   if (!arama) {
     const wlYer = el("div");
     kap.append(wlYer);
     import("../warp-liste.js").then(async (m) => wlYer.replaceWith(m.warpPaneli(await m.warpLaunchlari(), { baslik: "ARC PULSE launches through Warp · pump.fun, Raydium, Meteora, Montra, Flap, Pons", enFazla: 12 }))).catch(() => wlYer.remove());
+  }
+
+  /* what this is, in three steps: folded, for whoever wants it */
+  if (!arama) {
+    const nasil = ayrinti("How ARC PULSE works, in three steps", adimlar([
+      { ikon: "arti", baslik: "Launch from any chain", yazi: "Name it, pick up to five tokens from any chain as its collateral, pay from the wallet you already use." },
+      { ikon: "zincir", baslik: "One pool, one price", yazi: "Every token trades in one pool on Arc. Buyers on thirteen chains see the same price." },
+      { ikon: "kasa", baslik: "Backed, not just hyped", yazi: "A slice of every trade fills the token's collateral basket. Holders can redeem their share without selling." },
+    ]));
+    kap.append(nasil);
   }
 
   const sayfa = Number((param && param.get("s")) || 1) || 1;

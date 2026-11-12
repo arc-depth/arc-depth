@@ -18,6 +18,7 @@
  * =========================================================================== */
 import { el, temizle, sayfaUst, panel, adimlar, ayrinti, not } from "../ui.js";
 import { lpVeri, topla, elysiumLaunchpadlari } from "../radar.js";
+import { ACIK } from "../warp-durum.js";
 
 /* our thirteen chains, by DefiLlama's chain key */
 const ZINCIRLER = [
@@ -33,7 +34,9 @@ const ZAD = Object.fromEntries(ZINCIRLER.map((z) => [z.k, z]));
 
 /* Warp connections: "live" once tested with a real launch; "next" while being built */
 /* the Montra connection opens on the page once a real launch through it has worked (Halo, Pulse Squad #1) */
-const ACIK = { montra: true, pump: false, raydium: false, meteora: false, flap: false, pons: false, clanker: false };
+/* ACIK (which connection is live) now lives in ../warp-durum.js, shared with the Create chooser */
+/* DefiLlama's name for each connected launchpad -> its key in the form */
+const WARP_ANAHTAR = { "Montra": "montra", "Flap sh": "flap", "Pons V2": "pons", "pump.fun": "pump", "Meteora Dynamic Bonding Curve": "meteora", "LaunchLab": "raydium" };
 const WARP = { "Montra": ACIK.montra ? "live" : "next", "Flap sh": ACIK.flap ? "live" : "next", "Pons V2": ACIK.pons ? "live" : "next", "pump.fun": ACIK.pump ? "live" : "next", "Meteora Dynamic Bonding Curve": ACIK.meteora ? "live" : "next", "LaunchLab": ACIK.raydium ? "live" : "next" };
 /* where a launchpad lives when we know it for sure; otherwise its DefiLlama page, which links to it */
 const ADRES = { "pump.fun": "https://pump.fun", "Montra": "https://montramarkets.xyz", "Ascend Launchpad": "https://app.ascendlaunch.xyz", "Ascend": "https://app.ascendlaunch.xyz", "Volta": "https://www.volta.family" };
@@ -75,13 +78,26 @@ const STIL = `
 .wp-zc{display:flex;gap:4px;flex-wrap:wrap}.wp-zc span{font-size:11px;border:1px solid var(--cizgi,#2a2f3a);border-radius:999px;padding:2px 7px}
 .wp-git{justify-self:end;font-size:12px;font-weight:700;border-radius:999px;padding:6px 11px;text-decoration:none;color:inherit;border:1px solid var(--cizgi,#2a2f3a);white-space:nowrap}
 .wp-git.warp{background:linear-gradient(90deg,#7c5cff,#14b8a6);border:0;color:#fff}
-.wp-yakinda{margin-left:8px;font-size:10px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;padding:2px 7px;border-radius:999px;background:linear-gradient(90deg,#7c5cff,#14b8a6);color:#fff;vertical-align:2px}
+.wp-yakinda{margin-left:8px;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;border:1px solid var(--cizgi-guclu,#2a3039);color:var(--yazi-2,#a4abb6);vertical-align:1px}
+.wp-yakinda.canli{color:var(--mint,#9be8bd);border-color:rgba(155,232,189,.4)}
 @media (max-width:820px){.wp-sat{grid-template-columns:24px 26px minmax(0,1fr) 84px 96px}.wp-sat .gz{display:none}}
+@media (max-width:520px){.wp-radar{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.wp-z{padding:10px}.wp-z .lp{font-size:15px}.wp-sat{grid-template-columns:26px minmax(0,1fr) 64px auto;gap:8px;padding:9px 6px}.wp-sat > :first-child{display:none}.wp-git{padding:6px 9px}.wp-git .uzun{display:none}.wp-sat .ad .wp-yakinda{display:none}}
+.wp-git{cursor:pointer;font-family:inherit;background:transparent}
+.wp-durum{display:inline-block;margin-top:8px;font-size:12px;font-weight:700;border-radius:999px;padding:3px 10px;border:1px solid var(--cizgi-guclu,#2a3039);color:var(--yazi-2,#a4abb6)}
+.wp-durum.canli{color:var(--mint,#9be8bd);border-color:rgba(155,232,189,.4);background:rgba(155,232,189,.08)}
+.wp-z .git{display:inline-block;margin-top:8px;font-size:13px;font-weight:700;color:var(--marka-parlak,#9a80ff);text-decoration:none;background:none;border:0;padding:0;cursor:pointer;font-family:inherit}
+.wp-z .git:hover{text-decoration:underline}
+.wp-form .wp-gizli,.wp-gizli{position:absolute;padding:0;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.wp-dosya{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-weight:500}
+.wp-dosya .dugme{cursor:pointer;opacity:1}
+.wp-gizli:focus-visible + .dugme{outline:2px solid var(--marka-parlak,#9a80ff);outline-offset:2px}
+.wp-dosya .ad{font-size:13px;opacity:.75;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
 .wp-ucret{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
 .wp-u{border-radius:14px;padding:16px;background:var(--yuzey-1,#12141b);border:1px solid var(--cizgi,#2a2f3a)}
 .wp-u b{display:block;font-size:30px;font-weight:900;line-height:1;margin-bottom:6px}.wp-u span{font-size:13px;opacity:.8}
 .wp-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
-.wp-form label{display:grid;gap:5px;font-size:12px;font-weight:700;opacity:.8}
+.wp-form label{display:grid;gap:5px;font-size:12px;font-weight:700;opacity:.8;min-width:0}
+.wp-form select,.wp-form input:not(.wp-gizli),.wp-form textarea{min-width:0;width:100%;box-sizing:border-box;font-size:14px}
 .wp-form input,.wp-form select,.wp-form textarea{border:1px solid var(--cizgi,#2a2f3a);background:var(--yuzey-0,#0d0f14);color:inherit;border-radius:10px;padding:10px}
 .wp-squad{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
 .wp-m{border-radius:16px;padding:12px;text-align:center;background:var(--yuzey-1,#12141b);border:1px solid var(--cizgi,#2a2f3a)}
@@ -102,12 +118,15 @@ const LAUNCHPADLER = {
 };
 const ZINCIR_AD = { solana: ["Solana", "SOL"], elysium: ["Elysium", "HYPE"], base: ["Base", "ETH"], bsc: ["BNB Chain", "BNB"], monad: ["Monad", "MON"], robinhood: ["Robinhood", "ETH"], arc: ["Arc", "USDC"] };
 
-function warpFormu() {
+function warpFormu(ilkLp) {
   const gir = (ph, ek = {}) => el("input", { attr: { placeholder: ph, ...ek } });
-  const lp = el("select", {}, Object.entries(LAUNCHPADLER).map(([k, v]) => el("option", { attr: { value: k }, yazi: v.ad + " · " + v.zincirler.map((z) => ZINCIR_AD[z][0]).join(", ") })));
+  const lp = el("select", {}, Object.entries(LAUNCHPADLER).map(([k, v]) => el("option", { attr: { value: k }, yazi: v.ad + " · " + v.zincirler.map((z) => ZINCIR_AD[z][0]).join(", ") + (v.acik() ? " · Live" : " · Coming soon") })));
+  if (ilkLp && LAUNCHPADLER[ilkLp]) lp.value = ilkLp;
   const zincir = el("select");
   const ad = gir("e.g. Halo", { maxlength: "32" }), sembol = gir("HALO", { maxlength: "12" }), aciklama = el("textarea", { attr: { placeholder: "What it is, in a sentence or two", maxlength: "280", rows: "2" } });
-  const dosya = el("input", { attr: { type: "file", accept: "image/png,image/jpeg,image/webp,image/gif" } });
+  const dosya = el("input", { sinif: "wp-gizli", attr: { id: "wp-dosya", type: "file", accept: "image/png,image/jpeg,image/webp,image/gif" } });
+  const dosyaAd = el("span", { sinif: "ad", yazi: "No file chosen" });
+  dosya.addEventListener("change", () => { dosyaAd.textContent = dosya.files[0] ? dosya.files[0].name : "No file chosen"; });
   const gorsel = gir("…or paste an https:// or ipfs:// address");
   const onizle = el("img", { attr: { alt: "", style: "width:56px;height:56px;border-radius:12px;object-fit:cover;display:none;margin-top:6px" } });
   dosya.addEventListener("change", () => { const f = dosya.files[0]; if (f) { gorsel.value = ""; onizle.style.display = "block"; onizle.src = URL.createObjectURL(f); } });
@@ -127,14 +146,34 @@ function warpFormu() {
     const L = secim(), [zad, birim] = ZINCIR_AD[zincir.value] || ["", ""], h = Number(ilk.value || 0);
     ilkEt.textContent = "First buy (" + birim + ")";
     kalkanEt.style.display = L.kalkan ? "" : "none";
-    dugme.disabled = !L.acik(); dugme.textContent = L.acik() ? "Warp to " + L.ad + " ⚡" : L.ad + " " + L.bekliyor;
-    temizle(notKutusu).append(not(L.acik() ? "Live: " + L.ad + " on " + zad + ". Signed in your own wallet; ARC PULSE never holds your token or your coins." : L.ad + " is connected and " + L.bekliyor + ": a connection opens only after a real launch through it has worked.", L.acik() ? "" : "uyari"));
+    dugme.disabled = !L.acik(); dugme.textContent = L.acik() ? "Launch on " + L.ad + " ⚡" : L.ad + ": coming soon";
+    temizle(notKutusu).append(not(L.acik() ? "Live: " + L.ad + " on " + zad + ". Signed in your own wallet; ARC PULSE never holds your token or your coins." : "Coming soon: " + L.ad + " " + L.bekliyor + ". A connection opens only after a real launch through it has worked.", L.acik() ? "" : "uyari"));
     ozet.textContent = L.ad + " on " + zad + " · " + ucret.value + "% fee per trade" + (lp.value === "montra" ? ": you keep 90% of the creator side, ARC PULSE 10%." : lp.value === "raydium" ? ": Raydium's fee plus 0.5% to you and 0.5% to ARC PULSE on every trade (the fee box above is not used); when it graduates, most of the pool's liquidity is burned for good. Signed in your Solana wallet." : lp.value === "meteora" ? ": 1% fee per trade (the fee box above is not used); after Meteora's share, half to you and half to ARC PULSE; at ~400 SOL market cap it moves to a locked Meteora pool. Signed in your Solana wallet." : lp.value === "pump" ? ": pump.fun's own fees; your first buy is made in the launch itself. Signed in your Solana wallet (Phantom or any Solana wallet)." : lp.value === "pons" ? " creator tax to you (Pons caps it); your opening buy is made in the launch itself, so no one buys before you. Pons adds its own launch fee." : lp.value === "flap" ? " buy and sell tax to you; Flap pays ARC PULSE a commission its protocol sets on every taxed trade." : ": ARC PULSE takes Clanker's integrator share, 10% of the tax after Clanker's own; the rest is yours. Clanker adds its own 20-second anti-snipe.") +
       (h > 0 ? " Warp fee " + (h * 0.005).toFixed(6) + " " + birim + " (0.5% of your first buy)." : " No first buy, no Warp fee.");
   };
   const zincirleriDoldur = () => { temizle(zincir).append(...secim().zincirler.map((z) => el("option", { attr: { value: z }, yazi: ZINCIR_AD[z][0] }))); yaz(); };
   lp.addEventListener("change", zincirleriDoldur); [ilk, ucret].forEach((e) => e.addEventListener("input", yaz)); zincir.addEventListener("change", yaz);
   zincirleriDoldur();
+  /* after the launchpad's own code returned the launched token: the success card (launch-basari.js); the
+     old one-line link stays as the fallback when the token's address was not returned */
+  const bitti = async (sonuc, L, ortak) => {
+    const eski = () => temizle(durum).append("Launched ⚡ ", el("a", { attr: { href: sonuc.link, target: "_blank", rel: "noopener noreferrer" }, yazi: "Open your token on " + L.ad + " ↗" }));
+    if (!sonuc || !sonuc.token) return eski();
+    const m = await import("../launch-basari.js").catch(() => null);
+    if (!m) return eski();
+    const zad = (ZINCIR_AD[zincir.value] || [""])[0];
+    temizle(durum).append(m.basariKarti({
+      ad: ortak.ad, sembol: ortak.sembol, token: sonuc.token, nerede: L.ad + " on " + zad + ", launched with ARC PULSE Warp",
+      sayfa: "#/terminal?t=" + sonuc.token, dis: sonuc.link ? { ad: L.ad, link: sonuc.link } : null,
+      paylasYazi: "I just launched $" + ortak.sembol + " (" + ortak.ad + ") on " + L.ad + " (" + zad + ") with ARC PULSE Warp.",
+      adimlar: [
+        { yazi: "Share the launch on X (button above)" },
+        ...(sonuc.link ? [{ yazi: "Open your token on " + L.ad, href: sonuc.link, dis: true }] : []),
+        { yazi: "Open its token page on ARC PULSE", href: "#/terminal?t=" + sonuc.token },
+        { yazi: "Post the link in your community (Telegram, Discord)" },
+        { yazi: "See it listed in All launches", href: "#/launches" },
+      ] }));
+  };
   dugme.addEventListener("click", async () => {
     dugme.disabled = true;
     const L = secim();
@@ -155,7 +194,7 @@ function warpFormu() {
         if (!/^image\/(png|jpeg|webp|gif)$/.test(gorselDosya.type) || gorselDosya.size > 2e6) throw new Error("The image must be PNG, JPG, WebP or GIF, under 2 MB.");
         const mf = await import("../warp-flap.js");
         sonuc = await mf.launch({ ...ortak, gorsel: gorselDosya, zincir: zincir.value, ucret: Number(ucret.value) }, adim);
-        temizle(durum).append("Launched ⚡ ", el("a", { attr: { href: sonuc.link, target: "_blank", rel: "noopener noreferrer" }, yazi: "Open your token on " + L.ad + " ↗" }));
+        await bitti(sonuc, L, ortak);
         return;
       }
       if (lp.value === "pump" || lp.value === "meteora" || lp.value === "raydium") {
@@ -163,7 +202,7 @@ function warpFormu() {
         const g = { ...ortak };
         if (dosya.files[0] && !gorsel.value.trim()) g.gorsel = dosya.files[0]; else g.logo = mm.gorselAdresi(gorsel.value);
         sonuc = await mpf.launch(g, adim);
-        temizle(durum).append("Launched ⚡ ", el("a", { attr: { href: sonuc.link, target: "_blank", rel: "noopener noreferrer" }, yazi: "Open your token on " + L.ad + " ↗" }));
+        await bitti(sonuc, L, ortak);
         return;
       }
       let logo;
@@ -185,15 +224,25 @@ function warpFormu() {
         const mc = await import("../warp-clanker.js");
         sonuc = await mc.launch({ ...ortak, zincir: zincir.value, ucret: Number(ucret.value) }, adim);
       }
-      temizle(durum).append("Launched ⚡ ", el("a", { attr: { href: sonuc.link, target: "_blank", rel: "noopener noreferrer" }, yazi: "Open your token on " + L.ad + " ↗" }));
+      await bitti(sonuc, L, ortak);
     } catch (e) { durum.textContent = e.shortMessage || e.message; }
     finally { dugme.disabled = !L.acik(); }
   });
+  /* "Launch on <name>" from the radar and the table: pick that launchpad here and bring the form into view */
+  warpFormu.sec = (k) => {
+    if (!LAUNCHPADLER[k]) return;
+    lp.value = k; zincirleriDoldur();
+    const p = lp.closest(".panel") || lp;
+    p.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+    setTimeout(() => ad.focus({ preventScroll: true }), 400);
+  };
   return [
     notKutusu,
     el("div", { sinif: "wp-form wp-form--acik" }, [
       el("label", {}, ["Launchpad", lp]), el("label", {}, ["Chain", zincir]),
-      el("label", {}, ["Token name", ad]), el("label", {}, ["Ticker", sembol]), el("label", {}, ["Image", dosya, gorsel, onizle]),
+      el("label", {}, ["Token name", ad]), el("label", {}, ["Ticker", sembol]),
+      el("div", { attr: { style: "display:grid;gap:5px;font-size:12px;font-weight:700;opacity:.8;min-width:0" } }, ["Image",
+        el("div", { sinif: "wp-dosya" }, [dosya, el("label", { sinif: "dugme dugme--sessiz dugme--kucuk", attr: { for: "wp-dosya" }, yazi: "Choose image" }), dosyaAd]), gorsel, onizle]),
       el("label", {}, ["Fee per trade", ucret]), kalkanEt, el("label", {}, [ilkEt, ilk]),
       el("label", { attr: { style: "grid-column:1/-1" } }, ["Description", aciklama]), el("label", {}, ["Website", site]), el("label", {}, ["X", x]),
     ]),
@@ -211,6 +260,31 @@ export async function ciz({ param } = {}) {
     el("h2", {}, ["Warp your launch to ", el("span", { yazi: "wherever the volume is." })]),
     el("p", { yazi: "Warp watches every memecoin launchpad on thirteen chains and shows you, live, where the traders are today. Pick one, or take the hottest, and launch there from here with your own wallet." })]));
 
+  /* ---- the launch form first (12 Nov 2026 redesign): it is the page's main action ---- */
+  const formPaneli = panel("Warp a launch", warpFormu(param && param.get("lp")));
+  formPaneli.id = "warp-form";
+  kap.append(formPaneli);
+
+  /* ---- fees ---- */
+  kap.append(panel("What a Warp launch costs", [
+    el("div", { sinif: "wp-ucret" }, [
+      el("div", { sinif: "wp-u" }, [el("b", { yazi: "0.3%" }), el("span", { yazi: "of the opening buy, to ARC PULSE — it keeps Warp running." })]),
+      el("div", { sinif: "wp-u" }, [el("b", { yazi: "0.2%" }), el("span", { yazi: "of the opening buy, to ARCP: kept in USDC until the ARCP pool opens, then it buys ARCP and burns it." })]),
+      el("div", { sinif: "wp-u" }, [el("b", { yazi: "The rest" }), el("span", { yazi: "is yours. Where a launchpad lets creator fees be shared, ARC PULSE's share is printed on screen before you sign." })]),
+    ]),
+    not("The launchpad's own fees are its own and unchanged. Nothing is taken that is not shown before you sign."),
+  ]));
+
+  /* ---- the Pulse Squad (moved up from the bottom of the page) ---- */
+  kap.append(panel("The Pulse Squad · our own launches, one friend on every chain", [
+    el("p", { sinif: "vt-alt", attr: { style: "opacity:.8" }, yazi: "ARC PULSE launches a mascot memecoin on each chain, five days apart at the earliest, each one paid for by the fees of the ones before. They are not ARCP and promise nothing: their trading fees fund the platform, and every address, fee and payout is published here as it happens." }),
+    el("div", { sinif: "wp-squad" }, SQUAD.map(([k, ad, z, lp, t], i) => el("div", { sinif: "wp-m" + (i === 0 ? " ilk" : "") }, [
+      el("img", { attr: { src: "img/squad/" + k + ".svg", alt: ad + ", the Pulse Squad's " + z + " mascot", loading: i < 6 ? "eager" : "lazy" } }),
+      el("div", { sinif: "ad", yazi: ad }), el("div", { sinif: "z", attr: { style: "color:" + ((ZINCIRLER.find((x) => x.ad === z) || {}).renk || "#fff") }, yazi: z + " · " + lp }),
+      i === 0 ? el("a", { sinif: "t", attr: { href: "#/terminal?t=" + HALO, style: "font-weight:800" }, yazi: "Live · chart & buy →" }) : el("div", { sinif: "t", yazi: "Not before " + t }),
+    ]))),
+  ]));
+
   /* ---- the launchpads Warp launches on ---- */
   const BAGLI = [
     ["pump", "pump.fun", "Solana", "#14f195", "pump.fun's fees; 0.5% of your first buy to Warp"],
@@ -220,10 +294,13 @@ export async function ciz({ param } = {}) {
     ["flap", "Flap", "BNB · Robinhood · Monad", "#f0b90b", "your buy and sell tax; Flap pays ARC PULSE a commission"],
     ["pons", "Pons", "Robinhood", "#c3f53c", "your creator tax; the opening buy is made in the launch itself"],
   ];
-  kap.append(panel("Connected to Warp · " + BAGLI.length + " launchpads", [
-    el("div", { sinif: "wp-radar" }, BAGLI.map(([k, ad, z, r, ne]) => el("div", { sinif: "wp-z", attr: { style: "--zr:" + r } }, [
+  const canliSay = BAGLI.filter(([k]) => ACIK[k]).length;
+  kap.append(panel("Warp launchpads · " + canliSay + " live, " + (BAGLI.length - canliSay) + " coming soon", [
+    el("div", { sinif: "wp-radar" }, [...BAGLI].sort((a, b) => Number(!!ACIK[b[0]]) - Number(!!ACIK[a[0]])).map(([k, ad, z, r, ne]) => el("div", { sinif: "wp-z", attr: { style: "--zr:" + r } }, [
       el("div", { sinif: "ad", yazi: z }), el("div", { sinif: "lp", yazi: ad }), el("div", { sinif: "v", yazi: ne }),
-      el("div", { sinif: "v", attr: { style: "margin-top:6px;font-weight:700;opacity:1" }, yazi: ACIK[k] ? "⚡ Live" : "Ready · " + LAUNCHPADLER[k].bekliyor }),
+      el("span", { sinif: "wp-durum" + (ACIK[k] ? " canli" : ""), yazi: ACIK[k] ? "Live" : "Coming soon" }),
+      ACIK[k] ? el("div", {}, [el("button", { sinif: "git", attr: { type: "button" }, yazi: "Launch on " + ad + " →", on: { click: () => warpFormu.sec(k) } })])
+        : el("div", { sinif: "v", attr: { style: "margin-top:6px" }, yazi: "Opens " + LAUNCHPADLER[k].bekliyor.replace(/^opens /, "") }),
     ]))),
     el("p", { sinif: "vt-alt", attr: { style: "margin-top:10px" }, yazi: "Bags and letsbonk.fun run on Meteora and Raydium LaunchLab; ARC PULSE has its own platform on both, so a Warp launch there sits on the same engines." }),
   ]));
@@ -240,35 +317,12 @@ export async function ciz({ param } = {}) {
   kap.append(panel("Radar · the hottest launchpad on each chain, last 24 h", radar));
   kap.append(panel("Every launchpad on our thirteen chains", [cipler, tablo]));
 
-  /* ---- fees ---- */
-  kap.append(panel("What a Warp launch costs", [
-    el("div", { sinif: "wp-ucret" }, [
-      el("div", { sinif: "wp-u" }, [el("b", { yazi: "0.3%" }), el("span", { yazi: "of the opening buy, to ARC PULSE — it keeps Warp running." })]),
-      el("div", { sinif: "wp-u" }, [el("b", { yazi: "0.2%" }), el("span", { yazi: "of the opening buy, to ARCP: kept in USDC until the ARCP pool opens, then it buys ARCP and burns it." })]),
-      el("div", { sinif: "wp-u" }, [el("b", { yazi: "The rest" }), el("span", { yazi: "is yours. Where a launchpad lets creator fees be shared, ARC PULSE's share is printed on screen before you sign." })]),
-    ]),
-    not("The launchpad's own fees are its own and unchanged. Nothing is taken that is not shown before you sign."),
-  ]));
-
-  /* ---- the launch form, honest about its state ---- */
-  kap.append(panel("Warp a launch", warpFormu()));
-
   kap.append(panel("How Warp works", adimlar([
     { ikon: "grafik", baslik: "See where the volume is", yazi: "The radar ranks every launchpad on thirteen chains by what traded there in the last 24 hours." },
     { ikon: "pusula", baslik: "Pick a launchpad", yazi: "Take the hottest on your chain, or any other. Name, ticker, image and your opening buy are set once." },
     { ikon: "cuzdan", baslik: "Sign in your own wallet", yazi: "The launch goes straight to that launchpad's contracts. ARC PULSE never holds your token or your money." },
     { ikon: "hediye", baslik: "Every launch feeds ARCP", yazi: "0.2% of every opening buy goes to ARCP and, once its pool is open, buys ARCP and burns it." },
   ])));
-
-  /* ---- the Pulse Squad ---- */
-  kap.append(panel("The Pulse Squad · our own launches, one friend on every chain", [
-    el("p", { sinif: "vt-alt", attr: { style: "opacity:.8" }, yazi: "ARC PULSE launches a mascot memecoin on each chain, five days apart at the earliest, each one paid for by the fees of the ones before. They are not ARCP and promise nothing: their trading fees fund the platform, and every address, fee and payout is published here as it happens." }),
-    el("div", { sinif: "wp-squad" }, SQUAD.map(([k, ad, z, lp, t], i) => el("div", { sinif: "wp-m" + (i === 0 ? " ilk" : "") }, [
-      el("img", { attr: { src: "img/squad/" + k + ".svg", alt: ad + ", the Pulse Squad's " + z + " mascot", loading: "lazy" } }),
-      el("div", { sinif: "ad", yazi: ad }), el("div", { sinif: "z", attr: { style: "color:" + ((ZINCIRLER.find((x) => x.ad === z) || {}).renk || "#fff") }, yazi: z + " · " + lp }),
-      i === 0 ? el("a", { sinif: "t", attr: { href: "#/terminal?t=" + HALO, style: "font-weight:800" }, yazi: "Live · chart & buy →" }) : el("div", { sinif: "t", yazi: "Not before " + t }),
-    ]))),
-  ]));
 
   kap.append(ayrinti("Where do these volumes come from?", "DefiLlama's Launchpad category, broken down by chain, for every launchpad it tracks on Arc, Base, Solana, BNB Chain, Ethereum, Arbitrum, Avalanche, Monad, HyperEVM, Robinhood Chain, Sui, Aptos and Elysium. Elysium launchpads DefiLlama does not list yet are measured by ARC PULSE from Elysium's own chain records (pools with real activity only). The page reads them again every ten minutes."));
 
@@ -283,24 +337,27 @@ export async function ciz({ param } = {}) {
     const gor = satirlar.map((p) => ({ ...p, v: secili ? p.z24[secili] || 0 : p.v24 })).filter((p) => p.v > 0).sort((a, b) => b.v - a.v).slice(0, 80);
     temizle(tablo).append(el("div", { sinif: "wp-sat bas" }, [el("span", { yazi: "#" }), el("span"), el("span", { yazi: "Launchpad" }), el("span", { sinif: "gz", yazi: "Chains" }), el("span", { sinif: "r", yazi: "24h" }), el("span", { sinif: "r gz", yazi: "30d" }), el("span")]),
       ...(gor.length ? gor.map((p, i) => {
-        const w = WARP[p.ad], url = adresi(p);
+        const w = WARP[p.ad], url = adresi(p), k = WARP_ANAHTAR[p.ad];
         return el("div", { sinif: "wp-sat" }, [
           el("span", { sinif: "vt-k", yazi: String(i + 1) }),
           p.logo ? el("img", { attr: { src: p.logo, alt: "", loading: "lazy", referrerpolicy: "no-referrer" } }) : el("span"),
-          el("span", { sinif: "ad" }, [p.ad, w === "next" ? el("span", { sinif: "wp-yakinda", yazi: "Warp soon" }) : null]),
+          el("span", { sinif: "ad" }, [p.ad, w ? el("span", { sinif: "wp-yakinda" + (w === "live" ? " canli" : ""), yazi: w === "live" ? "Live" : "Coming soon" }) : null]),
           el("div", { sinif: "wp-zc gz" }, Object.keys(p.z24).filter((k) => p.z24[k] > 0).map((k) => el("span", { yazi: ZAD[k].ad }))),
           el("b", { sinif: "r", yazi: para(p.v) }),
           el("span", { sinif: "r gz", yazi: p.v30 == null ? "—" : para(secili ? p.z30[secili] || 0 : p.v30) }),
-          w === "live" ? el("a", { sinif: "wp-git warp", attr: { href: "#/warp" }, yazi: "Warp ⚡" })
-            : url ? el("a", { sinif: "wp-git" + (w === "next" ? " sirada" : ""), attr: { href: url, target: "_blank", rel: "noopener noreferrer" }, yazi: "Open ↗" }) : el("span"),
+          w === "live" && k ? el("button", { sinif: "wp-git warp", attr: { type: "button", "aria-label": "Launch on " + p.ad }, on: { click: () => warpFormu.sec(k) } }, ["Launch", el("span", { sinif: "uzun", yazi: " on " + p.ad })])
+            : url ? el("a", { sinif: "wp-git" + (w === "next" ? " sirada" : ""), attr: { href: url, target: "_blank", rel: "noopener noreferrer", "aria-label": "View " + p.ad + " (opens a new tab)" } }, ["View", el("span", { sinif: "uzun", yazi: " launchpad" }), " ↗"]) : el("span"),
         ]);
       }) : [el("div", { sinif: "vt-alt", attr: { style: "padding:12px" }, yazi: "No launchpad volume on this chain in the last 24 h." })]));
   };
   const radarCiz = () => {
     temizle(radar).append(...ZINCIRLER.map((z) => {
       const en = satirlar.filter((p) => (p.z24[z.k] || 0) > 0).sort((a, b) => b.z24[z.k] - a.z24[z.k])[0];
+      const k = en && WARP_ANAHTAR[en.ad], url = en && adresi(en);
       return el("div", { sinif: "wp-z" + (en ? "" : " bos"), attr: { style: "--zr:" + z.renk } }, [
-        el("div", { sinif: "ad", yazi: z.ad }), el("div", { sinif: "lp", yazi: en ? en.ad : "No launchpad volume" }), el("div", { sinif: "v", yazi: en ? para(en.z24[z.k]) + " in 24 h" : "nothing traded in 24 h" })]);
+        el("div", { sinif: "ad", yazi: z.ad }), el("div", { sinif: "lp", yazi: en ? en.ad : "No launchpad volume" }), el("div", { sinif: "v", yazi: en ? para(en.z24[z.k]) + " in 24 h" : "nothing traded in 24 h" }),
+        k && ACIK[k] ? el("button", { sinif: "git", attr: { type: "button" }, yazi: "Launch on " + en.ad + " →", on: { click: () => warpFormu.sec(k) } })
+          : url ? el("a", { sinif: "git", attr: { href: url, target: "_blank", rel: "noopener noreferrer" }, yazi: "View launchpad ↗" }) : null]);
     }));
   };
   const yukle = async () => {

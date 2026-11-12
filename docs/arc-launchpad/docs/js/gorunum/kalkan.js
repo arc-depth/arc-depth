@@ -67,7 +67,7 @@ export async function ciz() {
   tablo.append(el("thead", {}, [el("tr", {}, [
     el("th", { yazi: "Tier" }),
     el("th", { yazi: "Cumulative size" }),
-    el("th", { yazi: "Rate paid" })
+    el("th", { yazi: "Total sell rate (normal fee + shield)" })
   ])]));
   const govde = el("tbody");
   for (const o of OLCUM) {
@@ -75,7 +75,7 @@ export async function ciz() {
       el("td", { attr: { "data-et": "Tier" }, yazi: String(o.dilim) }),
       el("td", { sinif: "sayi", attr: { "data-et": "Cumulative size" },
         yazi: o.birikmis.toFixed(3) + "%" }),
-      el("td", { sinif: "sayi", attr: { "data-et": "Rate paid" },
+      el("td", { sinif: "sayi", attr: { "data-et": "Total sell rate" },
         yazi: o.oran.toFixed(3) + "%" })
     ]));
   }
@@ -170,8 +170,7 @@ export async function ciz() {
             "after which it is zero")
         ]));
         govde.append(not(
-          "These four numbers are not copies kept on the page — they were " +
-          "read just now from the hook contract at " + PULSE.hook + ".", "bilgi"));
+          "These four numbers were read just now from the first-generation hook contract (" + PULSE.hook + "), not copied onto the page.", "bilgi"));
       }
 
       /* The per-pool window needs a pool. */
@@ -182,10 +181,8 @@ export async function ciz() {
           "read is unknown too.", "uyari"));
       } else if (Number(sayi) === 0) {
         govde.append(not(
-          "There are no launches yet, so there is no pool window to read. " +
-          "The window is kept per pool id (one window for each pool); printing an " +
-          "empty table without a pool would be showing a state that does " +
-          "not exist.", "bilgi"));
+          "No token was launched on this first-generation hook, so it has no pool window to show. " +
+          "The live launchpads charge the shield in their own pool hooks, and each token's window is on its own page.", "bilgi"));
       } else {
         govde.append(not(
           Number(sayi) + " launches. The window is kept separately for each " +
@@ -193,7 +190,7 @@ export async function ciz() {
       }
     }
 
-    kap.append(panel("Live window", govde));
+    kap.append(panel("Live settings (first-generation hook)", govde));
   }
 
   return kap;

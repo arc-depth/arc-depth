@@ -25,14 +25,29 @@
  *   holder data; nothing that does not work offered as an active button.
  * =========================================================================== */
 
+/* 12 Nov 2026 redesign: the rail is grouped by what a visitor came to do, not by contract.
+   Every route has exactly one home here; a route with `ebeveyn` sits indented under that route
+   (Create's two launch forms, Platform DAO's proposals). scripts/ray-kapsami.js checks that every
+   route is reachable from the rail and from More. `ev` is the page a group's Back button opens
+   when there is no history (a deep link). */
 export const GRUPLAR = [
-  { anahtar: "piyasa", ad: "Market" },
+  { anahtar: "kesif", ad: "Explore", ev: "kesfet" },
+  { anahtar: "baslat", ad: "Launch", ev: "olustur" },
   /* 1 Nov 2026: nine products on one launch engine, told apart by TurKaydi */
-  { anahtar: "urunler", ad: "Products" },
-  { anahtar: "varlik", ad: "My assets" },
-  { anahtar: "yonetisim", ad: "Governance" },
-  { anahtar: "guven", ad: "Trust" }
+  { anahtar: "urunler", ad: "Launch for…", ev: "olustur" },
+  { anahtar: "sen", ad: "You", ev: "portfoy" },
+  { anahtar: "arcp", ad: "ARCP & DAO", ev: "fthm" },
+  { anahtar: "insa", ad: "Build", ev: "gelistirici" },
+  { anahtar: "guven", ad: "Trust & data", ev: "guvenlik" }
 ];
+
+/* the order of the rail inside each group (routes not listed keep registry order, after these) */
+export const RAY_SIRASI = ["kesfet", "terminal", "vitrin", "launches", "warp", "squad", "liderlik", "advertise",
+  "olustur", "merkez", "olustur-move", "move-token",
+  "portfoy", "kar-zarar", "davet",
+  "fthm", "presale", "dao", "teklifler", "topluluk-dao", "topluluk",
+  "genesis", "pazar", "gelistirici",
+  "kasalar", "analitik", "kalkan", "zincirler", "guvenlik", "dokuman"];
 
 export const YOLLAR = [
   /* ---- market ----------------------------------------------------- */
@@ -40,7 +55,7 @@ export const YOLLAR = [
     yol: "kesfet",
     ad: "Discover",
     kisa: "Discover",
-    grup: "piyasa",
+    grup: "kesif",
     ikon: "pusula",
     durum: "canli",
     ozet: "Every launch with its collateral now against what it started with, where it launched and where it trades.",
@@ -54,8 +69,8 @@ export const YOLLAR = [
     yol: "olustur",
     ad: "Create token",
     kisa: "Create",
-    grup: "piyasa",
-    ikon: "arti",
+    grup: "baslat",
+    ikon: "roket",
     /* LIVE, AND THIS WAS MEASURED TOO
          This said "dagitim" — deployment pending — while PulseLaunchpad
          was live, the form had a working submit and the page audit
@@ -78,8 +93,8 @@ export const YOLLAR = [
     yol: "genesis",
     ad: "PULSE GENESIS",
     kisa: "GENESIS",
-    grup: "piyasa",
-    ikon: "sohbet",
+    grup: "insa",
+    ikon: "kivilcim",
     /* The page reads every chain for the contract and says plainly when it
        is not there; what it shows is what is on chain. */
     durum: "canli",
@@ -88,23 +103,21 @@ export const YOLLAR = [
     sekme: true
   },
   {
-    yol: "olustur-move",
-    ad: "Create token (Sui / Aptos wallet)",
-    kisa: "Create (Move)",
-    grup: "piyasa",
-    ikon: "arti",
+    yol: "olustur-move", ebeveyn: "olustur",
+    ad: "Launch from a Sui / Aptos wallet",
+    kisa: "Sui / Aptos wallet",
+    grup: "baslat",
+    ikon: "katman",
     durum: "canli",
     ozet: "Launch paid from a Sui or Aptos wallet, the token living on that chain.",
-    kaynak: "pulse_launchpad (Sui) + pulse_launchpad (Aptos)",
-    gizliRay: true
+    kaynak: "pulse_launchpad (Sui) + pulse_launchpad (Aptos)"
   },
   {
-    yol: "merkez",
-    gizliRay: true,   /* off the rail: same page as Create token */
-    ad: "Launch on any chain",
-    kisa: "Any chain",
-    grup: "piyasa",
-    ikon: "pusula",
+    yol: "merkez", ebeveyn: "olustur",
+    ad: "Launch on any EVM chain",
+    kisa: "Any EVM chain",
+    grup: "baslat",
+    ikon: "kure",
     durum: "canli",
     ozet: "Launch, buy, sell and redeem from any chain with its own gas token; one pool and one price on Arc.",
     kaynak: "relay.link + MerkezKapi (Arc) + IkizYayici twins + basket vaults",
@@ -112,10 +125,10 @@ export const YOLLAR = [
   },
   {
     yol: "fthm",
-    ad: "ARCP from any chain",
+    ad: "ARCP token",
     kisa: "ARCP",
-    grup: "piyasa",
-    ikon: "pusula",
+    grup: "arcp",
+    ikon: "jeton",
     durum: "canli",
     ozet: "ARCP 2, the platform token: its presale live on Arc, its supply contract by contract; after the pool opens, bought from any of thirteen chains.",
     kaynak: "relay.link + ARCP pool (Uniswap v4, Arc) + SwapRouter",
@@ -126,8 +139,8 @@ export const YOLLAR = [
     yol: "presale",
     ad: "ARCP presale",
     kisa: "Presale",
-    grup: "piyasa",
-    ikon: "kupa",
+    grup: "arcp",
+    ikon: "saat",
     durum: "canli",
     site: "presale.html",
     ozet: "250,000,000 ARCP for $15,000 in 30-day rounds, $10 to $250 per wallet; an unfilled round is refunded.",
@@ -138,8 +151,8 @@ export const YOLLAR = [
     yol: "vitrin",
     ad: "Market",
     kisa: "Market",
-    grup: "piyasa",
-    ikon: "grafik",
+    grup: "kesif",
+    ikon: "dukkan",
     durum: "canli",
     ozet: "Trending and new tokens on eleven chains, Elysium included; buy them with the dollars you hold on any chain.",
     kaynak: "GeckoTerminal public API + relay.link"
@@ -149,8 +162,8 @@ export const YOLLAR = [
     yol: "warp",
     ad: "Warp",
     kisa: "Warp",
-    grup: "piyasa",
-    ikon: "grafik",
+    grup: "kesif",
+    ikon: "simsek",
     durum: "canli",
     ozet: "Every memecoin launchpad on thirteen chains, ranked by live volume; launch on the one you pick from your own wallet.",
     kaynak: "DefiLlama (Launchpad category) + Elysium chain records"
@@ -160,8 +173,8 @@ export const YOLLAR = [
     yol: "launches",
     ad: "All launches",
     kisa: "Launches",
-    grup: "piyasa",
-    ikon: "pusula",
+    grup: "kesif",
+    ikon: "liste",
     durum: "canli",
     ozet: "Every token launched from ARC PULSE: through Warp onto another launchpad, or on our own launchpad; where each lives and where it was paid from.",
     kaynak: "Warp marks on chain (warp-launches.json) + the Arc, Sui and Aptos launch registries"
@@ -170,45 +183,66 @@ export const YOLLAR = [
     yol: "move-token",
     ad: "Aptos & Sui launches",
     kisa: "Aptos & Sui",
-    grup: "piyasa",
-    ikon: "pusula",
+    grup: "baslat",
+    ikon: "damla",
     durum: "canli",
     ozet: "Every token launched on the Aptos and Sui launchpads; buy, sell and redeem against its vault.",
     kaynak: "Move launchpads (Aptos v2, Sui) + their pools and vaults",
     sekme: true
   },
   {
+    /* 12 Nov 2026: the Pulse Squad, ARC PULSE's twelve mascots, one per chain (view: gorunum/squad.js) */
+    yol: "squad",
+    ad: "Pulse Squad",
+    kisa: "Squad",
+    grup: "kesif",
+    ikon: "yildiz",
+    durum: "canli",
+    ozet: "Twelve mascots, one per chain: who stands for which chain, which are live and when the next one comes.",
+    kaynak: "docs/js/squad.js"
+  },
+  {
+    /* 12 Nov 2026: the sponsor menu: what can be bought, what it looks like, the rules and how to book */
+    yol: "advertise",
+    ad: "Advertise",
+    kisa: "Advertise",
+    grup: "kesif",
+    ikon: "megafon",
+    durum: "canli",
+    ozet: "Clearly labelled Sponsored slots sold as flat-fee time slots: formats, trial prices, rules and how to book.",
+    kaynak: "veri/sponsorlar.json (the active slots, with start and end dates)"
+  },
+  {
     yol: "terminal",
     ad: "Trade",
     kisa: "Trade",
-    grup: "piyasa",
+    grup: "kesif",
     ikon: "mum",
     durum: "canli",
     ozet: "Every launch from ARC PULSE with its live chart: Warp launches bought from any chain, our own tokens bought, sold or redeemed from any chain.",
     kaynak: "Launch registries + Warp marks; market data from DexScreener and GeckoTerminal",
-    sekme: true,
-    gizliRay: true          /* reached from a token, not from the rail */
+    sekme: true
   },
   {
     yol: "kasalar",
     ad: "Collateral vaults",
-    grup: "piyasa",
-    ikon: "kalkan",
+    grup: "guven",
+    ikon: "kasa",
     durum: "canli",
-    ozet: "The basket vault on each of nine chains: its dollars, its auctions, and the open ones with what they ask now.",
+    ozet: "The collateral vault on 12 of the 13 chains (all but Elysium): its dollars, its auctions, and the open ones with what they ask now.",
     kaynak: "SepetKasasi.ihaleler() / istenen() on each chain + Sui and Aptos vaults"
   },
   {
     yol: "analitik",
     ad: "Platform analytics",
-    grup: "piyasa",
+    grup: "guven",
     ikon: "grafik",
     /* LIVE since 14 Oct 2026. It was "yapim" because these numbers need an
        event walk, not one call. scripts/analitik-ozet.js now does that walk
        on both chains and writes veri/analitik.json; the page shows the
        block each chain was read to, so it never pretends to be live. */
     durum: "canli",
-    ozet: "Launches, volume, fees by slice and reserves, on Arc and Robinhood Chain.",
+    ozet: "Launches, volume, fees by slice and reserves, read live from Arc.",
     kaynak: "veri/analitik.json - Launched, Swap and Ucret events, balanceOf"
   },
 
@@ -224,17 +258,17 @@ export const YOLLAR = [
     kaynak: "TurKaydi type 1 (TurYazildi events) + MerkezKapi"
   },
   {
-    yol: "creators", ad: "Creators", kisa: "Creators", grup: "urunler", ikon: "kupa", durum: "canli",
+    yol: "creators", ad: "Creators", kisa: "Creators", grup: "urunler", ikon: "yildiz", durum: "canli",
     ozet: "Fans support creators by holding their token; the creator earns 0.30% of every trade in USDC.",
     kaynak: "TurKaydi type 2 (TurYazildi events) + MerkezKapi"
   },
   {
-    yol: "agents", ad: "AI agents", kisa: "Agents", grup: "urunler", ikon: "dis", durum: "canli",
+    yol: "agents", ad: "AI agents", kisa: "Agents", grup: "urunler", ikon: "robot", durum: "canli",
     ozet: "An AI agent's own token; with the agent's wallet as founder, its trading share pays the agent's own costs.",
     kaynak: "TurKaydi type 3 (TurYazildi events) + MerkezKapi"
   },
   {
-    yol: "projects", ad: "Projects", kisa: "Projects", grup: "urunler", ikon: "arti", durum: "canli",
+    yol: "projects", ad: "Projects", kisa: "Projects", grup: "urunler", ikon: "ampul", durum: "canli",
     ozet: "Small teams gather support for what they build. No profit promises; an optional founder lock is live.",
     kaynak: "TurKaydi type 4 (TurYazildi events) + MerkezKapi"
   },
@@ -244,12 +278,12 @@ export const YOLLAR = [
     kaynak: "TurKaydi type 5 (TurYazildi events) + MerkezKapi"
   },
   {
-    yol: "games", ad: "Games", kisa: "Games", grup: "urunler", ikon: "mum", durum: "canli",
-    ozet: "In-game currencies and rewards. A developer guide is coming.",
+    yol: "games", ad: "Games", kisa: "Games", grup: "urunler", ikon: "oyun", durum: "canli",
+    ozet: "In-game currencies and rewards, with a developer guide on the page.",
     kaynak: "TurKaydi type 6 (TurYazildi events) + MerkezKapi"
   },
   {
-    yol: "baskets", ad: "Baskets", kisa: "Baskets", grup: "urunler", ikon: "kasa", durum: "canli",
+    yol: "baskets", ad: "Baskets", kisa: "Baskets", grup: "urunler", ikon: "sepet", durum: "canli",
     ozet: "The collateral basket holds up to five assets from twelve chains; holders can redeem their share without selling.",
     kaynak: "TurKaydi type 7 (TurYazildi events) + basket vaults"
   },
@@ -262,7 +296,7 @@ export const YOLLAR = [
        older pools have none) and the page says so per token; publishing works now.
        (Was "yapim" with the description below while the contract was not
        deployed; `eksik` is kept for the record and shown only in that state.) */
-    yol: "designs", ad: "Designer NFTs", kisa: "NFT designs", grup: "urunler", ikon: "hediye", durum: "canli",
+    yol: "designs", ad: "Designer NFTs", kisa: "NFT designs", grup: "urunler", ikon: "firca", durum: "canli",
     /* 1 Nov 2026: the top button and the rail open ARC PULSE Designs, its own site (docs/designs/);
        #/designs keeps working here for old links and the on-chain license URI */
     site: "designs/",
@@ -281,7 +315,7 @@ export const YOLLAR = [
     yol: "portfoy",
     ad: "Portfolio",
     kisa: "Portfolio",
-    grup: "varlik",
+    grup: "sen",
     ikon: "cuzdan",
     durum: "canli",
     ozet: "The connected wallet's token balances and the collateral each one can claim.",
@@ -291,7 +325,7 @@ export const YOLLAR = [
   {
     yol: "kar-zarar",
     ad: "Profit / Loss",
-    grup: "varlik",
+    grup: "sen",
     ikon: "terazi",
     durum: "yapim",
     ozet: "Position cost, realised and unrealised profit and loss.",
@@ -318,9 +352,9 @@ export const YOLLAR = [
   {
     yol: "pazar",
     ad: "Developer marketplace",
-    kisa: "Pazar",
-    grup: "piyasa",
-    ikon: "terazi",
+    kisa: "Dev market",
+    grup: "insa",
+    ikon: "canta",
     /* LIVE: Pazar is on Arc mainnet and this screen reads it. The product
        count, the fee rate and the revenue ledger come straight from the
        contract; the zeros are real. */
@@ -332,8 +366,8 @@ export const YOLLAR = [
     yol: "gelistirici",
     ad: "Developer portal",
     kisa: "Developers",
-    grup: "varlik",
-    ikon: "dis",
+    grup: "insa",
+    ikon: "kod",
     /* Live: the developer-pool half reads the deployed DevPool and the
        deployed ARCP stake today, and tells the truth about why that
        money cannot move yet. Only the marketplace half is pending. */
@@ -346,7 +380,7 @@ export const YOLLAR = [
   {
     yol: "dao",
     ad: "Platform DAO",
-    grup: "yonetisim",
+    grup: "arcp",
     ikon: "meclis",
     /* LIVE. This entry was "yapim" for a long time and the reason was
        sound: building a screen before answering WHAT the DAO can decide
@@ -373,10 +407,9 @@ export const YOLLAR = [
     sekme: true
   },
   {
-    yol: "teklifler",
-    gizliRay: true,   /* off the rail: reached from Platform DAO */
+    yol: "teklifler", ebeveyn: "dao",
     ad: "Proposals and voting",
-    grup: "yonetisim",
+    grup: "arcp",
     ikon: "oy",
     /* LIVE and it really sends transactions: propose, castVote, queue,
        execute. Each button is rendered according to whether that action is
@@ -390,17 +423,18 @@ export const YOLLAR = [
   {
     yol: "topluluk-dao",
     ad: "Token DAOs",
-    grup: "yonetisim",
-    ikon: "insanlar",
-    durum: "yapim",
-    ozet: "Each token's own community governance, separate from the platform DAO.",
+    grup: "arcp",
+    ikon: "bayrak",
+    durum: "canli",
+    site: "#/daos",   // 12 Nov 2026: Token DAOs are live through TokenDAOFabrikasi (veri/urun-kilit-dao.json); their page is #/daos
+    ozet: "Each token's own community governance, separate from the platform DAO: live, opened from the Token DAOs page.",
     gerekli: "The same problem as the platform DAO, plus one more: a token DAO cannot touch its own vault or its tax — both are deliberately immutable. The set of things it CAN decide has to be defined first.",
     eksik: ["A governance contract per token", "Subjects the community can genuinely decide"]
   },
   {
     yol: "topluluk",
     ad: "Community pages",
-    grup: "yonetisim",
+    grup: "arcp",
     ikon: "sohbet",
     durum: "yapim",
     ozet: "A community page per token: links and announcements.",
@@ -410,7 +444,7 @@ export const YOLLAR = [
   {
     yol: "liderlik",
     ad: "Leaderboards",
-    grup: "yonetisim",
+    grup: "kesif",
     ikon: "kupa",
     /* LIVE from the same snapshot. Tokens by volume and by vault, founders
        by launches. No trader ranking: the sender of a swap is the router,
@@ -423,8 +457,8 @@ export const YOLLAR = [
     yol: "davet",
     ad: "Referrals",
     kisa: "Invite",
-    grup: "yonetisim",
-    ikon: "insanlar",
+    grup: "sen",
+    ikon: "hediye",
     /* LIVE: DavetKaydi (who invited whom, set once by the invited wallet) and
        DavetOdemesi (USDC rewards from the platform's cut, Merkle roots the page recomputes). */
     durum: "canli",
@@ -439,14 +473,13 @@ export const YOLLAR = [
     grup: "guven",
     ikon: "kalkan-artis",
     durum: "canli",
-    ozet: "First generation: the per-block cumulative sell threshold, the extra rate applied, and what the shield moves into the vault.",
+    ozet: "The per-block cumulative sell threshold, the extra rate applied, and what the shield moves into the vault.",
     /* The event is SavunmaAcildi on this hook; KalkanCalisti was the
        previous generation's name and no such event exists to listen for. */
     kaynak: "PulseHook.pencere() + SavunmaAcildi / SnipeKesildi events"
   },
   {
     yol: "zincirler",
-    gizliRay: true,   /* off the rail: the old bridge-to-Arc collateral; baskets stay on their own chains now */
     ad: "Cross-chain collateral",
     grup: "guven",
     ikon: "zincir",
@@ -486,8 +519,23 @@ export function yolBul(ad) {
   return YOLLAR.find((y) => y.yol === ad) || null;
 }
 
+/** a group's routes in rail order; a child (`ebeveyn`) comes straight after its parent */
 export function grubunYollari(grup) {
-  return YOLLAR.filter((y) => y.grup === grup && !y.gizliRay);
+  const sira = (y) => { const i = RAY_SIRASI.indexOf(y.yol); return i < 0 ? 999 + YOLLAR.indexOf(y) : i; };
+  const ogeler = YOLLAR.filter((y) => y.grup === grup).sort((a, b) => sira(a) - sira(b));
+  const ust = ogeler.filter((y) => !y.ebeveyn || !ogeler.some((x) => x.yol === y.ebeveyn));
+  return ust.flatMap((y) => [y, ...ogeler.filter((x) => x.ebeveyn === y.yol)]);
+}
+
+/** the parent page a route's Back button opens when there is no history */
+export function ustSayfa(ad) {
+  const y = yolBul(ad);
+  if (!y) return null;
+  if (y.ebeveyn) return yolBul(y.ebeveyn);
+  if (ad === "move-token") return yolBul("launches");
+  const g = GRUPLAR.find((x) => x.anahtar === y.grup);
+  const ev = g && g.ev !== ad ? yolBul(g.ev) : null;
+  return ev || (ad === "kesfet" ? null : yolBul("kesfet"));
 }
 
 /** How many modules are in each state — the honest headline for /hakkinda. */

@@ -15,6 +15,8 @@
  * A top tab (ana.js BIRINCIL) and on the rail.
  * =========================================================================== */
 import { el, temizle, bos } from "../ui.js";
+import { SQUAD } from "../squad.js";
+import { aktifSponsor, sponsorKarti, sponsorYeri } from "../sponsor.js";
 import { AGLAR } from "../aglar.js";
 import { ELYSIUM } from "../elysium.js";
 import { cuzdan } from "../cuzdan.js";
@@ -47,6 +49,34 @@ const ZINCIRLER = [
 const LP_EK = [{ k: "sui", ad: "Sui", llama: "sui" }, { k: "aptos", ad: "Aptos", llama: "aptos" }];
 const LLAMA_AD = Object.fromEntries([...ZINCIRLER, ...LP_EK].map((z) => [z.llama, z.ad]));
 const geckodan = (id) => ZINCIRLER.find((z) => z.gecko === id);
+
+/* ---- brand safety (12 Nov 2026) -------------------------------------------
+   The market feed is every pool on the chain, and some copy a famous brand's name to look official.
+   A name filter hides the obvious ones (it is on by default; the visitor can switch it off, the choice is
+   kept on this device only). It is a filter on words, not a judgement of any token. */
+const MARKA_SOZ = ["mcdonald", "spacex", "tesla", "nike", "apple", "google", "amazon", "microsoft", "nvidia", "cocacola", "pepsi", "disney",
+  "netflix", "starbucks", "walmart", "samsung", "adidas", "gucci", "rolex", "ferrari", "lamborghini", "blackrock", "paypal", "mastercard",
+  "binance", "coinbase", "openai", "chatgpt", "elonmusk", "officialtrump", "whitehouse"];
+const FILTRE_ANAHTAR = "arcpulse-marka-filtre";
+const filtreAcik = () => { try { return localStorage.getItem(FILTRE_ANAHTAR) !== "0"; } catch (e) { return true; } };
+const sade = (x) => String(x || "").toLowerCase().normalize("NFKD").replace(/[^a-z0-9]/g, "");
+/** does this token's name or ticker carry a famous brand's name? */
+export const taklitMi = (t) => { const a = sade(t.ad) + " " + sade(t.sembol); return MARKA_SOZ.some((w) => a.includes(w)); };
+const suz = (liste) => (filtreAcik() ? liste.filter((t) => !taklitMi(t)) : liste);
+
+/* ARC PULSE's own tokens (our launchpads, the Pulse Squad, Warp launches) are not "External" */
+let _bizimSet = null;
+function bizimSetYukle() {
+  if (!_bizimSet) _bizimSet = Promise.all([
+    bizimTokenler().catch(() => []),
+    fetch(new URL("../../veri/warp-launches.json", import.meta.url).href, { cache: "no-cache" }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+  ]).then(([b, w]) => new Set([...b.map((x) => x.adres), ...SQUAD.filter((m) => m.token).map((m) => m.token), ...((w && w.launchlar) || []).map((x) => x.token)]
+    .filter(Boolean).map((a) => String(a).toLowerCase())));
+  return _bizimSet;
+}
+let bizimSet = new Set();
+const disRozet = (t) => (bizimSet.has(String(t.adres).toLowerCase()) ? el("span", { sinif: "rozet-dis", attr: { style: "color:#cbbcff;border-color:rgba(124,92,255,.6)" }, yazi: "ARC PULSE" })
+  : el("span", { sinif: "rozet-dis", attr: { title: "A third-party token: not launched or checked by ARC PULSE" }, yazi: "External" }));
 
 /* what is shown: a pool needs this much liquidity (USD) to be listed; fresh pools a little less */
 const ESIK = 10_000, ESIK_YENI = 3_000;
@@ -156,6 +186,10 @@ const STIL = `
 .vt-ozet{margin-top:14px;border:1px solid var(--cizgi,#2a2f3a);border-radius:12px;padding:12px;font-size:13px}
 .vt-ozet div{display:flex;justify-content:space-between;padding:3px 0}
 .vt-durum{font-size:13px;opacity:.8;margin-top:10px;min-height:18px}
+.vt-durdur{width:26px;height:18px;margin-left:6px;border:0;border-radius:4px;background:rgba(0,0,0,.45);color:#fff;font-size:9px;cursor:pointer;padding:0;line-height:18px}
+.vt-filtre-satir{margin:-4px 0 12px}
+.vt-filtre{font-size:12.5px}
+.vt-vitrin .sponsor--slide{position:absolute;inset:0}
 .vt-demo{display:inline-block;background:#ffb02033;color:#ffcf70;border-radius:999px;padding:3px 10px;font-size:11px;font-weight:700;margin-left:8px;vertical-align:middle}
 `;
 
@@ -425,11 +459,11 @@ function alKutusu(t) {
 /** The hottest tokens on our chains as a strip of cards (Discover shows it); a tap opens the buy box. */
 export async function trendSeridi(adet = 6) {
   if (!document.getElementById("vt-stil")) document.head.append(el("style", { attr: { id: "vt-stil" }, yazi: STIL }));
-  const d = await veri(null);
-  const trend = d.trend.filter((t) => t.likidite >= ESIK).slice(0, adet);
+  const [d] = await Promise.all([veri(null), bizimSetYukle().then((s) => { bizimSet = s; }).catch(() => {})]);
+  const trend = suz(d.trend.filter((t) => t.likidite >= ESIK)).slice(0, adet);
   if (!trend.length) return null;
   return el("div", { sinif: "vt-trend" }, trend.map((t) => el("div", { sinif: "vt-sat", on: { click: () => alKutusu(t) } }, [
-    resim(t), el("div", { attr: { style: "min-width:0" } }, [el("div", { sinif: "vt-ad" }, [t.ad, el("span", { sinif: "vt-zincir", yazi: t.zincir.ad })]),
+    resim(t), el("div", { attr: { style: "min-width:0" } }, [el("div", { sinif: "vt-ad" }, [t.ad, el("span", { sinif: "vt-zincir", yazi: t.zincir.ad }), disRozet(t)]),
       el("div", { sinif: "vt-k" }, [para(t.fdv) + " ", yuzde(t.degisim)])])])));
 }
 
@@ -439,7 +473,21 @@ export async function ciz() {
   const govde = el("div", {});
   let secili = null, mod = "token";
   /* the showcase's slide survives the 45 s refresh; hovering holds it */
-  let heroNo = 0, heroDur = false;
+  let heroNo = 0, heroDur = false, heroElle = false;
+  const azHareket = () => { try { return matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) { return false; } };
+  if (azHareket()) heroElle = true;
+  /* the brand-name filter's switch, beside the chain chips */
+  const filtreDugme = el("button", { sinif: "vt-cip vt-filtre", attr: { type: "button" } });
+  let filtreSayi = 0;
+  const filtreYaz = (n) => {
+    if (n != null) filtreSayi = n;
+    const acik = filtreAcik();
+    filtreDugme.setAttribute("aria-pressed", String(acik));
+    filtreDugme.textContent = acik ? "Look-alike brand names hidden" + (filtreSayi ? " (" + filtreSayi + ")" : "") + " · show" : "Showing look-alike brand names · hide";
+    filtreDugme.title = "Hides tokens whose name copies a famous brand (McDonald's, SpaceX, Tesla, Nike …). A word filter, kept on this device only.";
+  };
+  filtreDugme.addEventListener("click", () => { try { localStorage.setItem(FILTRE_ANAHTAR, filtreAcik() ? "0" : "1"); } catch (e) { /* storage may be blocked */ } filtreYaz(); yukle(); });
+  filtreYaz();
   const heroGoster = (i) => {
     const s = govde.querySelectorAll(".vt-slayt"), n = govde.querySelectorAll(".vt-noktalar button");
     if (!s.length) return;
@@ -543,7 +591,8 @@ export async function ciz() {
       el("span", { sinif: "r", yazi: p.v30 == null ? "—" : para(p.v30) }),
       el("span", { sinif: "r" }, [p.degisim == null ? "—" : yuzde(p.degisim)]),
     ]));
-    temizle(govde).append(ozet, el("div", { sinif: "vt-lp" }, [bas, ...govdeSat]),
+    temizle(govde).append(ozet, sponsorYeri("market-launchpads", "row", (k) => el("section", { sinif: "sponsor-bolum", attr: { "aria-label": "Sponsored", style: "margin-bottom:14px" } }, [k])),
+      el("div", { sinif: "vt-lp" }, [bas, ...govdeSat]),
       el("p", { sinif: "vt-k", attr: { style: "margin-top:10px" }, yazi: "Volumes from DefiLlama (Launchpad category), counted on " + (secili ? secili.ad : "Arc, Base, Solana, BNB, Ethereum, Arbitrum, Avalanche, Monad, HyperEVM, Robinhood, Sui and Aptos") + ". Elysium launchpads (24 h): measured by ARC PULSE from Elysium's chain records. ARC PULSE: the 24 h volume of its own pools on Arc. 24h change is the launchpad's total across all its chains." }));
   }
   async function ciz2(sessiz, bu) {
@@ -551,14 +600,17 @@ export async function ciz() {
     let d;
     try { d = await veri(secili); } catch (e) { if (!sessiz && !eski(bu)) temizle(govde).append(el("div", { sinif: "vt-alt", yazi: e.message })); return; }
     if (eski(bu)) return;
-    const trend = d.trend.filter((t) => t.likidite >= ESIK);
-    const yeni = d.yeni.filter((t) => t.likidite >= ESIK_YENI).sort((a, b) => Date.parse(b.kuruldu) - Date.parse(a.kuruldu));
+    bizimSet = await bizimSetYukle().catch(() => bizimSet);
+    const trendHam = d.trend.filter((t) => t.likidite >= ESIK), yeniHam = d.yeni.filter((t) => t.likidite >= ESIK_YENI);
+    const trend = suz(trendHam);
+    const yeni = suz(yeniHam).sort((a, b) => Date.parse(b.kuruldu) - Date.parse(a.kuruldu));
+    filtreYaz([...trendHam, ...yeniHam].filter((t, i, a) => taklitMi(t) && a.findIndex((x) => x.adres === t.adres) === i).length);
     if (!trend.length && !yeni.length) { temizle(govde).append(el("div", { sinif: "vt-alt", yazi: "No markets on this chain right now." })); return; }
     const ac = (t) => () => alKutusu(t);
     const tokenSlayt = (one) => el("div", { sinif: "vt-one", on: { click: ac(one) } }, [
       one.resim ? el("img", { sinif: "bg", attr: { src: one.resim, alt: "", referrerpolicy: "no-referrer" } }) : null,
       el("div", { sinif: "vt-one-ust" }, [resim(one), el("div", {}, [el("div", { sinif: "vt-one-ad", yazi: one.ad }),
-        el("div", { sinif: "vt-k" }, ["$" + one.sembol, el("span", { sinif: "vt-zincir", yazi: one.zincir.ad })])])]),
+        el("div", { sinif: "vt-k" }, ["$" + one.sembol, el("span", { sinif: "vt-zincir", yazi: one.zincir.ad }), disRozet(one)])])]),
       el("div", { sinif: "vt-one-stat" }, [
         el("div", {}, ["Market cap", el("b", { yazi: para(one.fdv) })]),
         el("div", {}, ["24h volume", el("b", { yazi: para(one.hacim) })]),
@@ -569,22 +621,31 @@ export async function ciz() {
     /* the showcase: our presale first, then the five hottest tokens, turning every 6 s */
     const os = await onSatis().catch(() => null);
     const slaytlar = [...(os ? [osSlayt(os)] : []), ...(trend.length ? trend : yeni).slice(0, 5).map(tokenSlayt)];
+    /* a booked sponsor: one labelled slide, always the last (never the first) */
+    const sp = await aktifSponsor("market-slide").catch(() => null);
+    if (sp) slaytlar.push(sponsorKarti(sp, "slide"));
     heroNo = heroNo % slaytlar.length;
     const noktalar = el("div", { sinif: "vt-noktalar" });
     const hero = el("div", { sinif: "vt-vitrin", on: { mouseenter: () => { heroDur = true; }, mouseleave: () => { heroDur = false; } } },
       [...slaytlar.map((x, i) => el("div", { sinif: "vt-slayt" + (i === heroNo ? " acik" : "") }, [x])), noktalar]);
-    slaytlar.forEach((x, i) => noktalar.append(el("button", { sinif: i === heroNo ? "acik" : "", attr: { type: "button", "aria-label": "Slide " + (i + 1) },
+    slaytlar.forEach((x, i) => noktalar.append(el("button", { sinif: i === heroNo ? "acik" : "", attr: { type: "button", "aria-label": "Slide " + (i + 1) + (sp && i === slaytlar.length - 1 ? " (Sponsored)" : "") },
       on: { click: (e) => { e.stopPropagation(); heroGoster(i); } } })));
+    /* the carousel turns by itself only with a pause control, and never for people who ask for less motion */
+    const durdur = el("button", { sinif: "vt-durdur", attr: { type: "button", "aria-label": heroElle ? "Play the slides" : "Pause the slides", "aria-pressed": String(heroElle) }, yazi: heroElle ? "▶" : "❚❚",
+      on: { click: (e) => { e.stopPropagation(); heroElle = !heroElle; durdur.textContent = heroElle ? "▶" : "❚❚"; durdur.setAttribute("aria-pressed", String(heroElle)); durdur.setAttribute("aria-label", heroElle ? "Play the slides" : "Pause the slides"); } } });
+    noktalar.append(durdur);
+    hero.addEventListener("focusin", () => { heroDur = true; });
+    hero.addEventListener("focusout", () => { heroDur = false; });
     const trendIzgara = el("div", { sinif: "vt-trend" }, trend.slice(0, 12).map((t) => el("div", { sinif: "vt-sat", on: { click: ac(t) } }, [
-      resim(t), el("div", { attr: { style: "min-width:0" } }, [el("div", { sinif: "vt-ad" }, [t.ad, el("span", { sinif: "vt-zincir", yazi: t.zincir.ad })]),
+      resim(t), el("div", { attr: { style: "min-width:0" } }, [el("div", { sinif: "vt-ad" }, [t.ad, el("span", { sinif: "vt-zincir", yazi: t.zincir.ad }), disRozet(t)]),
         el("div", { sinif: "vt-k" }, [para(t.fdv) + " ", yuzde(t.degisim)])])])));
     const kartlar = el("div", { sinif: "vt-kartlar" }, yeni.slice(0, 16).map((t) => el("div", { sinif: "vt-kart", on: { click: ac(t) } }, [
       resim(t), el("span", { sinif: "vt-rozet", veri: { zaman: t.kuruldu }, yazi: once(t.kuruldu) }),
-      el("div", { sinif: "vt-kart-alt" }, [el("div", { sinif: "vt-ad", yazi: t.ad }), el("div", { sinif: "vt-k" }, [para(t.fdv), el("span", { sinif: "vt-zincir", yazi: t.zincir.ad })])])])));
+      el("div", { sinif: "vt-kart-alt" }, [el("div", { sinif: "vt-ad", yazi: t.ad }), el("div", { sinif: "vt-k" }, [para(t.fdv), el("span", { sinif: "vt-zincir", yazi: t.zincir.ad }), disRozet(t)])])])));
     const hacimSira = [...trend, ...yeni].sort((a, b) => Number(b.hacim) - Number(a.hacim)).filter((t, i, a) => a.findIndex((x) => x.adres === t.adres) === i).slice(0, 15);
     const yan = el("aside", { sinif: "vt-yan" }, [el("div", { sinif: "vt-ad", attr: { style: "margin:0 0 8px 8px" }, yazi: "Top volume · 24h" }),
       ...hacimSira.map((t, i) => el("div", { sinif: "vt-sira", on: { click: ac(t) } }, [el("span", { sinif: "vt-k", yazi: String(i + 1) }), resim(t),
-        el("div", { attr: { style: "min-width:0" } }, [el("div", { sinif: "vt-ad", yazi: t.ad }), el("div", { sinif: "vt-k", yazi: t.zincir.ad })]),
+        el("div", { attr: { style: "min-width:0" } }, [el("div", { sinif: "vt-ad", yazi: t.ad }), el("div", { sinif: "vt-k" }, [t.zincir.ad, disRozet(t)])]),
         el("div", { sinif: "r" }, [el("b", { yazi: para(t.hacim) }), el("div", {}, [yuzde(t.degisim)])])]))]);
 
     const bizim = (!secili || secili.k === "arc") ? await bizimTokenler().catch(() => []) : [];
@@ -603,8 +664,8 @@ export async function ciz() {
   const spotYer = el("div");
   kap.append(
     el("h1", { attr: { style: "margin:0;font-size:26px" } }, ["Market", el("span", { sinif: "vt-canli" }, [el("i"), "live"])]),
-    el("p", { sinif: "vt-alt", yazi: "Every token on 13 chains in one place. Buy any of them with the dollars you hold on any chain, in one tap." }),
-    spotYer, modlar, cipler, govde);
+    el("p", { sinif: "vt-alt", yazi: "Tokens on 11 chains in one place, Elysium included. Buy any of them with the dollars you hold on any chain, in one tap. Tokens marked External are third-party: not launched or checked by ARC PULSE." }),
+    spotYer, modlar, cipler, el("div", { sinif: "vt-filtre-satir" }, [filtreDugme]), govde);
   /* the newest live Pulse Squad mascot, above the market */
   import("./warp-token.js").then((m) => { const k = m.squadSpot(); if (k) { k.style.margin = "12px 0"; spotYer.replaceWith(k); } else spotYer.remove(); }).catch(() => spotYer.remove());
   modCiz();
@@ -624,7 +685,7 @@ export async function ciz() {
   }, 1000);
   const donme = setInterval(() => {
     if (!document.body.contains(kap)) { clearInterval(donme); return; }
-    if (!heroDur && !document.hidden) heroGoster(heroNo + 1);
+    if (!heroDur && !heroElle && !document.hidden) heroGoster(heroNo + 1);
   }, 6000);
   return kap;
 }

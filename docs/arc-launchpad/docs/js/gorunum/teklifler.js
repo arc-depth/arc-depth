@@ -35,15 +35,16 @@ import { el, sayfaUst, panel, bos, not, olcum, adres, hata } from "../ui.js";
 import { oku, cokluCagri, cagriVerisi, sonucCoz, ABI } from "../zincir.js";
 import { YONETISIM, DAO_YETKI, PULSE, EKONOMI, canli } from "../adresler.js";
 import { jetonMiktar, tamSayidanSayi, gecenSure, para } from "../bicim.js";
+import { maskotBos, dugmeLink } from "./squad.js";
 
 const SIFIR_ADRES = "0x0000000000000000000000000000000000000000";
 
 const DURUM = [
-  { ad: "Oylamada", sinif: "etiket--aktif" },
-  { ad: "Reddedildi", sinif: "etiket--red" },
-  { ad: "Kabul edildi", sinif: "etiket--kabul" },
-  { ad: "Kuyrukta", sinif: "etiket--bekle" },
-  { ad: "Uygulanabilir", sinif: "etiket--kabul" },
+  { ad: "Voting", sinif: "etiket--aktif" },
+  { ad: "Defeated", sinif: "etiket--red" },
+  { ad: "Passed", sinif: "etiket--kabul" },
+  { ad: "Queued", sinif: "etiket--bekle" },
+  { ad: "Ready to execute", sinif: "etiket--kabul" },
   { ad: "Executed", sinif: "etiket--bitti" },
   { ad: "Expired", sinif: "etiket--red" },
   { ad: "Cancelled", sinif: "etiket--red" }
@@ -130,7 +131,7 @@ function odemeTeklifi(cuzdan, havuzBakiye) {
   const durumSatiri = el("div", { sinif: "yazi yazi--kucuk yazi--sessiz" });
   const dugme = el("button", {
     sinif: "dugme dugme--marka", attr: { type: "button" },
-    yazi: "PROPOSE A PAYMENT"
+    yazi: "Propose a payment"
   });
   const gonder = gonderici(cuzdan, dugme, durumSatiri);
 
@@ -209,14 +210,14 @@ function odemeTeklifi(cuzdan, havuzBakiye) {
   if (havuzBakiye != null) {
     kap.append(el("div", { sinif: "izgara izgara--olcum" }, [
       olcum("In the pool", para(tamSayidanSayi(havuzBakiye, 6)),
-        "the DevPool's USDC balance"),
-      olcum("Target", "DevPool", YONETISIM.devPool)
+        "the developer pool's USDC balance"),
+      olcum("Target", "Developer pool", YONETISIM.devPool)
     ]));
   }
   for (const [etiket, girdi] of [
     ["Developer's address", alici],
-    ["Miktar (USDC)", miktar],
-    ["Contribution id (from DevPool.register)", katkiNo],
+    ["Amount (USDC)", miktar],
+    ["Contribution id (from the developer registration)", katkiNo],
     ["What for", neden]
   ]) {
     kap.append(el("div", { sinif: "alan" }, [
@@ -351,7 +352,7 @@ function teklifKarti(id, pr, durumNo, hesap, oyVerdi, gucu, cuzdan, oy) {
     olcum("Voting ends", new Date(bitis).toISOString().slice(0, 16).replace("T", " "),
       bitis > Date.now() ? gecenSure(bitis - Date.now()) + " left" : "over"),
     eta > 0
-      ? olcum("Uygulanabilir", new Date(eta).toISOString().slice(0, 16).replace("T", " "),
+      ? olcum("Executable from", new Date(eta).toISOString().slice(0, 16).replace("T", " "),
         eta > Date.now() ? gecenSure(eta - Date.now()) + " left" : "now")
       : null,
     olcum("Proposer", adres(pr[0]), null)
@@ -389,14 +390,14 @@ function teklifKarti(id, pr, durumNo, hesap, oyVerdi, gucu, cuzdan, oy) {
       }));
     } else {
       for (const [yazi, lehteMi, sinif] of [
-        ["Lehte oy ver", true, "dugme dugme--marka"],
-        ["Aleyhte oy ver", false, "dugme"]
+        ["Vote for", true, "dugme dugme--marka"],
+        ["Vote against", false, "dugme"]
       ]) {
         const b = el("button", { sinif, attr: { type: "button" }, yazi });
         const g = gonderici(cuzdan, b, durumSatiri);
         b.addEventListener("click", () =>
           g(cagriVerisi(ABI.governor, "castVote", [id, lehteMi]),
-            lehteMi ? "Lehte oy" : "Aleyhte oy"));
+            lehteMi ? "Vote for" : "Vote against"));
         eylemler.append(b);
       }
       eylemler.append(el("span", {
@@ -421,10 +422,10 @@ function teklifKarti(id, pr, durumNo, hesap, oyVerdi, gucu, cuzdan, oy) {
   } else if (durumNo != null && Number(durumNo) === UYGULANABILIR) {
     const b = el("button", {
       sinif: "dugme dugme--marka", attr: { type: "button" },
-      yazi: "Uygula"
+      yazi: "Execute"
     });
     const g = gonderici(cuzdan, b, durumSatiri);
-    b.addEventListener("click", () => g(cagriVerisi(ABI.governor, "execute", [id]), "Uygulama"));
+    b.addEventListener("click", () => g(cagriVerisi(ABI.governor, "execute", [id]), "Execution"));
     if (hesap) eylemler.append(b);
     eylemler.append(el("span", {
       sinif: "yazi yazi--kucuk yazi--sessiz",
@@ -452,8 +453,9 @@ export async function ciz({ cuzdan }) {
   const hesap = cuzdan.hesap();
   kap.append(sayfaUst(
     "Proposals and voting",
-    "A live governor — every button sends a real transaction"
+    "Voting is live on chain: every button sends a real transaction"
   ));
+  kap.append(not("Voting here uses staked ARCP of the previous contract, whose governor still decides payments from the developer pool. ARCP 2 has its own stake and governor; its staking opens when its pool opens. See the Platform DAO page for both.", "bilgi"));
 
   /* ---- parameters and the caller's standing --------------------- */
   /* MIN_OY_GUCU IS ON THE STAKE, NOT THE GOVERNOR
@@ -474,8 +476,7 @@ export async function ciz({ cuzdan }) {
   if (P.proposalCount == null) {
     kap.append(hata(
       "Governance could not be read",
-      "The governor is at " + YONETISIM.governor + " but `proposalCount()` " +
-      "did not answer. The screen is not inventing a state."
+      "The governor contract did not return its proposal count just now, so this page shows nothing rather than a guess. Reload in a minute."
     ));
     return kap;
   }
@@ -499,16 +500,15 @@ export async function ciz({ cuzdan }) {
     olcum("Proposal threshold", esik == null ? "—" : jetonMiktar(esik) + " ARCP",
       "the greater of the stake share and the floor"),
     olcum("Your voting power",
-      hesap ? (gucu == null ? "—" : jetonMiktar(gucu) + " ARCP") : "no wallet connected",
-      hesap ? "ARCP staked" : null)
+      hesap ? (gucu == null ? "—" : jetonMiktar(gucu) + " ARCP") : "—",
+      hesap ? "ARCP staked" : "connect a wallet to see it")
   ]));
 
   /* ---- the form, and only if it can succeed --------------------- */
   if (!hesap) {
     kap.append(panel("New proposal", bos(
       "Wallet not connected",
-      "Connect a wallet to propose and to vote. The page sends nothing " +
-      "on its own.",
+      "Connect a wallet to propose and to vote. Voting power comes from staked ARCP; the Platform DAO page explains how staking works and when ARCP 2 staking opens.",
       el("button", {
         sinif: "dugme dugme--marka", attr: { type: "button" },
         yazi: "Connect wallet",
@@ -538,8 +538,7 @@ export async function ciz({ cuzdan }) {
       "Your voting power is " + jetonMiktar(gucu) + " ARCP and the " +
       "threshold is " + jetonMiktar(esik) + " ARCP. The form is not " +
       "rendered because the transaction would be refused on chain — " +
-      "showing the button and charging gas for it is not information, " +
-      "maliyet olurdu." +
+      "showing the button and charging gas for it would only cost you." +
       (toplam === 0
         ? " Right now NO ARCP is staked, so this holds for everyone: the " +
           "DAO is deployed and answering; what is missing is stake."
@@ -569,7 +568,7 @@ export async function ciz({ cuzdan }) {
     el("ul", { sinif: "liste liste--isaretli" },
       DAO_YETKI.yapabilir.map((x) => el("li", {}, [
         el("strong", { yazi: x.ne }),
-        el("span", { sinif: "yazi yazi--kucuk yazi--sessiz", yazi: "  " + x.nerede })
+        el("span", { sinif: "yazi yazi--kucuk yazi--sessiz", yazi: "  " + String(x.nerede).replace(/^DevPool\.pay\s*[—-]\s*/, "paid by the developer pool contract; ") })
       ]))),
     not(
       "A proposal outside this list CAN be made — the governor's signature " +
@@ -583,10 +582,10 @@ export async function ciz({ cuzdan }) {
   /* ---- the proposals ------------------------------------------- */
   const sayi = Number(P.proposalCount);
   if (sayi === 0) {
-    kap.append(panel("Proposals", bos(
+    kap.append(panel("Proposals", maskotBos("pulsy",
       "No proposals yet",
-      "The governor has recorded zero proposals. That is not a fault: " +
-      "the contract is deployed and answering, nobody has proposed yet."
+      "Proposals appear here as cards with their votes for and against. Anyone with enough staked ARCP can open the first one.",
+      [dugmeLink("How staking works", "#/dao")]
     )));
     return kap;
   }

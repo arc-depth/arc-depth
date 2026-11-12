@@ -12,8 +12,13 @@
  * =========================================================================== */
 import { el, sayfaUst, bos, not, temizle } from "../ui.js";
 import { squadOf, squadResim } from "../squad.js";
+import { demoMu, demoSonda } from "../launch-kaynak.js";
+import { sponsorYeri } from "../sponsor.js";
 
 const SAYFA = 24;
+/* a chain key in a link (?zincir=) -> the chain name the launch rows carry */
+export const ZINCIR_ANAHTAR = { arc: "Arc", base: "Base", solana: "Solana", bsc: "BNB Chain", bnb: "BNB Chain", robinhood: "Robinhood", arbitrum: "Arbitrum",
+  ethereum: "Ethereum", avalanche: "Avalanche", monad: "Monad", hyperevm: "HyperEVM", sui: "Sui", aptos: "Aptos", elysium: "Elysium" };
 const DS = { bsc: "bsc", elysium: "elysium", solana: "solana", base: "base", monad: "monad", robinhood: "robinhood" };
 const RENK = { Arc: "#7c5cff", Base: "#0052ff", Arbitrum: "#28a0f0", Ethereum: "#627eea", "BNB Chain": "#f0b90b", Avalanche: "#e84142",
   Monad: "#836ef9", HyperEVM: "#50e3c2", Robinhood: "#ccff00", Elysium: "#c6f86b", Solana: "#14f195", Sui: "#4da2ff", Aptos: "#2ed8a7" };
@@ -39,6 +44,8 @@ const STIL = `
 .tr-rozet.warp{background:linear-gradient(90deg,#7c5cff,#14b8a6);color:#fff}.tr-rozet.biz{background:rgba(10,10,20,.7);color:#cbbcff;border:1px solid rgba(124,92,255,.6)}
 .tr-z{position:absolute;top:10px;right:10px;z-index:1;font-size:11px;font-weight:800;padding:3px 8px;border-radius:999px;background:rgba(10,10,20,.7);border:1px solid color-mix(in srgb,var(--z) 60%,transparent);color:var(--z)}
 .tr-sq{position:absolute;bottom:10px;left:10px;z-index:1;font-size:10px;font-weight:800;padding:2px 7px;border-radius:999px;background:#c6f86b;color:#10140a}
+.tr-gorsel .rozet-demo{position:absolute;bottom:10px;right:10px;z-index:1}
+.tr-kart--demo .tr-gorsel{filter:saturate(.55)}
 .tr-govde{padding:12px 14px 14px;display:flex;flex-direction:column;gap:6px}
 .tr-ad{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
 .tr-ad b{font-size:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tr-ad span{font-size:12px;opacity:.6;flex:none}
@@ -100,6 +107,16 @@ async function piyasaToplu(satirlar) {
   return out;
 }
 
+/** the grid's styles, for other pages that show launch cards (Discover) */
+export function launchStil() {
+  if (!document.getElementById("tr-stil")) document.head.append(el("style", { attr: { id: "tr-stil" }, yazi: STIL }));
+}
+/** the market figures for a batch of launch rows (see piyasaToplu) */
+export const launchPiyasa = (rows) => piyasaToplu(rows);
+
+/** one launch card; `_doldur(v)` fills in its market figures */
+export function launchKarti(s) { return kart(s); }
+
 function kart(s) {
   const m = squadOf(s.token);
   const z = RENK[s.zincir] || "#7c5cff";
@@ -109,9 +126,10 @@ function kart(s) {
     el("span", { sinif: "tr-rozet " + s.tur }, s.tur === "warp" ? ["Warp ⚡", el("span", { sinif: "tr-lp", yazi: " " + s.lp })] : ["ARC PULSE"]),
     el("span", { sinif: "tr-z", attr: { style: "--z:" + z }, yazi: s.zincir }),
     m ? el("span", { sinif: "tr-sq", yazi: "PULSE SQUAD" }) : null,
+    demoMu(s) ? el("span", { sinif: "rozet-demo", attr: { title: "A protocol demo token: launched by ARC PULSE to prove the contracts work" }, yazi: "Demo" }) : null,
   ]);
   const fiyat = el("b", { yazi: "…" }), mcap = el("b", { yazi: "…" }), deg = el("b", { yazi: "…" });
-  const a = el("a", { sinif: "tr-kart", attr: { href: "#/terminal?t=" + encodeURIComponent(s.token), style: "--z:" + z } }, [
+  const a = el("a", { sinif: "tr-kart" + (demoMu(s) ? " tr-kart--demo" : ""), attr: { href: "#/terminal?t=" + encodeURIComponent(s.token), style: "--z:" + z } }, [
     gorsel,
     el("div", { sinif: "tr-govde" }, [
       el("div", { sinif: "tr-ad" }, [el("b", { yazi: s.ad || s.sembol || "?" }), el("span", { yazi: yas(s.zaman) })]),
@@ -143,7 +161,7 @@ async function detay(K, istenen) {
 
 export async function ciz({ param } = {}) {
   if (param && param.get("ag")) return (await import("./terminal-ag.js")).ciz({ param });
-  if (!document.getElementById("tr-stil")) document.head.append(el("style", { attr: { id: "tr-stil" }, yazi: STIL }));
+  launchStil();
   const K = await (await import("../launch-kaynak.js")).launchKaynagi();
   const satirlar = K.satirlar, hatalar = K.hatalar;
   const istenen = decodeURIComponent((param && param.get("t")) || "").trim().toLowerCase();
@@ -157,7 +175,8 @@ export async function ciz({ param } = {}) {
     return kap;
   }
 
-  let tur = "hepsi", zincir = null, gosterilen = SAYFA;
+  /* ?zincir=<key> (the landing's "Which chain are you?" tiles): open with that chain picked */
+  let tur = "hepsi", zincir = ZINCIR_ANAHTAR[String((param && param.get("zincir")) || "").toLowerCase()] || null, gosterilen = SAYFA;
   const ara = el("input", { sinif: "girdi tr-ara", attr: { placeholder: "Search name, ticker, launchpad or contract address", autocomplete: "off", type: "search" } });
   const seg = el("div", { sinif: "tr-seg", attr: { role: "tablist" } });
   const zc = el("div", { sinif: "tr-zc" });
@@ -166,7 +185,7 @@ export async function ciz({ param } = {}) {
   const daha = el("div", { sinif: "tr-daha" });
   const segCiz = () => temizle(seg).append(...[["hepsi", "All"], ["warp", "Warp"], ["biz", "ARC PULSE"]].map(([k, ad]) => el("button", { attr: { type: "button", "aria-pressed": String(tur === k) }, yazi: ad + (k === "hepsi" ? " · " + K.toplam : ""),
     on: { click: () => { tur = k; gosterilen = SAYFA; segCiz(); ciz2(); } } })));
-  const zcCiz = () => temizle(zc).append(...[null, ...new Set(satirlar.map((s) => s.zincir))].map((z) => el("button", { attr: { type: "button", "aria-pressed": String(z === zincir), style: "--z:" + (RENK[z] || "#7c5cff") }, yazi: z || "All chains",
+  const zcCiz = () => temizle(zc).append(...[null, ...new Set([...satirlar.map((s) => s.zincir), ...(zincir ? [zincir] : [])])].map((z) => el("button", { attr: { type: "button", "aria-pressed": String(z === zincir), style: "--z:" + (RENK[z] || "#7c5cff") }, yazi: z || "All chains",
     on: { click: () => { zincir = z; gosterilen = SAYFA; zcCiz(); ciz2(); } } })));
 
   /* market figures for cards as they come on screen, a batch at a time */
@@ -190,21 +209,25 @@ export async function ciz({ param } = {}) {
     const uyar = (s) => (tur === "hepsi" || s.tur === tur) && (!zincir || s.zincir === zincir) &&
       (!q || [s.ad, s.sembol, s.lp, s.zincir].some((v) => String(v || "").toLowerCase().includes(q)) || String(s.token).toLowerCase() === q);
     /* older index files are loaded only as far as this page of matches needs */
-    const { liste, tam } = await K.sec(uyar, gosterilen + 1);
+    const { liste: ham, tam } = await K.sec(uyar, gosterilen + 1);
     if (bu !== sira) return;
+    const liste = demoSonda(ham);   // protocol demo tokens after real launches, never hidden
     const toplamYazi = tam ? String(liste.length) : liste.length + "+";
-    sayac.textContent = liste.length ? "Showing " + Math.min(gosterilen, liste.length) + " of " + (tur === "hepsi" && !zincir && !q ? K.toplam : toplamYazi) + " · newest first" : "";
+    sayac.textContent = liste.length ? "Showing " + Math.min(gosterilen, liste.length) + " of " + (tur === "hepsi" && !zincir && !q ? K.toplam : toplamYazi) + " · newest first" + (liste.some(demoMu) ? ", protocol demo tokens last" : "") : "";
     temizle(izgara); temizle(daha);
     if (!liste.length) { izgara.append(bos("No launches match", "Try another name, chain or route.")); return; }
     for (const s of liste.slice(0, gosterilen)) { const k = kart(s); k._satir = s; izgara.append(k); gozcu.observe(k); }
     if (liste.length > gosterilen || !tam) daha.append(el("button", { sinif: "dugme dugme--sade", attr: { type: "button" }, yazi: "Load more",
       on: { click: () => { gosterilen += SAYFA; ciz2().then(zcCiz); } } }));
   };
+  /* a booked launch boost: its own labelled row BELOW the organic grid, never inside it */
+  const sponsorSatiri = sponsorYeri("trade", "row", (k) => el("section", { sinif: "sponsor-bolum", attr: { "aria-label": "Sponsored" } }, [k]));
   let araZaman = null;
   ara.addEventListener("input", () => { clearTimeout(araZaman); araZaman = setTimeout(() => { gosterilen = SAYFA; ciz2(); }, 200); });
 
   kap.append(el("div", {}, [el("div", { sinif: "tr-arac" }, [ara, seg]), zc]));
   kap.append(el("div", {}, [sayac, izgara, daha]));
+  kap.append(sponsorSatiri);
   kap.append(el("div", { sinif: "satir", attr: { style: "gap:10px;flex-wrap:wrap" } }, [
     el("a", { sinif: "dugme dugme--sade dugme--kucuk", attr: { href: "#/launches" }, yazi: "All launches as a table →" }),
     el("a", { sinif: "dugme dugme--sade dugme--kucuk", attr: { href: "#/vitrin" }, yazi: "Any other token: Market →" })]));

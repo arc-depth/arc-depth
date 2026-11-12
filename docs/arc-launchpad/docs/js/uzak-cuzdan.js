@@ -311,7 +311,7 @@ export function uzakCuzdanPaneli({ token, V2, kaymaOrani }) {
         }
         return;
       }
-      if (!V2.emanet) return durum("Launching from " + z.ad + " opens when LaunchEmaneti is deployed on Arc (scripts/dagit-launch-emaneti.js).");
+      if (!V2.emanet) return durum("Launching from " + z.ad + " opens when the launch escrow contract is deployed on Arc.");
       /* paid by a CCTP burn: the dollars and the launch arrive together at LaunchEmaneti; the LayerZero value comes out of them */
       const deger6 = (ikizUcret + 10n ** 12n - 1n) / 10n ** 12n;
       /* v4: $0.05 more for whoever carries the launch out on Arc if this page is closed by then (LaunchEmaneti.BAHSIS);
@@ -325,7 +325,7 @@ export function uzakCuzdanPaneli({ token, V2, kaymaOrani }) {
       const r = z.anahtar === "sui" ? await z.u.suiLaunch({ emanet: V2.emanet, miktar6, kanca, durum }) : await z.u.aptosLaunch({ emanet: V2.emanet, miktar6, kanca, durum });
       bekleyen = r;
       bekleyenYaz({ kaynak: r.kaynak, hash: r.hash, zincir: z.ad, t: Date.now() });
-      durum("Burned on " + z.ad + " (" + r.hash.slice(0, 14) + "…). Circle attests it in a few minutes; then anyone runs it on Arc (LaunchEmaneti.isle). Waiting for the attestation…");
+      durum("Burned on " + z.ad + " (" + r.hash.slice(0, 14) + "…). Circle attests it in a few minutes; then anyone can complete it on Arc from the launch escrow contract. Waiting for the attestation…");
       for (let i = 0; i < 120; i++) {
         const o = await z.u.onay(r.kaynak, r.hash);
         if (o) { bekleyen.onay = o; bitirD.hidden = false; return durum("Attested. Press \"Finish on Arc\" with any EVM wallet (or leave it to anyone: it can only launch your token, with your dollars" +
@@ -370,7 +370,7 @@ export function uzakCuzdanPaneli({ token, V2, kaymaOrani }) {
     el("div", { sinif: "girdi-grup" }, [satD, itfaD, tasD]),
     el("div", { sinif: "alan__ipucu", yazi: "Buy with SOL (relay.link): bought in the Arc pool, delivered to this wallet on Solana." }),
     el("div", { sinif: "girdi-grup" }, [alTutar, el("span", { sinif: "girdi-grup__son", yazi: "$" }), alD]),
-    el("div", { sinif: "alan__ipucu", yazi: "Launch from this wallet: Solana pays through relay.link; Sui and Aptos burn USDC through Circle to LaunchEmaneti on Arc, which launches with it. Basket: " + (v8 && V2.platformToken ? V2.platformToken.sembol : "ARCP") + " on Arc + WETH on Base, " + (v8 ? "each 5% of the first buy ($1 at least)" : "$10 each") + ". The founder's tokens and income go to the Arc address above." }),
+    el("div", { sinif: "alan__ipucu", yazi: "Launch from this wallet: Solana pays through relay.link; Sui and Aptos burn USDC through Circle to the launch escrow contract on Arc, which launches with it. Basket: " + (v8 && V2.platformToken ? V2.platformToken.sembol : "ARCP") + " on Arc + WETH on Base, " + (v8 ? "each 5% of the first buy ($1 at least)" : "$10 each") + ". The founder's tokens and income go to the Arc address above." }),
     el("div", { sinif: "girdi-grup" }, [lAd, lSembol]),
     el("div", { sinif: "girdi-grup" }, [lAlim, el("span", { sinif: "girdi-grup__son", yazi: "$ first buy" })]),
     el("label", { sinif: "alan__ipucu" }, [lIkiz, el("span", { yazi: " twins on the 8 EVM chains now (their LayerZero fee is added)" })]),

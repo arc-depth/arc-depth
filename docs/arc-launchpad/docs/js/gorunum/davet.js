@@ -8,7 +8,8 @@
  * whether the published root matches before it offers a claim.
  * No server, no account, nothing stored about the visitor.
  * =========================================================================== */
-import { el, sayfaUst, panel, bos, not, olcum, adres, adimlar } from "../ui.js";
+import { el, sayfaUst, panel, bos, not, olcum, adres, adimlar, ayrinti } from "../ui.js";
+import { sozlesmeAyrinti } from "./squad.js";
 import { para } from "../bicim.js";
 import * as H from "../davet-hesap.js";
 import { arcOkur, davetCanli, bekleyenDavet, baglantiDurumu, baglaGonder, arcGonder, zincirVerisi, refCoz } from "../davet.js";
@@ -27,19 +28,47 @@ function kopyaSatiri(metin) {
   return el("div", { sinif: "girdi-grup davet-link" }, [el("input", { sinif: "girdi mono", attr: { readonly: true, value: metin, "aria-label": "Invite link" } }), b]);
 }
 
+/* the share of a trade that counts for referrals (davet-hesap.js): development 0.30% + marketing
+   (operations) 0.20% on a main-launchpad trade, 0.30% + 0.10% on a designer-token trade */
+const PAY_ANA = 0.005, PAY_TASARIM = 0.004;
+
+/** A worked example the visitor can change: an amount a friend trades, and what the rate on chain gives the referrer. */
+function ornekHesap(oranBps) {
+  const oran = oranBps / 10_000;
+  const girdi = el("input", { sinif: "girdi mono", attr: { type: "number", min: "0", step: "100", value: "1000", inputmode: "decimal", "aria-label": "Amount your friend trades, in dollars", style: "max-width:160px" } });
+  const sonuc = el("div", { sinif: "d4-ornek-hesap" });
+  const yaz = () => {
+    const x = Math.max(0, Number(girdi.value) || 0);
+    const kutu = (et, dg, alt) => el("div", { sinif: "olcum" }, [el("div", { sinif: "olcum__etiket", yazi: et }), el("div", { sinif: "olcum__deger", yazi: dg }), el("div", { sinif: "olcum__alt", yazi: alt })]);
+    sonuc.replaceChildren(
+      kutu("Main launchpad trade", "$" + (x * PAY_ANA * oran).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 4 }), (oranBps / 100) + "% of 0.50% of the trade"),
+      kutu("Designer-token trade", "$" + (x * PAY_TASARIM * oran).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 4 }), (oranBps / 100) + "% of 0.40% of the trade"));
+  };
+  girdi.addEventListener("input", yaz);
+  yaz();
+  return el("div", { sinif: "yigin yigin--sik" }, [
+    el("label", { sinif: "yazi", attr: { style: "display:flex;flex-wrap:wrap;gap:8px;align-items:center" } }, ["If a friend you invited trades $", girdi, " you earn, in USDC:"]),
+    sonuc,
+    el("div", { sinif: "yazi yazi--kucuk yazi--sessiz", yazi: "An example of the arithmetic, not a forecast: you earn only from fees your invitees actually pay." }),
+  ]);
+}
+
 function kurallar(oranBps, bekleme) {
   const oran = (oranBps / 100).toLocaleString("en-US") + "%";
   return panel("How it works", el("div", { sinif: "yigin yigin--sik" }, [
+    ornekHesap(oranBps),
     el("ol", { sinif: "davet-adimlar" }, [
       el("li", { yazi: "Share your link. Anyone who opens it and then links their wallet (one Arc transaction, gas only) becomes your invitee. The link is set once per wallet, forever: the first invite they link wins, nobody can change it, and a wallet cannot invite itself." }),
       el("li", { yazi: "When your invitees trade, launch, publish or buy a design, hire on Designs or fill a limit order, the contracts take their usual fees. Nothing is added for them." }),
-      el("li", { yazi: "You earn " + oran + " of the DEVELOPMENT + MARKETING share of those fees, exactly as each contract paid it, for activity after they linked: on a v8 trade 0.30% + 0.20% of it, on a v9 trade 0.30% + 0.10%, half of the 2% launch fee, the $0.10 marketing half of a design publish fee, and the development and marketing slices of Designs market, commission and limit-order fees. The burn share and the owner's share are never part of it. The development / marketing side pays it." }),
-      el("li", { yazi: "Rewards are computed from public Arc logs by an open program (the same code this page runs). Once a day a published root of every referrer's cumulative reward goes on DavetOdemesi; after a " + Math.round(bekleme / 3600) + "-hour wait you claim it in USDC here." })
+      el("li", { yazi: "You earn " + oran + " of the development and marketing share of those fees, for activity after they linked." }),
+      el("li", { yazi: "Rewards are worked out from public Arc records by an open program (the same code this page runs). Once a day the total owed to every referrer is published to the referral payout contract; after a " + Math.round(bekleme / 3600) + "-hour wait you claim it in USDC here." })
     ]),
-    not("The rate is set on chain (now " + oran + ", hard cap 30%) and changes are public events that only apply from their block on. A root can never promise more than the contract holds. Rewards come only from fees your invitees actually pay: no amount is promised, and this is not an investment or income product."),
+    ayrinti("Which fees count, exactly?", "The development + marketing share of each fee, exactly as each contract paid it: on a main-launchpad trade 0.30% + 0.20% of the trade, on a designer-token trade 0.30% + 0.10%, half of the 2% launch fee, the $0.10 marketing half of a design publish fee, and the development and marketing slices of the Designs market, commission and limit-order fees. " +
+      "The daily publication is a Merkle root of every referrer's running total; this page recomputes it from Arc and shows whether it matches before it offers a claim."),
+    not("The rate is set on chain (now " + oran + ", hard cap 30%) and changes are public events that only apply from their block on. A published total can never promise more than the contract holds. Rewards come only from fees your invitees actually pay: no amount is promised, and this is not an investment or income product."),
+    sozlesmeAyrinti([["Who invited whom (written once by the invited wallet, no admin)", "DavetKaydi", H.DAVET.kayit], ["Referral payouts in USDC", "DavetOdemesi", H.DAVET.odeme]]),
   ]));
 }
-
 export async function ciz({ cuzdan }) {
   const kap = el("div", { sinif: "yigin" });
   kap.append(sayfaUst("Referrals", "Invite people to ARC PULSE and receive 20% of the development + marketing share of the fees they pay, in USDC"));
@@ -187,7 +216,7 @@ async function panoCiz(pano, { ben, durum, odeme, cuzdan }) {
       kokKap.append(el("div", { sinif: "girdi-grup" }, [b]), d);
     } else if (kokVar) kokKap.append(el("div", { sinif: "yazi--kucuk yazi--sessiz", yazi: "Nothing for this wallet in the claimable root." }));
   }
-  kokKap.append(el("div", { sinif: "yazi--kucuk yazi--sessiz", yazi: "Reward pot: " + usdTam(kasa) + " held, " + usdTam(borc) + " owed to published roots. Contract: " + H.DAVET.odeme }));
+  kokKap.append(el("div", { sinif: "yazi--kucuk yazi--sessiz", yazi: "Reward pot: " + usdTam(kasa) + " held, " + usdTam(borc) + " owed to published totals." }));
 
   /* invitees */
   const liste = [...v.baglar].filter(([, b]) => b.davetci === k);
@@ -199,5 +228,5 @@ async function panoCiz(pano, { ben, durum, odeme, cuzdan }) {
   const g = el("tbody");
   for (const [a, b] of liste.sort((x, y) => y[1].blok - x[1].blok).slice(0, 100)) g.append(el("tr", {}, [el("td", {}, [adres(a)]), el("td", { yazi: b.blok.toLocaleString("en-US") }), el("td", { yazi: usd(hacimOf.get(a) || 0n) })]));
   t.append(g);
-  pano.append(t);
+  pano.append(el("div", { sinif: "tablo-sarmal" }, [t]));
 }

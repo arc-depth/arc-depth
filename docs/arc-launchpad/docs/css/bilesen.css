@@ -635,3 +635,79 @@ textarea.girdi { height: auto; min-height: 84px; padding: var(--bosluk-3); resiz
 .davet-link .girdi { flex: 1; min-width: 0; }
 .davet-adimlar { margin: 0; padding-left: 20px; display: grid; gap: 6px; color: var(--yazi-2); }
 .lider-pencere { margin-bottom: 4px; }
+
+/* ===== 12 Nov 2026 redesign: shell pieces, the Sponsored unit, badges ===== */
+
+/* rail: a child route (Create's launch forms, Platform DAO's proposals) sits indented under its parent */
+.yol-oge--alt { height: 30px; padding-left: 30px; font-size: var(--boy-s); color: var(--yazi-3); }
+.yol-oge--alt .yol-oge__ikon { width: 14px; height: 14px; }
+
+/* top bar: the presale chip and Create */
+.ust-cip { display: inline-flex; align-items: center; gap: 7px; height: 34px; padding: 0 12px; border-radius: 999px;
+  border: 1px solid rgba(155, 232, 189, .35); background: rgba(155, 232, 189, .08); color: var(--yazi-1); font-size: 13px; font-weight: 600; white-space: nowrap; }
+.ust-cip:hover { color: var(--yazi-1); border-color: rgba(155, 232, 189, .7); }
+.ust-cip i { width: 7px; height: 7px; border-radius: 50%; background: #9be8bd; box-shadow: 0 0 8px #9be8bd; }
+.ust-cip__kisa { display: none; }
+.ust-olustur { display: inline-flex; align-items: center; gap: 6px; }
+@media (max-width: 860px) {
+  .ust-olustur { display: none; }
+  .ust-cip { height: 32px; padding: 0 10px; }
+  .ust-cip__uzun { display: none; }
+  .ust-cip__kisa { display: inline; }
+}
+
+/* search: pages that match, under the box */
+.ust-ara__oneri { position: absolute; left: 0; right: 0; top: calc(100% + 6px); z-index: var(--z-menu); padding: 6px;
+  border: 1px solid var(--cizgi-guclu); border-radius: 12px; background: #121419; box-shadow: var(--golge-menu); }
+.ustbar[data-ara="1"] .ust-ara__oneri { left: var(--oluk); right: var(--oluk); }
+.ust-ara__oneri[hidden] { display: none; }
+.ust-ara__oneri a { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 8px; color: var(--yazi-1); font-size: 14px; }
+.ust-ara__oneri a:hover, .ust-ara__oneri a:focus-visible { background: var(--yuzey-2); }
+.ust-ara__oneri svg { width: 16px; height: 16px; color: var(--yazi-3); flex: none; }
+.ust-ara__et { padding: 6px 10px 4px; font-size: 12px; color: var(--yazi-3); }
+
+/* empty states: the second and later mascots on a page are smaller */
+.bos__pulsy--kucuk { width: 48px !important; height: 48px !important; }
+.yok > .bos__pulsy { margin: 0 0 6px; }
+
+/* ---- the Sponsored unit (js/sponsor.js) --------------------------------
+   Dashed frame (organic cards are solid), no glow, no gradient, no mascot, no motion,
+   no price. The word "Sponsored" is real text and comes first. */
+.sponsor { position: relative; display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; border-radius: 14px;
+  border: 1px dashed var(--cizgi-guclu); background: var(--yuzey-1); color: var(--yazi-1); min-width: 0; }
+.sponsor__ust { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--yazi-2); min-width: 0; }
+.sponsor__et { font-weight: 700; color: var(--yazi-1); letter-spacing: .02em; }
+.sponsor__ad { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sponsor__neden { margin-left: auto; position: relative; }
+.sponsor__neden summary { list-style: none; cursor: pointer; display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%;
+  border: 1px solid var(--cizgi-guclu); font-size: 11px; font-weight: 700; font-style: italic; color: var(--yazi-2); }
+.sponsor__neden summary::-webkit-details-marker { display: none; }
+.sponsor__neden-govde { position: absolute; right: 0; top: 26px; z-index: 5; width: min(260px, 70vw); padding: 10px 12px; border-radius: 10px;
+  border: 1px solid var(--cizgi-guclu); background: #121419; box-shadow: var(--golge-menu); font-size: 12.5px; line-height: 1.45; color: var(--yazi-2); }
+.sponsor__govde { display: flex; gap: 12px; align-items: flex-start; min-width: 0; }
+.sponsor__resim { width: 40px; height: 40px; border-radius: 10px; object-fit: cover; flex: none; background: var(--yuzey-2); }
+.sponsor__yazi { min-width: 0; }
+.sponsor__yazi b { display: block; font-size: 15px; line-height: 1.3; overflow-wrap: anywhere; }
+.sponsor__yazi p { margin: 3px 0 0; font-size: 13.5px; line-height: 1.4; color: var(--yazi-2); overflow-wrap: anywhere; }
+.sponsor__git { align-self: flex-start; gap: 8px; }
+.sponsor__git small { font-size: 12px; color: var(--yazi-3); font-weight: 500; }
+.sponsor--row { flex-direction: row; flex-wrap: wrap; align-items: center; }
+.sponsor--row .sponsor__ust { flex: 1 0 100%; }
+.sponsor--row .sponsor__govde { flex: 1 1 260px; }
+.sponsor--rail { padding: 12px; gap: 8px; }
+.sponsor--rail .sponsor__yazi b { font-size: 14px; }
+.sponsor--rail .sponsor__yazi p { font-size: 12.5px; }
+.sponsor--slide { height: 100%; justify-content: center; padding: 28px 32px; border-radius: 0; border-width: 0; outline: 1px dashed var(--cizgi-guclu); outline-offset: -10px; }
+.sponsor--slide .sponsor__yazi b { font-size: 24px; }
+.sponsor--slide .sponsor__yazi p { font-size: 15px; }
+.sponsor--slide .sponsor__resim { width: 64px; height: 64px; border-radius: 14px; }
+.sponsor-bolum { display: flex; flex-direction: column; gap: 8px; }
+.sponsor-bolum__et { font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--yazi-3); }
+
+/* badges: Demo (protocol test tokens), External (third-party tokens) */
+.rozet-demo { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; color: var(--yazi-2); vertical-align: middle;
+  border: 1px solid var(--cizgi-guclu); background: repeating-linear-gradient(135deg, rgba(255,255,255,.08) 0 4px, transparent 4px 8px), var(--yuzey-2); }
+.rozet-dis { display: inline-block; font-size: 11px; font-weight: 600; padding: 1px 7px; border-radius: 999px; color: var(--yazi-3); border: 1px solid var(--cizgi-guclu); vertical-align: middle; margin-left: 6px; }
+
+/* the wallet button: "Connect" on a narrow phone, "Connect wallet" elsewhere */
+@media (max-width: 480px) { .cuzdan-uzun { display: none; } #cuzdan-dugme { padding: 0 12px; } }

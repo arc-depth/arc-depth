@@ -17,18 +17,18 @@ const usd = (x) => "$" + (x >= 1000 ? Math.round(x).toLocaleString("en-US") : x.
 
 export async function ciz() {
   const kap = el("div", { sinif: "yigin" });
-  kap.append(sayfaUst("Documentation", "Exactly what the system does — the second generation"));
+  kap.append(sayfaUst("Documentation", "Exactly what the system does: one pool on Arc, twins on 11 chains, payments from 13"));
 
   /* ---- 1. one pool, twelve chains ------------------------------------ */
-  kap.append(panel("1 — One pool, twelve chains", [
+  kap.append(panel("1 — One pool on Arc, 13 chains", [
     el("div", { sinif: "ikincil" }, [
       el("p", { yazi: "Every token has ONE pool, on Arc (Uniswap v4). Every buy and sell, from whichever chain, is made in that pool, " +
         "so the price is the same everywhere by construction — there is no second market to keep in line and no price messages." }),
-      el("p", { attr: { style: "margin-top:10px" }, yazi: "On the other eleven chains the token exists as its twin: the real token locked on Arc " +
+      el("p", { attr: { style: "margin-top:10px" }, yazi: "On 11 other chains the token exists as its twin: the real token locked on Arc " +
         "(the EVM twins in their Arc adapter, the Solana / Sui / Aptos twins in the twin hub) and the same amount minted there. " +
         "Supply is fixed at 1,000,000,000; there is no mint function, only burn. Twins are moved by LayerZero, dollars by Circle " +
         "(CCTP with forwarding) or relay.link; nothing waits on a machine of ours." }),
-      el("p", { attr: { style: "margin-top:10px" }, yazi: "The thirteenth chain, Elysium, is a pay-from chain: an Elysium wallet launches and buys in HYPE through relay.link and receives on Arc. LayerZero does not reach Elysium, so no twin and no vault live there yet; Elysium's own tokens are in Market, buyable from any chain." }),
+      el("p", { attr: { style: "margin-top:10px" }, yazi: "The 13th chain, Elysium, is a pay-from chain: an Elysium wallet launches and buys in HYPE through relay.link and receives on Arc. LayerZero does not reach Elysium, so no twin and no vault live there yet; Elysium's own tokens are in Market, buyable from any chain." }),
     ]),
   ]));
 
@@ -155,7 +155,7 @@ export async function ciz() {
   /* ---- 9. security --------------------------------------------------- */
   kap.append(panel("9 — Security: reporting a vulnerability, and the bounty", [
     el("div", { sinif: "ikincil" }, [
-      el("p", { yazi: "In scope: the live v7 contracts on all twelve chains (the Security page lists every address with its Sourcify-verified source), the site at arcpulse.app and GENESIS's diagnosis code. " +
+      el("p", { yazi: "In scope: the live contracts on all 12 chains where they are deployed (the Security page lists every address with its Sourcify-verified source), the site at arcpulse.app and GENESIS's diagnosis code. " +
         "Out of scope: third parties we depend on (Circle CCTP, LayerZero, relay.link, Uniswap, Raydium, Cetus, Hyperion, wallets), the older sets v2–v6 except where they still hold funds, price movements, and anything that needs a stolen key." }),
       el("p", { attr: { style: "margin-top:10px" }, yazi: "Report privately: GitHub → arc-depth/arc-depth → Security → Report a vulnerability (private advisory), or a direct message to @ArcPulseApp on X. " +
         "Please do not open a public issue or exploit it on mainnet beyond what proves it. We answer within 72 hours and publish the fix and the report after it is safe." }),

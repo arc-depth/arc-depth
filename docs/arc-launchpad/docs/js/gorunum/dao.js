@@ -32,7 +32,8 @@
  *   — once. Here they are read as seconds.
  * =========================================================================== */
 
-import { el, sayfaUst, panel, bos, not, olcum, adres, hata, adimlar } from "../ui.js";
+import { el, sayfaUst, panel, bos, not, olcum, adres, hata, adimlar, ayrinti } from "../ui.js";
+import { maskotBos, dugmeLink, sozlesmeAyrinti } from "./squad.js";
 import { oku, cokluCagri, cagriVerisi, sonucCoz, ABI } from "../zincir.js";
 import { YONETISIM, DAO_YETKI } from "../adresler.js";
 import { jetonMiktar, tamSayidanSayi, gecenSure } from "../bicim.js";
@@ -45,11 +46,11 @@ const oran = (bps) => (Number(bps) / 100).toFixed(2) + "%";
 /* Governor.State, in order. A number nobody can read is a number that
    invites a guess. */
 const DURUM = [
-  { ad: "Oylamada", sinif: "etiket--aktif" },
-  { ad: "Reddedildi", sinif: "etiket--red" },
-  { ad: "Kabul edildi", sinif: "etiket--kabul" },
-  { ad: "Kuyrukta", sinif: "etiket--bekle" },
-  { ad: "Uygulanabilir", sinif: "etiket--kabul" },
+  { ad: "Voting", sinif: "etiket--aktif" },
+  { ad: "Defeated", sinif: "etiket--red" },
+  { ad: "Passed", sinif: "etiket--kabul" },
+  { ad: "Queued", sinif: "etiket--bekle" },
+  { ad: "Ready to execute", sinif: "etiket--kabul" },
   { ad: "Executed", sinif: "etiket--bitti" },
   { ad: "Expired", sinif: "etiket--red" },
   { ad: "Cancelled", sinif: "etiket--red" }
@@ -60,8 +61,8 @@ function sureYaz(saniye) {
   if (!isFinite(s) || s <= 0) return "—";
   if (s % 86400 === 0) return s / 86400 + " days";
   if (s >= 86400) return (s / 86400).toFixed(2) + " days";
-  if (s >= 3600) return (s / 3600).toFixed(1) + " saat";
-  return s + " sn";
+  if (s >= 3600) return (s / 3600).toFixed(1) + " hours";
+  return s + " seconds";
 }
 
 /* ---- the live parameters, read in one batch -------------------------- */
@@ -137,6 +138,29 @@ function gucVgovde(kap, kurucuPay, yuzde, toplam) {
 
 /* ---- the screen ------------------------------------------------------ */
 
+/* plain reasons for the entries whose note is a sentence about a contract rather than "Name: reason" */
+const SADE = {
+  "The treasury": "its governor is the earlier ALP governor and cannot be changed, so ARCP cannot reach it",
+  "The launch menu (the share queue)": "governed by the earlier ALP governor, and the queue was cancelled",
+  "The old developer fund": "its allocator is the operations wallet and cannot be changed",
+};
+
+/* staking: what exists today and when ARCP 2 staking opens (veri/arcp2.json has its stake and governor) */
+function stakePaneli() {
+  const govde = el("div", { sinif: "yigin yigin--sik" }, [el("div", { sinif: "yazi yazi--sessiz", yazi: "Reading ARCP 2…" })]);
+  fetch("veri/arcp2.json").then((r) => (r.ok ? r.json() : null)).catch(() => null).then((k) => {
+    govde.replaceChildren(
+      el("p", { yazi: "Voting power comes from staked ARCP. ARCP 2, the current token, has its own stake contract and its own governor on Arc, already deployed. " +
+        "Nobody holds ARCP 2 until its presale round fills and its pool opens, so nobody can stake it yet: staking opens with the pool. Stakers then receive ARCP released weekly from the staking allocation (10% of supply) and vote on the developer pool." }),
+      el("p", { sinif: "yazi yazi--sessiz", yazi: "Until then, the governor this page reads is the previous ARCP's. It still decides payments from the developer pool, and holders of the previous ARCP can stake it on its archive page." }),
+      el("div", { sinif: "d4-bos__eylem" }, [dugmeLink("Join the ARCP 2 presale", "presale.html", true), dugmeLink("ARCP 2 details", "#/fthm"), dugmeLink("Previous ARCP: stake on the archive page", "fathom.html")]),
+      sozlesmeAyrinti([
+        ["ARCP 2 stake contract", "Stake", k ? k.stake : null], ["ARCP 2 governor", "DepthGovernor", k ? k.governor : null],
+        ["Governor read on this page (previous ARCP)", "Governor", YONETISIM.governor], ["Its stake contract", "Stake", YONETISIM.staking]]));
+  });
+  return panel("Stake ARCP", govde);
+}
+
 export async function ciz() {
   const kap = el("div", { sinif: "yigin" });
   kap.append(sayfaUst(
@@ -148,6 +172,7 @@ export async function ciz() {
     { ikon: "oy", baslik: "Propose and vote", yazi: "Anyone with enough stake proposes how the developer pool is spent. Holders vote for five days." },
     { ikon: "meclis", baslik: "Timelock, then execute", yazi: "A passed proposal waits two days, then anyone executes it. The contract pays; no team wallet in between." },
   ]));
+  kap.append(stakePaneli());
 
   let p;
   try {
@@ -155,8 +180,7 @@ export async function ciz() {
   } catch (e) {
     kap.append(hata(
       "Governance could not be read",
-      "The governor is at " + YONETISIM.governor + " and did not " +
-      "answer: " + e.message
+      "The Arc endpoint did not answer just now. Reload the page in a minute. (" + e.message + ")"
     ));
     return kap;
   }
@@ -164,8 +188,7 @@ export async function ciz() {
   if (p.proposalCount == null) {
     kap.append(hata(
       "Governance is not answering",
-      "The governor is at " + YONETISIM.governor + " but `proposalCount()` " +
-      "did not answer. The screen stops here rather than inventing a state."
+      "The governor contract did not return its proposal count just now, so this page shows nothing rather than a guess. Reload in a minute."
     ));
     return kap;
   }
@@ -191,8 +214,7 @@ export async function ciz() {
   kap.append(not(
     "This DAO is live on chain and has taken " + sayi + " proposals. " +
     (sayi === 0
-      ? "Zero is not a fault: the mechanism is in place, nobody has " +
-        "proposed yet."
+      ? "Nobody has proposed yet; the mechanism is in place."
       : ""),
     sayi === 0 ? "bilgi" : ""
   ));
@@ -265,7 +287,7 @@ export async function ciz() {
     const esik = asgari == null
       ? null : Math.max(t * Number(p.PROPOSAL_THRESHOLD_BPS) / 10_000, asgari);
     gucGovde.append(el("div", { sinif: "izgara izgara--olcum" }, [
-      olcum("Total staked", jetonMiktar(t) + " ARCP", "all of the voting power"),
+      olcum("Total staked", jetonMiktar(t) + " ARCP", "previous ARCP; all of the voting power"),
       olcum("Quorum threshold",
         jetonMiktar(t * Number(p.QUORUM_BPS) / 10_000) + " ARCP",
         "the FOR votes a proposal needs to pass"),
@@ -319,11 +341,9 @@ export async function ciz() {
   const yetkiGovde = el("div", { sinif: "yigin yigin--sik" });
   yetkiGovde.append(el("p", {
     sinif: "yazi yazi--sessiz",
-    yazi: "The governor's proposal signature is propose(string, address, " +
-      "bytes), so a proposal can EXPRESS any call to any address. What " +
-      "holds it is not a list inside the governor but the absence of a " +
-      "lever in the target contracts. Being expressible is not the same " +
-      "as being valid: a call without authority reverts."
+    yazi: "A proposal can express any call to any address. What holds it " +
+      "is not a list inside the governor but the absence of a lever in the " +
+      "target contracts: a call without authority reverts."
   }));
 
   const iki = el("div", { sinif: "izgara izgara--iki" });
@@ -332,47 +352,49 @@ export async function ciz() {
   for (const x of DAO_YETKI.yapabilir) {
     yapabilir.append(el("li", {}, [
       el("strong", { yazi: x.ne }),
-      el("span", { sinif: "yazi yazi--kucuk yazi--sessiz", yazi: "  " + x.nerede })
+      el("span", { sinif: "yazi yazi--kucuk yazi--sessiz", yazi: "  " + String(x.nerede).replace(/^DevPool\.pay\s*[—-]\s*/, "paid by the developer pool contract; ") })
     ]));
   }
   iki.append(panel("Can decide", yapabilir));
 
   const yapamaz = el("ul", { sinif: "liste liste--capraz" });
+  /* the reason is shown in plain words; the contract's code name goes to "Contract details" below */
+  const yapamazKod = [];
   for (const x of DAO_YETKI.yapamaz) {
+    const m = /^([A-Za-z0-9.\/ ]+?)(?::| is | and )(.*)$/.exec(x.neden);
+    const kod = m ? m[1].trim() : "";
+    const sade = m && /:/.test(x.neden.slice(0, m[1].length + 1)) ? m[2].trim() : null;
+    yapamazKod.push([x.ne, x.neden, null]);
     yapamaz.append(el("li", {}, [
       el("strong", { yazi: x.ne }),
-      el("span", { sinif: "yazi yazi--kucuk yazi--sessiz", yazi: "  " + x.neden })
+      el("span", { sinif: "yazi yazi--kucuk yazi--sessiz", yazi: "  " + (sade ? sade.charAt(0).toUpperCase() + sade.slice(1) : SADE[x.ne] || "out of the DAO's reach") })
     ]));
   }
   iki.append(panel("Cannot touch", yapamaz));
   yetkiGovde.append(iki);
+  yetkiGovde.append(sozlesmeAyrinti(yapamazKod, "Contract details: why each is out of reach"));
 
   yetkiGovde.append(not(
     "This split is not a policy but a measurement: " +
-    "scripts/denetim-dao-erisimi.js reads those contracts one by one and " +
+    "an audit script in the project's repository reads those contracts one by one and " +
     "asserts that none of them has a privileged role or a setter. If " +
     "somebody adds a setter to a vault, that audit goes red.",
     "bilgi"
   ));
 
   /* The residual risk inside the permitted set. Stated, not buried. */
-  yetkiGovde.append(not(DAO_YETKI.artikRisk, "uyari"));
+  yetkiGovde.append(not(DAO_YETKI.artikRisk.replace("DevPool", "developer pool"), "uyari"));
 
   kap.append(panel("What the DAO can decide", yetkiGovde));
 
   /* ---- 5. the proposals themselves -------------------------------- */
 
   if (sayi === 0) {
-    kap.append(panel("Proposals", bos(
+    kap.append(panel("Proposals", maskotBos("pulsy",
       "No proposals yet",
-      "The governor has recorded " + sayi + " proposals. To propose and " +
-      "to vote, go to the Proposals and voting screen — every button " +
-      "there sends a real transaction.",
-      el("a", {
-        sinif: "dugme dugme--marka",
-        attr: { href: "#/teklifler" },
-        yazi: "Proposals and voting"
-      })
+      "Proposals appear here once someone with enough staked ARCP opens one. To propose and " +
+      "to vote, go to Proposals and voting: every button there sends a real transaction.",
+      [dugmeLink("Proposals and voting", "#/teklifler", true)]
     )));
     return kap;
   }
@@ -403,10 +425,10 @@ export async function ciz() {
   tablo.append(el("thead", {}, [el("tr", {}, [
     el("th", { yazi: "#" }),
     el("th", { yazi: "Description" }),
-    el("th", { yazi: "Durum" }),
-    el("th", { yazi: "Lehte" }),
-    el("th", { yazi: "Aleyhte" }),
-    el("th", { yazi: "Hedef" })
+    el("th", { yazi: "State" }),
+    el("th", { yazi: "For" }),
+    el("th", { yazi: "Against" }),
+    el("th", { yazi: "Target" })
   ])]));
   const govde = el("tbody");
 
@@ -451,7 +473,7 @@ export async function ciz() {
   });
 
   tablo.append(govde);
-  kap.append(panel("Recent proposals", tablo, el("a", {
+  kap.append(panel("Recent proposals", el("div", { sinif: "tablo-sarmal" }, [tablo]), el("a", {
     sinif: "dugme dugme--sessiz",
     attr: { href: "#/teklifler" },
     yazi: "See all and vote"

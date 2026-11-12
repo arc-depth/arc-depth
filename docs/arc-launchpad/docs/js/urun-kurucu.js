@@ -95,7 +95,7 @@ export function secimYap(s) {
 }
 const _dinleyen = new Set();
 const secimYazi = (s) => s.tur === "kilit"
-  ? "Founder lock: " + s.ay + " months" + (s.ucurum ? ", nothing for the first " + s.ucurum : ", no cliff")
+  ? "Founder lock: " + s.ay + " months" + (s.ucurum ? ", nothing for the first " + s.ucurum + (Number(s.ucurum) === 1 ? " month" : " months") : ", no cliff")
   : "DAO treasury: voting " + s.ayar[0] / 86400 + " day(s), timelock " + s.ayar[1] / 3600 + " hour(s), quorum " + s.ayar[2] / 100 + "% of " + (s.ayar[3] ? "deposits" : "supply");
 
 /** The box on the Create page: what the founder slot will be, and a way to remove the choice. */
@@ -233,7 +233,7 @@ export function kilitPaneli({ cuzdan }) {
 
     /* before the launch */
     const ay = secimKutu(Array.from({ length: 22 }, (_, i) => [i + 3, (i + 3) + " months"]), 12);
-    const ucurum = secimKutu(Array.from({ length: 25 }, (_, i) => [i, i ? i + " months" : "No cliff"]), 3);
+    const ucurum = secimKutu(Array.from({ length: 25 }, (_, i) => [i, i ? i + (i === 1 ? " month" : " months") : "No cliff"]), 3);
     const sinirla = () => { for (const o of ucurum.options) o.disabled = Number(o.value) > Number(ay.value); if (Number(ucurum.value) > Number(ay.value)) ucurum.value = ay.value; };
     ay.addEventListener("change", sinirla); sinirla();
     const sec = el("a", { sinif: "dugme dugme--marka", attr: { href: "#/olustur" }, yazi: "Lock my founder share and create a project token" });

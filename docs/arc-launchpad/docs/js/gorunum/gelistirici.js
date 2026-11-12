@@ -104,13 +104,13 @@ export async function ciz({ kayit, cuzdan }) {
 
     havuzGovde.append(el("div", { sinif: "izgara izgara--olcum" }, [
       olcum("Collected in the pool",
-        tutulan == null ? "unreadable" : para(tamSayidanSayi(tutulan, 6)),
-        "0.30% of every trade"),
+        tutulan == null ? "—" : para(tamSayidanSayi(tutulan, 6)),
+        tutulan == null ? "could not be read just now; reload in a minute" : "0.30% of every trade"),
       olcum("ARCP staked",
-        stakeli == null ? "unreadable" : jetonMiktar(tamSayidanSayi(stakeli, 18)),
+        stakeli == null ? "—" : jetonMiktar(tamSayidanSayi(stakeli, 18)),
         "all of the voting power"),
       olcum("Proposal floor",
-        taban == null ? "unreadable" : jetonMiktar(tamSayidanSayi(taban, 18)) + " ARCP",
+        taban == null ? "—" : jetonMiktar(tamSayidanSayi(taban, 18)) + " ARCP",
         "the minimum needed to propose")
     ]));
 
@@ -123,15 +123,16 @@ export async function ciz({ kayit, cuzdan }) {
     havuzGovde.append(not(
       bos0
         ? "Money leaves this pool only through a proposal the ARCP DAO has " +
-          "passed, and RIGHT NOW no ARCP is staked — so nobody has voting " +
-          "power and nobody can propose. The pool keeps filling and " +
-          "neither the DAO nor we can take anything out of it. There is no " +
-          "claim button here because there is nothing to press."
+          "passed. No ARCP is staked yet, so nobody can propose today; the " +
+          "pool keeps filling, and neither the DAO nor we can take anything " +
+          "out of it in the meantime. The Platform DAO page explains staking " +
+          "and when ARCP 2 staking opens. Record your contribution now so a " +
+          "proposal can point to it."
         : "Money leaves this pool only through a proposal the ARCP DAO has " +
           "passed: a 1% proposal threshold, 10% quorum, five days of " +
           "voting, two days of timelock. You can record your contribution, " +
           "but payment depends on a vote.",
-      bos0 ? "uyari" : "bilgi"
+      "bilgi"
     ));
 
     havuzGovde.append(not(
@@ -163,12 +164,12 @@ export async function ciz({ kayit, cuzdan }) {
     katkiGovde.append(el("p", {
       sinif: "yazi yazi--sessiz",
       yazi: "You can put your work on chain: give a link (a PR, a repo, a " +
-        "report), the record is public and gets an id. This is NOT A " +
+        "report), the record is public and gets an id. This is not a " +
         "PAYMENT — payment happens only through a proposal the DAO " +
         "passes, and that proposal refers to this id."
     }));
     katkiGovde.append(el("div", { sinif: "izgara izgara--olcum" }, [
-      olcum("Contributions recorded", sayi == null ? "unreadable" : String(Number(sayi)),
+      olcum("Contributions recorded", sayi == null ? "—" : String(Number(sayi)),
         "to date"),
       olcum("Who may record", "anyone", "permissionless: the judgement happens in the vote")
     ]));
@@ -227,7 +228,7 @@ export async function ciz({ kayit, cuzdan }) {
     }
     katkiGovde.append(durumSatiri);
     katkiGovde.append(not(
-      "What you record is public and cannot be taken back. DO NOT write a " +
+      "What you record is public and cannot be taken back. Do not write a " +
       "private repo address, a key, or customer data.", "uyari"));
 
     kap.append(panel("Record a contribution", katkiGovde));
@@ -318,7 +319,7 @@ export async function ciz({ kayit, cuzdan }) {
       ]));
       kayitGovde.append(kayitDugme);
       kayitGovde.append(not(
-        "What you write is public and cannot be taken back. DO NOT write an " +
+        "What you write is public and cannot be taken back. Do not write an " +
         "API key, a private endpoint, or customer data — the chain is " +
         "open to everyone.",
         "uyari"));
@@ -435,7 +436,7 @@ export async function ciz({ kayit, cuzdan }) {
     } catch (e) { kazanc = null; }
     kazancGovde.append(el("div", { sinif: "izgara izgara--olcum" }, [
       olcum("Earned on the marketplace",
-        kazanc == null ? "unreadable" : para(tamSayidanSayi(kazanc, 6)),
+        kazanc == null ? "—" : para(tamSayidanSayi(kazanc, 6)),
         (PAZAR_KURAL.gelistiriciPpm / 10_000) + "% of your sales")
     ]));
     /* The distinction the brief insists on: this number is money that
