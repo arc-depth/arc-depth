@@ -1,7 +1,7 @@
 /* ===========================================================================
  * gorunum/terminal.js — Trade (#/terminal)
  *
- * Every launch made from ARC PULSE (through Warp onto another launchpad, or on our own launchpad on Arc, Sui and
+ * Every launch made from ARC PULSE (no upper limit: the paged index of launch-kaynak.js) (through Warp onto another launchpad, or on our own launchpad on Arc, Sui and
  * Aptos) as a grid of cards, built to stay usable at thousands of launches:
  *   - search, route filter (All / Warp / ARC PULSE) and chain filter; newest first
  *   - 24 cards a page with "Load more"; market figures are read only for the cards on screen, in batches
@@ -131,10 +131,10 @@ function kart(s) {
   return a;
 }
 
-async function detay(satirlar, istenen) {
+async function detay(K, istenen) {
   const { tokenDetay } = await import("./warp-token.js");
   const kap = el("div", { sinif: "yigin" });
-  const s = satirlar.find((x) => String(x.token).toLowerCase() === istenen);
+  const s = await K.bul(istenen);
   kap.append(el("a", { sinif: "dugme dugme--sade dugme--kucuk tr-geri", attr: { href: "#/terminal" }, yazi: "← Back to Trade" }));
   if (!s) { kap.append(bos("Not an ARC PULSE launch", "This token was not launched from ARC PULSE. Every other token is in Market.", el("a", { sinif: "dugme dugme--marka", attr: { href: "#/vitrin" }, yazi: "Open Market" }))); return kap; }
   kap.append(tokenDetay(s));
@@ -144,10 +144,10 @@ async function detay(satirlar, istenen) {
 export async function ciz({ param } = {}) {
   if (param && param.get("ag")) return (await import("./terminal-ag.js")).ciz({ param });
   if (!document.getElementById("tr-stil")) document.head.append(el("style", { attr: { id: "tr-stil" }, yazi: STIL }));
-  const { tumLaunchlar } = await import("./launchlar.js");
-  const { satirlar, hatalar } = await tumLaunchlar();
+  const K = await (await import("../launch-kaynak.js")).launchKaynagi();
+  const satirlar = K.satirlar, hatalar = K.hatalar;
   const istenen = decodeURIComponent((param && param.get("t")) || "").trim().toLowerCase();
-  if (istenen) return detay(satirlar, istenen);
+  if (istenen) return detay(K, istenen);
 
   const kap = el("div", { sinif: "yigin" });
   kap.append(sayfaUst("Trade", "Every token launched from ARC PULSE, through Warp or on our own launchpad. Tap one for its chart and to trade it."));
@@ -164,10 +164,9 @@ export async function ciz({ param } = {}) {
   const sayac = el("div", { sinif: "tr-say" });
   const izgara = el("div", { sinif: "tr-izgara" });
   const daha = el("div", { sinif: "tr-daha" });
-  const segCiz = () => temizle(seg).append(...[["hepsi", "All"], ["warp", "Warp"], ["biz", "ARC PULSE"]].map(([k, ad]) => el("button", { attr: { type: "button", "aria-pressed": String(tur === k) }, yazi: ad + " · " + (k === "hepsi" ? satirlar.length : satirlar.filter((s) => s.tur === k).length),
+  const segCiz = () => temizle(seg).append(...[["hepsi", "All"], ["warp", "Warp"], ["biz", "ARC PULSE"]].map(([k, ad]) => el("button", { attr: { type: "button", "aria-pressed": String(tur === k) }, yazi: ad + (k === "hepsi" ? " · " + K.toplam : ""),
     on: { click: () => { tur = k; gosterilen = SAYFA; segCiz(); ciz2(); } } })));
-  const zincirler = [...new Set(satirlar.map((s) => s.zincir))];
-  const zcCiz = () => temizle(zc).append(...[null, ...zincirler].map((z) => el("button", { attr: { type: "button", "aria-pressed": String(z === zincir), style: "--z:" + (RENK[z] || "#7c5cff") }, yazi: z || "All chains",
+  const zcCiz = () => temizle(zc).append(...[null, ...new Set(satirlar.map((s) => s.zincir))].map((z) => el("button", { attr: { type: "button", "aria-pressed": String(z === zincir), style: "--z:" + (RENK[z] || "#7c5cff") }, yazi: z || "All chains",
     on: { click: () => { zincir = z; gosterilen = SAYFA; zcCiz(); ciz2(); } } })));
 
   /* market figures for cards as they come on screen, a batch at a time */
@@ -184,16 +183,22 @@ export async function ciz({ param } = {}) {
     }, 150);
   }, { rootMargin: "200px" });
 
-  const ciz2 = () => {
+  let sira = 0;
+  const ciz2 = async () => {
+    const bu = ++sira;
     const q = ara.value.trim().toLowerCase();
-    const liste = satirlar.filter((s) => (tur === "hepsi" || s.tur === tur) && (!zincir || s.zincir === zincir) &&
-      (!q || [s.ad, s.sembol, s.lp, s.zincir].some((v) => String(v || "").toLowerCase().includes(q)) || String(s.token).toLowerCase() === q));
-    sayac.textContent = liste.length ? "Showing " + Math.min(gosterilen, liste.length) + " of " + liste.length + " · newest first" : "";
+    const uyar = (s) => (tur === "hepsi" || s.tur === tur) && (!zincir || s.zincir === zincir) &&
+      (!q || [s.ad, s.sembol, s.lp, s.zincir].some((v) => String(v || "").toLowerCase().includes(q)) || String(s.token).toLowerCase() === q);
+    /* older index files are loaded only as far as this page of matches needs */
+    const { liste, tam } = await K.sec(uyar, gosterilen + 1);
+    if (bu !== sira) return;
+    const toplamYazi = tam ? String(liste.length) : liste.length + "+";
+    sayac.textContent = liste.length ? "Showing " + Math.min(gosterilen, liste.length) + " of " + (tur === "hepsi" && !zincir && !q ? K.toplam : toplamYazi) + " · newest first" : "";
     temizle(izgara); temizle(daha);
     if (!liste.length) { izgara.append(bos("No launches match", "Try another name, chain or route.")); return; }
     for (const s of liste.slice(0, gosterilen)) { const k = kart(s); k._satir = s; izgara.append(k); gozcu.observe(k); }
-    if (liste.length > gosterilen) daha.append(el("button", { sinif: "dugme dugme--sade", attr: { type: "button" }, yazi: "Load more (" + (liste.length - gosterilen) + " left)",
-      on: { click: () => { gosterilen += SAYFA; ciz2(); } } }));
+    if (liste.length > gosterilen || !tam) daha.append(el("button", { sinif: "dugme dugme--sade", attr: { type: "button" }, yazi: "Load more",
+      on: { click: () => { gosterilen += SAYFA; ciz2().then(zcCiz); } } }));
   };
   let araZaman = null;
   ara.addEventListener("input", () => { clearTimeout(araZaman); araZaman = setTimeout(() => { gosterilen = SAYFA; ciz2(); }, 200); });

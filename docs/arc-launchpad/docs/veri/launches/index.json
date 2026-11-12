@@ -1,0 +1,27 @@
+{
+ "guncellendi": "2026-11-12T13:55:15.417Z",
+ "toplam": 4,
+ "parcaBoy": 5000,
+ "parcalar": [
+  {
+   "dosya": "p0000.json",
+   "adet": 4,
+   "ilk": 1792315673,
+   "son": 1794479007
+  }
+ ],
+ "kayit": {
+  "v2": {
+   "lp": "0x2D3a0DaBD48207528800bDA6aDbC1b84E8d1f98B",
+   "n": 1
+  },
+  "g1": {
+   "lp": "0x52e600c8259ca44D9837B7b9E6BA1faee4bC040d",
+   "n": 1
+  },
+  "v9": {
+   "lp": "0x87045C17BD5fCf3495abC30898803E39E25Be0dD",
+   "n": 1
+  }
+ }
+}
