@@ -33,7 +33,7 @@ const ZAD = Object.fromEntries(ZINCIRLER.map((z) => [z.k, z]));
 
 /* Warp connections: "live" once tested with a real launch; "next" while being built */
 /* the Montra connection opens on the page once a real launch through it has worked (Halo, Pulse Squad #1) */
-const ACIK = { montra: false, pump: false, raydium: false, meteora: false, flap: false, pons: false, clanker: false };
+const ACIK = { montra: true, pump: false, raydium: false, meteora: false, flap: false, pons: false, clanker: false };
 const WARP = { "Montra": ACIK.montra ? "live" : "next", "Flap sh": ACIK.flap ? "live" : "next", "Pons V2": ACIK.pons ? "live" : "next", "pump.fun": ACIK.pump ? "live" : "next", "Meteora Dynamic Bonding Curve": ACIK.meteora ? "live" : "next", "LaunchLab": ACIK.raydium ? "live" : "next" };
 /* where a launchpad lives when we know it for sure; otherwise its DefiLlama page, which links to it */
 const ADRES = { "pump.fun": "https://pump.fun", "Montra": "https://montramarkets.xyz", "Ascend Launchpad": "https://app.ascendlaunch.xyz", "Ascend": "https://app.ascendlaunch.xyz", "Volta": "https://www.volta.family" };
@@ -91,7 +91,7 @@ const STIL = `
 
 /* the launch form: one launchpad at a time; each opens only once a real launch through it has worked */
 const LAUNCHPADLER = {
-  montra: { ad: "Montra", zincirler: ["elysium"], kalkan: true, acik: () => ACIK.montra, link: (t) => "https://montramarkets.xyz/token/" + t, bekliyor: "opens with Halo's launch on 13 Nov" },
+  montra: { ad: "Montra", zincirler: ["elysium"], kalkan: true, acik: () => ACIK.montra, link: (t) => "https://montramarkets.xyz/token/" + t, bekliyor: "opens with Halo's launch" },
   pump: { ad: "pump.fun", zincirler: ["solana"], kalkan: false, acik: () => ACIK.pump, link: null, bekliyor: "opens with Zappy's launch on Solana" },
   raydium: { ad: "Raydium LaunchLab", zincirler: ["solana"], kalkan: false, acik: () => ACIK.raydium, link: null, bekliyor: "opens with the first Solana launch through it" },
   meteora: { ad: "Meteora", zincirler: ["solana"], kalkan: false, acik: () => ACIK.meteora, link: null, bekliyor: "opens with the first Solana launch through it" },

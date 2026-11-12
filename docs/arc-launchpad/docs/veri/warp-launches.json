@@ -1,4 +1,18 @@
 {
- "guncellendi": "2026-11-12T09:36:47.171Z",
- "launchlar": []
+ "guncellendi": "2026-11-12T10:31:56.921Z",
+ "launchlar": [
+  {
+   "lp": "Montra",
+   "zincir": "elysium",
+   "token": "0xebEe0B053569333d72006d5dA46362eeaD1Ccd3B",
+   "ad": "Halo",
+   "sembol": "HALO",
+   "gorsel": null,
+   "olusturan": "0x89189C84DC95d0520AEeC9c8cF3BA5B9d42611D0",
+   "biz": true,
+   "zaman": "2026-11-12T10:23:27.000Z",
+   "tx": "0xa3a75bd5bb27a88ed4637b95686fc6ca6a2d5dca6f7d68e82e50c07173d6fc6f",
+   "link": "https://montramarkets.xyz/token/0xebEe0B053569333d72006d5dA46362eeaD1Ccd3B"
+  }
+ ]
 }
