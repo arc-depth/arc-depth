@@ -362,3 +362,4 @@ footer{border-top:1px solid var(--line);padding:40px 0 48px;background:#08090c;c
   *,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
   .squad-liste a:hover img{transform:none}
 }
+@media(max-width:380px){header .hin{gap:6px}}

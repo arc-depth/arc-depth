@@ -152,7 +152,7 @@ function stakePaneli() {
     govde.replaceChildren(
       el("p", { yazi: "Voting power comes from staked ARCP. ARCP 2, the current token, has its own stake contract and its own governor on Arc, already deployed. " +
         "Nobody holds ARCP 2 until its presale round fills and its pool opens, so nobody can stake it yet: staking opens with the pool. Stakers then receive ARCP released weekly from the staking allocation (10% of supply) and vote on the developer pool." }),
-      el("p", { sinif: "yazi yazi--sessiz", yazi: "Until then, the governor this page reads is the previous ARCP's. It still decides payments from the developer pool, and holders of the previous ARCP can stake it on its archive page." }),
+      el("p", { sinif: "yazi yazi--sessiz", yazi: "ARCP 2 staking and voting open when the presale completes. Until then this page reads the earlier governor listed below, and holders of the previous ARCP can stake it on its archive page." }),
       el("div", { sinif: "d4-bos__eylem" }, [dugmeLink("Join the ARCP 2 presale", "presale.html", true), dugmeLink("ARCP 2 details", "#/fthm"), dugmeLink("Previous ARCP: stake on the archive page", "fathom.html")]),
       sozlesmeAyrinti([
         ["ARCP 2 stake contract", "Stake", k ? k.stake : null], ["ARCP 2 governor", "DepthGovernor", k ? k.governor : null],

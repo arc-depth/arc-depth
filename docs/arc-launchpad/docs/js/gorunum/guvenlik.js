@@ -196,10 +196,10 @@ export async function ciz() {
     const dogru = dogrulama.sozlesmeler.filter((x) => x.eslesme === "exact_match" || x.eslesme === "match").length;
     const zincirSay = new Set(dogrulama.sozlesmeler.map((x) => x.chainId)).size;
     kap.append(el("div", { sinif: "izgara izgara--olcum" }, [
-      olcum("Source verified", dogru + " of " + dogrulama.sozlesmeler.length, "Sourcify exact match"),
+      olcum("Open source & verified", dogru + " of " + dogrulama.sozlesmeler.length, "source published and verified on Sourcify"),
       olcum("Chains", String(zincirSay), "with contracts the app calls"),
       olcum("Your wallet is asked for", "Transactions only", "exact-amount approvals; no message or permit signatures"),
-      olcum("Independent audit", "None yet", "the measurements below are our own, and repeatable"),
+      olcum("Owner, pause or proxy", "None", "on the trade contracts: fees and the liquidity lock cannot be changed"),
     ]));
 
     const ara = el("input", { sinif: "girdi gv-ara", attr: { type: "search", placeholder: "Search a contract, chain or address", "aria-label": "Search contracts" } });
