@@ -2,6 +2,7 @@
  * The list (veri/warp-launches.json) is written by scripts/warp-izle.js from each launch's own on-chain mark and published
  * with the analytics; this module only reads and draws it. Shown on Warp and on Discover. */
 import { el, panel, bos } from "./ui.js";
+import { squadOf, squadResim } from "./squad.js";
 
 const ZINCIR = { solana: "Solana", elysium: "Elysium", bsc: "BNB Chain", robinhood: "Robinhood", monad: "Monad", base: "Base", arc: "Arc" };
 
@@ -25,12 +26,12 @@ const STIL = `
 export function warpPaneli(launchlar, { baslik = "Launched with Warp", bosYazi, enFazla = 24 } = {}) {
   if (!document.getElementById("wl-stil")) document.head.append(el("style", { attr: { id: "wl-stil" }, yazi: STIL }));
   if (!launchlar.length) return panel(baslik, bos("No Warp launches yet", bosYazi || "The first is Halo, the Pulse Squad's Elysium mascot, on Montra. Every token launched through Warp on any connected launchpad appears here."));
-  return panel(baslik + " · " + launchlar.length, el("div", { sinif: "wl" }, launchlar.slice(0, enFazla).map((x) => el("a", { attr: { href: x.link, target: "_blank", rel: "noopener noreferrer" } }, [
-    x.gorsel ? el("img", { attr: { src: x.gorsel, alt: "", loading: "lazy", referrerpolicy: "no-referrer" } }) : el("span", { sinif: "wl-bos" }),
+  return panel(baslik + " · " + launchlar.length, el("div", { sinif: "wl" }, launchlar.slice(0, enFazla).map((x) => el("a", { attr: { href: "#/warp?t=" + x.token } }, [
+    (x.gorsel || squadOf(x.token)) ? el("img", { attr: { src: x.gorsel || squadResim(squadOf(x.token)), alt: "", loading: "lazy", referrerpolicy: "no-referrer" } }) : el("span", { sinif: "wl-bos" }),
     el("span", { attr: { style: "min-width:0" } }, [
       el("b", {}, [(x.ad || x.sembol || x.token.slice(0, 8) + "…"), x.biz ? el("span", { sinif: "wl-sq", yazi: "Pulse Squad" }) : null]),
       el("small", { yazi: (x.sembol ? "$" + x.sembol + " · " : "") + x.lp + " · " + (ZINCIR[x.zincir] || x.zincir) }),
-      el("small", { yazi: new Date(x.zaman).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) }),
+      el("small", { yazi: new Date(x.zaman).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) + " · chart & buy →" }),
     ]),
   ]))));
 }

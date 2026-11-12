@@ -617,3 +617,12 @@ export async function ciz() {
   }, 6000);
   return kap;
 }
+
+/** The Market buy box for one token, opened from another page (a Warp launch's own page): pay in dollars from any of our
+ *  EVM chains, delivered on the token's chain. `zincir` is one of ZINCIRLER's keys (e.g. "elysium"). */
+export function tokenAl({ zincir, adres, sembol, ad, resim = null, fiyat = 0, fdv = 0, hacim = 0, degisim = null, likidite = 0, havuz = "", kuruldu = null }) {
+  if (!document.getElementById("vt-stil")) document.head.append(el("style", { attr: { id: "vt-stil" }, yazi: STIL }));
+  const z = ZINCIRLER.find((x) => x.k === zincir);
+  if (!z) throw new Error("Unknown chain " + zincir);
+  alKutusu({ zincir: z, adres, sembol, ad, resim, fiyat, fdv, hacim, degisim, likidite, havuz, kuruldu: kuruldu || new Date(0).toISOString(), karar: 18 });
+}

@@ -40,12 +40,13 @@ const ADRES = { "pump.fun": "https://pump.fun", "Montra": "https://montramarkets
 
 /* the Pulse Squad: our own launches, one mascot per chain, five days apart at the earliest */
 const SQUAD = [
-  ["halo", "Halo", "Elysium", "Montra", "13 Nov"], ["zappy", "Zappy", "Solana", "pump.fun", "18 Nov"], ["blu", "Blu", "Base", "Clanker", "23 Nov"],
+  ["halo", "Halo", "Elysium", "Montra", "12 Nov"], ["zappy", "Zappy", "Solana", "pump.fun", "18 Nov"], ["blu", "Blu", "Base", "Clanker", "23 Nov"],
   ["feather", "Feather", "Robinhood", "Pons", "28 Nov"], ["goldie", "Goldie", "BNB Chain", "Flap", "3 Dec"], ["vio", "Vio", "Monad", "nad.fun", "8 Dec"],
   ["pulsy", "Pulsy", "Arc", "ARC PULSE", "13 Dec"], ["turbo", "Turbo", "HyperEVM", "Alt Fun", "18 Dec"], ["drip", "Drip", "Sui", "Turbos", "23 Dec"],
   ["yeti", "Yeti", "Avalanche", "Arena", "28 Dec"], ["pebble", "Pebble", "Aptos", "Emojicoin", "2 Jan"], ["bolt", "Bolt", "Arbitrum", "ARC PULSE", "7 Jan"],
 ];
 
+const HALO = "0xebEe0B053569333d72006d5dA46362eeaD1Ccd3B";   // Pulse Squad #1, launched 12 Nov 2026
 const para = (v) => { v = Number(v || 0); return v >= 1e9 ? "$" + (v / 1e9).toFixed(2) + "B" : v >= 1e6 ? "$" + (v / 1e6).toFixed(2) + "M" : v >= 1e3 ? "$" + (v / 1e3).toFixed(1) + "K" : "$" + v.toFixed(0); };
 const adresi = (p) => ADRES[p.ad] || (p.slug ? "https://defillama.com/protocol/" + p.slug : null);
 
@@ -200,7 +201,9 @@ function warpFormu() {
   ];
 }
 
-export async function ciz() {
+export async function ciz({ param } = {}) {
+  /* a Warp launch's own page: #/warp?t=<token> */
+  if (param && param.get("t")) return (await import("./warp-token.js")).ciz({ param });
   if (!document.getElementById("wp-stil")) document.head.append(el("style", { attr: { id: "wp-stil" }, yazi: STIL }));
   const kap = el("div", {});
   kap.append(sayfaUst("Warp", "Launch your token on the hottest launchpad of thirteen chains, from one page"));
@@ -263,7 +266,7 @@ export async function ciz() {
     el("div", { sinif: "wp-squad" }, SQUAD.map(([k, ad, z, lp, t], i) => el("div", { sinif: "wp-m" + (i === 0 ? " ilk" : "") }, [
       el("img", { attr: { src: "img/squad/" + k + ".svg", alt: ad + ", the Pulse Squad's " + z + " mascot", loading: "lazy" } }),
       el("div", { sinif: "ad", yazi: ad }), el("div", { sinif: "z", attr: { style: "color:" + ((ZINCIRLER.find((x) => x.ad === z) || {}).renk || "#fff") }, yazi: z + " · " + lp }),
-      el("div", { sinif: "t", yazi: (i === 0 ? "First up · " : "Not before ") + t }),
+      i === 0 ? el("a", { sinif: "t", attr: { href: "#/warp?t=" + HALO, style: "font-weight:800" }, yazi: "Live · chart & buy →" }) : el("div", { sinif: "t", yazi: "Not before " + t }),
     ]))),
   ]));
 

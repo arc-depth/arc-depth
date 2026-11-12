@@ -52,14 +52,31 @@ export async function ciz({ param }) {
     /* this terminal reads the first-generation registry, which is empty; the launches live on the
        one-pool registries, each traded on its own page, and every other token is in Market */
     kap.append(sayfaUst("Trade", "Buy and sell any ARC PULSE token from thirteen chains, or any token on eleven chains in Market"));
-    const bizim = await import("./vitrin.js").then((m) => m.bizimTokenler()).catch(() => []);
-    if (bizim.length) {
-      kap.append(panel("ARC PULSE tokens", el("div", { sinif: "izgara izgara--kart" }, bizim.map((b) => el("a", { sinif: "jeton-kart", attr: { href: "#/merkez?t=" + b.adres } }, [
-        el("div", { sinif: "jeton" }, [el("div", { sinif: "jeton__logo jeton__logo--bos", yazi: (b.sembol || "?").slice(0, 3).toUpperCase() }),
-          el("div", { sinif: "jeton__yazi" }, [el("div", { sinif: "jeton__sembol", yazi: b.sembol || "?" }), el("div", { sinif: "jeton__ad", yazi: b.ad || "" })])]),
-        el("div", { sinif: "yazi yazi--kucuk yazi--sessiz", yazi: "Buy, sell or redeem from any chain →" }),
-      ])))));
-    } else kap.append(bos("No tokens yet", "The first launch appears here. Until then, every token on eleven chains is one click away in Market."));
+    const [bizim, warp] = await Promise.all([
+      import("./vitrin.js").then((m) => m.bizimTokenler()).catch(() => []),
+      import("../warp-liste.js").then((m) => m.warpLaunchlari()).catch(() => [])]);
+    /* two lists, one tab each, so neither crowds the other: ARC PULSE's own pool tokens and the tokens launched through Warp */
+    const govde = el("div", { sinif: "yigin" });
+    const bizimCiz = () => {
+      const kap = govde;
+      if (bizim.length) {
+        kap.append(panel("ARC PULSE tokens", el("div", { sinif: "izgara izgara--kart" }, bizim.map((b) => el("a", { sinif: "jeton-kart", attr: { href: "#/merkez?t=" + b.adres } }, [
+          el("div", { sinif: "jeton" }, [el("div", { sinif: "jeton__logo jeton__logo--bos", yazi: (b.sembol || "?").slice(0, 3).toUpperCase() }),
+            el("div", { sinif: "jeton__yazi" }, [el("div", { sinif: "jeton__sembol", yazi: b.sembol || "?" }), el("div", { sinif: "jeton__ad", yazi: b.ad || "" })])]),
+          el("div", { sinif: "yazi yazi--kucuk yazi--sessiz", yazi: "Buy, sell or redeem from any chain →" }),
+        ])))));
+      } else kap.append(bos("No tokens yet", "The first launch appears here. Until then, every token on eleven chains is one click away in Market."));
+    };
+    const warpCiz = async () => {
+      const { warpCipleri } = await import("./warp-token.js");
+      const { warpPaneli } = await import("../warp-liste.js");
+      if (warp.length) govde.append(warpCipleri(warp));
+      govde.append(warpPaneli(warp, { baslik: "Launched with Warp · tap one for its chart and a buy box" }));
+    };
+    const sec = (k) => { temizle(govde); k === "warp" ? warpCiz() : bizimCiz(); };
+    kap.append(sekmeler([{ anahtar: "bizim", ad: "ARC PULSE tokens" + (bizim.length ? " · " + bizim.length : "") }, { anahtar: "warp", ad: "Launched with Warp" + (warp.length ? " · " + warp.length : "") }], "bizim", sec));
+    kap.append(govde);
+    sec("bizim");
     kap.append(el("a", { sinif: "dugme dugme--marka", attr: { href: "#/vitrin", style: "align-self:flex-start" }, yazi: "Open Market: every token on eleven chains →" }));
     return kap;
   }
