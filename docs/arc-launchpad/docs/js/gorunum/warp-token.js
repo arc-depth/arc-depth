@@ -10,7 +10,8 @@
  * =========================================================================== */
 import { el, sayfaUst, panel, bos, temizle } from "../ui.js";
 import { warpLaunchlari } from "../warp-liste.js";
-import { squadOf, squadResim } from "../squad.js";
+import { squadOf, squadResim, SQUAD } from "../squad.js";
+const SQUAD_LISTE = () => SQUAD;
 
 const ZINCIR = { solana: "Solana", elysium: "Elysium", bsc: "BNB Chain", robinhood: "Robinhood", monad: "Monad", base: "Base", arc: "Arc" };
 /* DexScreener's chain ids where they differ from ours */
@@ -155,4 +156,35 @@ export async function ciz({ param }) {
   ])));
   else kap.append(panel("About", el("p", { sinif: "vt-alt", yazi: "Launched by its creator through Warp on " + x.lp + ". ARC PULSE does not hold or control this token. Memecoins are risky: check the chart and who holds the supply before you buy." })));
   return kap;
+}
+
+/** A spotlight card for the newest live Pulse Squad mascot, with its live price, for Discover and Market.
+ *  Draws at once from what is known and fills the numbers when DexScreener answers. */
+export function squadSpot() {
+  if (!document.getElementById("wt-stil")) document.head.append(el("style", { attr: { id: "wt-stil" }, yazi: STIL }));
+  if (!document.getElementById("ws-stil")) document.head.append(el("style", { attr: { id: "ws-stil" }, yazi: `
+.ws{display:flex;gap:16px;align-items:center;padding:16px;border-radius:18px;text-decoration:none;color:inherit;border:1px solid color-mix(in srgb,var(--ws,#c6f86b) 50%,transparent);background:radial-gradient(120% 160% at 0% 0%,color-mix(in srgb,var(--ws,#c6f86b) 20%,transparent),transparent 60%),var(--yuzey-1,#12141b)}
+.ws:hover{border-color:var(--ws,#c6f86b)}
+.ws img{width:76px;height:76px;object-fit:contain;flex:none}
+.ws .g{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.ws small{font-size:11px;font-weight:800;letter-spacing:.08em;color:var(--ws,#c6f86b)}
+.ws b{font-size:19px}.ws .s{opacity:.8;font-size:13.5px}
+.ws .r{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;opacity:.9}
+.ws .c{flex:none;padding:10px 16px;border-radius:999px;background:var(--ws,#c6f86b);color:#10140a;font-weight:800;font-size:14px}
+@media (max-width:640px){.ws{flex-wrap:wrap}.ws .c{width:100%;text-align:center}}` }));
+  const m = [...SQUAD_LISTE()].reverse().find((x) => x.token);
+  if (!m) return null;
+  const rakam = el("div", { sinif: "r" }, [el("span", { yazi: "Loading price…" })]);
+  const kart = el("a", { sinif: "ws", attr: { href: "#/warp?t=" + m.token, style: "--ws:" + (m.renk || "#c6f86b") } }, [
+    el("img", { attr: { src: squadResim(m), alt: m.ad + ", the Pulse Squad's " + m.zincir + " mascot" } }),
+    el("div", { sinif: "g" }, [el("small", { yazi: "LIVE · PULSE SQUAD · " + m.zincir.toUpperCase() }), el("b", { yazi: m.ad + " is live on " + m.zincir }),
+      el("div", { sinif: "s", yazi: "“" + m.soz + "” Launched through Warp on " + m.lp + "." }), rakam]),
+    el("span", { sinif: "c", yazi: "Chart & buy →" }),
+  ]);
+  dsCifti(m.zincir.toLowerCase(), m.token).then((c) => {
+    if (!c) { temizle(rakam).append(el("span", { yazi: "CA " + m.token.slice(0, 6) + "…" + m.token.slice(-4) })); return; }
+    temizle(rakam).append(el("span", { yazi: "Price " + para(c.priceUsd) }), el("span", { yazi: "Market cap " + para(c.marketCap || c.fdv) }),
+      el("span", { yazi: "24h volume " + para((c.volume || {}).h24) }), el("span", { yazi: "CA " + m.token.slice(0, 6) + "…" + m.token.slice(-4) }));
+  }).catch(() => {});
+  return kart;
 }

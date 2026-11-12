@@ -592,10 +592,13 @@ export async function ciz() {
       yan]));
   }
 
+  const spotYer = el("div");
   kap.append(
     el("h1", { attr: { style: "margin:0;font-size:26px" } }, ["Market", el("span", { sinif: "vt-canli" }, [el("i"), "live"])]),
     el("p", { sinif: "vt-alt", yazi: "Every token on 13 chains in one place. Buy any of them with the dollars you hold on any chain, in one tap." }),
-    modlar, cipler, govde);
+    spotYer, modlar, cipler, govde);
+  /* the newest live Pulse Squad mascot, above the market */
+  import("./warp-token.js").then((m) => { const k = m.squadSpot(); if (k) { k.style.margin = "12px 0"; spotYer.replaceWith(k); } else spotYer.remove(); }).catch(() => spotYer.remove());
   modCiz();
   cipCiz();
   yukle();

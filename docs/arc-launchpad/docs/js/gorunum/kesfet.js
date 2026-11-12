@@ -157,6 +157,12 @@ export async function ciz({ param }) {
     { ikon: "zincir", baslik: "One pool, one price", yazi: "Every token trades in one pool on Arc. Buyers on thirteen chains see the same price." },
     { ikon: "kasa", baslik: "Backed, not just hyped", yazi: "A slice of every trade fills the token's collateral basket. Holders can redeem their share without selling." },
   ]));
+  /* the newest live Pulse Squad mascot (Halo first), with its live price */
+  if (!arama) {
+    const spot = el("div");
+    kap.append(spot);
+    import("./warp-token.js").then((m) => { const k = m.squadSpot(); if (k) spot.replaceWith(k); else spot.remove(); }).catch(() => spot.remove());
+  }
   /* the hottest tokens on our chains right now, bought from any chain (Market); never blocks the page */
   if (!arama) {
     const yer = el("div");
