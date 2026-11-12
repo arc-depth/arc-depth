@@ -24,7 +24,7 @@ const LP_ABI = [
 const ZINCIR = { solana: "Solana", elysium: "Elysium", bsc: "BNB Chain", robinhood: "Robinhood", monad: "Monad", base: "Base", arc: "Arc" };
 const RENK = { Arc: "#7c5cff", Base: "#0052ff", Arbitrum: "#28a0f0", Ethereum: "#627eea", BNB: "#f0b90b", "BNB Chain": "#f0b90b", Avalanche: "#e84142",
   Monad: "#836ef9", HyperEVM: "#50e3c2", Robinhood: "#ccff00", Elysium: "#c6f86b", Solana: "#14f195", Sui: "#4da2ff", Aptos: "#2ed8a7" };
-const AZAMI = 60;   // newest launches read per Arc registry
+const AZAMI = 200;   // newest launches read per Arc registry (Trade pages them 24 at a time)
 
 const STIL = `
 .ll-ozet{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px}
