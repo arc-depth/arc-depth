@@ -282,6 +282,8 @@
 .tablo tbody tr:hover { background: var(--yuzey-2); }
 .tablo tbody tr:last-child td { border-bottom: 0; }
 .tablo .sayi { font-family: var(--yazi-tipi-mono); font-variant-numeric: tabular-nums; }
+/* a cell holding a sentence, not a figure: it wraps and reads left to right (12 Nov 2026) */
+.tablo tbody td.metin { white-space: normal; text-align: left; min-width: 16rem; line-height: 1.5; }
 
 @media (max-width: 760px) {
   .tablo--kart thead { display: none; }

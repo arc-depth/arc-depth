@@ -225,9 +225,17 @@ async function gecko(yol) {
     if (r && r.ok) {
       const v = cozumle(await r.json());
       onbellek.set(yol, { t: Date.now(), v });
+      /* the last good answer is kept in this browser, so a busy service never blanks the page (12 Nov 2026) */
+      try { localStorage.setItem("vt:" + yol, JSON.stringify({ t: Date.now(), j: v.map((x) => ({ ...x, zincir: x.zincir.k })) })); } catch (e) { /* storage may be full or blocked */ }
       return v;
     }
     if (o) return o.v;   // an older copy beats nothing
+    if (i >= 2) {
+      try {
+        const k = JSON.parse(localStorage.getItem("vt:" + yol) || "null");
+        if (k && Date.now() - k.t < 86_400_000) return k.j.map((x) => ({ ...x, zincir: ZINCIRLER.find((z) => z.k === x.zincir) })).filter((x) => x.zincir);
+      } catch (e) { /* unreadable copy: fall through */ }
+    }
     if (i >= 2) throw new Error("The market data service is busy, try again in a minute.");
     await new Promise((x) => setTimeout(x, 2500 * (i + 1)));
   }

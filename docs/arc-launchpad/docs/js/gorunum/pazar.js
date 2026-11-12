@@ -61,19 +61,25 @@ export async function ciz({ kayit, cuzdan }) {
   /* ---- 1. the split, read from the contract ----------------------- */
   const adlar = ["PLATFORM_PPM", "urunSayisi", "platformKazanci",
     "toplamHasilat", "tutulan"];
-  const ham = await cokluCagri(adlar.map((ad) => ({
-    method: "eth_call",
-    params: [{ to: PAZAR.pazar, data: cagriVerisi(ABI.pazar, ad) }, "latest"]
-  })));
+  /* a busy public RPC sometimes drops a call: asked up to three times before giving up (12 Nov 2026) */
   const v = {};
-  adlar.forEach((ad, i) => { v[ad] = tek(ABI.pazar, ad, ham[i]); });
+  for (let deneme = 0; deneme < 3; deneme++) {
+    const ham = await cokluCagri(adlar.map((ad) => ({
+      method: "eth_call",
+      params: [{ to: PAZAR.pazar, data: cagriVerisi(ABI.pazar, ad) }, "latest"]
+    }))).catch(() => []);
+    adlar.forEach((ad, i) => { v[ad] = tek(ABI.pazar, ad, ham[i]); });
+    if (v.urunSayisi != null) break;
+    await new Promise((r) => setTimeout(r, 1200 * (deneme + 1)));
+  }
 
   if (v.urunSayisi == null) {
     kap.append(hata(
-      "The marketplace could not be read",
-      "The contract is at " + PAZAR.pazar + " but `urunSayisi()` did not " +
-      "answer. The screen is not inventing a state."
+      "The marketplace is busy right now",
+      "The network did not answer in time. Nothing is wrong with your wallet or the products; try again in a moment."
     ));
+    kap.append(el("button", { sinif: "dugme dugme--marka", attr: { type: "button", style: "align-self:flex-start" }, yazi: "Try again",
+      on: { click: () => window.dispatchEvent(new HashChangeEvent("hashchange")) } }));
     return kap;
   }
 

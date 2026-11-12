@@ -48,7 +48,7 @@ const STIL = `
 .tr-up{color:#22c55e}.tr-dn{color:#ef4444}
 .tr-daha{display:flex;justify-content:center;margin-top:16px}
 .tr-geri{align-self:flex-start}
-@media (max-width:520px){.tr-izgara{grid-template-columns:1fr 1fr;gap:10px}.tr-gorsel .h{font-size:22px}.tr-sayi{grid-template-columns:1fr 1fr}.tr-sayi>div:last-child{display:none}.tr-rozet{font-size:9px}}
+@media (max-width:520px){.tr-izgara{grid-template-columns:1fr 1fr;gap:10px}.tr-gorsel .h{font-size:22px}.tr-sayi{grid-template-columns:1fr 1fr}.tr-sayi>div:last-child{display:none}.tr-rozet{font-size:9px}.tr-lp{display:none}}
 `;
 
 const para = (x) => {
@@ -106,7 +106,7 @@ function kart(s) {
   const res = s.gorsel || (m ? squadResim(m) : null);
   const gorsel = el("div", { sinif: "tr-gorsel", attr: { style: res ? "" : "background:linear-gradient(135deg,hsl(" + ton(s.token) + " 65% 42%),hsl(" + ((ton(s.token) + 80) % 360) + " 65% 22%))" } }, [
     res ? el("img", { attr: { src: res, alt: "", loading: "lazy", referrerpolicy: "no-referrer" } }) : el("span", { sinif: "h", yazi: "$" + String(s.sembol || "?").slice(0, 6).toUpperCase() }),
-    el("span", { sinif: "tr-rozet " + s.tur, yazi: s.tur === "warp" ? "Warp ⚡ " + s.lp : "ARC PULSE" }),
+    el("span", { sinif: "tr-rozet " + s.tur }, s.tur === "warp" ? ["Warp ⚡", el("span", { sinif: "tr-lp", yazi: " " + s.lp })] : ["ARC PULSE"]),
     el("span", { sinif: "tr-z", attr: { style: "--z:" + z }, yazi: s.zincir }),
     m ? el("span", { sinif: "tr-sq", yazi: "PULSE SQUAD" }) : null,
   ]);

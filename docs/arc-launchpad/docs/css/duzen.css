@@ -216,7 +216,9 @@
     left: 0; right: 0; bottom: 0;
     z-index: var(--z-ustbar);
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    /* one column per tab, however many there are (5 today: four + More) */
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
     height: calc(var(--alt-bar) + env(safe-area-inset-bottom, 0px));
     padding-bottom: env(safe-area-inset-bottom, 0px);
     background: rgba(10, 11, 13, 0.94);

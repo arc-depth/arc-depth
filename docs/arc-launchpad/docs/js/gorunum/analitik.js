@@ -27,7 +27,7 @@ async function v2Paneli(kap) {
       olcum("Launches", String(L.length), "the v2 registry on Arc" + (V9 ? " · v8 " + L8.length + " + v9 " + (L9 ? L9.length : "unreadable") : "")),
       olcum("Real dollars in pools", para(top((x) => x.gercekDolar)), "what sellers can be paid from"),
       olcum("Market cap, all tokens", para(top((x) => x.piyasaDegeri)), "price × supply"),
-      olcum("Basket dollars waiting", para(top((x) => x.bekleyen)), "in the Defter until a line reaches $50"),
+      olcum("Basket dollars waiting", para(top((x) => x.bekleyen)), "in the collateral ledger until a line reaches $50"),
     ]));
     const gun = el("div", { sinif: "yazi yazi--kucuk yazi--sessiz", yazi: "Last 24 hours: reading the hook's fee events…" });
     yer.append(gun);

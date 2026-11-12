@@ -213,7 +213,7 @@ export async function ciz() {
         olcum("Address", adres(p.guardian), "cancel authority"),
         olcum("Expires", new Date(bitis).toISOString().slice(0, 10),
           bitis > Date.now()
-            ? gecenSure(bitis - Date.now()) + " left"
+            ? (() => { const g = Math.floor((bitis - Date.now()) / 86400000); return g >= 60 ? Math.floor(g / 30.44) + " months left" : g + " days left"; })()
             : "already expired"),
         olcum("State", bitis > Date.now() ? "Active" : "Ended",
           "can be given up early with renounce()")

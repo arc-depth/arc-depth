@@ -245,7 +245,7 @@ export function kilitPaneli({ cuzdan }) {
       el("p", { yazi: "Choose how long your founder tokens stay locked. They are released to you linearly over the whole period, nothing before the cliff ends; the clock starts when the lock first holds them (right after the launch). Your 0.30% USDC trading income is never locked: it passes straight to you. You can change your receiving address later; nobody else, us included, can take locked tokens out." }),
       el("div", { sinif: "alan__etiket", yazi: "Lock period" }), ay,
       el("div", { sinif: "alan__etiket", yazi: "Cliff (nothing released before it ends)" }), ucurum,
-      not("Same launch and same fees as any token: the lock only changes where your founder share goes (kurucu = the lock's address on Arc, computed before you pay). The lock contract's gas, a few cents, is the only extra.", "bilgi"),
+      not("Same launch and same fees as any token: the lock only changes where your founder share goes (the founder address becomes the lock's address on Arc, computed before you pay). The lock contract's gas, a few cents, is the only extra.", "bilgi"),
       sec])));
 
     /* after the launch: follow a lock */

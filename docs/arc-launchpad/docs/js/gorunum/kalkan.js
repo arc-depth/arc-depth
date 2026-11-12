@@ -171,7 +171,7 @@ export async function ciz() {
         ]));
         govde.append(not(
           "These four numbers are not copies kept on the page — they were " +
-          "kancadan, " + PULSE.hook + " adresinden okundu.", "bilgi"));
+          "read just now from the hook contract at " + PULSE.hook + ".", "bilgi"));
       }
 
       /* The per-pool window needs a pool. */
@@ -183,7 +183,7 @@ export async function ciz() {
       } else if (Number(sayi) === 0) {
         govde.append(not(
           "There are no launches yet, so there is no pool window to read. " +
-          "The window is kept per pool id (pencere(poolId)); printing an " +
+          "The window is kept per pool id (one window for each pool); printing an " +
           "empty table without a pool would be showing a state that does " +
           "not exist.", "bilgi"));
       } else {

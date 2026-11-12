@@ -68,23 +68,22 @@ const kSekme = document.getElementById("sekmebar");
 const kAra = document.getElementById("ust-ara");
 const kCuzdanDugme = document.getElementById("cuzdan-dugme");
 
-/* ---- phone layout, by choice --------------------------------------------
-   Phones open the full desktop layout (app.html's width=1280 viewport, 64b5635).
-   On a phone a button next to the wallet offers the phone layout as well (the
-   same page under the existing @media rules); the choice is kept on this device
-   and the button switches back. */
+/* ---- phone layout ---------------------------------------------------------
+   Phones open the phone layout (12 Nov 2026, user: phone first; app.html's viewport is width=device-width).
+   A button next to the wallet offers the full desktop layout instead; the choice is kept on this device and the
+   button switches back. */
 const GORUNUM = "arcpulse-gorunum";
 const gorunumOku = () => { try { return localStorage.getItem(GORUNUM); } catch (e) { return null; } };
-if (gorunumOku() === "mobil") {
+if (gorunumOku() === "masaustu") {
   const m = document.querySelector('meta[name="viewport"]');
-  if (m) m.setAttribute("content", "width=device-width, initial-scale=1, viewport-fit=cover");
+  if (m) m.setAttribute("content", "width=1280, viewport-fit=cover");
 }
 if (mobilMi() && kCuzdanDugme) {
-  const mobilde = gorunumOku() === "mobil";
-  kCuzdanDugme.before(el("button", { sinif: "dugme dugme--sade", attr: { type: "button", title: mobilde ? "Show the full desktop layout" : "Show the phone layout",
-    "aria-label": mobilde ? "Desktop layout" : "Phone layout", style: mobilde ? "flex:none;padding:6px 8px;min-width:0" : "flex:none" },
-    yazi: mobilde ? "\u{1F5A5}" : "Mobile view",
-    on: { click: () => { try { localStorage.setItem(GORUNUM, mobilde ? "masaustu" : "mobil"); } catch (e) { /* storage may be blocked */ } location.reload(); } } }));
+  const masaustunde = gorunumOku() === "masaustu";
+  kCuzdanDugme.before(el("button", { sinif: "dugme dugme--sade", attr: { type: "button", title: masaustunde ? "Show the phone layout" : "Show the full desktop layout",
+    "aria-label": masaustunde ? "Phone layout" : "Desktop layout", style: "flex:none;padding:6px 8px;min-width:0" },
+    yazi: masaustunde ? "\u{1F4F1}" : "\u{1F5A5}",
+    on: { click: () => { try { localStorage.setItem(GORUNUM, masaustunde ? "mobil" : "masaustu"); } catch (e) { /* storage may be blocked */ } location.reload(); } } }));
 }
 
 /* ---- navigation ------------------------------------------------------ */
@@ -175,7 +174,7 @@ function ustYoluCiz() {
 
 function sekmeleriCiz() {
   temizle(kSekme);
-  for (const ad of ["kesfet", "vitrin", "olustur", "portfoy"]) {   // the phone bar (9 Nov 2026): Trade and the rest under More
+  for (const ad of ["kesfet", "terminal", "olustur", "portfoy"]) {   // the phone bar (12 Nov 2026): every launch in Trade; Market and the rest under More
     const y = yolBul(ad);
     if (!y) continue;
     kSekme.append(el("a", {

@@ -151,7 +151,7 @@ export async function teshisEt(V, token) {
   }
 
   for (const s of r.satirlar) if (s.lotHazir) sorunlar.push({ tur: "lot", metin: "Basket line on " + zincirAdi(Number(s.zincir)) + " holds " + d6(s.biriken) +
-    " (at or above the $50 lot) and is still in the Defter" + (s.bekliyor ? "; its last send failed less than an hour ago" : "") + ".",
+    " (at or above the $50 lot) and is still in the collateral ledger" + (s.bekliyor ? "; its last send failed less than an hour ago" : "") + ".",
     duzelt: { ad: "Send waiting lines (Defter.bekleyenleriGonder)", hedef: V.defter, veri: new Interface(["function bekleyenleriGonder(uint64)"]).encodeFunctionData("bekleyenleriGonder", [r.id]), bahsis: "$0.05 per line sent" } });
   for (const e of emirler) sorunlar.push({ tur: "emir", metin: "Redemption order #" + e.sira + " to " + zincirAdi(Number(e.zincir)) + " is queued; sending it costs " + d6(e.ucret) + " now.",
     duzelt: { ad: "Send queued order #" + e.sira + " (Defter.emirGonder)", hedef: V.defter, veri: new Interface(["function emirGonder(uint256)"]).encodeFunctionData("emirGonder", [e.sira]),

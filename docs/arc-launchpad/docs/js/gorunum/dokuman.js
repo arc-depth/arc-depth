@@ -95,7 +95,7 @@ export async function ciz() {
   /* ---- 5. the basket -------------------------------------------------- */
   kap.append(panel("5 — The collateral basket", [
     el("div", { sinif: "ikincil" }, [
-      el("p", { yazi: "Each line's dollars wait as USDC in the Defter on Arc. Every trade's collateral tax is split across the lines " +
+      el("p", { yazi: "Each line's dollars wait as USDC in the collateral ledger on Arc. Every trade's collateral tax is split across the lines " +
         "by their weight; when a line reaches $50 its asset is bought on its own chain and held in that chain's vault, for this token only." }),
       el("p", { attr: { style: "margin-top:10px" }, yazi: "Every vault buys the asset itself from a pool on its own chain: Uniswap v4 on Arc, " +
         "Uniswap v3 on Base, Arbitrum, Ethereum, Avalanche, Monad and Robinhood, HyperSwap v3 on HyperEVM and PancakeSwap v3 on BNB (within ~3% " +
@@ -186,7 +186,7 @@ function tablo(basliklar, satirlar) {
   t.append(el("thead", {}, [el("tr", {}, basliklar.map((b) => el("th", { yazi: b })))]));
   const g = el("tbody");
   for (const s of satirlar) {
-    g.append(el("tr", {}, s.map((h, i) => el("td", { sinif: i > 0 ? "sayi" : "", attr: { "data-et": basliklar[i] }, yazi: h }))));
+    g.append(el("tr", {}, s.map((h, i) => el("td", { sinif: i > 0 ? (String(h).length > 32 ? "metin" : "sayi") : "", attr: { "data-et": basliklar[i] }, yazi: h }))));
   }
   t.append(g);
   return el("div", { sinif: "tablo-sarmal" }, [t]);

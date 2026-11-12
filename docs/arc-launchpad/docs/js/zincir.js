@@ -382,7 +382,14 @@ export async function sonBlok() {
 
 /** A Chainlink proxy's answer, scaled. null when the feed cannot be read —
  *  which is a real outcome and not an excuse to invent a price. */
+/* a feed's own decimals (most USD feeds use 8; the XAUM reference rate uses 18), read once per feed */
+const _besleyiciOndalik = new Map();
 export async function besleyiciFiyat(proxy, ondalik = 8) {
+  if (!_besleyiciOndalik.has(proxy)) {
+    const d = await oku(proxy, ["function decimals() view returns (uint8)"], "decimals").catch(() => null);
+    _besleyiciOndalik.set(proxy, d == null ? ondalik : Number(Array.isArray(d) ? d[0] : d));
+  }
+  ondalik = _besleyiciOndalik.get(proxy);
   const c = await oku(proxy, ABI.besleyici, "latestRoundData");
   if (!c) return null;
   const cevap = c[1];

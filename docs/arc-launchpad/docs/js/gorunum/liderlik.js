@@ -25,7 +25,7 @@ async function v2Siralar(kap) {
   kap.append(liste("Tokens by market cap (one pool on Arc, live)", [...L].sort((a, b) => (b.piyasaDegeri || 0) - (a.piyasaDegeri || 0)),
     [["Token", ad], ["Market cap", (t) => el("td", { yazi: para(t.piyasaDegeri || 0) })], ["Real dollars in pool", (t) => el("td", { yazi: para(t.gercekDolar || 0) })]]));
   kap.append(liste("Tokens by basket dollars", [...L].sort((a, b) => (b.teminat + b.bekleyen) - (a.teminat + a.bekleyen)),
-    [["Token", ad], ["Basket at launch", (t) => el("td", { yazi: para(t.teminat) })], ["Waiting in the Defter", (t) => el("td", { yazi: para(t.bekleyen) })]]));
+    [["Token", ad], ["Basket at launch", (t) => el("td", { yazi: para(t.teminat) })], ["Waiting to be bought", (t) => el("td", { yazi: para(t.bekleyen) })]]));
   const K = {};
   for (const t of L) {
     const k = String(t.kurucu || t.vekil).toLowerCase();
