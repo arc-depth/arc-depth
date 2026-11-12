@@ -58,15 +58,12 @@ async function arcKaydi(lpAdres, nesil, cfg) {
   return Promise.all(kayit.map(async (k) => {
     const c = new Contract(k.token, ["function name() view returns (string)", "function symbol() view returns (string)"], arc);
     const [ad, sembol] = await Promise.all([c.name().catch(() => null), c.symbol().catch(() => null)]);
-    return { tur: "biz", token: k.token, ad, sembol, zaman: Number(k.zaman), lp: "ARC PULSE one pool" + nesil, zincir: "Arc", link: "#/merkez?t=" + k.token, cfg };
+    return { tur: "biz", token: k.token, ad, sembol, zaman: Number(k.zaman), lp: "ARC PULSE one pool" + nesil, zk: "arc", zincir: "Arc", link: "#/terminal?t=" + k.token, git: "#/merkez?t=" + k.token, cfg };
   }));
 }
 
-export async function ciz({ param } = {}) {
-  if (!document.getElementById("ll-stil")) document.head.append(el("style", { attr: { id: "ll-stil" }, yazi: STIL }));
-  const kap = el("div", { sinif: "yigin" });
-  kap.append(sayfaUst("All launches", "Every token launched from ARC PULSE: through Warp onto another launchpad, or on our own launchpad"));
-
+/** Every launch from ARC PULSE, newest first: { satirlar, hatalar }. Shared with Trade. */
+export async function tumLaunchlar() {
   const [v2, v9] = await Promise.all([sepetV2(), sepetV9()]);
   const kaynaklar = await Promise.allSettled([
     warpLaunchlari(),
@@ -78,15 +75,21 @@ export async function ciz({ param } = {}) {
   ]);
   const hatalar = [];
   const al = (i, ad) => { const s = kaynaklar[i]; if (s.status === "fulfilled") return s.value || []; hatalar.push(ad); return []; };
-
   const satirlar = [];
   for (const x of al(0, "Warp list")) satirlar.push({ tur: "warp", token: x.token, ad: x.ad, sembol: x.sembol, zaman: Math.floor(Date.parse(x.zaman) / 1000),
-    lp: x.lp, zincir: ZINCIR[x.zincir] || x.zincir, nereden: ZINCIR[x.zincir] || x.zincir, link: "#/warp?t=" + x.token, gorsel: x.gorsel, biz: x.biz });
+    lp: x.lp, zk: x.zincir, zincir: ZINCIR[x.zincir] || x.zincir, nereden: ZINCIR[x.zincir] || x.zincir, link: "#/terminal?t=" + x.token, dis: x.link, gorsel: x.gorsel, biz: x.biz });
   for (const i of [1, 2, 3]) satirlar.push(...al(i, ["", "Arc launchpad", "Arc first generation", "Arc designer set"][i]));
-  for (const x of al(4, "Sui launchpad")) satirlar.push({ tur: "biz", token: x.token, ad: String(x.token).split("::")[2] || "Sui token", sembol: String(x.token).split("::")[2] || "", zaman: 0, lp: "ARC PULSE Move launchpad", zincir: "Sui", nereden: "Sui", link: "#/move-token?zincir=sui&kasa=" + x.kasa });
-  for (const x of al(5, "Aptos launchpad")) satirlar.push({ tur: "biz", token: x.token, ad: x.ad, sembol: x.simge, zaman: 0, lp: "ARC PULSE Move launchpad", zincir: "Aptos", nereden: "Aptos", link: "#/move-token?zincir=aptos&token=" + x.token });
+  for (const x of al(4, "Sui launchpad")) satirlar.push({ tur: "biz", token: x.token, ad: String(x.token).split("::")[2] || "Sui token", sembol: String(x.token).split("::")[2] || "", zaman: 0, lp: "ARC PULSE Move launchpad", zk: "sui", zincir: "Sui", nereden: "Sui", link: "#/terminal?t=" + encodeURIComponent(x.token), git: "#/move-token?zincir=sui&kasa=" + x.kasa });
+  for (const x of al(5, "Aptos launchpad")) satirlar.push({ tur: "biz", token: x.token, ad: x.ad, sembol: x.simge, zaman: 0, lp: "ARC PULSE Move launchpad", zk: "aptos", zincir: "Aptos", nereden: "Aptos", link: "#/terminal?t=" + encodeURIComponent(x.token), git: "#/move-token?zincir=aptos&token=" + x.token });
   satirlar.sort((a, b) => b.zaman - a.zaman);
+  return { satirlar, hatalar };
+}
 
+export async function ciz({ param } = {}) {
+  if (!document.getElementById("ll-stil")) document.head.append(el("style", { attr: { id: "ll-stil" }, yazi: STIL }));
+  const kap = el("div", { sinif: "yigin" });
+  kap.append(sayfaUst("All launches", "Every token launched from ARC PULSE: through Warp onto another launchpad, or on our own launchpad"));
+  const { satirlar, hatalar } = await tumLaunchlar();
   if (hatalar.length) kap.append(not("Could not read every source right now (" + hatalar.join(", ") + "); the rest is shown.", "uyari"));
   const nWarp = satirlar.filter((s) => s.tur === "warp").length, nBiz = satirlar.length - nWarp;
   const lpSay = new Set(satirlar.map((s) => s.lp + "|" + s.zincir)).size;

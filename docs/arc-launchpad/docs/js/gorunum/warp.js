@@ -203,7 +203,7 @@ function warpFormu() {
 
 export async function ciz({ param } = {}) {
   /* a Warp launch's own page: #/warp?t=<token> */
-  if (param && param.get("t")) return (await import("./warp-token.js")).ciz({ param });
+  if (param && param.get("t")) return (await import("./terminal.js")).ciz({ param });
   if (!document.getElementById("wp-stil")) document.head.append(el("style", { attr: { id: "wp-stil" }, yazi: STIL }));
   const kap = el("div", {});
   kap.append(sayfaUst("Warp", "Launch your token on the hottest launchpad of thirteen chains, from one page"));
@@ -266,7 +266,7 @@ export async function ciz({ param } = {}) {
     el("div", { sinif: "wp-squad" }, SQUAD.map(([k, ad, z, lp, t], i) => el("div", { sinif: "wp-m" + (i === 0 ? " ilk" : "") }, [
       el("img", { attr: { src: "img/squad/" + k + ".svg", alt: ad + ", the Pulse Squad's " + z + " mascot", loading: "lazy" } }),
       el("div", { sinif: "ad", yazi: ad }), el("div", { sinif: "z", attr: { style: "color:" + ((ZINCIRLER.find((x) => x.ad === z) || {}).renk || "#fff") }, yazi: z + " · " + lp }),
-      i === 0 ? el("a", { sinif: "t", attr: { href: "#/warp?t=" + HALO, style: "font-weight:800" }, yazi: "Live · chart & buy →" }) : el("div", { sinif: "t", yazi: "Not before " + t }),
+      i === 0 ? el("a", { sinif: "t", attr: { href: "#/terminal?t=" + HALO, style: "font-weight:800" }, yazi: "Live · chart & buy →" }) : el("div", { sinif: "t", yazi: "Not before " + t }),
     ]))),
   ]));
 

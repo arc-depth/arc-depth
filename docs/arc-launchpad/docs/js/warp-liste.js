@@ -26,7 +26,7 @@ const STIL = `
 export function warpPaneli(launchlar, { baslik = "Launched with Warp", bosYazi, enFazla = 24 } = {}) {
   if (!document.getElementById("wl-stil")) document.head.append(el("style", { attr: { id: "wl-stil" }, yazi: STIL }));
   if (!launchlar.length) return panel(baslik, bos("No Warp launches yet", bosYazi || "The first is Halo, the Pulse Squad's Elysium mascot, on Montra. Every token launched through Warp on any connected launchpad appears here."));
-  return panel(baslik + " · " + launchlar.length, el("div", { sinif: "wl" }, launchlar.slice(0, enFazla).map((x) => el("a", { attr: { href: "#/warp?t=" + x.token } }, [
+  return panel(baslik + " · " + launchlar.length, el("div", { sinif: "wl" }, launchlar.slice(0, enFazla).map((x) => el("a", { attr: { href: "#/terminal?t=" + x.token } }, [
     (x.gorsel || squadOf(x.token)) ? el("img", { attr: { src: x.gorsel || squadResim(squadOf(x.token)), alt: "", loading: "lazy", referrerpolicy: "no-referrer" } }) : el("span", { sinif: "wl-bos" }),
     el("span", { attr: { style: "min-width:0" } }, [
       el("b", {}, [(x.ad || x.sembol || x.token.slice(0, 8) + "…"), x.biz ? el("span", { sinif: "wl-sq", yazi: "Pulse Squad" }) : null]),

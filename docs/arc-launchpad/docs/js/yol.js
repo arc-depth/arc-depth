@@ -179,13 +179,13 @@ export const YOLLAR = [
   },
   {
     yol: "terminal",
-    ad: "Trading terminal",
+    ad: "Trade",
     kisa: "Trade",
     grup: "piyasa",
     ikon: "mum",
     durum: "canli",
-    ozet: "First-generation tokens: candles, trade history, buy/sell panel, holders, collateral reserve and buyback history.",
-    kaynak: "v4 Swap events + KopruKasasi + PulseHook events",
+    ozet: "Every launch from ARC PULSE with its live chart: Warp launches bought from any chain, our own tokens bought, sold or redeemed from any chain.",
+    kaynak: "Launch registries + Warp marks; market data from DexScreener and GeckoTerminal",
     sekme: true,
     gizliRay: true          /* reached from a token, not from the rail */
   },
