@@ -54,7 +54,7 @@ const VARSAYILAN = "kesfet";
    own button. It is the sixth entry, so the phone bar (first four) is unchanged. */
 /* "presale" (9 Nov 2026): the ARCP presale behind its own tab, likewise after the phone bar four */
 /* "vitrin" (Market, 9 Nov 2026): every token on ten chains, bought from any of them; second, after Discover */
-const BIRINCIL = ["kesfet", "vitrin", "warp", "olustur", "terminal", "portfoy", "dao", "presale", "designs"];
+const BIRINCIL = ["kesfet", "vitrin", "warp", "launches", "olustur", "terminal", "portfoy", "dao", "presale", "designs"];
 /* the top bar (9 Nov 2026 redesign): six tabs read at a glance; every other module, DAO and
    NFT designs included, is one click away under "More", grouped as the rail groups them */
 /* "warp" (11 Nov 2026): launch on the hottest launchpad of thirteen chains */
@@ -285,7 +285,8 @@ const GORUNUMLER = {
   baskets: () => import("./gorunum/baskets.js"),
   designs: () => import("./gorunum/designs.js"),
   vitrin: () => import("./gorunum/vitrin.js"),   // Market, demo (9 Nov 2026)
-  warp: () => import("./gorunum/warp.js")   // Warp (11 Nov 2026)
+launches: () => import("./gorunum/launchlar.js"),   // every launch from ARC PULSE (12 Nov 2026)
+    warp: () => import("./gorunum/warp.js")   // Warp (11 Nov 2026)
 };
 
 let sonCizim = 0;

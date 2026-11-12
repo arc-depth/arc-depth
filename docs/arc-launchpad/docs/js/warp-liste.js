@@ -33,5 +33,5 @@ export function warpPaneli(launchlar, { baslik = "Launched with Warp", bosYazi, 
       el("small", { yazi: (x.sembol ? "$" + x.sembol + " · " : "") + x.lp + " · " + (ZINCIR[x.zincir] || x.zincir) }),
       el("small", { yazi: new Date(x.zaman).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) + " · chart & buy →" }),
     ]),
-  ]))));
+  ]))), el("a", { sinif: "dugme dugme--sade dugme--kucuk", attr: { href: "#/launches" }, yazi: "All launches →" }));
 }

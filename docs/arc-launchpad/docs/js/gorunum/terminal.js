@@ -77,7 +77,9 @@ export async function ciz({ param }) {
     kap.append(sekmeler([{ anahtar: "bizim", ad: "ARC PULSE tokens" + (bizim.length ? " · " + bizim.length : "") }, { anahtar: "warp", ad: "Launched with Warp" + (warp.length ? " · " + warp.length : "") }], "bizim", sec));
     kap.append(govde);
     sec("bizim");
-    kap.append(el("a", { sinif: "dugme dugme--marka", attr: { href: "#/vitrin", style: "align-self:flex-start" }, yazi: "Open Market: every token on eleven chains →" }));
+    kap.append(el("div", { sinif: "satir", attr: { style: "gap:10px;flex-wrap:wrap" } }, [
+      el("a", { sinif: "dugme dugme--marka", attr: { href: "#/vitrin" }, yazi: "Open Market: every token on eleven chains →" }),
+      el("a", { sinif: "dugme dugme--sade", attr: { href: "#/launches" }, yazi: "All launches from ARC PULSE →" })]));
     return kap;
   }
 

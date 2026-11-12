@@ -156,6 +156,17 @@ export const YOLLAR = [
     kaynak: "DefiLlama (Launchpad category) + Elysium chain records"
   },
   {
+    /* 12 Nov 2026: every launch made from ARC PULSE in one list, through Warp or on our own launchpad, with where each was made */
+    yol: "launches",
+    ad: "All launches",
+    kisa: "Launches",
+    grup: "piyasa",
+    ikon: "pusula",
+    durum: "canli",
+    ozet: "Every token launched from ARC PULSE: through Warp onto another launchpad, or on our own launchpad; where each lives and where it was paid from.",
+    kaynak: "Warp marks on chain (warp-launches.json) + the Arc, Sui and Aptos launch registries"
+  },
+  {
     yol: "move-token",
     ad: "Aptos & Sui launches",
     kisa: "Aptos & Sui",
