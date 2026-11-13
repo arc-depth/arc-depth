@@ -197,7 +197,7 @@ export async function ciz() {
     el("div", { sinif: "olcum" }, [el("div", { sinif: "olcum__etiket", yazi: "Chains" }), el("div", { sinif: "olcum__deger", yazi: String(new Set(SQUAD.map((m) => m.zincir)).size) }), el("div", { sinif: "olcum__alt", yazi: "one mascot each" })]),
   ]));
   kap.append(panel("Meet the Squad", el("div", { sinif: "d4-sq-izgara" }, SQUAD.map(kart)),
-    el("a", { sinif: "ucuncul", attr: { href: X_HESAP, target: "_blank", rel: "noopener" }, yazi: "Follow @ArcPulseApp for each launch ↗" })));
+    el("a", { sinif: "ucuncul", attr: { href: X_HESAP, target: "_blank", rel: "noopener" }, yazi: "Follow @ArcPulseApp for each launch ↗" }), el("a", { sinif: "ucuncul", attr: { href: "https://t.me/arcpulse", target: "_blank", rel: "noopener" }, yazi: "Join the Pulse Squad Telegram ↗" })));
   kap.append(panel("Launch your own", el("div", { sinif: "yigin" }, [
     el("div", { sinif: "yazi", yazi: "The Squad shows what a launch looks like on each chain. Your token can start the same way: on ARC PULSE's own launchpad, or on another launchpad through Warp." }),
     el("div", { sinif: "d4-bos__eylem" }, [dugmeLink("Create a token", "#/olustur", true), dugmeLink("Launch through Warp", "#/warp"), dugmeLink("All launches", "#/launches")]),
