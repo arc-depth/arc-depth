@@ -58,6 +58,11 @@ export async function ciz({ cuzdan }) {
   const hesap = cuzdan.hesap();
 
   kap.append(sayfaUst("Portfolio", hesap ? null : "No wallet connected"));
+  /* 13 Nov 2026: Pulse Points, opened at this wallet when one is connected */
+  kap.append(el("a", { sinif: "jeton-kart", attr: { href: "#/points" + (hesap ? "?a=" + hesap : "") } }, [
+    el("div", { sinif: "satir" }, [el("span", { sinif: "ucuncul", html: ikon("kupa", "yol-oge__ikon") }), el("strong", { yazi: "Pulse Points" })]),
+    el("div", { sinif: "ikincil", yazi: hesap ? "See this wallet's points for creating tokens and backing new launches." : "Points for creating tokens and backing new launches. Check any address, no wallet needed." })
+  ]));
 
   if (!hesap) {
     kap.append(bos(

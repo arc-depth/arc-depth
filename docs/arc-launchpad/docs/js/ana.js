@@ -289,6 +289,7 @@ const GORUNUMLER = {
   analitik: () => import("./gorunum/analitik.js"),
   liderlik: () => import("./gorunum/liderlik.js"),
   davet: () => import("./gorunum/davet.js"),   // referrals (DavetKaydi + DavetOdemesi)
+  points: () => import("./gorunum/puan.js"),   // Pulse Points (13 Nov 2026)
   guvenlik: () => import("./gorunum/guvenlik.js"),
   /* Governance. These two read and WRITE to the live Governor, which is
      the one contract in this product that is already deployed. */

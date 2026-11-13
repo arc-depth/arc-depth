@@ -42,7 +42,7 @@ const STIL =
   ".dh-oge span{white-space:normal;overflow-wrap:anywhere;line-height:1.25}.dh-oge .etiket{margin:0;font-size:10.5px}}";
 
 const HIZLI = [["vitrin", "Tokens on 11 chains"], ["launches", "Every launch from ARC PULSE"], ["warp", "Launch on any launchpad"], ["presale", "ARCP presale"],
-  ["fthm", "The platform token"], ["liderlik", "Top creators and traders"], ["davet", "Invite and earn"], ["dokuman", "How it works"]];
+  ["fthm", "The platform token"], ["liderlik", "Top creators and traders"], ["davet", "Invite and earn"], ["points", "Points for real activity"], ["dokuman", "How it works"]];
 
 export async function ciz({ param } = {}) {
   if (!document.getElementById("hizli-stil")) document.head.append(el("style", { attr: { id: "hizli-stil" }, yazi: STIL }));

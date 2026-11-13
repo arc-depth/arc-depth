@@ -44,7 +44,7 @@ export const GRUPLAR = [
 /* the order of the rail inside each group (routes not listed keep registry order, after these) */
 export const RAY_SIRASI = ["kesfet", "terminal", "vitrin", "launches", "warp", "squad", "liderlik", "advertise",
   "olustur", "merkez", "olustur-move", "move-token",
-  "portfoy", "kar-zarar", "davet",
+  "portfoy", "kar-zarar", "davet", "points",
   "fthm", "presale", "dao", "teklifler", "topluluk-dao", "topluluk",
   "genesis", "pazar", "gelistirici",
   "kasalar", "analitik", "kalkan", "zincirler", "guvenlik", "dokuman"];
@@ -464,6 +464,18 @@ export const YOLLAR = [
     durum: "canli",
     ozet: "Your invite link, who you invited, and your share of the platform's cut of their fees, claimable in USDC.",
     kaynak: "DavetKaydi + DavetOdemesi (Arc)"
+  },
+  {
+    yol: "points",
+    ad: "Pulse Points",
+    kisa: "Points",
+    grup: "sen",
+    ikon: "kupa",
+    /* 13 Nov 2026: points from public on-chain activity only (scripts/puan-hesapla.js, hourly, writes veri/puan.json).
+       Never volume. A future airdrop is planned from ARCP 2's 10% airdrop share, never the founder share. */
+    durum: "canli",
+    ozet: "Points for creating tokens that find real buyers and for backing new launches early, counted hourly from public on-chain activity.",
+    kaynak: "veri/puan.json (scripts/puan-hesapla.js)"
   },
 
   /* ---- trust ------------------------------------------------------- */
