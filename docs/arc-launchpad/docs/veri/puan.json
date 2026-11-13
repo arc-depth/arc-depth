@@ -1,5 +1,5 @@
 {
- "guncellendi": "2026-11-13T06:58:59.742Z",
+ "guncellendi": "2026-11-13T11:35:31.096Z",
  "surum": "v1",
  "formul": {
   "launch": 10,
@@ -18,8 +18,8 @@
  },
  "toplam": {
   "cuzdan": 2,
-  "puan": 0,
-  "bekleyen": 10,
+  "puan": 10,
+  "bekleyen": 0,
   "launch": 4,
   "izlenen": 4,
   "haric": 838
@@ -157,21 +157,21 @@
  "liste": [
   {
    "a": "0x7a988b8fa5d66de4950ee5f94c55c7820b6e562f",
-   "p": 0,
-   "b": 5,
+   "p": 5,
+   "b": 0,
    "l": 0,
    "n": 0,
-   "e": 0,
-   "eb": 1
+   "e": 1,
+   "eb": 0
   },
   {
    "a": "0xbcd87a4e282ed73fa74020d86c7536296d2d0577",
-   "p": 0,
-   "b": 5,
+   "p": 5,
+   "b": 0,
    "l": 0,
    "n": 0,
-   "e": 0,
-   "eb": 1
+   "e": 1,
+   "eb": 0
   }
  ],
  "jetonlar": [
@@ -183,7 +183,7 @@
    "ekip": true,
    "alici": 0,
    "nitelikli": false,
-   "acik": true,
+   "acik": false,
    "erken": 2
   },
   {
