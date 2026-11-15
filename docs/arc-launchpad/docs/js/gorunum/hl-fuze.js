@@ -16,6 +16,7 @@
 
 import { el } from "../ui.js";
 import { oynaklik } from "./hl-kask.js";
+import { zamanMakinesi } from "./hl-zaman.js";
 
 const STIL =
   ".fz{border:1px solid var(--marka);border-radius:12px;padding:10px 12px;display:grid;gap:8px;font-size:13px}" +
@@ -38,14 +39,15 @@ export function fuzePaneli(ortam, yon0) {
   const yonK = el("div", { sinif: "fz__iki" }), genK = el("div", { sinif: "fz__sec" }), rK = el("div", { sinif: "fz__sec" });
   const plan = el("div", { sinif: "fz__plan" });
   const yukleDug = el("button", { sinif: "dugme dugme--marka dugme--tam", attr: { type: "button" }, yazi: "Load into the order form" });
-  let son = null;
+  let son = null, sonPlan = null;
+  const zm = zamanMakinesi({ plan: () => sonPlan, fiyat });
   const kutu = el("div", { sinif: "fz", attr: { "aria-label": "Aim assist" } }, [
     el("div", { sinif: "fz__bas" }, [el("span", { yazi: "🎯 Aim assist" }), el("small", { yazi: "fills the form, you still review and sign" })]),
     yonK,
     el("div", {}, [el("label", { yazi: "Most you are willing to lose if the stop fills (USD)" }), riskG]),
     el("div", {}, [el("label", { yazi: "Stop distance" }), genK]),
     el("div", {}, [el("label", { yazi: "Take profit" }), rK]),
-    plan, yukleDug,
+    plan, yukleDug, zm.kutu,
     el("div", { sinif: "fz__n", yazi: "Stop distances come from the market's own moves over the last 7 days, so the stop sits outside normal noise. Isolated margin, so a loss is limited to this position's margin. Not advice: you choose the side." }),
   ]);
   const secDug = (k, ad, aktif, f, sinif = "dugme dugme--sade dugme--kucuk") => el("button", { sinif, attr: { type: "button", "aria-pressed": String(aktif) }, yazi: ad, on: { click: f } });
@@ -59,7 +61,7 @@ export function fuzePaneli(ortam, yon0) {
   async function hesapla() {
     const P = ortam.P(), H = ortam.H();
     const o = await oynaklik(hl, P.ad);
-    son = null; yukleDug.disabled = true;
+    son = null; sonPlan = null; yukleDug.disabled = true;
     const satir = (a, b, s = "") => el("div", {}, [el("span", { yazi: a }), el("span", { sinif: s, yazi: b })]);
     if (!o) { plan.replaceChildren(el("div", { sinif: "fz__n", yazi: "Not enough price history for this market to place a stop outside its noise." })); return; }
     const risk = Number(String(riskG.value).replace(/[$,\s]/g, ""));
@@ -82,6 +84,7 @@ export function fuzePaneli(ortam, yon0) {
     kal = Math.min(kal, P.maxKal);
     if (liqUzak(kal) < d * 1.5) sorunlar.push("At " + kal + "× the liquidation would come before or near the stop. Lower the amount, add margin, or use a tighter stop.");
     if (boyut < hl.EN_AZ_USD) sorunlar.push("That is below Hyperliquid's $" + hl.EN_AZ_USD + " minimum order. Raise the amount or use a tighter stop.");
+    sonPlan = { coin: P.ad, giris: ref, tp, sl, alis };
     const liq = hl.liqTahmin({ px: ref, boyut: boyut / ref, alis, kal, capraz: false, hesapDegeri: boyut / kal, maxKal: P.maxKal });
     plan.replaceChildren(
       satir((alis ? "Long " : "Short ") + P.ad + " at market", "≈ " + fiyat(ref)),
