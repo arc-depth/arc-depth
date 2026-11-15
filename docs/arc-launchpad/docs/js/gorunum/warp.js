@@ -41,12 +41,12 @@ const WARP = { "Montra": ACIK.montra ? "live" : "next", "Flap sh": ACIK.flap ? "
 /* where a launchpad lives when we know it for sure; otherwise its DefiLlama page, which links to it */
 const ADRES = { "pump.fun": "https://pump.fun", "Montra": "https://montramarkets.xyz", "Ascend Launchpad": "https://app.ascendlaunch.xyz", "Ascend": "https://app.ascendlaunch.xyz", "Volta": "https://www.volta.family" };
 
-/* the Pulse Squad: our own launches, one mascot per chain, five days apart at the earliest */
+/* the Pulse Squad: our own launches, one mascot per chain; no launch dates until the market recovers (15 Nov 2026) */
 const SQUAD = [
-  ["halo", "Halo", "Elysium", "Montra", null], ["zappy", "Zappy", "Solana", "pump.fun", "18 Nov"], ["blu", "Blu", "Base", "Clanker", "23 Nov"],
-  ["feather", "Feather", "Robinhood", "Pons", "28 Nov"], ["goldie", "Goldie", "BNB Chain", "Flap", "3 Dec"], ["vio", "Vio", "Monad", "nad.fun", "8 Dec"],
-  ["pulsy", "Pulsy", "Arc", "ARC PULSE", "13 Dec"], ["turbo", "Turbo", "HyperEVM", "Alt Fun", "18 Dec"], ["drip", "Drip", "Sui", "Turbos", "23 Dec"],
-  ["yeti", "Yeti", "Avalanche", "Arena", "28 Dec"], ["pebble", "Pebble", "Aptos", "Emojicoin", "2 Jan"], ["bolt", "Bolt", "Arbitrum", "ARC PULSE", "7 Jan"],
+  ["lumi", "Lumi", "Elysium", "Montra", null], ["zappy", "Zappy", "Solana", "pump.fun", null], ["blu", "Blu", "Base", "Clanker", null],
+  ["feather", "Feather", "Robinhood", "Pons", null], ["goldie", "Goldie", "BNB Chain", "Flap", null], ["vio", "Vio", "Monad", "nad.fun", null],
+  ["pulsy", "Pulsy", "Arc", "ARC PULSE", null], ["turbo", "Turbo", "HyperEVM", "Alt Fun", null], ["drip", "Drip", "Sui", "Turbos", null],
+  ["yeti", "Yeti", "Avalanche", "Arena", null], ["pebble", "Pebble", "Aptos", "Emojicoin", null], ["bolt", "Bolt", "Arbitrum", "ARC PULSE", null],
 ];
 
 const para = (v) => { v = Number(v || 0); return v >= 1e9 ? "$" + (v / 1e9).toFixed(2) + "B" : v >= 1e6 ? "$" + (v / 1e6).toFixed(2) + "M" : v >= 1e3 ? "$" + (v / 1e3).toFixed(1) + "K" : "$" + v.toFixed(0); };
@@ -122,7 +122,7 @@ function warpFormu(ilkLp) {
   const lp = el("select", {}, Object.entries(LAUNCHPADLER).map(([k, v]) => el("option", { attr: { value: k }, yazi: v.ad + " · " + v.zincirler.map((z) => ZINCIR_AD[z][0]).join(", ") + (v.acik() ? " · Live" : " · Coming soon") })));
   if (ilkLp && LAUNCHPADLER[ilkLp]) lp.value = ilkLp;
   const zincir = el("select");
-  const ad = gir("e.g. Halo", { maxlength: "32" }), sembol = gir("HALO", { maxlength: "12" }), aciklama = el("textarea", { attr: { placeholder: "What it is, in a sentence or two", maxlength: "280", rows: "2" } });
+  const ad = gir("e.g. Lumi", { maxlength: "32" }), sembol = gir("LUMI", { maxlength: "12" }), aciklama = el("textarea", { attr: { placeholder: "What it is, in a sentence or two", maxlength: "280", rows: "2" } });
   const dosya = el("input", { sinif: "wp-gizli", attr: { id: "wp-dosya", type: "file", accept: "image/png,image/jpeg,image/webp,image/gif" } });
   const dosyaAd = el("span", { sinif: "ad", yazi: "No file chosen" });
   dosya.addEventListener("change", () => { dosyaAd.textContent = dosya.files[0] ? dosya.files[0].name : "No file chosen"; });
@@ -276,7 +276,7 @@ export async function ciz({ param } = {}) {
 
   /* ---- the Pulse Squad (moved up from the bottom of the page) ---- */
   kap.append(panel("The Pulse Squad · our own launches, one friend on every chain", [
-    el("p", { sinif: "vt-alt", attr: { style: "opacity:.8" }, yazi: "ARC PULSE launches a mascot memecoin on each chain, five days apart at the earliest, each one paid for by the fees of the ones before. They are not ARCP and promise nothing: their trading fees fund the platform, and every address, fee and payout is published here as it happens." }),
+    el("p", { sinif: "vt-alt", attr: { style: "opacity:.8" }, yazi: "ARC PULSE will launch a mascot memecoin on each chain, one by one, each one paid for by the fees of the ones before. Dates are announced on X and Telegram. They are not ARCP and promise nothing: their trading fees fund the platform, and every address, fee and payout is published here as it happens." }),
     el("div", { sinif: "wp-squad" }, SQUAD.map(([k, ad, z, lp, t], i) => el("div", { sinif: "wp-m" }, [
       el("img", { attr: { src: "img/squad/" + k + ".svg", alt: ad + ", the Pulse Squad's " + z + " mascot", loading: i < 6 ? "eager" : "lazy" } }),
       el("div", { sinif: "ad", yazi: ad }), el("div", { sinif: "z", attr: { style: "color:" + ((ZINCIRLER.find((x) => x.ad === z) || {}).renk || "#fff") }, yazi: z + " · " + lp }),

@@ -176,7 +176,7 @@ export function olcum(etiket, deger, alt = null, sinif = "") {
    same page take the next mascots, smaller, so one screen is not a row of the
    same face. Ethereum has no mascot: Pulsy stands in. */
 const ZINCIR_MASKOT = { ...Object.fromEntries(SQUAD.map((m) => [m.zincir.toLowerCase().replace(/ chain$/, ""), m.k])), bsc: "goldie", ethereum: "pulsy" };
-const YOL_MASKOT = { kesfet: "pulsy", terminal: "zappy", vitrin: "blu", launches: "feather", warp: "halo", liderlik: "goldie", advertise: "vio",
+const YOL_MASKOT = { kesfet: "pulsy", terminal: "zappy", vitrin: "blu", launches: "feather", warp: "lumi", liderlik: "goldie", advertise: "vio",
   olustur: "pulsy", merkez: "pulsy", "olustur-move": "pebble", "move-token": "drip", portfoy: "turbo", "kar-zarar": "turbo", davet: "feather",
   fthm: "pulsy", dao: "pulsy", teklifler: "pulsy", "topluluk-dao": "vio", topluluk: "vio", genesis: "bolt", pazar: "bolt", gelistirici: "bolt",
   kasalar: "yeti", analitik: "turbo", kalkan: "yeti", zincirler: "vio", guvenlik: "pebble", dokuman: "drip", daha: "zappy",

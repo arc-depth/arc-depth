@@ -13,10 +13,10 @@
 const KOK = "https://arcpulse.app/arc-launchpad/docs/squad.html";
 
 const SORULAR = [
-  { s: "It's launch day. You are…", c: [["🛡️", "First in line, checking the path for everyone", "halo"], ["⚡", "Already live before anyone finished reading", "zappy"], ["🧢", "Shipping quietly, smiling later", "blu"], ["🎯", "Waiting for one calm, perfect shot", "feather"]] },
+  { s: "It's launch day. You are…", c: [["✨", "First to spot what's new", "lumi"], ["⚡", "Already live before anyone finished reading", "zappy"], ["🧢", "Shipping quietly, smiling later", "blu"], ["🎯", "Waiting for one calm, perfect shot", "feather"]] },
   { s: "Pick a superpower.", c: [["🐙", "Doing eight things at once", "vio"], ["💜", "Keeping the whole crew in sync", "pulsy"], ["🏁", "Pure, unreasonable speed", "turbo"], ["💧", "Going with the flow, always", "drip"]] },
   { s: "Your ideal weekend?", c: [["🏔️", "Racing down a snowy mountain", "yeti"], ["🪨", "A slow, steady, cosy day", "pebble"], ["🧩", "A puzzle nobody else could solve", "bolt"], ["🍯", "Something sweet and golden", "goldie"]] },
-  { s: "Which motto is yours?", c: [["😇", "Look after the newcomers", "halo"], ["🌊", "Stay liquid", "drip"], ["🥽", "Goggles on. Full send.", "turbo"], ["🤖", "Logic first, vibes right after", "bolt"]] },
+  { s: "Which motto is yours?", c: [["💡", "Light the way", "lumi"], ["🌊", "Stay liquid", "drip"], ["🥽", "Goggles on. Full send.", "turbo"], ["🤖", "Logic first, vibes right after", "bolt"]] },
   { s: "In the group chat you are…", c: [["❤️", "The one who keeps everyone together", "pulsy"], ["💨", "The fastest reply, every time", "zappy"], ["🌟", "The sweet, stubborn optimist", "goldie"], ["🤗", "The big heart with the big hugs", "yeti"]] },
   { s: "Pick a look.", c: [["🔧", "Cap backwards, sleeves rolled up", "blu"], ["🪶", "Light, sharp and precise", "feather"], ["🌀", "A little of everything, all at once", "vio"], ["🐰", "Small, soft and unbreakable", "pebble"]] },
 ];
@@ -69,7 +69,7 @@ function hesapla() {
     say[k] = (say[k] || 0) + 1;
     if (!en || say[k] >= say[en]) en = k;
   });
-  return en || "halo";
+  return en || "lumi";
 }
 
 function sonucGoster(k, kendi) {

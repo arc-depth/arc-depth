@@ -1,5 +1,5 @@
 /* ===========================================================================
- * sayfa.js — the little script the static pages share (halo, squad, warp,
+ * sayfa.js — the little script the static pages share (squad, warp,
  * launch-memecoin; 13 Nov 2026). No data leaves the page and nothing is stored.
  *
  *   - the phone menu (a <details>, opens without script) closes after a link

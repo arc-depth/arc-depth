@@ -143,15 +143,6 @@ section{padding:72px 0;scroll-margin-top:90px}
 
 /* ---------- Pulse Squad: which chain are you? ---------- */
 .squad{padding-top:48px}
-.halo-canli{display:flex;gap:16px;align-items:center;margin:0 0 18px;padding:16px 18px;border-radius:18px;text-decoration:none;color:inherit;
-  background:radial-gradient(120% 160% at 0% 0%,rgba(198,248,107,.16),transparent 60%),var(--panel);border:1px solid rgba(198,248,107,.38)}
-.halo-canli:hover{border-color:#c6f86b;text-decoration:none}
-.halo-canli img{width:84px;height:84px;object-fit:contain;flex:none}
-.halo-canli span{display:flex;flex-direction:column;gap:3px;min-width:0;flex:1}
-.halo-canli small{font:600 12px/1.3 var(--mono);letter-spacing:.08em;color:#c6f86b}
-.halo-canli b{font-size:20px}.halo-canli em{color:var(--dim);font-size:14px;font-style:normal}
-.halo-canli code{font-size:12px;color:var(--dim2);word-break:break-all}
-.halo-canli strong{flex:none;padding:10px 16px;border-radius:999px;background:var(--marka);color:#fff;font-size:14px;font-weight:600}
 .squad-liste{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:10px}
 .squad-liste a{display:flex;flex-direction:column;align-items:center;text-align:center;gap:2px;padding:14px 8px 12px;border-radius:16px;text-decoration:none;color:var(--tx);height:100%;
   background:linear-gradient(180deg,color-mix(in srgb,var(--z) 14%,transparent),transparent 70%),var(--panel);border:1px solid color-mix(in srgb,var(--z) 30%,var(--line))}
@@ -325,8 +316,6 @@ footer{border-top:1px solid var(--line);padding:40px 0 48px;background:#08090c;c
   .onsatis-serit__metin{flex-basis:100%}
   .onsatis-serit__eylem{width:100%}
   .onsatis-serit__eylem .cta{flex:1 1 100%}
-  .halo-canli{flex-wrap:wrap}
-  .halo-canli strong{width:100%;text-align:center}
   .squad-liste{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
   .squad-liste img{width:58px;height:54px}
   .squad-liste b{font-size:13.5px}

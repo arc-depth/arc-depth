@@ -4,8 +4,8 @@
  * Twelve mascots, one per chain (data: docs/js/squad.js, the personality
  * lines from video/squad/squad.json copied below). Each card: the mascot,
  * its chain and launchpad, a line about it, its quote and its status:
- * "Live" with a link to its token page once it is launched, otherwise the
- * date it will not come before. No price is shown next to a mascot.
+ * "Live" with a link to its token page once it is launched, otherwise
+ * "Coming soon" (no launch dates until the market recovers, 15 Nov 2026). No price is shown next to a mascot.
  *
  * This file also holds the few small display helpers the secondary pages
  * share (a mascot empty state, an example card, CSS bars, an archive
@@ -18,7 +18,7 @@ import { SQUAD, squadResim } from "../squad.js";
 
 /* the personality line and quote of each mascot (video/squad/squad.json) */
 const KISILIK = {
-  halo: ["Kind, brave and always first. The squad's guardian angel.", "Every chain deserves a guardian."],
+  lumi: ["Bright, curious and first to spot something new. Lights the way to every launch.", "Follow the glow."],
   zappy: ["Quick, cheeky, impossible to catch.", "Blink and I'm already live."],
   blu: ["Builds first, talks later. Cap always backwards.", "Ship it, then smile."],
   feather: ["Light as a feather, never misses a shot.", "Aim small, fly high."],
@@ -31,7 +31,7 @@ const KISILIK = {
   pebble: ["Solid as a rock, soft as a bunny.", "Small, steady, unbreakable."],
   bolt: ["Runs on pure logic and a little bit of vibes.", "A little logic. A lot of personality."],
 };
-const RENK = { halo: "#c6f86b", zappy: "#14f195", blu: "#3d7bff", feather: "#c3f53c", goldie: "#f0b90b", vio: "#a08cff", pulsy: "#8b6cff", turbo: "#50e3c2", drip: "#4da2ff", yeti: "#e84142", pebble: "#2ed8a7", bolt: "#28a0f0" };
+const RENK = { lumi: "#7cf0a0", zappy: "#14f195", blu: "#3d7bff", feather: "#c3f53c", goldie: "#f0b90b", vio: "#a08cff", pulsy: "#8b6cff", turbo: "#50e3c2", drip: "#4da2ff", yeti: "#e84142", pebble: "#2ed8a7", bolt: "#28a0f0" };
 const X_HESAP = "https://x.com/ArcPulseApp";
 
 /* ---- shared styles (injected once; reuses the CSS variables of docs/css) ---- */
@@ -187,8 +187,8 @@ export async function ciz() {
   stil();
   const kap = el("div", { sinif: "yigin" });
   kap.append(sayfaUst("Pulse Squad", "Twelve mascots, one for each chain they call home"));
-  kap.append(not("Each mascot is a guide to its chain and its launchpad, and each is also a small memecoin ARC PULSE launches itself, one every five days. " +
-    "A date is the earliest day, not a promise. Ethereum has no mascot of its own; Pulsy, ARC PULSE's own mascot, stands in there.", "bilgi"));
+  kap.append(not("Each mascot is a guide to its chain and its launchpad, and each is also a small memecoin ARC PULSE will launch itself. " +
+    "Launching one by one, dates announced on X and Telegram. Ethereum has no mascot of its own; Pulsy, ARC PULSE's own mascot, stands in there.", "bilgi"));
   const canli = SQUAD.filter((m) => m.token);
   const sonraki = SQUAD.find((m) => !m.token && m.tarih);
   kap.append(el("div", { sinif: "izgara izgara--olcum" }, [

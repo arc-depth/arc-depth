@@ -1,4 +1,4 @@
-/* sayfa.css — the base sheet for the static pages (halo, squad, warp, launch-memecoin), 13 Nov 2026.
+/* sayfa.css — the base sheet for the static pages (squad, warp, launch-memecoin), 13 Nov 2026.
    The first part is a copy of index.html's own base <style> (header, buttons, sections, FAQ, band, footer);
    css/landing-visual.css is loaded after this file and restyles them to the brand. The sy- classes below are these pages' own. */
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
