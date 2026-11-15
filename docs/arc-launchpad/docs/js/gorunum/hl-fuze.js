@@ -85,6 +85,8 @@ export function fuzePaneli(ortam, yon0) {
     if (liqUzak(kal) < d * 1.5) sorunlar.push("At " + kal + "× the liquidation would come before or near the stop. Lower the amount, add margin, or use a tighter stop.");
     if (boyut < hl.EN_AZ_USD) sorunlar.push("That is below Hyperliquid's $" + hl.EN_AZ_USD + " minimum order. Raise the amount or use a tighter stop.");
     sonPlan = { coin: P.ad, giris: ref, tp, sl, alis };
+    /* the chart draws the plan (entry, stop, target) */
+    try { window.dispatchEvent(new CustomEvent("hl-plan", { detail: sonPlan })); } catch (e) { /* old browser */ }
     const liq = hl.liqTahmin({ px: ref, boyut: boyut / ref, alis, kal, capraz: false, hesapDegeri: boyut / kal, maxKal: P.maxKal });
     plan.replaceChildren(
       satir((alis ? "Long " : "Short ") + P.ad + " at market", "≈ " + fiyat(ref)),

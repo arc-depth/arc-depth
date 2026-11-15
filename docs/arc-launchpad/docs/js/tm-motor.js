@@ -79,13 +79,20 @@ export function simule(p) {
   for (let i = 0; i < N; i++) {
     let x = x0, v = s0, bj = 0, bk = 0, sonuc = "-", ai = asagi.length ? 0 : -1, yi = yukari.length ? 0 : -1;
     let blokBas = art ? Math.floor(R() * (art.length - B)) : 0;
+    /* Time Machine 2: start from the hour after a past moment with a similar chart, and replay what followed */
+    let ai2 = p.analog && p.analog.baslar.length ? p.analog.baslar[Math.floor(R() * p.analog.baslar.length)] + 1 : -1;
     const yol = i < ORNEK ? new Float32Array(T + 1) : null;
     if (yol) yol[0] = 0;
     let t = 0;
     for (; t < T; t++) {
-      if (bk === B) { bk = 0; blokBas = art ? Math.floor(R() * (art.length - B)) : 0; }
-      const z = art ? art[blokBas + bk] : normal();
-      bk++;
+      let z;
+      if (ai2 >= 0 && ai2 < art.length) { z = art[ai2] + p.analog.ekle; ai2++; }
+      else {
+        ai2 = -1;
+        if (bk === B) { bk = 0; blokBas = art ? Math.floor(R() * (art.length - B)) : 0; }
+        z = art ? art[blokBas + bk] : normal();
+        bk++;
+      }
       const m = car ? (car[t] || 1) : 1;
       const sig = Math.sqrt(v) * m;
       let r = sig * z;
@@ -157,4 +164,29 @@ export function girdiHazirla(D, I, { giris, tp, sl, saat, n, tohum, ornek, katma
   return { giris, tp, sl, saat, n, tohum, ornek, sigma, carpan, artik: D.artik,
     likit: k.likit ? D.likit : null,
     etki: k.likit && D.likit && D.gunHacim > 0 ? { Y: 0.5, gunSigma, gunHacim: D.gunHacim, h: 0.5 } : null };
+}
+
+/**
+ * Time Machine 2 inputs: the same forward model, but every future starts from the hour after a past moment
+ * of this market whose chart state matched today's (gosterge.js hepsi().durum), and replays the moves that
+ * really followed (with their drift), scaled to today's volatility. The match loosens step by step
+ * (gevset: list of key reducers, loosest last) until at least `enAz` past moments are found.
+ * Returns null when the market has no chart states yet.
+ */
+export function girdiHazirla2(D, I, secenek, gevset, enAz = 20) {
+  if (!D.durum || !D.durum.length || !D.simdiDurum) return null;
+  const T = Math.max(1, Math.round(secenek.saat));
+  for (let s2 = 0; s2 < gevset.length; s2++) {
+    const hedef = gevset[s2](D.simdiDurum);
+    const baslar = [];
+    for (let k = 0; k < D.durum.length - 1; k++) if (D.durum[k] && gevset[s2](D.durum[k]) === hedef) baslar.push(k);
+    /* prefer moments with the whole horizon after them */
+    const tam = baslar.filter((k) => k + T < D.artik.length);
+    const l = tam.length >= enAz ? tam : baslar;
+    if (l.length >= enAz || s2 === gevset.length - 1) {
+      if (!l.length) return null;
+      return { ...girdiHazirla(D, I, secenek), analog: { baslar: l, ekle: D.zOrt || 0 }, eslesme: { seviye: s2, anahtar: hedef, n: l.length } };
+    }
+  }
+  return null;
 }

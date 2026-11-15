@@ -27,6 +27,7 @@ import { paraPaneli } from "./hl-para.js";
 import { gecmisPaneli } from "./hl-gecmis.js";
 import { kaskPaneli } from "./hl-kask.js";
 import { fuzePaneli } from "./hl-fuze.js";
+import { grafikPaneli } from "./hl-grafik.js";
 
 const RISK = "Perpetual futures use leverage and can lose more than you expect quickly. You can lose more than you deposit quickly with leverage. " +
   "ARC PULSE does not run Hyperliquid: orders placed here go to Hyperliquid's order book, signed by your own wallet, and your funds stay in your own Hyperliquid account. Not available where perps are restricted.";
@@ -192,29 +193,11 @@ export async function ciz({ param, cuzdan }) {
   kap.append(el("div", { sinif: "hl-ust" }, [el("div", { sinif: "hl-alan" }, [el("label", { yazi: "Market" }), secim]), olcler]));
 
   /* ---- chart ---- */
-  const ARALIK = [{ ad: "24h", i: "15m", ms: 864e5 }, { ad: "7d", i: "1h", ms: 7 * 864e5 }, { ad: "30d", i: "4h", ms: 30 * 864e5 }];
-  let aralik = ARALIK[0];
-  const tuval = el("canvas", { attr: { role: "img", "aria-label": "Price chart" } });
-  const grafikBos = el("div", { sinif: "hl-grafik__bos", yazi: "Loading the chart…" });
-  const aralikDug = el("div", { sinif: "hl-aralik" });
-  let sonMumlar = [];
-  const grafikYukle = async () => {
-    const coin = P.ad, ar = aralik;
-    grafikBos.hidden = false; grafikBos.textContent = "Loading the chart…";
-    try {
-      const m = await hl.mumlar(coin, ar.i, ar.ms);
-      if (coin !== P.ad || ar !== aralik) return;
-      sonMumlar = m || [];
-      grafikBos.hidden = sonMumlar.length > 1;
-      if (sonMumlar.length < 2) grafikBos.textContent = "No price history for this market.";
-      grafikCiz(tuval, sonMumlar);
-    } catch (e) { grafikBos.textContent = "The chart could not be loaded."; }
-  };
-  const aralikCiz = () => aralikDug.replaceChildren(...ARALIK.map((a) => el("button", { sinif: "dugme dugme--sade dugme--kucuk", attr: { type: "button", "aria-pressed": String(a === aralik) }, yazi: a.ad, on: { click: () => { aralik = a; aralikCiz(); grafikYukle(); } } })));
-  aralikCiz();
-  const grafikKutu = el("div", { sinif: "hl-grafik" }, [tuval, grafikBos]);
-  const grafikPanel = panel(["Price · ", el("span", { yazi: P.ad + "-USD" })], el("div", { sinif: "yigin yigin--sik" }, [grafikKutu,
-    el("div", { sinif: "hl-ipucu", yazi: "Hyperliquid's own candles (close prices). Data may be delayed." })]), aralikDug);
+  /* 16 Nov 2026: candles + indicators + Chart read (hl-grafik.js); the old line chart (grafikCiz) is kept below, unused */
+  const gp = grafikPaneli({ hl, P: () => P, fiyat });
+  const grafikYukle = () => gp.yukle();
+  const sonMumlar = [];
+  const grafikPanel = panel(["Price · ", el("span", { yazi: P.ad + "-USD" })], gp.govde, gp.aralikDug);
   const grafikBaslik = grafikPanel.querySelector(".panel__baslik span");
 
   /* ---- order form ---- */

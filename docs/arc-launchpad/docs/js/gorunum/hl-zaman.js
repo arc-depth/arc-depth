@@ -11,7 +11,8 @@
  * =========================================================================== */
 
 import { el } from "../ui.js";
-import { simule, girdiHazirla } from "../tm-motor.js";
+import { simule, girdiHazirla, girdiHazirla2 } from "../tm-motor.js";
+import { GEVSET, GEVSET_AD, durumYazi } from "../gosterge.js";
 
 const STIL =
   ".tm{display:grid;gap:8px;border-top:1px solid var(--cizgi);padding-top:8px}" +
@@ -35,22 +36,30 @@ function oku(ad) {
 /** `plan()` returns { coin, giris, tp, sl, alis } or null; `fiyat` formats a price. */
 export function zamanMakinesi({ plan, fiyat }) {
   if (!document.getElementById("tm-stil")) document.head.append(el("style", { attr: { id: "tm-stil" }, yazi: STIL }));
-  let ufuk = 24;
+  let ufuk = 24, mod = 1;   // 1: forward model (no direction) · 2: chart setups (replays what followed similar charts)
   const tuval = el("canvas", { attr: { role: "img", "aria-label": "Simulated price paths" } });
   const sayac = el("div", { sinif: "tm__sayac" });
   const sonuc = el("div", { sinif: "tm__sonuc" });
   const metin = el("div", { sinif: "yigin yigin--sik" });
   const ufukK = el("div", { sinif: "tm__ufuk" });
+  const modK = el("div", { sinif: "tm__ufuk", attr: { style: "flex-wrap:wrap" } });
+  const aciklama = el("div", { sinif: "tm__n" });
   const calistir = el("button", { sinif: "dugme dugme--marka dugme--tam", attr: { type: "button" }, yazi: "🔮 Run the Time Machine (10,000 futures)" });
   const kutu = el("div", { sinif: "tm" }, [
     el("div", { sinif: "tm__bas" }, [el("b", { yazi: "🔮 Time Machine" }), ufukK]),
-    el("div", { sinif: "tm__n", yazi: "Runs 10,000 possible futures of this market for the plan above and counts which comes first: take profit, stop loss, or neither." }),
+    modK, aciklama,
     calistir,
     el("div", { sinif: "tm__tuval", attr: { hidden: true } }, [tuval, sayac]),
     sonuc, metin,
   ]);
   const ufukCiz = () => ufukK.replaceChildren(...[4, 24, 72].map((h) => el("button", { sinif: "dugme dugme--sade dugme--kucuk", attr: { type: "button", "aria-pressed": String(h === ufuk) }, yazi: h + "h", on: { click: () => { ufuk = h; ufukCiz(); } } })));
   ufukCiz();
+  const ACIK = {
+    1: "Time Machine 1 · forward model: 10,000 possible futures from this market's forecast volatility, options pricing, scheduled events and liquidation levels. It takes no view on direction.",
+    2: "Time Machine 2 · chart setups: finds the past hours of this market whose 1 h chart looked like now (RSI, trend, Bollinger, volume, MACD) and replays what really followed, scaled to today's volatility, 10,000 times. Direction comes from those past moves.",
+  };
+  const modCiz = () => { modK.replaceChildren(...[[1, "1 · Forward model"], [2, "2 · Chart setups 📈"]].map(([k, ad]) => el("button", { sinif: "dugme dugme--sade dugme--kucuk", attr: { type: "button", "aria-pressed": String(mod === k) }, yazi: ad, on: { click: () => { mod = k; modCiz(); } } }))); aciklama.textContent = ACIK[mod]; };
+  modCiz();
 
   let anim = 0;
   function ciz(r, giris, tp, sl, ilerleme) {
@@ -91,10 +100,15 @@ export function zamanMakinesi({ plan, fiyat }) {
     calistir.textContent = "Simulating 10,000 futures…";
     await new Promise((r) => setTimeout(r, 30));
     /* the long and short cases are mirror images: for a short, TP is below and SL above */
-    const tam = simule(girdiHazirla(D, I, { giris: pl.giris, tp: pl.tp, sl: pl.sl, saat: ufuk, n: 10000, ornek: 180 }));
+    const sec = { giris: pl.giris, tp: pl.tp, sl: pl.sl, saat: ufuk, n: 10000, ornek: 180 };
+    const g2 = girdiHazirla2(D, I, sec, GEVSET);
+    if (mod === 2 && !g2) { calistir.disabled = false; calistir.textContent = "🔮 Run the Time Machine (10,000 futures)"; metin.replaceChildren(el("div", { sinif: "tm__m tm__u", yazi: "Time Machine 2 needs this market's chart history; it is not ready yet for " + pl.coin + ". Use Time Machine 1." })); return; }
+    const bir = simule(girdiHazirla(D, I, mod === 1 ? sec : { ...sec, n: 5000, ornek: 0 }));
+    const iki = g2 ? simule(mod === 2 ? g2 : { ...g2, n: 5000, ornek: 0 }) : null;
+    const tam = mod === 2 ? iki : bir, diger = mod === 2 ? bir : iki;
     const sade = simule(girdiHazirla(D, I, { giris: pl.giris, tp: pl.tp, sl: pl.sl, saat: ufuk, n: 10000, ornek: 0, katman: { iv: false, mevsim: false, olay: false, likit: false } }));
     /* where the price could be after the horizon, ignoring the plan (no TP / SL stopping the paths) */
-    const serbest = simule(girdiHazirla(D, I, { giris: pl.giris, tp: null, sl: null, saat: ufuk, n: 5000, ornek: 0 }));
+    const serbest = mod === 2 && g2 ? simule({ ...g2, tp: null, sl: null, n: 5000, ornek: 0 }) : simule(girdiHazirla(D, I, { giris: pl.giris, tp: null, sl: null, saat: ufuk, n: 5000, ornek: 0 }));
     calistir.disabled = false; calistir.textContent = "🔮 Run again";
     kutu.querySelector(".tm__tuval").hidden = false;
     /* draw the paths in over ~1.2 s while the counter runs up */
@@ -124,12 +138,25 @@ export function zamanMakinesi({ plan, fiyat }) {
     }
     if (D.bayrak === "thin") katlar.push("⚠ Thin market: open interest is large next to the order book. Real moves can be far wilder than any model.");
     const fark = Math.round(((tam.tp - sade.tp) / tam.n) * 100);
+    const uc = (r) => Math.round((r.tp / r.n) * 100) + " / " + Math.round((r.sl / r.n) * 100) + " / " + Math.round((r.hic / r.n) * 100);
+    const iki2 = [];
+    if (mod === 2 && g2) {
+      const y = durumYazi(D.simdiDurum) || {};
+      /* moments next to each other are one episode: count starts at least 6 h apart */
+      let olay = 0, onceki = -1e9; for (const k of g2.eslesme ? g2.analog.baslar : []) { if (k - onceki >= 6) olay++; onceki = k; }
+      iki2.push(el("div", { sinif: "tm__m", yazi: "Chart now (1 h): " + [y.T, y.R, y.B, y.V, y.M].filter(Boolean).join(", ") + "." }));
+      iki2.push(el("div", { sinif: "tm__m", yazi: "Matched on " + GEVSET_AD[g2.eslesme.seviye] + ": " + g2.eslesme.n + " past hours of " + pl.coin + " in the last 60 days (about " + olay + " separate episodes). Every future replays what followed one of them." }));
+      if (olay < 8) iki2.push(el("div", { sinif: "tm__m tm__u", yazi: "Few separate episodes: treat this as a handful of past stories, not as odds." }));
+      iki2.push(el("div", { sinif: "tm__n", yazi: "Those 60 days were one kind of market (mostly falling). Past chart setups do not have to repeat." }));
+    }
     metin.replaceChildren(
+      ...iki2,
+      diger ? el("div", { sinif: "tm__m", yazi: (mod === 2 ? "Time Machine 1 (forward model, no direction)" : "Time Machine 2 (chart setups)") + " gives the same plan " + uc(diger) + " (TP first / stop first / neither)." }) : null,
       el("div", { sinif: "tm__m", yazi: "Where the price ends after " + ufuk + "h if nothing closes the trade (middle 90% of futures): " + fiyat(serbest.aralik.p05) + " – " + fiyat(serbest.aralik.p95) + " (half of them between " + fiyat(serbest.aralik.p25) + " and " + fiyat(serbest.aralik.p75) + ")." }),
       ...katlar.map((k) => el("div", { sinif: "tm__m", yazi: k })),
-      el("div", { sinif: "tm__n", yazi: "Without the forward-looking layers (past volatility only) the same plan gives " + Math.round((sade.tp / sade.n) * 100) + " / " + Math.round((sade.sl / sade.n) * 100) + " / " + Math.round((sade.hic / sade.n) * 100) + (fark ? " — the forward inputs move take-profit-first by " + (fark > 0 ? "+" : "") + fark + "." : ".") }),
+      mod === 2 ? null : el("div", { sinif: "tm__n", yazi: "Without the forward-looking layers (past volatility only) the same plan gives " + Math.round((sade.tp / sade.n) * 100) + " / " + Math.round((sade.sl / sade.n) * 100) + " / " + Math.round((sade.hic / sade.n) * 100) + (fark ? " — the forward inputs move take-profit-first by " + (fark > 0 ? "+" : "") + fark + "." : ".") }),
       el("div", { sinif: "tm__n", yazi: trackRecord(S) }),
-      el("div", { sinif: "tm__n", yazi: "Odds from a model of possible futures, not a forecast of the price and not advice. The model has no view on direction; news it cannot see can change everything. Runs in your browser; your plan is not sent anywhere." }));
+      el("div", { sinif: "tm__n", yazi: (mod === 2 ? "Replays of past moves after similar charts, not a forecast and not advice." : "Odds from a model of possible futures, not a forecast of the price and not advice. The model has no view on direction.") + " News it cannot see can change everything. Runs in your browser; your plan is not sent anywhere." }));
   });
   return { kutu };
 }
