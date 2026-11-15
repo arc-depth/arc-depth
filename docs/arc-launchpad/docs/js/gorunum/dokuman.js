@@ -134,6 +134,7 @@ export async function ciz() {
   ]));
   kap.append(panel("8 — Privacy", [
     el("div", { sinif: "ikincil" }, [
+      el("p", { attr: { style: "margin-bottom:10px" } }, ["Full texts: ", el("a", { attr: { href: "privacy.html" }, yazi: "Privacy" }), " · ", el("a", { attr: { href: "terms.html" }, yazi: "Terms of Use" }), " · ", el("a", { attr: { href: "risk.html" }, yazi: "Risk disclosure" }), "."]),
       el("p", { yazi: "No accounts, no cookies, no analytics, no trackers, and no server of ours. This page is static files; " +
         "it keeps nothing about you anywhere, and we cannot see who visits or who connects a wallet." }),
       el("p", { attr: { style: "margin-top:10px" }, yazi: "What is public by nature: blockchain transactions. Any address that trades, " +

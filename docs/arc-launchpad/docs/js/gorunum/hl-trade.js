@@ -230,7 +230,7 @@ export async function ciz({ param, cuzdan }) {
   const tpslSatir = el("label", { sinif: "hl-kutu", attr: { for: "hl-tpsl" } }, [tpslKutu, el("span", { yazi: "Add take profit / stop loss" })]);
   tpslKutu.addEventListener("change", () => { tpslAlan.hidden = !tpslKutu.checked; girdi(); });
   const riskKutu = el("input", { attr: { type: "checkbox", id: "hl-risk" } });
-  const riskSatir = el("label", { sinif: "hl-kutu", attr: { for: "hl-risk" } }, [riskKutu, el("span", { yazi: "I'm not a US person or in a restricted region, and I understand perps are high risk." })]);
+  const riskSatir = el("label", { sinif: "hl-kutu", attr: { for: "hl-risk" } }, [riskKutu, el("span", {}, ["I'm not a US person or in a restricted region, and I understand perps are high risk (", el("a", { attr: { href: "risk.html", target: "_blank", rel: "noopener" }, yazi: "risk disclosure" }), ", ", el("a", { attr: { href: "terms.html", target: "_blank", rel: "noopener" }, yazi: "terms" }), ")."])]);
   const ucretKutu = el("div", { sinif: "hl-ucret" });
   /* Pulse HUD (hl-kask.js): holding cost, risk vs. normal moves, size by risk, the same market elsewhere */
   const kask = kaskPaneli({ hl, usd, fiyat, boyutKoy: (x) => { tutarGirdi.value = String(x); girdi(); tutarGirdi.focus(); } });
@@ -687,7 +687,7 @@ export async function ciz({ param, cuzdan }) {
   kap.append(panel("About trading here", el("div", { sinif: "yigin yigin--sik" }, [
     el("div", { sinif: "ikincil", yazi: "ARC PULSE is a front end: Hyperliquid runs the order book, the margin, liquidations and settlement. Your orders and positions are the same ones you see on Hyperliquid's own app. " + ONAY_METIN }),
     el("div", { sinif: "ikincil", yazi: "Prices, funding and volume come from Hyperliquid's public API and may be delayed. Funding is Hyperliquid's hourly rate; positive means longs pay shorts." }),
-    el("div", { sinif: "hl-bag" }, [disBag(HL_APP + "/trade/" + encodeURIComponent(P.ad), "Hyperliquid app ↗"), disBag("https://hyperliquid.gitbook.io/hyperliquid-docs/trading/builder-codes", "Builder codes (Hyperliquid docs) ↗")]),
+    el("div", { sinif: "hl-bag" }, [el("a", { sinif: "dugme dugme--sade dugme--kucuk", attr: { href: "risk.html" }, yazi: "Risk disclosure" }), el("a", { sinif: "dugme dugme--sade dugme--kucuk", attr: { href: "terms.html" }, yazi: "Terms of Use" }), el("a", { sinif: "dugme dugme--sade dugme--kucuk", attr: { href: "privacy.html" }, yazi: "Privacy" }), disBag(HL_APP + "/trade/" + encodeURIComponent(P.ad), "Hyperliquid app ↗"), disBag("https://hyperliquid.gitbook.io/hyperliquid-docs/trading/builder-codes", "Builder codes (Hyperliquid docs) ↗")]),
   ])));
 
   formGuncelle(); hesapCiz();
