@@ -41,7 +41,7 @@ const VENUE_AD = { hyperliquid: "Hyperliquid (here)", lighter: "Lighter", aster:
 
 /* ---- data: volatility from 1 h candles (cached per coin, 15 min) and the Perps Radar file ---- */
 const _oyn = new Map();
-function oynaklik(hl, coin) {
+export function oynaklik(hl, coin) {
   const x = _oyn.get(coin);
   if (x && Date.now() - x.t < 900000) return x.p;
   const p = hl.mumlar(coin, "1h", 7 * 864e5).then((m) => {
@@ -160,9 +160,12 @@ export function kaskPaneli({ hl, usd, fiyat, boyutKoy }) {
       if (!liq && !H && t && deger && !t.azalt) { liq = hl.liqTahmin({ px: ref, boyut: Number(t.boyut), alis, kal: t.kal, capraz: false, hesapDegeri: deger / t.kal, maxKal: P.maxKal }); izoleVarsayim = liq > 0; }
       if (liq > 0) {
         const mesafe = Math.abs(liq - ref) / ref, kat = mesafe / o.gun;
-        const tur = kat < 1 || mesafe <= Math.abs(kotu) ? "hud--tehlike" : kat < 2 ? "hud--uyari" : "hud--ok";
+        let tur = kat < 1 || mesafe <= Math.abs(kotu) ? "hud--tehlike" : kat < 2 ? "hud--uyari" : "hud--ok";
+        /* a stop loss between the price and the liquidation closes the position first */
+        const slOnce = t && t.sl > 0 && (alis ? t.sl > liq : t.sl < liq);
+        if (slOnce && tur === "hud--tehlike") tur = "hud--uyari";
         satirlar.push(m(["Liquidation ≈ ", { b: fiyat(liq) }, ", " + yz(mesafe) + " away = ", { b: kat.toFixed(1) + "×" }, " a typical day's move" + (izoleVarsayim ? " (as isolated; connect a wallet for your account)" : "") + ". " +
-          (tur === "hud--tehlike" ? (mesafe <= Math.abs(kotu) ? "A move like the worst day of the last week would liquidate it." : "A normal day's move can reach it.") : tur === "hud--uyari" ? "A bigger-than-usual day can reach it." : "Outside the moves of a normal day.")], tur));
+          (tur === "hud--tehlike" ? (mesafe <= Math.abs(kotu) ? "A move like the worst day of the last week would liquidate it." : "A normal day's move can reach it.") : tur === "hud--uyari" ? "A bigger-than-usual day can reach it." : "Outside the moves of a normal day.") + (slOnce ? " Your stop loss (" + fiyat(t.sl) + ") comes first." : "")], tur));
       } else if (H && t && !t.azalt && deger) satirlar.push(m(["No liquidation price at this size and leverage (the account covers it)."], "hud--ok"));
       if (t && t.sl > 0) {
         const d = Math.abs(t.sl - ref) / ref, kat = d / o.saat;

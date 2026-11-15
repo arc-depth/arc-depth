@@ -26,6 +26,7 @@ import * as hl from "../hl.js";
 import { paraPaneli } from "./hl-para.js";
 import { gecmisPaneli } from "./hl-gecmis.js";
 import { kaskPaneli } from "./hl-kask.js";
+import { fuzePaneli } from "./hl-fuze.js";
 
 const RISK = "Perpetual futures use leverage and can lose more than you expect quickly. You can lose more than you deposit quickly with leverage. " +
   "ARC PULSE does not run Hyperliquid: orders placed here go to Hyperliquid's order book, signed by your own wallet, and your funds stay in your own Hyperliquid account. Not available where perps are restricted.";
@@ -131,6 +132,7 @@ export async function ciz({ param, cuzdan }) {
   document.title = "Trade Hyperliquid perps — ARC PULSE";
   const kap = el("div", { sinif: "yigin" });
   kap.append(sayfaUst("Trade Hyperliquid perps", "Hyperliquid's order book, from your own wallet. Your funds stay in your Hyperliquid account.", [
+    el("a", { sinif: "dugme dugme--sade", attr: { href: "#/perps/targets" }, yazi: "🎯 Target Radar" }),
     el("a", { sinif: "dugme dugme--sade", attr: { href: "#/perps" }, yazi: "Perps Radar" })]));
   kap.append(not(RISK, "uyari"));
 
@@ -436,8 +438,22 @@ export async function ciz({ param, cuzdan }) {
     el("div", { sinif: "hl-ipucu", yazi: "Deposit here from Arc, Arbitrum, Base and other chains (through relay.link, to your own address), or use Hyperliquid's own deposit. Already have USDC in your Hyperliquid spot balance? Move it to perps on Hyperliquid (Portfolio, Perps ⇄ Spot)." }),
   ]));
 
+  /* Aim assist (hl-fuze.js): open at the top when the visitor came from a Target Radar card (?aim=long|short) */
+  const aim = (param.get("aim") || "").toLowerCase();
+  const fuze = fuzePaneli({ hl, usd, fiyat, P: () => P, H: () => H, yukle: (p) => {
+    yon = p.yon; yonCiz(); tur = "piyasa"; turCiz(); limitAlan.hidden = true;
+    tutarGirdi.value = String(p.boyut); kalGirdi.value = String(p.kal); kalOynandi = true;
+    if (!P.yalnizIzole) modSec.value = "isolated";
+    azaltKutu.checked = false; if (!tpslKutu.checked) tpslKutu.checked = true;
+    tpGirdi.value = p.tp != null ? String(p.tp) : ""; slGirdi.value = String(p.sl);
+    girdi();
+    durumYaz("Aim assist filled the order form. Check Pulse HUD below, then press Review.", "ok");
+    anaDugme.scrollIntoView({ behavior: "smooth", block: "center" });
+  } }, aim === "short" ? "satis" : aim === "long" ? "alis" : null);
+  const fuzeYeri = aim === "long" || aim === "short" ? fuze.kutu : ayrinti("🎯 Aim assist: size, stop and target from your risk", fuze.kutu);
+  fuze.hesapla();
   const formPanel = panel("Place an order", el("div", { sinif: "yigin yigin--sik" }, [
-    yonDug, turDug, limitAlan,
+    fuzeYeri, yonDug, turDug, limitAlan,
     el("div", { sinif: "hl-alan" }, [el("label", { yazi: "Size (USD)" }), tutarGirdi, tutarIpucu]),
     el("div", { sinif: "hl-alan" }, [el("label", { yazi: "Leverage" }), el("div", { sinif: "hl-kal" }, [kalGirdi, kalYazi]), el("div", { sinif: "hl-kal" }, [modSec, el("span")]), kalIpucu]),
     el("label", { sinif: "hl-kutu", attr: { for: "hl-azalt" } }, [azaltKutu, el("span", { yazi: "Reduce only (only makes an open position smaller)" })]),
@@ -660,7 +676,7 @@ export async function ciz({ param, cuzdan }) {
     grafikBaslik.textContent = P.ad + "-USD";
     zincirNotu.hidden = true; durumYaz("");
     try { history.replaceState(null, "", "#/perps/trade?coin=" + encodeURIComponent(P.ad) + (salt ? "&as=" + kim : "")); } catch (e) { /* not allowed: the hash stays */ }
-    olcCiz(); grafikYukle(); girdi();
+    olcCiz(); grafikYukle(); girdi(); fuze.hesapla();
     if (kim) hl.kaldiracOku(kim, P.ad).then((k) => { if (P === yeni) { K = k; if (K && K.leverage) { kalGirdi.value = String(Math.min(P.maxKal, K.leverage.value)); if (!P.yalnizIzole) modSec.value = K.leverage.type === "isolated" ? "isolated" : "cross"; } formGuncelle(); } });
   });
 
@@ -685,7 +701,7 @@ export async function ciz({ param, cuzdan }) {
     try {
       const yeni = await hl.piyasalar();
       for (const p of yeni) { const e = adIle.get(p.ad); if (e) Object.assign(e, { mark: p.mark, mid: p.mid, dun: p.dun, hacim: p.hacim, fon: p.fon, oi: p.oi }); }
-      olcCiz(); formGuncelle();
+      olcCiz(); formGuncelle(); if (kap.contains(fuze.kutu) && fuze.kutu.offsetParent && !fuze.kutu.contains(document.activeElement)) fuze.hesapla();
     } catch (e) { /* next round */ }
     if (kim && onizle.hidden) hesapYukle();
   }, 10000);
