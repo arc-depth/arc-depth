@@ -25,6 +25,7 @@ import { el, sayfaUst, panel, not, olcum, ayrinti } from "../ui.js";
 import * as hl from "../hl.js";
 import { paraPaneli } from "./hl-para.js";
 import { gecmisPaneli } from "./hl-gecmis.js";
+import { kaskPaneli } from "./hl-kask.js";
 
 const RISK = "Perpetual futures use leverage and can lose more than you expect quickly. You can lose more than you deposit quickly with leverage. " +
   "ARC PULSE does not run Hyperliquid: orders placed here go to Hyperliquid's order book, signed by your own wallet, and your funds stay in your own Hyperliquid account. Not available where perps are restricted.";
@@ -229,6 +230,8 @@ export async function ciz({ param, cuzdan }) {
   const riskKutu = el("input", { attr: { type: "checkbox", id: "hl-risk" } });
   const riskSatir = el("label", { sinif: "hl-kutu", attr: { for: "hl-risk" } }, [riskKutu, el("span", { yazi: "I'm not a US person or in a restricted region, and I understand perps are high risk." })]);
   const ucretKutu = el("div", { sinif: "hl-ucret" });
+  /* Pulse HUD (hl-kask.js): holding cost, risk vs. normal moves, size by risk, the same market elsewhere */
+  const kask = kaskPaneli({ hl, usd, fiyat, boyutKoy: (x) => { tutarGirdi.value = String(x); girdi(); tutarGirdi.focus(); } });
   const anaDugme = el("button", { sinif: "dugme dugme--marka dugme--tam dugme--buyuk", attr: { type: "button" } });
   const onayAciklama = el("div", { sinif: "ikincil", attr: { hidden: true }, yazi: ONAY_METIN });
   const yatirKutu = el("div", { attr: { hidden: true } });
@@ -302,6 +305,7 @@ export async function ciz({ param, cuzdan }) {
     const t = taslak();
     tutarIpucu.textContent = t.boyut && Number(t.boyut) > 0 ? "≈ " + t.boyut + " " + P.ad + (t.teminat ? " · margin ≈ " + usd(t.teminat) : "") : (H ? "Available: " + usd(H.cekilebilir) : "Size is in US dollars of " + P.ad + ".");
     ucretCiz(t);
+    kask.guncelle({ P, t, H });
     riskSatir.hidden = riskOnayliMi();
     tpslSatir.hidden = azaltKutu.checked; tpslAlan.hidden = azaltKutu.checked || !tpslKutu.checked;
     onayAciklama.hidden = true; yatirKutu.hidden = true;
@@ -438,7 +442,7 @@ export async function ciz({ param, cuzdan }) {
     el("div", { sinif: "hl-alan" }, [el("label", { yazi: "Leverage" }), el("div", { sinif: "hl-kal" }, [kalGirdi, kalYazi]), el("div", { sinif: "hl-kal" }, [modSec, el("span")]), kalIpucu]),
     el("label", { sinif: "hl-kutu", attr: { for: "hl-azalt" } }, [azaltKutu, el("span", { yazi: "Reduce only (only makes an open position smaller)" })]),
     tpslSatir, tpslAlan,
-    ucretKutu, riskSatir, yatirKutu, onayAciklama, anaDugme, onizle, durum, zincirNotu,
+    ucretKutu, kask.kutu, riskSatir, yatirKutu, onayAciklama, anaDugme, onizle, durum, zincirNotu,
     ayrinti("How does this work?", el("div", { sinif: "ikincil", yazi: "Your wallet signs each order (a signature, not a transaction: no gas). The order goes straight to Hyperliquid, which matches it, holds your margin and settles it. A market order is sent as an immediate-or-cancel limit " + (hl.KAYMA * 100) + "% through the current price, the way Hyperliquid's own app does it. The first time, you approve ARC PULSE's 0.05% fee once and create a trading key for this device. Take profit / stop loss are market orders that Hyperliquid sends when the mark price reaches them (up to 10% slippage), reduce only. The liquidation price shown before you confirm is an approximation from Hyperliquid's formula; Hyperliquid's own figure is in the Positions table once the position is open." })),
   ]));
 
