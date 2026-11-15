@@ -114,6 +114,8 @@ export async function hesapOku(user) {
 
 /** Mid prices of every perp, fresh, just before an order is priced. */
 export const ortaFiyatlar = () => bilgi({ type: "allMids" });
+/** Best bid and ask of a market (for checking that a changed limit price would not fill at once). */
+export const enIyiFiyatlar = (coin) => bilgi({ type: "l2Book", coin }).then((k) => ({ alis: Number(k.levels[0][0] && k.levels[0][0].px), satis: Number(k.levels[1][0] && k.levels[1][0].px) }));
 
 export const kaldiracOku = (user, coin) => bilgi({ type: "activeAssetData", user: user.toLowerCase(), coin }).catch(() => null);
 
@@ -288,7 +290,9 @@ export function emirlerEylemi(satirlar, grouping = "na") {
   return { type: "order", orders: satirlar.map(emirSatiri), grouping, builder: { b: BUILDER, f: BUILDER_F } };
 }
 export function emirEylemi(e) { return emirlerEylemi([e], "na"); }
-/** Change an open limit order's price / size (the order keeps its oid; the builder fee of the original applies). */
+/** Change an open limit order's price / size (the builder fee of the original applies: checked on a real fill 15 Nov 2026).
+    Hyperliquid refuses a modify whose new price would fill at once (it is placed post-only) and the original
+    order is then gone, so the page checks the book first. */
 export const duzenleEylemi = (oid, e) => ({ type: "modify", oid, order: emirSatiri(e) });
 /** Trigger (TP/SL market) limit price: 10% through the trigger in the closing direction, like Hyperliquid's app,
     so the market order it becomes can fill. */

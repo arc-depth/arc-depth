@@ -578,9 +578,12 @@ export async function ciz({ param, cuzdan }) {
             if (!(px > 0) || !(sz > 0)) throw new Error("Enter a price and a size.");
             const szYaz = hl.boyutYaz(sz, m.szDec);
             if (Number(szYaz) * px < hl.EN_AZ_USD) throw new Error("Hyperliquid's minimum order is $" + hl.EN_AZ_USD + ".");
+            /* a changed order must rest on the book: Hyperliquid rejects one that would fill at once and removes the original */
+            const bbo = await hl.enIyiFiyatlar(o.coin).catch(() => null);
+            if (bbo && (o.side === "B" ? px >= bbo.satis : px <= bbo.alis)) throw new Error("At " + fiyat(px) + " this order would fill at once (best " + (o.side === "B" ? "ask " + fiyat(bbo.satis) : "bid " + fiyat(bbo.alis)) + "). A changed order has to stay on the book, so pick a price " + (o.side === "B" ? "below " + fiyat(bbo.satis) : "above " + fiyat(bbo.alis)) + ", or cancel it and place a market order. Your order was not changed.");
             const y = await hl.l1Gonder(hl.duzenleEylemi(o.oid, { a: m.i, alis: o.side === "B", px: hl.fiyatYaz(px, m.szDec), sz: szYaz, azalt: !!o.reduceOnly, tif: o.tif === "Alo" ? "Alo" : "Gtc" }), imzaci());
             const st = y && y.data && y.data.statuses && y.data.statuses[0];
-            if (st && st.error) throw new Error("Hyperliquid: " + st.error);
+            if (st && st.error) throw new Error("Hyperliquid: " + st.error + (/during modify/i.test(st.error) ? " Hyperliquid removed the original order; check Open orders." : ""));
             return "Order changed.";
           }, "Change order", "dugme--marka", false, alan);
         });
