@@ -77,6 +77,16 @@ export function mumlar(coin, aralik, sureMs) {
   return bilgi({ type: "candleSnapshot", req: { coin, interval: aralik, startTime: bitis - sureMs, endTime: bitis } });
 }
 
+/* fee tier and account mode change rarely: read them at most every 5 minutes (the account refreshes every 10 s) */
+const _yavas = new Map();
+function yavas(u, type) {
+  const k = type + ":" + u, x = _yavas.get(k);
+  if (x && Date.now() - x.t < 300000) return x.p;
+  const p = bilgi({ type, user: u }).catch(() => null);
+  _yavas.set(k, { t: Date.now(), p });
+  return p;
+}
+
 /** Everything the account panel shows for `user`, in one round of parallel reads. */
 export async function hesapOku(user) {
   const u = user.toLowerCase();
@@ -85,8 +95,7 @@ export async function hesapOku(user) {
     bilgi({ type: "frontendOpenOrders", user: u }),
     bilgi({ type: "spotClearinghouseState", user: u }).catch(() => null),
     bilgi({ type: "maxBuilderFee", user: u, builder: BUILDER }).catch(() => null),
-    bilgi({ type: "userFees", user: u }).catch(() => null),
-    bilgi({ type: "userAbstraction", user: u }).catch(() => null),
+    yavas(u, "userFees"), yavas(u, "userAbstraction"),
   ]);
   const usdc = spot && (spot.balances || []).find((b) => b.coin === "USDC");
   return {
@@ -107,6 +116,24 @@ export async function hesapOku(user) {
 export const ortaFiyatlar = () => bilgi({ type: "allMids" });
 
 export const kaldiracOku = (user, coin) => bilgi({ type: "activeAssetData", user: user.toLowerCase(), coin }).catch(() => null);
+
+/** Recent fills (Hyperliquid keeps the latest 2000 here), newest first. */
+export const dolgularOku = (user) => bilgi({ type: "userFills", user: user.toLowerCase() }).then((x) => (x || []).sort((a, b) => b.time - a.time));
+/** Funding payments between two times (ms), newest first. */
+export const fonlamaOku = (user, bas, bit) => bilgi({ type: "userFunding", user: user.toLowerCase(), startTime: bas, endTime: bit }).then((x) => (x || []).sort((a, b) => b.time - a.time));
+
+/** APPROXIMATE liquidation price of a new position, Hyperliquid's formula
+      liq = price - side * margin_available / size / (1 - l * side),  l = 1 / (2 * maxLeverage)
+    margin_available: isolated = the margin put up minus maintenance; cross = account value minus the
+    maintenance of this position (other positions ignored, so it is rough with other cross positions).
+    Returns null when the position cannot be liquidated at this size (long: <= 0). */
+export function liqTahmin({ px, boyut, alis, kal, capraz, hesapDegeri, maxKal }) {
+  const side = alis ? 1 : -1, l = 1 / (2 * maxKal), notional = px * boyut;
+  const bakim = notional * l;
+  const marj = (capraz ? hesapDegeri : notional / kal) - bakim;
+  const liq = px - side * marj / boyut / (1 - l * side);
+  return liq > 0 && isFinite(liq) ? liq : null;
+}
 
 /* ---- number rules (tick and lot size) ------------------------------- */
 
@@ -204,6 +231,21 @@ export function onayTipli(action) {
   };
 }
 
+const CEK_TIP = { "HyperliquidTransaction:Withdraw": [
+  { name: "hyperliquidChain", type: "string" }, { name: "destination", type: "string" }, { name: "amount", type: "string" }, { name: "time", type: "uint64" }] };
+/** Withdraw `amount` USDC to `destination` on Arbitrum (Hyperliquid's bridge; Hyperliquid keeps $1). */
+export function cekEylemi(signatureChainId, destination, amount, time) {
+  return { type: "withdraw3", signatureChainId, hyperliquidChain: "Mainnet", destination: destination.toLowerCase(), amount, time };
+}
+export function cekTipli(action) {
+  return {
+    domain: { name: "HyperliquidSignTransaction", version: "1", chainId: parseInt(action.signatureChainId, 16), verifyingContract: SIFIR },
+    types: CEK_TIP, primaryType: "HyperliquidTransaction:Withdraw",
+    message: { hyperliquidChain: action.hyperliquidChain, destination: action.destination, amount: action.amount, time: action.time },
+  };
+}
+export const CEK_UCRETI = 1;   // Hyperliquid's withdrawal fee, USD
+
 const AJAN_TIP = { "HyperliquidTransaction:ApproveAgent": [
   { name: "hyperliquidChain", type: "string" }, { name: "agentAddress", type: "address" }, { name: "agentName", type: "string" }, { name: "nonce", type: "uint64" }] };
 export const AJAN_ADI = "ARC PULSE";
@@ -236,9 +278,21 @@ export async function ajanGecerliMi(user, ajan) {
 
 /* ---- actions (key order matters: it is hashed) ----------------------- */
 
-export function emirEylemi({ a, alis, px, sz, azalt, tif }) {
-  return { type: "order", orders: [{ a, b: !!alis, p: px, s: sz, r: !!azalt, t: { limit: { tif } } }], grouping: "na", builder: { b: BUILDER, f: BUILDER_F } };
+/** One order line. tif "Gtc"/"Ioc" = limit; tetik { px, tpsl: "tp"|"sl" } = a market trigger (TP/SL). */
+export function emirSatiri({ a, alis, px, sz, azalt, tif, tetik }) {
+  const t = tetik ? { trigger: { isMarket: true, triggerPx: tetik.px, tpsl: tetik.tpsl } } : { limit: { tif } };
+  return { a, b: !!alis, p: px, s: sz, r: !!azalt, t };
 }
+/** An order action: lines in Hyperliquid's order (parent first, then TP, then SL), every one with the builder fee. */
+export function emirlerEylemi(satirlar, grouping = "na") {
+  return { type: "order", orders: satirlar.map(emirSatiri), grouping, builder: { b: BUILDER, f: BUILDER_F } };
+}
+export function emirEylemi(e) { return emirlerEylemi([e], "na"); }
+/** Change an open limit order's price / size (the order keeps its oid; the builder fee of the original applies). */
+export const duzenleEylemi = (oid, e) => ({ type: "modify", oid, order: emirSatiri(e) });
+/** Trigger (TP/SL market) limit price: 10% through the trigger in the closing direction, like Hyperliquid's app,
+    so the market order it becomes can fill. */
+export const tetikLimit = (tetikPx, alis, szDec) => fiyatYaz(tetikPx * (alis ? 1.1 : 0.9), szDec);
 export const iptalEylemi = (a, oid) => ({ type: "cancel", cancels: [{ a, o: oid }] });
 export const kaldiracEylemi = (asset, capraz, kaldirac) => ({ type: "updateLeverage", asset, isCross: !!capraz, leverage: kaldirac });
 
@@ -313,6 +367,15 @@ export async function ajanOnayla(user) {
   return new Wallet(yeni.privateKey);
 }
 
+/** Withdraw `miktar` (decimal string) from the perps balance to the SAME address on Arbitrum. Main wallet signs. */
+export async function cekGonder(user, miktar) {
+  const action = cekEylemi(zincirHex(), user, miktar, nonceAl());
+  sonEylem = { action, nonce: action.time };
+  let sig;
+  try { sig = await cuzdan.imzalaTipli(cekTipli(action)); } catch (e) { throw imzaHatasi(e); }
+  return gonder(action, action.time, sig);
+}
+
 /** The one-time approval of the 0.05% builder fee, signed on the chain the wallet is on.
     oran "0%" withdraws the approval (revoke). */
 export async function builderOnayla(oran = BUILDER_YUZDE) {
@@ -328,7 +391,11 @@ export function emirSonucu(yanit, coin) {
   const st = yanit && yanit.data && yanit.data.statuses && yanit.data.statuses[0];
   if (!st) throw new Error("Hyperliquid returned no order status");
   if (st.error) throw new Error("Hyperliquid: " + st.error);
-  if (st.filled) return "Filled " + st.filled.totalSz + " " + coin + " at $" + Number(st.filled.avgPx).toLocaleString("en-US", { maximumSignificantDigits: 6 }) + ".";
-  if (st.resting) return "Order placed on the book (order " + st.resting.oid + ").";
-  return "Hyperliquid accepted the order.";
+  /* TP / SL lines after the parent (normalTpsl): their own status, never hidden */
+  const ek = yanit.data.statuses.slice(1);
+  const ekHata = ek.find((x) => x && x.error);
+  const ekYazi = !ek.length ? "" : ekHata ? " TP/SL NOT set: " + ekHata.error + " (set it from the Positions table)." : " TP/SL set (" + ek.length + ").";
+  if (st.filled) return "Filled " + st.filled.totalSz + " " + coin + " at $" + Number(st.filled.avgPx).toLocaleString("en-US", { maximumSignificantDigits: 6 }) + "." + ekYazi;
+  if (st.resting) return "Order placed on the book (order " + st.resting.oid + ")." + ekYazi;
+  return "Hyperliquid accepted the order." + ekYazi;
 }
