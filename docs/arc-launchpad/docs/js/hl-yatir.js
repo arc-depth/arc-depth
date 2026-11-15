@@ -80,9 +80,24 @@ export async function teklif(k, kullanici, miktar, yerel = false) {
     enAz: Number(d.currencyOut.minimumAmount || 0) / 10 ** ond8,
     ucret: usd(f.relayer) + usd(f.app) + usd(f.gas),
     sure: Number(d.timeEstimate || 0),
-    bakiye: d.userBalance != null ? Number(d.userBalance) / 10 ** ond : null,
+    /* read from the chain itself (relay's userBalance came back 0 for Arc USDC while the wallet held 6) */
+    bakiye: await bakiyeOku(k, kullanici, yerel).catch(() => null),
     istekId: q.steps.map((s) => s.requestId).find(Boolean) || null,
   };
+}
+
+/** The visitor's balance on the paying chain, in whole tokens: the dollar token's ERC-20 balanceOf at its own
+    decimals (Arc USDC: the 6-decimal ERC-20 view at 0x3600…), or the native gas balance at 18 decimals. */
+export async function bakiyeOku(k, user, yerel = false) {
+  const ag = agBul(k.id);
+  if (!ag) return null;
+  const istek = yerel
+    ? { method: "eth_getBalance", params: [user, "latest"] }
+    : { method: "eth_call", params: [{ to: k.para, data: "0x70a08231" + user.toLowerCase().replace(/^0x/, "").padStart(64, "0") }, "latest"] };
+  const j = await fetch(ag.rpc, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: 1, ...istek }), signal: AbortSignal.timeout(10000) }).then((x) => x.json());
+  if (!j || !j.result || j.result === "0x") return null;
+  const ham = BigInt(j.result), ond = BigInt(yerel ? 18 : k.ond);
+  return Number(ham / 10n ** (ond - 6n > 0n ? ond - 6n : 0n)) / 10 ** Number(ond > 6n ? 6n : ond);
 }
 
 async function makbuz(ag, h, durum) {

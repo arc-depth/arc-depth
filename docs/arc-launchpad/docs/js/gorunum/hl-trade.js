@@ -225,7 +225,7 @@ export async function ciz({ param, cuzdan }) {
   const slGirdi = el("input", { sinif: "girdi", attr: { type: "text", inputmode: "decimal", autocomplete: "off", placeholder: "Stop loss price (optional)", "aria-label": "Stop loss price" } });
   const tpslAlan = el("div", { sinif: "hl-alan", attr: { hidden: true } }, [el("label", { yazi: "Take profit / stop loss (market orders when the mark price reaches them)" }), tpGirdi, slGirdi]);
   const tpslSatir = el("label", { sinif: "hl-kutu", attr: { for: "hl-tpsl" } }, [tpslKutu, el("span", { yazi: "Add take profit / stop loss" })]);
-  tpslKutu.addEventListener("change", () => { tpslAlan.hidden = !tpslKutu.checked; formGuncelle(); });
+  tpslKutu.addEventListener("change", () => { tpslAlan.hidden = !tpslKutu.checked; girdi(); });
   const riskKutu = el("input", { attr: { type: "checkbox", id: "hl-risk" } });
   const riskSatir = el("label", { sinif: "hl-kutu", attr: { for: "hl-risk" } }, [riskKutu, el("span", { yazi: "I'm not a US person or in a restricted region, and I understand perps are high risk." })]);
   const ucretKutu = el("div", { sinif: "hl-ucret" });
@@ -235,9 +235,9 @@ export async function ciz({ param, cuzdan }) {
   const onizle = el("div", { sinif: "hl-onizle", attr: { hidden: true } });
 
   const yonCiz = () => yonDug.replaceChildren(
-    el("button", { sinif: "dugme dugme--alis", attr: { type: "button", "aria-pressed": String(yon === "alis") }, yazi: "Long", on: { click: () => { yon = "alis"; yonCiz(); formGuncelle(); } } }),
-    el("button", { sinif: "dugme dugme--satis", attr: { type: "button", "aria-pressed": String(yon === "satis") }, yazi: "Short", on: { click: () => { yon = "satis"; yonCiz(); formGuncelle(); } } }));
-  const turCiz = () => turDug.replaceChildren(...[["piyasa", "Market"], ["limit", "Limit"]].map(([k, ad]) => el("button", { sinif: "dugme dugme--sade", attr: { type: "button", "aria-pressed": String(tur === k) }, yazi: ad, on: { click: () => { tur = k; turCiz(); limitAlan.hidden = tur !== "limit"; if (tur === "limit" && !limitGirdi.value) limitGirdi.value = hl.fiyatYaz(P.mid || P.mark, P.szDec); formGuncelle(); } } })));
+    el("button", { sinif: "dugme dugme--alis", attr: { type: "button", "aria-pressed": String(yon === "alis") }, yazi: "Long", on: { click: () => { yon = "alis"; yonCiz(); girdi(); } } }),
+    el("button", { sinif: "dugme dugme--satis", attr: { type: "button", "aria-pressed": String(yon === "satis") }, yazi: "Short", on: { click: () => { yon = "satis"; yonCiz(); girdi(); } } }));
+  const turCiz = () => turDug.replaceChildren(...[["piyasa", "Market"], ["limit", "Limit"]].map(([k, ad]) => el("button", { sinif: "dugme dugme--sade", attr: { type: "button", "aria-pressed": String(tur === k) }, yazi: ad, on: { click: () => { tur = k; turCiz(); limitAlan.hidden = tur !== "limit"; if (tur === "limit" && !limitGirdi.value) limitGirdi.value = hl.fiyatYaz(P.mid || P.mark, P.szDec); girdi(); } } })));
   yonCiz(); turCiz();
 
   const sayi = (s) => { const x = Number(String(s || "").replace(/[$,\s]/g, "")); return isFinite(x) ? x : NaN; };
@@ -289,8 +289,11 @@ export async function ciz({ param, cuzdan }) {
       satir("Total fees" + (t.limit ? ", at most" : ", est."), usd(t.hlUcret + t.biz, 4), "hl-top"));
   }
 
+  /* only the visitor changing the form closes an open preview; a background refresh (prices, account)
+     redraws the form around it and leaves it open (15 Nov 2026: a refresh landing right after "Review"
+     used to close the preview before "Sign and place order" could be pressed) */
+  function girdi() { onizle.hidden = true; formGuncelle(); }
   function formGuncelle() {
-    onizle.hidden = true;
     const kal = Math.round(Number(kalGirdi.value) || 1);
     kalYazi.textContent = kal + "×";
     if (P.yalnizIzole) { modSec.value = "isolated"; modSec.disabled = true; } else modSec.disabled = false;
@@ -316,9 +319,9 @@ export async function ciz({ param, cuzdan }) {
     anaDugme.textContent = "Review " + (t.alis ? "Long" : "Short") + " " + t.kal + "× " + P.ad;
   }
 
-  [tutarGirdi, limitGirdi, tpGirdi, slGirdi].forEach((g) => g.addEventListener("input", formGuncelle));
-  [kalGirdi].forEach((g) => g.addEventListener("input", formGuncelle));
-  [modSec, azaltKutu].forEach((g) => g.addEventListener("change", formGuncelle));
+  [tutarGirdi, limitGirdi, tpGirdi, slGirdi].forEach((g) => g.addEventListener("input", girdi));
+  [kalGirdi].forEach((g) => g.addEventListener("input", girdi));
+  [modSec, azaltKutu].forEach((g) => g.addEventListener("change", girdi));
   riskKutu.addEventListener("change", () => { durumYaz(""); });
 
   /* a wallet that will not sign for Hyperliquid's chain id: say so once, plainly */
@@ -650,7 +653,7 @@ export async function ciz({ param, cuzdan }) {
     grafikBaslik.textContent = P.ad + "-USD";
     zincirNotu.hidden = true; durumYaz("");
     try { history.replaceState(null, "", "#/perps/trade?coin=" + encodeURIComponent(P.ad) + (salt ? "&as=" + kim : "")); } catch (e) { /* not allowed: the hash stays */ }
-    olcCiz(); grafikYukle(); formGuncelle();
+    olcCiz(); grafikYukle(); girdi();
     if (kim) hl.kaldiracOku(kim, P.ad).then((k) => { if (P === yeni) { K = k; if (K && K.leverage) { kalGirdi.value = String(Math.min(P.maxKal, K.leverage.value)); if (!P.yalnizIzole) modSec.value = K.leverage.type === "isolated" ? "isolated" : "cross"; } formGuncelle(); } });
   });
 
@@ -675,7 +678,7 @@ export async function ciz({ param, cuzdan }) {
     try {
       const yeni = await hl.piyasalar();
       for (const p of yeni) { const e = adIle.get(p.ad); if (e) Object.assign(e, { mark: p.mark, mid: p.mid, dun: p.dun, hacim: p.hacim, fon: p.fon, oi: p.oi }); }
-      olcCiz(); if (onizle.hidden) formGuncelle();
+      olcCiz(); formGuncelle();
     } catch (e) { /* next round */ }
     if (kim && onizle.hidden) hesapYukle();
   }, 10000);
