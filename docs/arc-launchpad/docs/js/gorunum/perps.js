@@ -145,6 +145,7 @@ function coinSatiri(veri, x, sira) {
 export async function ciz(ctx = {}) {
   if (ctx.param && ctx.param.get("alt") === "trade") return (await import("./hl-trade.js")).ciz(ctx);
   if (ctx.param && ctx.param.get("alt") === "targets") return (await import("./hl-hedef.js")).ciz(ctx);
+  if (ctx.param && ctx.param.get("alt") === "alerts") return (await import("./hl-alarm.js")).ciz(ctx);
   if (!document.getElementById("pr-stil")) document.head.append(el("style", { attr: { id: "pr-stil" }, yazi: STIL }));
   const kap = el("div", { sinif: "yigin" });
   const turbo = el("img", { attr: { src: new URL("../../img/squad/turbo.svg", import.meta.url).href, alt: "", width: "84", height: "84", loading: "lazy" } });

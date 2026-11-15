@@ -29,6 +29,8 @@ import { el, temizle, dagitimBekliyor, yapimda, hata, iskelet, ikon, GRUP_RENK }
 import { sponsorYeri } from "./sponsor.js";
 import { cuzdan, cuzdanUygulamalari, mobilMi, tarayiciCuzdani, WC_ACIK } from "./cuzdan.js";
 import { davetYakala } from "./davet.js";
+/* Pulse alerts (15 Nov 2026): checked in this browser while the app is open; idle when there are none */
+import("./alarm.js").then((m) => m.baslat(cuzdan)).catch(() => {});
 
 const VARSAYILAN = "kesfet";
 
@@ -269,6 +271,8 @@ function hashiCoz() {
   if (yol === "perps/trade") { param.set("alt", "trade"); yol = "perps"; }
   /* #/perps/targets (15 Nov 2026): Target Radar, gorunum/hl-hedef.js */
   if (yol === "perps/targets") { param.set("alt", "targets"); yol = "perps"; }
+  /* #/perps/alerts (15 Nov 2026): Pulse alerts, gorunum/hl-alarm.js (watched by alarm.js) */
+  if (yol === "perps/alerts") { param.set("alt", "alerts"); yol = "perps"; }
   return {
     yol: yol || VARSAYILAN,
     param

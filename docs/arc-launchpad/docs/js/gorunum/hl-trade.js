@@ -133,6 +133,7 @@ export async function ciz({ param, cuzdan }) {
   const kap = el("div", { sinif: "yigin" });
   kap.append(sayfaUst("Trade Hyperliquid perps", "Hyperliquid's order book, from your own wallet. Your funds stay in your Hyperliquid account.", [
     el("a", { sinif: "dugme dugme--sade", attr: { href: "#/perps/targets" }, yazi: "🎯 Target Radar" }),
+    el("a", { sinif: "dugme dugme--sade", attr: { href: "#/perps/alerts?coin=" + encodeURIComponent(param.get("coin") || "BTC") }, yazi: "🔔 Alerts" }),
     el("a", { sinif: "dugme dugme--sade", attr: { href: "#/perps" }, yazi: "Perps Radar" })]));
   kap.append(not(RISK, "uyari"));
 
