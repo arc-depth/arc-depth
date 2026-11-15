@@ -25,7 +25,7 @@ const STIL = `
 /* a panel of the list; `bosYazi` is what an empty list says */
 export function warpPaneli(launchlar, { baslik = "Launched with Warp", bosYazi, enFazla = 24 } = {}) {
   if (!document.getElementById("wl-stil")) document.head.append(el("style", { attr: { id: "wl-stil" }, yazi: STIL }));
-  if (!launchlar.length) return panel(baslik, bos("No Warp launches yet", bosYazi || "The first is Halo, the Pulse Squad's Elysium mascot, on Montra. Every token launched through Warp on any connected launchpad appears here."));
+  if (!launchlar.length) return panel(baslik, bos("No Warp launches yet", bosYazi || "Every token launched through Warp on any connected launchpad appears here."));
   return panel(baslik + " · " + launchlar.length, el("div", { sinif: "wl" }, launchlar.slice(0, enFazla).map((x) => el("a", { attr: { href: "#/terminal?t=" + x.token } }, [
     (x.gorsel || squadOf(x.token)) ? el("img", { attr: { src: x.gorsel || squadResim(squadOf(x.token)), alt: "", loading: "lazy", referrerpolicy: "no-referrer" } }) : el("span", { sinif: "wl-bos" }),
     el("span", { attr: { style: "min-width:0" } }, [

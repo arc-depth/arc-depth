@@ -92,7 +92,7 @@ function sonucGoster(k, kendi) {
         el("div", { class: "btns" },
           el("a", { class: "cta x", href: paylas, target: "_blank", rel: "noopener", yazi: "Share on X" }),
           el("a", { class: "cta ghost", href: "app.html#/kesfet?zincir=" + encodeURIComponent(m.anahtar), yazi: "Meet " + m.ad + "'s chain" }),
-          k === "halo" ? el("a", { class: "cta", href: "halo.html", yazi: "See $HALO" }) : null),
+          null),
         el("div", { class: "sq-alt" },
           el("button", { type: "button", class: "sq-geri", yazi: kendi ? "↻ Take it again" : "Which one are you? Take the quiz →", on: { click: basla } }),
           el("a", { class: "text-link", href: "#m-" + k, yazi: "See " + m.ad + " in the Squad ↓" })))),

@@ -154,7 +154,7 @@ export async function ciz({ param }) {
 
   /* 12 Nov 2026 redesign: Discover leads with what is happening now (the Squad spotlight and the newest
      launches); the how-it-works steps fold below, and the counters and older lists sit further down */
-  /* the newest live Pulse Squad mascot (Halo first), with its live price */
+  /* the newest live Pulse Squad mascot, with its live price; nothing when no mascot is live */
   if (!arama) {
     const spot = el("div");
     kap.append(spot);

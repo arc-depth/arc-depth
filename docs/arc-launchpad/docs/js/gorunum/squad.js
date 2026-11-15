@@ -178,7 +178,7 @@ function kart(m) {
       ? [el("span", { sinif: "d4-durum d4-durum--canli", yazi: "Live" }),
          el("a", { sinif: "dugme dugme--kucuk", attr: { href: "#/terminal?t=" + m.token }, yazi: "Open " + m.ad + "'s page" }),
          m.x ? el("a", { sinif: "dugme dugme--sade dugme--kucuk", attr: { href: m.x, target: "_blank", rel: "noopener" }, yazi: "Launch post ↗" }) : null]
-      : [el("span", { sinif: "d4-durum", yazi: "Not before " + m.tarih }),
+      : [el("span", { sinif: "d4-durum", yazi: m.tarih ? "Not before " + m.tarih : "Coming soon" }),
          el("a", { sinif: "dugme dugme--sade dugme--kucuk", attr: { href: X_HESAP, target: "_blank", rel: "noopener", "aria-label": "Notify me: follow @ArcPulseApp on X" }, yazi: "Notify me ↗" })]),
   ]);
 }
@@ -190,7 +190,7 @@ export async function ciz() {
   kap.append(not("Each mascot is a guide to its chain and its launchpad, and each is also a small memecoin ARC PULSE launches itself, one every five days. " +
     "A date is the earliest day, not a promise. Ethereum has no mascot of its own; Pulsy, ARC PULSE's own mascot, stands in there.", "bilgi"));
   const canli = SQUAD.filter((m) => m.token);
-  const sonraki = SQUAD.find((m) => !m.token);
+  const sonraki = SQUAD.find((m) => !m.token && m.tarih);
   kap.append(el("div", { sinif: "izgara izgara--olcum" }, [
     el("div", { sinif: "olcum" }, [el("div", { sinif: "olcum__etiket", yazi: "Live" }), el("div", { sinif: "olcum__deger", yazi: canli.length + " of " + SQUAD.length }), el("div", { sinif: "olcum__alt", yazi: canli.map((m) => m.ad).join(", ") || "none yet" })]),
     sonraki ? el("div", { sinif: "olcum" }, [el("div", { sinif: "olcum__etiket", yazi: "Next" }), el("div", { sinif: "olcum__deger", yazi: sonraki.ad }), el("div", { sinif: "olcum__alt", yazi: sonraki.zincir + " · not before " + sonraki.tarih })]) : null,

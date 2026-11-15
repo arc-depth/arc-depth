@@ -3,7 +3,7 @@
  * the Create chooser in gorunum/merkez.js)
  *
  * A connection is "live" only once a real launch through it has worked.
- * Montra opened with Halo (Pulse Squad #1, 12 Nov 2026); the others are
+ * Montra on Elysium is live (a real launch through it worked); the others are
  * connected in code and open with their first real launch.
  * =========================================================================== */
 export const ACIK = { montra: true, pump: false, raydium: false, meteora: false, flap: false, pons: false, clanker: false };

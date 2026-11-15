@@ -33,7 +33,7 @@ const ZINCIRLER = [
 const ZAD = Object.fromEntries(ZINCIRLER.map((z) => [z.k, z]));
 
 /* Warp connections: "live" once tested with a real launch; "next" while being built */
-/* the Montra connection opens on the page once a real launch through it has worked (Halo, Pulse Squad #1) */
+/* the Montra connection is live: a real launch through it has worked */
 /* ACIK (which connection is live) now lives in ../warp-durum.js, shared with the Create chooser */
 /* DefiLlama's name for each connected launchpad -> its key in the form */
 const WARP_ANAHTAR = { "Montra": "montra", "Flap sh": "flap", "Pons V2": "pons", "pump.fun": "pump", "Meteora Dynamic Bonding Curve": "meteora", "LaunchLab": "raydium" };
@@ -43,13 +43,12 @@ const ADRES = { "pump.fun": "https://pump.fun", "Montra": "https://montramarkets
 
 /* the Pulse Squad: our own launches, one mascot per chain, five days apart at the earliest */
 const SQUAD = [
-  ["halo", "Halo", "Elysium", "Montra", "12 Nov"], ["zappy", "Zappy", "Solana", "pump.fun", "18 Nov"], ["blu", "Blu", "Base", "Clanker", "23 Nov"],
+  ["halo", "Halo", "Elysium", "Montra", null], ["zappy", "Zappy", "Solana", "pump.fun", "18 Nov"], ["blu", "Blu", "Base", "Clanker", "23 Nov"],
   ["feather", "Feather", "Robinhood", "Pons", "28 Nov"], ["goldie", "Goldie", "BNB Chain", "Flap", "3 Dec"], ["vio", "Vio", "Monad", "nad.fun", "8 Dec"],
   ["pulsy", "Pulsy", "Arc", "ARC PULSE", "13 Dec"], ["turbo", "Turbo", "HyperEVM", "Alt Fun", "18 Dec"], ["drip", "Drip", "Sui", "Turbos", "23 Dec"],
   ["yeti", "Yeti", "Avalanche", "Arena", "28 Dec"], ["pebble", "Pebble", "Aptos", "Emojicoin", "2 Jan"], ["bolt", "Bolt", "Arbitrum", "ARC PULSE", "7 Jan"],
 ];
 
-const HALO = "0xebEe0B053569333d72006d5dA46362eeaD1Ccd3B";   // Pulse Squad #1, launched 12 Nov 2026
 const para = (v) => { v = Number(v || 0); return v >= 1e9 ? "$" + (v / 1e9).toFixed(2) + "B" : v >= 1e6 ? "$" + (v / 1e6).toFixed(2) + "M" : v >= 1e3 ? "$" + (v / 1e3).toFixed(1) + "K" : "$" + v.toFixed(0); };
 const adresi = (p) => ADRES[p.ad] || (p.slug ? "https://defillama.com/protocol/" + p.slug : null);
 
@@ -108,7 +107,7 @@ const STIL = `
 
 /* the launch form: one launchpad at a time; each opens only once a real launch through it has worked */
 const LAUNCHPADLER = {
-  montra: { ad: "Montra", zincirler: ["elysium"], kalkan: true, acik: () => ACIK.montra, link: (t) => "https://montramarkets.xyz/token/" + t, bekliyor: "opens with Halo's launch" },
+  montra: { ad: "Montra", zincirler: ["elysium"], kalkan: true, acik: () => ACIK.montra, link: (t) => "https://montramarkets.xyz/token/" + t, bekliyor: "opens with the first Elysium launch through it" },
   pump: { ad: "pump.fun", zincirler: ["solana"], kalkan: false, acik: () => ACIK.pump, link: null, bekliyor: "opens with Zappy's launch on Solana" },
   raydium: { ad: "Raydium LaunchLab", zincirler: ["solana"], kalkan: false, acik: () => ACIK.raydium, link: null, bekliyor: "opens with the first Solana launch through it" },
   meteora: { ad: "Meteora", zincirler: ["solana"], kalkan: false, acik: () => ACIK.meteora, link: null, bekliyor: "opens with the first Solana launch through it" },
@@ -278,10 +277,10 @@ export async function ciz({ param } = {}) {
   /* ---- the Pulse Squad (moved up from the bottom of the page) ---- */
   kap.append(panel("The Pulse Squad · our own launches, one friend on every chain", [
     el("p", { sinif: "vt-alt", attr: { style: "opacity:.8" }, yazi: "ARC PULSE launches a mascot memecoin on each chain, five days apart at the earliest, each one paid for by the fees of the ones before. They are not ARCP and promise nothing: their trading fees fund the platform, and every address, fee and payout is published here as it happens." }),
-    el("div", { sinif: "wp-squad" }, SQUAD.map(([k, ad, z, lp, t], i) => el("div", { sinif: "wp-m" + (i === 0 ? " ilk" : "") }, [
+    el("div", { sinif: "wp-squad" }, SQUAD.map(([k, ad, z, lp, t], i) => el("div", { sinif: "wp-m" }, [
       el("img", { attr: { src: "img/squad/" + k + ".svg", alt: ad + ", the Pulse Squad's " + z + " mascot", loading: i < 6 ? "eager" : "lazy" } }),
       el("div", { sinif: "ad", yazi: ad }), el("div", { sinif: "z", attr: { style: "color:" + ((ZINCIRLER.find((x) => x.ad === z) || {}).renk || "#fff") }, yazi: z + " · " + lp }),
-      i === 0 ? el("a", { sinif: "t", attr: { href: "#/terminal?t=" + HALO, style: "font-weight:800" }, yazi: "Live · chart & buy →" }) : el("div", { sinif: "t", yazi: "Not before " + t }),
+      el("div", { sinif: "t", yazi: t ? "Not before " + t : "Coming soon" }),
     ]))),
   ]));
 

@@ -1,10 +1,9 @@
 /* squad.js — the Pulse Squad: ARC PULSE's own mascot memecoins, one per chain (from video/squad/squad.json).
  * `token` is filled in once a mascot is really launched; `x` is its launch post. Used by Warp, its token pages and Trade. */
 export const SQUAD = [
-  { k: "halo", ad: "Halo", zincir: "Elysium", lp: "Montra", tarih: "12 Nov", renk: "#c6f86b",
-    kisilik: "Kind, brave and always first. The squad's guardian angel.", soz: "Every chain deserves a guardian.",
-    token: "0xebEe0B053569333d72006d5dA46362eeaD1Ccd3B", x: "https://x.com/ArcPulseApp/status/2120828583954289147",
-    olgular: ["Launched 12 Nov 2026 through Warp on Montra (Elysium), from ARC PULSE's own wallet", "2% fee per trade, 1-minute anti-snipe window", "Liquidity locked by Montra at launch; fixed supply of 1,000,000,000"] },
+  /* Halo's first token was exited on 15 Nov 2026; Halo returns later as a new token, so no date for now */
+  { k: "halo", ad: "Halo", zincir: "Elysium", lp: "Montra", tarih: null, renk: "#c6f86b",
+    kisilik: "Kind, brave and always first. The squad's guardian angel.", soz: "Every chain deserves a guardian." },
   { k: "zappy", ad: "Zappy", zincir: "Solana", lp: "pump.fun", tarih: "18 Nov" },
   { k: "blu", ad: "Blu", zincir: "Base", lp: "Clanker", tarih: "23 Nov" },
   { k: "feather", ad: "Feather", zincir: "Robinhood", lp: "Pons", tarih: "28 Nov" },
