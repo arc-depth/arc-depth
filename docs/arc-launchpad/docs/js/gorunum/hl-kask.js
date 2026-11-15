@@ -127,7 +127,7 @@ export function kaskPaneli({ hl, usd, fiyat, boyutKoy }) {
 
   async function ciz({ P, t, H }) {
     const no = ++sira;
-    const [o, r, fg, oiD, tk, kb] = await Promise.all([oynaklik(hl, P.ad), radar(), fonGecmis(hl, P.ad), dosya("perps-oi.json", 600000), dosya("takvim.json", 1800000), kitap(hl, P.ad)]);
+    const [o, r, fg, oiD, tk, kb, tmD] = await Promise.all([oynaklik(hl, P.ad), radar(), fonGecmis(hl, P.ad), dosya("perps-oi.json", 600000), dosya("takvim.json", 1800000), kitap(hl, P.ad), dosya("tm/" + P.ad + ".json", 600000)]);
     if (no !== sira) return;   // a newer draw started
     const ref = t && t.ref > 0 ? t.ref : (P.mid || P.mark);
     const alis = t ? t.alis : true;
@@ -172,6 +172,17 @@ export function kaskPaneli({ hl, usd, fiyat, boyutKoy }) {
         const tur = kat < 1 ? "hud--tehlike" : kat < 2 ? "hud--uyari" : "hud--ok";
         satirlar.push(m(["Stop loss ", { b: yz(d) }, " away = ", { b: kat.toFixed(1) + "×" }, " a typical hour. " +
           (tur === "hud--tehlike" ? "Inside normal hourly noise: it may be hit without a real trend change." : tur === "hud--uyari" ? "Close to normal noise." : "Outside normal hourly noise.")], tur));
+        /* liquidation levels of large public positions between the entry and the stop (veri/tm/<coin>.json, hourly):
+           a long's stop is reached through other longs' liquidations, whose forced selling can push the price into it */
+        if (tmD && tmD.likit) {
+          const alt = Math.min(t.sl, ref), ust = Math.max(t.sl, ref);
+          const q = ((alis ? tmD.likit.uzun : tmD.likit.kisa) || []).filter((l) => l[0] >= alt && l[0] <= ust).reduce((a, l) => a + l[1], 0);
+          const oran = tmD.derinlik1 > 0 ? q / tmD.derinlik1 : null;
+          const tur2 = q <= 0 ? "hud--ok" : oran != null && oran >= 0.5 ? "hud--tehlike" : oran != null && oran >= 0.15 ? "hud--uyari" : "";
+          satirlar.push(q > 0
+            ? m(["Between your entry and your stop: ≈ ", { b: usd(q, 0) }, " of " + (alis ? "long" : "short") + " liquidations of large public positions" + (oran != null ? " (" + Math.round(oran * 100) + "% of the order book within 1%)" : "") + ". If the price gets there, forced " + (alis ? "selling" : "buying") + " can push it on into your stop."], tur2)
+            : m(["No liquidation cluster of large public positions between your entry and your stop."], "hud--ok"));
+        }
       }
       koy.risk = (kume("Risk vs. normal moves", ...satirlar,
         el("div", { sinif: "hud__n", yazi: "From Hyperliquid's 1 h closes over the last 7 days (" + o.n + " candles). Past moves, not a forecast." })));

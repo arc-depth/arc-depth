@@ -20,6 +20,7 @@ const TUR = {
   sikisma: { ad: "Squeeze", ikon: "🧲", aciklama: "The last day was much calmer than the month. Quiet stretches are often followed by a bigger move, in either direction." },
   kirilma: { ad: "Breakout", ikon: "🚀", aciklama: "Price left its 7-day range with more volume than usual. Some breakouts run, many fall back into the range." },
   oi: { ad: "OI surge", ikon: "🌊", aciklama: "Open interest jumped or dropped in a day: many positions opened or closed." },
+  bant: { ad: "Range edge", ikon: "📏", aciklama: "The price is at the bottom or top 15% of its last 24 hours' range (at least 1.2% wide), on a market with a real order book. Ranges often hold, until they break." },
   capraz: { ad: "Funding gap", ikon: "⚖️", aciklama: "The same market's funding differs a lot between venues (each venue has its own fees and rules)." },
 };
 
@@ -104,7 +105,7 @@ export async function ciz() {
     ...Object.entries(TUR).map(([k, x]) => el("div", { sinif: "hd-k" }, [el("strong", { yazi: x.ikon + " " + x.ad }), el("span", { yazi: x.aciklama })])),
     el("div", { sinif: "hd-sarmal" }, [el("table", { sinif: "hd-tablo" }, [
       el("thead", {}, [el("tr", {}, ["Condition", "Times (30 d)", "Avg move next 24 h", "Median move", "Higher 24 h later"].map((x) => el("th", { yazi: x })))]),
-      el("tbody", {}, [...["fon", "sikisma", "kirilma"].filter((k) => G[k]).map((k) => el("tr", {}, [
+      el("tbody", {}, [...["fon", "sikisma", "kirilma", "bant"].filter((k) => G[k]).map((k) => el("tr", {}, [
         el("td", { yazi: TUR[k].ad }), el("td", { yazi: String(G[k].n) }), el("td", { yazi: "±" + yz(G[k].ortHareket) }), el("td", { yazi: "±" + yz(G[k].medyanHareket) }), el("td", { yazi: Math.round(G[k].yukari * 100) + "%" })])),
         G.taban ? el("tr", {}, [el("td", { yazi: "Baseline: any market, any day" }), el("td", { yazi: String(G.taban.n) }), el("td", { yazi: "±" + yz(G.taban.ortHareket) }), el("td", { yazi: "±" + yz(G.taban.medyanHareket) }), el("td", { yazi: Math.round(G.taban.yukari * 100) + "%" })]) : null]),
     ])]),

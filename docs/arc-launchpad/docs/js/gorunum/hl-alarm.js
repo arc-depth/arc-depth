@@ -13,7 +13,7 @@ const TUR = {
   fiyat: { ad: "Price", ikon: "💲" }, fon: { ad: "Funding", ikon: "💸" }, hedef: { ad: "Target Radar", ikon: "🎯" },
   olay: { ad: "Economic event", ikon: "🗓️" }, likit: { ad: "My liquidation risk", ikon: "🛡️" },
 };
-const HEDEF_TUR = { "": "Any condition", fon: "Funding extreme", sikisma: "Squeeze", kirilma: "Breakout", oi: "OI surge", capraz: "Funding gap" };
+const HEDEF_TUR = { "": "Any condition", fon: "Funding extreme", sikisma: "Squeeze", kirilma: "Breakout", oi: "OI surge", capraz: "Funding gap", bant: "Range edge" };
 
 export async function ciz({ param, cuzdan }) {
   document.title = "Pulse alerts — ARC PULSE";
