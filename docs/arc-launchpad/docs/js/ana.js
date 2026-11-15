@@ -265,6 +265,8 @@ function hashiCoz() {
   /* #/designs/<sub> (the on-chain license URI is #/designs/license): the
      "designs" route with the rest in param "alt" */
   if (yol && yol.startsWith("designs/")) { param.set("alt", yol.slice(8)); yol = "designs"; }
+  /* #/perps/trade (15 Nov 2026): Hyperliquid trading, inside the Perps Radar route (gorunum/perps.js hands it to hl-trade.js) */
+  if (yol === "perps/trade") { param.set("alt", "trade"); yol = "perps"; }
   return {
     yol: yol || VARSAYILAN,
     param

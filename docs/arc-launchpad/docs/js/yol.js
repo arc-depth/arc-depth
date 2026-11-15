@@ -177,7 +177,8 @@ export const YOLLAR = [
     grup: "kesif",
     ikon: "mum",
     durum: "canli",
-    ozet: "For each coin, every perp DEX that lists it, sorted by 24h volume, so you can see where the volume is; plus a venue leaderboard. Read-only.",
+    /* 15 Nov 2026: #/perps/trade (gorunum/hl-trade.js) trades Hyperliquid from the visitor's own wallet, ARC PULSE builder fee 0.05% */
+    ozet: "For each coin, every perp DEX that lists it, sorted by 24h volume, so you can see where the volume is; plus a venue leaderboard. Hyperliquid can be traded here with your own wallet.",
     kaynak: "veri/perps.json (scripts/perps-radar.js: Hyperliquid, Aster, Lighter, dYdX, Orderly, Paradex public APIs)"
   },
   {

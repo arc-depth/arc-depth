@@ -4,8 +4,10 @@
  * Read-only comparison of perpetual-futures DEXes, from veri/perps.json
  * (written hourly by scripts/perps-radar.js from each venue's public API).
  * For each coin: every venue listing it, sorted by 24 h volume, so a visitor
- * sees where the volume is; plus a venue leaderboard. No trading here, no
- * wallet, no money: a "Trade on" link opens the venue's own site.
+ * sees where the volume is; plus a venue leaderboard. The radar itself is
+ * read-only: a "Trade on" link opens the venue's own site. 15 Nov 2026:
+ * Hyperliquid can also be traded here (#/perps/trade, gorunum/hl-trade.js,
+ * the visitor's own wallet signs; ARC PULSE builder fee 0.05%).
  * =========================================================================== */
 
 import { el, sayfaUst, panel, not, olcum, ayrinti } from "../ui.js";
@@ -78,6 +80,12 @@ async function veriOku() {
 function tradeLink(V, e, coin) {
   const m = V[e.v];
   if (!m) return null;
+  if (e.v === "hyperliquid") {
+    const s = e.s || coin;
+    return el("span", { attr: { style: "display:inline-flex;gap:6px;flex-wrap:wrap" } }, [
+      el("a", { sinif: "pr-git dugme--marka", attr: { href: "#/perps/trade?coin=" + encodeURIComponent(s), style: "background:var(--marka);border-color:var(--marka);color:#fff" }, yazi: "Trade here" }),
+      el("a", { sinif: "pr-git", attr: { href: m.url.replace("{s}", encodeURIComponent(s)), target: "_blank", rel: "noopener noreferrer" }, yazi: "Hyperliquid ↗" })]);
+  }
   if (m.genel) return el("a", { sinif: "pr-git", attr: { href: m.url, target: "_blank", rel: "noopener noreferrer", title: "Orderly is an order book shared by many front ends" }, yazi: "Find an Orderly app ↗" });
   const href = m.url.replace("{s}", encodeURIComponent(e.s || coin));
   return el("a", { sinif: "pr-git", attr: { href, target: "_blank", rel: "noopener noreferrer" }, yazi: "Trade on " + m.ad + " ↗" });
@@ -134,11 +142,13 @@ function coinSatiri(veri, x, sira) {
   return d;
 }
 
-export async function ciz() {
+export async function ciz(ctx = {}) {
+  if (ctx.param && ctx.param.get("alt") === "trade") return (await import("./hl-trade.js")).ciz(ctx);
   if (!document.getElementById("pr-stil")) document.head.append(el("style", { attr: { id: "pr-stil" }, yazi: STIL }));
   const kap = el("div", { sinif: "yigin" });
   const turbo = el("img", { attr: { src: new URL("../../img/squad/turbo.svg", import.meta.url).href, alt: "", width: "84", height: "84", loading: "lazy" } });
-  kap.append(sayfaUst("Perps Radar", "Where the volume is, across perp DEXes. Updated hourly."));
+  kap.append(sayfaUst("Perps Radar", "Where the volume is, across perp DEXes. Updated hourly.", [
+    el("a", { sinif: "dugme dugme--marka", attr: { href: "#/perps/trade" }, yazi: "Trade Hyperliquid perps here" })]));
 
   let veri;
   try { veri = await veriOku(); }
@@ -155,7 +165,8 @@ export async function ciz() {
 
   kap.append(el("div", { sinif: "pr-ust" }, [turbo, el("p", {}, [
     "For every coin, each perp DEX that lists it, sorted by 24h volume: more volume usually means more liquidity. ",
-    el("strong", { yazi: "Read-only." }), " Nothing is traded here and no wallet is needed; a link opens the venue's own site.",
+    el("strong", { yazi: "The radar is read-only." }), " No wallet is needed to compare; a link opens the venue's own site. Hyperliquid can also be traded from this site with your own wallet (",
+    el("a", { attr: { href: "#/perps/trade" }, yazi: "Trade here" }), ").",
   ])]));
   kap.append(not(RISK, "uyari"));
 

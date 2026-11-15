@@ -389,6 +389,26 @@ export const cuzdan = {
     return sig;
   },
 
+  /**
+   * eth_signTypedData_v4 of `veri` ({ domain, types (without EIP712Domain), primaryType, message }) from the
+   * connected wallet (15 Nov 2026, Hyperliquid trading). Never a transaction; the page never holds a key.
+   * The signer is recovered and checked against the connected account before the signature is returned.
+   */
+  async imzalaTipli(veri) {
+    const p = saglayici();
+    if (!p) throw new Error("No wallet");
+    if (!_hesap) await this.bagla();
+    if (!_hesap) throw new Error("Wallet not connected");
+    const ben = _hesap;
+    const { verifyTypedData } = await import("../vendor/ethers.min.js");
+    const alanTip = [{ name: "name", type: "string" }, { name: "version", type: "string" }, { name: "chainId", type: "uint256" }, { name: "verifyingContract", type: "address" }];
+    const tam = { domain: veri.domain, types: { EIP712Domain: alanTip, ...veri.types }, primaryType: veri.primaryType, message: veri.message };
+    const sig = await p.request({ method: "eth_signTypedData_v4", params: [ben, JSON.stringify(tam)] });
+    const kim = verifyTypedData(veri.domain, veri.types, veri.message, sig);
+    if (kim.toLowerCase() !== ben.toLowerCase()) throw new Error("The wallet signed with " + kim + ", not the connected account " + ben + ".");
+    return sig;
+  },
+
   dinle(f) {
     _dinleyiciler.add(f);
     return () => _dinleyiciler.delete(f);
