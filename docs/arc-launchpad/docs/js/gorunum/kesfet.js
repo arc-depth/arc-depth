@@ -152,6 +152,12 @@ export async function ciz({ param }) {
       el("span", { html: ikon("arti", "yol-oge__ikon") }), el("span", { yazi: "Create a token" })]),
   ]));
 
+  /* 15 Nov 2026: the perps cockpit, announced where everyone lands (phones reach the rail only through More) */
+  if (!arama) kap.append(el("a", { attr: { href: "#/perps/trade", style: "display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;border:1px solid var(--marka);border-radius:16px;padding:12px 14px;background:linear-gradient(90deg,rgba(124,92,255,.14),rgba(46,229,157,.08));color:inherit;text-decoration:none" } }, [
+    el("div", {}, [el("div", { attr: { style: "font-size:12px;letter-spacing:.06em;color:var(--marka);font-weight:700" }, yazi: "NEW · PERPS COCKPIT" }),
+      el("b", { attr: { style: "display:block;font-size:16px;margin-top:2px" }, yazi: "Trade Hyperliquid perps with what perp sites don't show" }),
+      el("div", { sinif: "ikincil", attr: { style: "font-size:13px" }, yazi: "📟 Pulse HUD · 🔮 Time Machine (10,000 futures) · 🎯 Aim assist · 🛰️ Target Radar · 🔔 Alerts" })]),
+    el("span", { sinif: "dugme dugme--marka dugme--kucuk", yazi: "Trade perps →" })]));
   /* 12 Nov 2026 redesign: Discover leads with what is happening now (the Squad spotlight and the newest
      launches); the how-it-works steps fold below, and the counters and older lists sit further down */
   /* the newest live Pulse Squad mascot, with its live price; nothing when no mascot is live */

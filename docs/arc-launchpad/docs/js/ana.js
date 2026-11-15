@@ -80,7 +80,7 @@ function yolLinki(y, sinifEk = "") {
     veri: { yol: y.yol }
   }, [
     el("span", { sinif: "yol-oge__ikon", html: ikon(y.ikon, "yol-oge__ikon") }),
-    el("span", { sinif: "yol-oge__etiket", yazi: y.ad + (y.site && y.site !== "presale.html" ? " ↗" : "") }),
+    el("span", { sinif: "yol-oge__etiket", yazi: y.ad + (y.site && y.site !== "presale.html" && !y.site.startsWith("#") ? " ↗" : "") }),
     /* the rail marks state before anybody clicks, in the two words used everywhere: Live (no badge) and Coming soon */
     DURUM_ROZET[y.durum] ? el("span", { sinif: "etiket etiket--uyari", yazi: DURUM_ROZET[y.durum], attr: { title: "Coming soon" } }) : null
   ]);
@@ -268,6 +268,7 @@ function hashiCoz() {
      "designs" route with the rest in param "alt" */
   if (yol && yol.startsWith("designs/")) { param.set("alt", yol.slice(8)); yol = "designs"; }
   /* #/perps/trade (15 Nov 2026): Hyperliquid trading, inside the Perps Radar route (gorunum/perps.js hands it to hl-trade.js) */
+  if (yol === "perps-trade" || yol === "perps-targets" || yol === "perps-alerts") yol = yol.replace("-", "/");
   if (yol === "perps/trade") { param.set("alt", "trade"); yol = "perps"; }
   /* #/perps/targets (15 Nov 2026): Target Radar, gorunum/hl-hedef.js */
   if (yol === "perps/targets") { param.set("alt", "targets"); yol = "perps"; }

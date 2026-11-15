@@ -136,6 +136,15 @@ export async function ciz({ param, cuzdan }) {
     el("a", { sinif: "dugme dugme--sade", attr: { href: "#/perps/alerts?coin=" + encodeURIComponent(param.get("coin") || "BTC") }, yazi: "🔔 Alerts" }),
     el("a", { sinif: "dugme dugme--sade", attr: { href: "#/perps" }, yazi: "Perps Radar" })]));
   kap.append(not(RISK, "uyari"));
+  /* the cockpit at a glance: what is on this page and next to it */
+  const git = (sec) => () => { const e = document.querySelector(sec); if (e) { if (e.closest("details")) e.closest("details").open = true; e.scrollIntoView({ behavior: "smooth", block: "start" }); } };
+  kap.append(el("div", { attr: { style: "display:flex;flex-wrap:wrap;gap:6px" } }, [
+    el("button", { sinif: "dugme dugme--sade dugme--kucuk", attr: { type: "button" }, yazi: "📟 Pulse HUD", on: { click: git(".hud") } }),
+    el("button", { sinif: "dugme dugme--sade dugme--kucuk", attr: { type: "button" }, yazi: "🎯 Aim assist", on: { click: git(".fz") } }),
+    el("button", { sinif: "dugme dugme--sade dugme--kucuk", attr: { type: "button" }, yazi: "🔮 Time Machine", on: { click: git(".tm") } }),
+    el("a", { sinif: "dugme dugme--sade dugme--kucuk", attr: { href: "#/perps/targets" }, yazi: "🛰️ Target Radar" }),
+    el("a", { sinif: "dugme dugme--sade dugme--kucuk", attr: { href: "#/perps/alerts?coin=" + encodeURIComponent(param.get("coin") || "BTC") }, yazi: "🔔 Alerts" }),
+    el("a", { sinif: "dugme dugme--sade dugme--kucuk", attr: { href: "#/perps" }, yazi: "📊 Perps Radar" })]));
 
   let piyasalar;
   try { piyasalar = await hl.piyasalar(); }
@@ -451,7 +460,9 @@ export async function ciz({ param, cuzdan }) {
     durumYaz("Aim assist filled the order form. Check Pulse HUD below, then press Review.", "ok");
     anaDugme.scrollIntoView({ behavior: "smooth", block: "center" });
   } }, aim === "short" ? "satis" : aim === "long" ? "alis" : null);
-  const fuzeYeri = aim === "long" || aim === "short" ? fuze.kutu : ayrinti("🎯 Aim assist: size, stop and target from your risk", fuze.kutu);
+  const fuzeYeri = aim === "long" || aim === "short" ? fuze.kutu : ayrinti("🎯 Aim assist + 🔮 Time Machine: size, stop and target from your risk, then 10,000 possible futures", fuze.kutu);
+  /* open by default on wide screens, so the Time Machine is in sight; phones keep it one tap away above the form */
+  if (fuzeYeri.tagName === "DETAILS" && window.matchMedia("(min-width: 900px)").matches) fuzeYeri.open = true;
   fuze.hesapla();
   const formPanel = panel("Place an order", el("div", { sinif: "yigin yigin--sik" }, [
     fuzeYeri, yonDug, turDug, limitAlan,

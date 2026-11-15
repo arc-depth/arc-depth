@@ -151,6 +151,7 @@ export async function ciz(ctx = {}) {
   const turbo = el("img", { attr: { src: new URL("../../img/squad/turbo.svg", import.meta.url).href, alt: "", width: "84", height: "84", loading: "lazy" } });
   kap.append(sayfaUst("Perps Radar", "Where the volume is, across perp DEXes. Updated hourly.", [
     el("a", { sinif: "dugme dugme--sade", attr: { href: "#/perps/targets" }, yazi: "🎯 Target Radar" }),
+    el("a", { sinif: "dugme dugme--sade", attr: { href: "#/perps/alerts" }, yazi: "🔔 Alerts" }),
     el("a", { sinif: "dugme dugme--marka", attr: { href: "#/perps/trade" }, yazi: "Trade Hyperliquid perps here" })]));
 
   let veri;

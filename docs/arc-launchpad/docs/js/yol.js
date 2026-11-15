@@ -42,7 +42,7 @@ export const GRUPLAR = [
 ];
 
 /* the order of the rail inside each group (routes not listed keep registry order, after these) */
-export const RAY_SIRASI = ["kesfet", "terminal", "vitrin", "launches", "warp", "perps", "squad", "liderlik", "advertise",
+export const RAY_SIRASI = ["kesfet", "terminal", "vitrin", "launches", "warp", "perps", "perps-trade", "perps-targets", "perps-alerts", "squad", "liderlik", "advertise",
   "olustur", "merkez", "olustur-move", "move-token",
   "portfoy", "kar-zarar", "davet", "points",
   "fthm", "presale", "dao", "teklifler", "topluluk-dao", "topluluk",
@@ -181,6 +181,13 @@ export const YOLLAR = [
     ozet: "Perps from your own wallet: compare perp DEXes, trade Hyperliquid with Pulse HUD, Target Radar, the Time Machine and alerts.",
     kaynak: "veri/perps.json (scripts/perps-radar.js: Hyperliquid, Aster, Lighter, dYdX, Orderly, Paradex public APIs)"
   },
+  /* 15 Nov 2026: the perps cockpit pages, shown in the rail under Perps Radar (they live inside the perps route) */
+  { yol: "perps-trade", ebeveyn: "perps", site: "#/perps/trade", ad: "Trade perps", kisa: "Trade perps", grup: "kesif", ikon: "grafik", durum: "canli",
+    ozet: "Hyperliquid perps from your own wallet, with Pulse HUD, Aim assist and the Time Machine (10,000 possible futures before you trade).", kaynak: "Hyperliquid public API" },
+  { yol: "perps-targets", ebeveyn: "perps", site: "#/perps/targets", ad: "Target Radar", kisa: "Targets", grup: "kesif", ikon: "kivilcim", durum: "canli",
+    ozet: "Unusual conditions across Hyperliquid markets, scanned hourly: funding extremes, squeezes, breakouts, OI surges, funding gaps.", kaynak: "veri/perps-hedef.json (scripts/perps-hedef.js)" },
+  { yol: "perps-alerts", ebeveyn: "perps", site: "#/perps/alerts", ad: "Alerts", kisa: "Alerts", grup: "kesif", ikon: "saat", durum: "canli",
+    ozet: "Price, funding, Target Radar, economic event and liquidation-risk alerts, kept in your browser.", kaynak: "docs/js/alarm.js" },
   {
     /* 12 Nov 2026: every launch made from ARC PULSE in one list, through Warp or on our own launchpad, with where each was made */
     yol: "launches",
