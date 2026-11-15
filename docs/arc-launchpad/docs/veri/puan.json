@@ -1,5 +1,5 @@
 {
- "guncellendi": "2026-11-13T11:35:31.096Z",
+ "guncellendi": "2026-11-15T10:02:05.340Z",
  "surum": "v1",
  "formul": {
   "launch": 10,
@@ -20,7 +20,7 @@
   "cuzdan": 2,
   "puan": 10,
   "bekleyen": 0,
-  "launch": 4,
+  "launch": 3,
   "izlenen": 4,
   "haric": 838
  },
@@ -175,17 +175,6 @@
   }
  ],
  "jetonlar": [
-  {
-   "t": "0xebEe0B053569333d72006d5dA46362eeaD1Ccd3B",
-   "s": "HALO",
-   "zk": "elysium",
-   "z": 1794479007,
-   "ekip": true,
-   "alici": 0,
-   "nitelikli": false,
-   "acik": false,
-   "erken": 2
-  },
   {
    "t": "0x35d337a50dF58B63eA281713A2e5F563355A6EFA",
    "s": "APDT",

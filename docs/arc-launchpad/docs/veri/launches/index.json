@@ -1,13 +1,13 @@
 {
- "guncellendi": "2026-11-12T13:55:15.417Z",
- "toplam": 4,
+ "guncellendi": "2026-11-15T10:02:04.552Z",
+ "toplam": 3,
  "parcaBoy": 5000,
  "parcalar": [
   {
    "dosya": "p0000.json",
-   "adet": 4,
+   "adet": 3,
    "ilk": 1792315673,
-   "son": 1794479007
+   "son": 1793599790
   }
  ],
  "kayit": {
