@@ -313,6 +313,7 @@ const GORUNUMLER = {
   designs: () => import("./gorunum/designs.js"),
   vitrin: () => import("./gorunum/vitrin.js"),   // Market, demo (9 Nov 2026)
 launches: () => import("./gorunum/launchlar.js"),   // every launch from ARC PULSE (12 Nov 2026)
+    perps: () => import("./gorunum/perps.js"),   // Perps Radar (15 Nov 2026)
     warp: () => import("./gorunum/warp.js")   // Warp (11 Nov 2026)
 };
 

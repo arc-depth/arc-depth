@@ -42,7 +42,7 @@ export const GRUPLAR = [
 ];
 
 /* the order of the rail inside each group (routes not listed keep registry order, after these) */
-export const RAY_SIRASI = ["kesfet", "terminal", "vitrin", "launches", "warp", "squad", "liderlik", "advertise",
+export const RAY_SIRASI = ["kesfet", "terminal", "vitrin", "launches", "warp", "perps", "squad", "liderlik", "advertise",
   "olustur", "merkez", "olustur-move", "move-token",
   "portfoy", "kar-zarar", "davet", "points",
   "fthm", "presale", "dao", "teklifler", "topluluk-dao", "topluluk",
@@ -167,6 +167,18 @@ export const YOLLAR = [
     durum: "canli",
     ozet: "Every memecoin launchpad on thirteen chains, ranked by live volume; launch on the one you pick from your own wallet.",
     kaynak: "DefiLlama (Launchpad category) + Elysium chain records"
+  },
+  {
+    /* 15 Nov 2026 (owner approved): Perps Radar, its own tab. Read-only comparison of perp DEXes by 24 h volume;
+       no trading, no wallet, no money flows. Data: scripts/perps-radar.js, hourly, writes veri/perps.json. */
+    yol: "perps",
+    ad: "Perps Radar",
+    kisa: "Perps",
+    grup: "kesif",
+    ikon: "mum",
+    durum: "canli",
+    ozet: "For each coin, every perp DEX that lists it, sorted by 24h volume, so you can see where the volume is; plus a venue leaderboard. Read-only.",
+    kaynak: "veri/perps.json (scripts/perps-radar.js: Hyperliquid, Aster, Lighter, dYdX, Orderly, Paradex public APIs)"
   },
   {
     /* 12 Nov 2026: every launch made from ARC PULSE in one list, through Warp or on our own launchpad, with where each was made */

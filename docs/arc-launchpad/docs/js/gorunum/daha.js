@@ -41,7 +41,7 @@ const STIL =
   ".dh-oge{flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:6px;padding:10px 6px;font-size:12.5px;min-height:76px}" +
   ".dh-oge span{white-space:normal;overflow-wrap:anywhere;line-height:1.25}.dh-oge .etiket{margin:0;font-size:10.5px}}";
 
-const HIZLI = [["vitrin", "Tokens on 11 chains"], ["launches", "Every launch from ARC PULSE"], ["warp", "Launch on any launchpad"], ["presale", "ARCP presale"],
+const HIZLI = [["vitrin", "Tokens on 11 chains"], ["launches", "Every launch from ARC PULSE"], ["warp", "Launch on any launchpad"], ["perps", "Where perp volume is"], ["presale", "ARCP presale"],
   ["fthm", "The platform token"], ["liderlik", "Top creators and traders"], ["davet", "Invite and earn"], ["points", "Points for real activity"], ["dokuman", "How it works"]];
 
 export async function ciz({ param } = {}) {
