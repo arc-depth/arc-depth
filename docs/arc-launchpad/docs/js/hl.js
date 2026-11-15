@@ -4,8 +4,8 @@
  * 15 Nov 2026 (owner approved). Used by gorunum/hl-trade.js (#/perps/trade).
  *
  * WHAT IS SIGNED, AND BY WHOM
- *   Every action is signed by the connected wallet with eth_signTypedData_v4 (cuzdan.imzalaTipli).
- *   The page never creates, receives or stores a private key. Two kinds, per Hyperliquid's docs and
+ *   Fee approval and trading-key approval are signed by the connected wallet with eth_signTypedData_v4
+ *   (cuzdan.imzalaTipli); the wallet's own key never reaches the page. Two kinds, per Hyperliquid's docs and
  *   the reference SDKs (hyperliquid-python-sdk; @nktkas/hyperliquid 0.33.3, whose signing this file
  *   was checked against byte for byte, see scripts/hl-imza-dene.js):
  *     - L1 actions (order, cancel, updateLeverage): msgpack(action) + nonce (uint64 BE) + 0x00 (no
@@ -14,7 +14,17 @@
  *       Agent { source "a" (mainnet), connectionId bytes32 }.
  *     - user-signed actions (approveBuilderFee): EIP-712 { name "HyperliquidSignTransaction",
  *       version "1", chainId = signatureChainId = the chain the wallet is on, verifyingContract 0x0 },
- *       primary type "HyperliquidTransaction:ApproveBuilderFee".
+ *       primary type "HyperliquidTransaction:ApproveBuilderFee" / "HyperliquidTransaction:ApproveAgent".
+ *
+ * TRADING KEY ("agent wallet", owner approved 15 Nov 2026, the way Hyperliquid's own app works)
+ *   L1 actions must be signed with chainId 1337, which wallets such as MetaMask refuse. So, like
+ *   app.hyperliquid.xyz, the page can create a fresh random key in this browser (ethers Wallet.createRandom),
+ *   have the main wallet approve it once (approveAgent, named "ARC PULSE"), and then sign orders,
+ *   cancels and leverage changes locally with it: no wallet popup per order. Hyperliquid lets an agent
+ *   trade but never withdraw or transfer. The key is kept ONLY in this browser's localStorage, under the
+ *   main address (hl-ajan-v1:<address>); it is never sent anywhere. "Forget this device" deletes it.
+ *   Approving a new "ARC PULSE" agent replaces the previous one of that name (another device's key stops).
+ *   If the visitor declines the trading key, every L1 action is signed by the main wallet instead.
  *   Some wallets (MetaMask among them) refuse an EIP-712 signature whose chainId is not the chain they
  *   are on, so they refuse the L1 (chainId 1337) signature; that refusal is reported plainly
  *   (code "IMZA_ZINCIR") and nothing is sent.
@@ -27,7 +37,7 @@
  *   20% marketing / 10% founder. Accounting is manual for now; no payout code exists or is built here.
  * =========================================================================== */
 
-import { keccak256, Signature } from "../vendor/ethers.min.js";
+import { keccak256, Signature, Wallet } from "../vendor/ethers.min.js";
 import { cuzdan } from "./cuzdan.js";
 
 export const API = "https://api.hyperliquid.xyz";
@@ -194,6 +204,36 @@ export function onayTipli(action) {
   };
 }
 
+const AJAN_TIP = { "HyperliquidTransaction:ApproveAgent": [
+  { name: "hyperliquidChain", type: "string" }, { name: "agentAddress", type: "address" }, { name: "agentName", type: "string" }, { name: "nonce", type: "uint64" }] };
+export const AJAN_ADI = "ARC PULSE";
+
+export function ajanEylemi(signatureChainId, nonce, agentAddress) {
+  return { type: "approveAgent", signatureChainId, hyperliquidChain: "Mainnet", agentAddress: agentAddress.toLowerCase(), agentName: AJAN_ADI, nonce };
+}
+export function ajanTipli(action) {
+  return {
+    domain: { name: "HyperliquidSignTransaction", version: "1", chainId: parseInt(action.signatureChainId, 16), verifyingContract: SIFIR },
+    types: AJAN_TIP, primaryType: "HyperliquidTransaction:ApproveAgent",
+    message: { hyperliquidChain: action.hyperliquidChain, agentAddress: action.agentAddress, agentName: action.agentName, nonce: action.nonce },
+  };
+}
+
+/* ---- the trading key on this device --------------------------------- */
+const ajanYeri = (user) => "hl-ajan-v1:" + user.toLowerCase();
+/** This device's trading key for `user` (an ethers Wallet), or null. */
+export function ajanOku(user) {
+  try { const j = JSON.parse(localStorage.getItem(ajanYeri(user)) || "null"); if (j && j.anahtar) return new Wallet(j.anahtar); } catch (e) { /* storage blocked or bad entry */ }
+  return null;
+}
+export function ajanSil(user) { try { localStorage.removeItem(ajanYeri(user)); } catch (e) { /* storage blocked */ } }
+/** Is `ajan` an approved, unexpired agent of `user` on Hyperliquid right now? (extraAgents) */
+export async function ajanGecerliMi(user, ajan) {
+  const liste = await bilgi({ type: "extraAgents", user: user.toLowerCase() });
+  const a = (liste || []).find((x) => (x.address || "").toLowerCase() === ajan.address.toLowerCase());
+  return !!a && (a.validUntil == null || a.validUntil > Date.now());
+}
+
 /* ---- actions (key order matters: it is hashed) ----------------------- */
 
 export function emirEylemi({ a, alis, px, sz, azalt, tif }) {
@@ -221,32 +261,62 @@ function imzaHatasi(e) {
 
 async function gonder(action, nonce, sig) {
   const s = Signature.from(sig);
-  const r = await fetch(API + "/exchange", {
-    method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ action, nonce, signature: { r: s.r, s: s.s, v: s.v } }), signal: AbortSignal.timeout(20000),
-  });
+  let r;
+  try {
+    r = await fetch(API + "/exchange", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action, nonce, signature: { r: s.r, s: s.s, v: s.v } }), signal: AbortSignal.timeout(20000),
+    });
+  } catch (e) {
+    /* the request may or may not have arrived: never say "nothing happened" here */
+    throw new Error("Could not reach Hyperliquid (" + ((e && e.message) || e) + "). It may or may not have been received: check your open orders and positions below before trying again.");
+  }
   const j = await r.json().catch(() => null);
   if (!j) throw new Error("Hyperliquid answered HTTP " + r.status);
   if (j.status !== "ok") throw new Error("Hyperliquid: " + (typeof j.response === "string" ? j.response : JSON.stringify(j.response || j)));
   return j.response;
 }
 
-/** Sign an L1 action with the connected wallet and send it. */
-export async function l1Gonder(action) {
+/** Sign an L1 action and send it: with this device's trading key `ajan` when given (no popup),
+    otherwise with the connected wallet. A trading key Hyperliquid no longer knows -> code "AJAN_YOK". */
+export async function l1Gonder(action, ajan = null) {
   const nonce = nonceAl();
-  sonEylem = { action, nonce };
+  sonEylem = { action, nonce, ajan: ajan ? ajan.address : null };
+  const t = l1Tipli(action, nonce);
   let sig;
-  try { sig = await cuzdan.imzalaTipli(l1Tipli(action, nonce)); } catch (e) { throw imzaHatasi(e); }
-  return gonder(action, nonce, sig);
+  if (ajan) sig = await ajan.signTypedData(t.domain, t.types, t.message);
+  else { try { sig = await cuzdan.imzalaTipli(t); } catch (e) { throw imzaHatasi(e); } }
+  try { return await gonder(action, nonce, sig); }
+  catch (e) {
+    if (ajan && /does not exist|not.{0,20}(agent|api wallet)|agent.{0,20}(expired|not found)/i.test(e.message)) throw Object.assign(new Error("This device's trading key is no longer approved on Hyperliquid. Enable trading again to create a new one. Nothing was placed."), { code: "AJAN_YOK" });
+    throw e;
+  }
+}
+
+const zincirHex = () => {
+  const z = cuzdan.zincirId();
+  if (!z) throw new Error("The wallet did not say which network it is on");
+  return "0x" + parseInt(z, 16).toString(16);
+};
+
+/** Create a trading key on this device and have the main wallet approve it (approveAgent). The key is
+    stored (localStorage, under the main address) only after Hyperliquid accepted the approval. */
+export async function ajanOnayla(user) {
+  const yeni = Wallet.createRandom();
+  const action = ajanEylemi(zincirHex(), nonceAl(), yeni.address);
+  sonEylem = { action, nonce: action.nonce };
+  let sig;
+  try { sig = await cuzdan.imzalaTipli(ajanTipli(action)); } catch (e) { throw imzaHatasi(e); }
+  await gonder(action, action.nonce, sig);
+  try { localStorage.setItem(ajanYeri(user), JSON.stringify({ anahtar: yeni.privateKey, adres: yeni.address, t: Date.now() })); }
+  catch (e) { /* storage blocked: the key lives only in this tab */ }
+  return new Wallet(yeni.privateKey);
 }
 
 /** The one-time approval of the 0.05% builder fee, signed on the chain the wallet is on.
     oran "0%" withdraws the approval (revoke). */
 export async function builderOnayla(oran = BUILDER_YUZDE) {
-  let zincir = cuzdan.zincirId();
-  if (!zincir) throw new Error("The wallet did not say which network it is on");
-  zincir = "0x" + parseInt(zincir, 16).toString(16);
-  const action = onayEylemi(zincir, nonceAl(), oran);
+  const action = onayEylemi(zincirHex(), nonceAl(), oran);
   sonEylem = { action, nonce: action.nonce };
   let sig;
   try { sig = await cuzdan.imzalaTipli(onayTipli(action)); } catch (e) { throw imzaHatasi(e); }

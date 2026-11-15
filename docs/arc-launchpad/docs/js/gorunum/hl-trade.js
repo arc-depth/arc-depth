@@ -12,6 +12,10 @@
  * v1 limits: no TP/SL, no order modify, no deposit or withdrawal inside the page (links to
  * Hyperliquid's own app and to relay.link), main order book only (no HIP-3 markets).
  *
+ * Trading key (owner approved 15 Nov 2026): "Enable trading" also creates a key on this device that the
+ * main wallet approves once (approveAgent); orders, cancels and leverage are then signed with it, no
+ * popup (hl.js). Declining it falls back to signing each action in the wallet.
+ *
  * Debug: #/perps/trade?coin=BTC&as=0x... shows that address's account, read-only (no signing).
  * =========================================================================== */
 
@@ -21,6 +25,7 @@ import * as hl from "../hl.js";
 const RISK = "Perpetual futures use leverage and can lose more than you expect quickly. You can lose more than you deposit quickly with leverage. " +
   "ARC PULSE does not run Hyperliquid: orders placed here go to Hyperliquid's order book, signed by your own wallet, and your funds stay in your own Hyperliquid account. Not available where perps are restricted.";
 const ONAY_METIN = "ARC PULSE adds a 0.05% fee to each trade you place here, on top of Hyperliquid's fee. You can revoke it anytime.";
+const AJAN_METIN = "A trading key is created on this device. It can place and cancel orders for your account but cannot withdraw or transfer funds. You can remove it anytime here or on Hyperliquid.";
 const RISK_ANAHTAR = "hl-risk-onay-v1";
 const HL_APP = "https://app.hyperliquid.xyz";
 
@@ -141,6 +146,12 @@ export async function ciz({ param, cuzdan }) {
   const salt = /^0x[0-9a-fA-F]{40}$/.test(asParam);
   const kim = salt ? asParam.toLowerCase() : (cuzdan.hesap() || null);
   let H = null;           // account data (hl.hesapOku)
+  let ajan = null;        // this device's trading key (ethers Wallet), see hl.js
+  let ajanDurum = "bilinmiyor";   // "gecerli" once Hyperliquid lists it as an agent of kim, "yok" when there is none
+  let ajanReddedildi = false;     // declined in the wallet: sign each action in the wallet instead
+  const ajanHazir = () => !!ajan && ajanDurum === "gecerli";
+  const imzaci = () => (ajanHazir() ? ajan : null);
+  const hazirMi = () => H && H.onay >= hl.BUILDER_F && (ajanHazir() || ajanReddedildi);
   let K = null;           // activeAssetData for (kim, P)
   let hesapHata = null;
 
@@ -273,7 +284,11 @@ export async function ciz({ param, cuzdan }) {
     if (!H) { anaDugme.textContent = hesapHata ? "Account could not be read" : "Reading your Hyperliquid account…"; anaDugme.disabled = true; return; }
     const bos = H.deger <= 0 && !H.pozisyonlar.length && !(H.birlesik && H.spotUsdc > 0);
     if (bos) { yatirKutu.hidden = false; anaDugme.textContent = "Deposit USDC to trade"; anaDugme.disabled = true; return; }
-    if (!(H.onay >= hl.BUILDER_F)) { onayAciklama.hidden = false; anaDugme.textContent = "Enable trading on ARC PULSE"; return; }
+    if (!hazirMi()) {
+      onayAciklama.hidden = false;
+      onayAciklama.textContent = [!(H.onay >= hl.BUILDER_F) ? ONAY_METIN : null, !ajanHazir() && !ajanReddedildi ? AJAN_METIN : null].filter(Boolean).join(" ");
+      anaDugme.textContent = "Enable trading on ARC PULSE"; return;
+    }
     anaDugme.textContent = "Review " + (t.alis ? "Long" : "Short") + " " + t.kal + "× " + P.ad;
   }
 
@@ -286,20 +301,34 @@ export async function ciz({ param, cuzdan }) {
   function hataGoster(e) {
     if (e && e.code === "IMZA_ZINCIR") {
       zincirNotu.hidden = false;
-      zincirNotu.replaceChildren(not("Your wallet signs only for the network it is on, and Hyperliquid order signatures use Hyperliquid's own signing ID (1337), so this wallet refused. Nothing was sent. You can trade the same market on Hyperliquid's own site.", "uyari"),
+      ajanReddedildi = false; formGuncelle();
+      zincirNotu.replaceChildren(not("Your wallet signs only for the network it is on, and Hyperliquid order signatures use Hyperliquid's own signing ID (1337), so this wallet refused. Nothing was sent. Press Enable trading to create a trading key on this device (then orders need no wallet signature), or trade the same market on Hyperliquid's own site.", "uyari"),
         el("div", { sinif: "hl-bag", attr: { style: "margin-top:8px" } }, [disBag(HL_APP + "/trade/" + encodeURIComponent(P.ad), "Open " + P.ad + " on Hyperliquid ↗")]));
       durumYaz("");
       return;
     }
+    if (e && e.code === "AJAN_YOK") { hl.ajanSil(kim); ajan = null; ajanDurum = "yok"; formGuncelle(); }
     durumYaz((e && e.message) || String(e), "hata");
   }
 
   async function onayla() {
-    durumYaz("Confirm the one-time fee approval in your wallet (no transaction, no gas)…");
     anaDugme.disabled = true;
     try {
-      await hl.builderOnayla();
-      durumYaz("Trading on ARC PULSE is enabled.", "ok");
+      if (!(H.onay >= hl.BUILDER_F)) {
+        durumYaz("Confirm the one-time fee approval in your wallet (a signature: no transaction, no gas)…");
+        await hl.builderOnayla();
+        H.onay = hl.BUILDER_F;
+      }
+      if (!ajanHazir() && !ajanReddedildi) {
+        durumYaz("Confirm the trading key for this device in your wallet (a signature: no transaction, no gas)…");
+        try { ajan = await hl.ajanOnayla(kim); ajanDurum = "gecerli"; }
+        catch (e) {
+          if (!(e && e.code === "RED")) throw e;
+          ajanReddedildi = true;
+        }
+      }
+      if (ajanReddedildi) durumYaz("No trading key: each order will be signed in your wallet instead. Some wallets (MetaMask among them) refuse those signatures.");
+      else durumYaz("Trading on ARC PULSE is enabled. Orders are signed with this device's trading key: no wallet popup per order.", "ok");
       await hesapYukle();
     } catch (e) { hataGoster(e); }
     formGuncelle();
@@ -321,7 +350,7 @@ export async function ciz({ param, cuzdan }) {
       satir("Leverage", t.kal + "× " + (t.capraz ? "cross" : "isolated")),
       satir("Hyperliquid fee" + (t.limit ? ", at most" : ", est."), usd(t.hlUcret, 4)),
       satir("ARC PULSE fee (0.05%)", usd(t.biz, 4)),
-      kalDegisir ? not("Your wallet will ask for two signatures: first to set " + P.ad + " to " + t.kal + "× " + (t.capraz ? "cross" : "isolated") + ", then the order.", "bilgi") : null,
+      kalDegisir ? not((imzaci() ? "Two actions are sent, signed with this device's trading key" : "Your wallet will ask for two signatures") + ": first to set " + P.ad + " to " + t.kal + "× " + (t.capraz ? "cross" : "isolated") + ", then the order.", "bilgi") : null,
       el("div", { sinif: "hl-sec" }, [vazgec, gonderDug])].filter(Boolean));
     onizle.hidden = false;
     gonderDug.addEventListener("click", async () => {
@@ -329,8 +358,8 @@ export async function ciz({ param, cuzdan }) {
       gonderDug.disabled = true; vazgec.disabled = true;
       try {
         if (kalDegisir) {
-          durumYaz("Step 1 of 2: confirm the leverage setting in your wallet…");
-          await hl.l1Gonder(hl.kaldiracEylemi(P.i, t.capraz, t.kal));
+          durumYaz(imzaci() ? "Step 1 of 2: setting the leverage…" : "Step 1 of 2: confirm the leverage setting in your wallet…");
+          await hl.l1Gonder(hl.kaldiracEylemi(P.i, t.capraz, t.kal), imzaci());
           K = await hl.kaldiracOku(kim, P.ad);
         }
         /* the size is exactly the one in the preview; a market order is priced from a fresh mid */
@@ -342,8 +371,8 @@ export async function ciz({ param, cuzdan }) {
           px = mid * (t.alis ? 1 + hl.KAYMA : 1 - hl.KAYMA);
         }
         const eylem = hl.emirEylemi({ a: P.i, alis: t.alis, px: hl.fiyatYaz(px, P.szDec), sz: boyut, azalt: t.azalt, tif: t.limit ? "Gtc" : "Ioc" });
-        durumYaz((kalDegisir ? "Step 2 of 2: " : "") + "confirm the order in your wallet…");
-        const yanit = await hl.l1Gonder(eylem);
+        durumYaz((kalDegisir ? "Step 2 of 2: " : "") + (imzaci() ? "placing the order…" : "confirm the order in your wallet…"));
+        const yanit = await hl.l1Gonder(eylem, imzaci());
         durumYaz(hl.emirSonucu(yanit, P.ad), "ok");
         onizle.hidden = true;
         tutarGirdi.value = "";
@@ -359,7 +388,7 @@ export async function ciz({ param, cuzdan }) {
     if (salt) return;
     if (!kim) { try { await cuzdan.bagla(); } catch (e) { if (e && e.code !== "CUZDAN_YOK") durumYaz((e && e.message) || String(e), "hata"); } return; }
     if (!H) return;
-    if (!(H.onay >= hl.BUILDER_F)) { await onayla(); return; }
+    if (!hazirMi()) { await onayla(); return; }
     incele();
   });
 
@@ -382,7 +411,7 @@ export async function ciz({ param, cuzdan }) {
   const hesapGovde = el("div", { sinif: "yigin yigin--sik" });
   const hesapPanel = panel(salt ? "Account (read-only view)" : "Your Hyperliquid account", hesapGovde);
 
-  function satirOnay(hedef, metin, eylem, dugmeYazi, dugmeSinif) {
+  function satirOnay(hedef, metin, eylem, dugmeYazi, dugmeSinif, cuzdanla = false) {
     /* an inline confirm under a table: one sentence, Confirm / Keep */
     const kutu = el("div", { sinif: "hl-onizle" });
     const evet = el("button", { sinif: "dugme " + dugmeSinif, attr: { type: "button" }, yazi: dugmeYazi });
@@ -390,10 +419,15 @@ export async function ciz({ param, cuzdan }) {
     const d = el("div", { sinif: "hl-durum", attr: { role: "status" } });
     kutu.append(el("div", { yazi: metin }), el("div", { sinif: "hl-sec" }, [hayir, evet]), d);
     evet.addEventListener("click", async () => {
-      evet.disabled = true; hayir.disabled = true; d.textContent = "Confirm in your wallet…"; d.className = "hl-durum";
-      try { d.textContent = await eylem(); d.className = "hl-durum hl-art"; setTimeout(() => hesapYukle(), 600); }
+      evet.disabled = true; hayir.disabled = true; d.textContent = cuzdanla || !imzaci() ? "Confirm in your wallet…" : "Sending…"; d.className = "hl-durum";
+      try {
+        const sonucYazi = await eylem();
+        d.textContent = sonucYazi; d.className = "hl-durum hl-art";
+        durumYaz(sonucYazi, "ok");   /* also in the form: the account panel redraws a moment later */
+        setTimeout(() => hesapYukle(), 600);
+      }
       catch (e) {
-        if (e && e.code === "IMZA_ZINCIR") hataGoster(e);
+        if (e && (e.code === "IMZA_ZINCIR" || e.code === "AJAN_YOK")) hataGoster(e);
         d.textContent = (e && e.message) || String(e); d.className = "hl-durum hl-eks"; evet.disabled = false; hayir.disabled = false;
       }
     });
@@ -431,14 +465,14 @@ export async function ciz({ param, cuzdan }) {
         kapat.addEventListener("click", () => {
           if (salt) return;
           if (!m) { durumYaz("This market is not on Hyperliquid's main list; close it on Hyperliquid.", "hata"); return; }
-          if (!(H.onay >= hl.BUILDER_F)) { satirOnay(pozKap, "Closing here is an order placed from ARC PULSE, so it needs the one-time fee approval first. " + ONAY_METIN, async () => { await hl.builderOnayla(); return "Trading on ARC PULSE is enabled. Press Close again."; }, "Enable trading on ARC PULSE", "dugme--marka"); return; }
+          if (!hazirMi()) { satirOnay(pozKap, "Closing here is an order placed from ARC PULSE, so trading has to be enabled here first. " + (H.onay >= hl.BUILDER_F ? "" : ONAY_METIN + " ") + (ajanHazir() || ajanReddedildi ? "" : AJAN_METIN), async () => { await onayla(); if (!hazirMi()) throw new Error(durum.textContent || "Trading is not enabled."); return "Trading on ARC PULSE is enabled. Press Close again."; }, "Enable trading on ARC PULSE", "dugme--marka", true); return; }
           const deger = Math.abs(szi) * mark;
           const ucret = deger * (H.alici + hl.BUILDER_ORAN);
           satirOnay(pozKap, "Close " + Math.abs(szi) + " " + p.coin + " " + (uzun ? "long" : "short") + " at market (at most " + (hl.KAYMA * 100) + "% from " + fiyat(mark) + "). Fees: Hyperliquid ≈ " + usd(deger * H.alici, 4) + " + ARC PULSE 0.05% ≈ " + usd(deger * hl.BUILDER_ORAN, 4) + " (≈ " + usd(ucret, 4) + ").", async () => {
             const mids = await hl.ortaFiyatlar();
             const mid = Number(mids[p.coin]) || mark;
             const px = mid * (uzun ? 1 - hl.KAYMA : 1 + hl.KAYMA);
-            const y = await hl.l1Gonder(hl.emirEylemi({ a: m.i, alis: !uzun, px: hl.fiyatYaz(px, m.szDec), sz: hl.boyutYaz(Math.abs(szi), m.szDec), azalt: true, tif: "Ioc" }));
+            const y = await hl.l1Gonder(hl.emirEylemi({ a: m.i, alis: !uzun, px: hl.fiyatYaz(px, m.szDec), sz: hl.boyutYaz(Math.abs(szi), m.szDec), azalt: true, tif: "Ioc" }), imzaci());
             return hl.emirSonucu(y, p.coin);
           }, "Confirm close", uzun ? "dugme--satis" : "dugme--alis");
         });
@@ -468,7 +502,7 @@ export async function ciz({ param, cuzdan }) {
         iptal.addEventListener("click", () => {
           if (salt || !m) return;
           satirOnay(emKap, "Cancel this " + o.coin + " " + (o.side === "B" ? "buy" : "sell") + " order for " + o.sz + " at " + fiyat(Number(o.limitPx)) + "? (A signature, no fee.)", async () => {
-            const y = await hl.l1Gonder(hl.iptalEylemi(m.i, o.oid));
+            const y = await hl.l1Gonder(hl.iptalEylemi(m.i, o.oid), imzaci());
             const st = y && y.data && y.data.statuses && y.data.statuses[0];
             if (st && st.error) throw new Error("Hyperliquid: " + st.error);
             return "Order cancelled.";
@@ -493,7 +527,13 @@ export async function ciz({ param, cuzdan }) {
     kalemler.push(bag);
     const onayKap = el("div", { sinif: "yigin yigin--sik" });
     onayKap.append(el("div", { sinif: "hl-ipucu", yazi: onayli ? "ARC PULSE fee approved: up to 0.05% per trade placed here." : "ARC PULSE fee not approved yet: you approve it once before your first order here." }));
-    if (onayli && !salt) onayKap.append(el("button", { sinif: "dugme dugme--sade dugme--kucuk", attr: { type: "button", style: "justify-self:start" }, yazi: "Revoke the ARC PULSE fee approval", on: { click: () => satirOnay(onayKap, "Revoke the approval? Orders from ARC PULSE then stop until you approve again. Orders you place on Hyperliquid's own site are not affected.", async () => { await hl.builderOnayla("0%"); return "Approval revoked."; }, "Revoke", "dugme--satis") } }));
+    if (onayli && !salt) onayKap.append(el("button", { sinif: "dugme dugme--sade dugme--kucuk", attr: { type: "button", style: "justify-self:start" }, yazi: "Revoke the ARC PULSE fee approval", on: { click: () => satirOnay(onayKap, "Revoke the approval? Orders from ARC PULSE then stop until you approve again. Orders you place on Hyperliquid's own site are not affected.", async () => { await hl.builderOnayla("0%"); return "Approval revoked."; }, "Revoke", "dugme--satis", true) } }));
+    if (!salt) {
+      onayKap.append(el("div", { sinif: "hl-ipucu", yazi: ajanHazir() ? "Trading key on this device: " + ajan.address.slice(0, 8) + "…" + ajan.address.slice(-6) + " (can place and cancel orders, cannot withdraw or transfer)." : ajanReddedildi ? "No trading key on this device: each order is signed in your wallet." : "No trading key on this device yet." }));
+      if (ajanHazir()) onayKap.append(el("div", { sinif: "hl-bag" }, [
+        el("button", { sinif: "dugme dugme--sade dugme--kucuk", attr: { type: "button" }, yazi: "Forget this device", on: { click: () => satirOnay(onayKap, "Delete this device's trading key? Orders here then need Enable trading again. The key stays listed on Hyperliquid's API page until it is replaced or removed there; without the key nobody can use it.", async () => { hl.ajanSil(kim); ajan = null; ajanDurum = "yok"; return "Trading key deleted from this device."; }, "Forget this device", "dugme--satis") } }),
+        disBag(HL_APP + "/API", "Agents on Hyperliquid ↗")]));
+    }
     kalemler.push(onayKap);
     hesapGovde.replaceChildren(...kalemler);
   }
@@ -504,6 +544,16 @@ export async function ciz({ param, cuzdan }) {
       const coin = P.ad;
       const [h, k] = await Promise.all([hl.hesapOku(kim), hl.kaldiracOku(kim, coin)]);
       H = h; hesapHata = null;
+      /* this device's trading key: checked against Hyperliquid's agent list once per page */
+      if (!salt && ajanDurum !== "gecerli") {
+        if (!ajan) ajan = hl.ajanOku(kim);
+        if (!ajan) ajanDurum = "yok";
+        else {
+          const ok = await hl.ajanGecerliMi(kim, ajan).catch(() => null);
+          if (ok === true) ajanDurum = "gecerli";
+          else if (ok === false) { hl.ajanSil(kim); ajan = null; ajanDurum = "yok"; }   // expired or replaced: ask again
+        }
+      }
       if (coin === P.ad) {
         K = k;
         if (K && K.leverage && !kalOynandi) { kalGirdi.value = String(Math.min(P.maxKal, K.leverage.value)); if (!P.yalnizIzole) modSec.value = K.leverage.type === "isolated" ? "isolated" : "cross"; }
