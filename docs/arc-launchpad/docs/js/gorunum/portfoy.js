@@ -16,6 +16,7 @@ import { launchListesi, jetonBilgileri, oku, cokluCagri, cagriVerisi, sonucCoz, 
 import { DIS } from "../adresler.js";
 import { para, jetonMiktar, tamSayidanSayi } from "../bicim.js";
 import { zincirLaunchPaneli } from "./tum-zincirler.js";
+import { portfoyUst } from "./portfoy-ust.js";
 
 /* the newest `kac` launches of each one-pool registry (v8, v9) that `hesap` holds on Arc, priced */
 async function tekHavuzTutulan(hesap, kac = 200) {
@@ -182,7 +183,7 @@ export async function ciz({ cuzdan }) {
   const kap = el("div", { sinif: "yigin", veri: { icindekilerYok: "1" } });
   const hesap = cuzdan.hesap();
 
-  kap.append(el("div", { attr: { style: "display:flex;align-items:baseline;gap:12px;flex-wrap:wrap" } }, [
+  if (!hesap) kap.append(el("div", { attr: { style: "display:flex;align-items:baseline;gap:12px;flex-wrap:wrap" } }, [
     el("h1", { attr: { style: "font-size:22px;margin:0" }, yazi: "Portfolio" }),
     hesap ? el("span", { sinif: "mono", attr: { style: "font-size:13px;color:var(--yazi-3)" }, yazi: hesap.slice(0, 6) + "…" + hesap.slice(-4) }) : null]));
 
@@ -203,7 +204,9 @@ export async function ciz({ cuzdan }) {
 
   /* 16 Nov 2026 (owner: "coinler nerde nasıl takip etcem ... açtığım pozisyonlar nerde"): Hyperliquid first:
      perp positions (main list and every HIP-3 DEX) and every spot coin, refreshed every 15 s while the page is open */
-  kap.append(hlPaneli(hesap));
+  /* 16 Nov 2026 redesign (approved demo): total, today's P&L, chart, actions, Tokens / Perps / Activity */
+  kap.append(portfoyUst(hesap, { tekHavuzTutulan, hlKapat }));
+  kap.append(el("h2", { attr: { style: "font-size:16px;margin:18px 0 0;color:var(--yazi-2)" }, yazi: "More holdings" }));
 
   /* 13 Nov 2026: Pulse Points, opened at this wallet */
   kap.append(el("a", { sinif: "jeton-kart", attr: { href: "#/points" } }, [
@@ -236,35 +239,6 @@ export async function ciz({ cuzdan }) {
     ])));
   }).catch((e) => {
     kurucuKap.replaceChildren(el("div", { sinif: "yazi yazi--kucuk yazi--sessiz", yazi: "Could not read the registry: " + ((e && e.message) || e) }));
-  });
-
-  /* one-pool tokens this wallet holds on Arc, from both registries: v8 (PulseHook5) and v9 (PulseHook6,
-     designer tokens). Each is priced from its own launchpad's pool key, so the right hook's pool. */
-  const tutKap = el("div", { sinif: "yigin" }, [el("div", { sinif: "yazi yazi--kucuk yazi--sessiz", yazi: "Reading the v8 and v9 registries on Arc…" })]);
-  kap.append(panel("One-pool tokens you hold on Arc", tutKap));
-  tekHavuzTutulan(hesap).then((liste) => {
-    if (!liste.length) {
-      tutKap.replaceChildren(el("div", { sinif: "yazi yazi--kucuk yazi--sessiz", yazi: "This wallet holds none of the newest one-pool launches on Arc (v8 and v9 sets). Tokens held on another chain are its twins there." }));
-      return;
-    }
-    const top = liste.reduce((t, x) => t + (x.deger || 0), 0);
-    const tablo = el("table", { sinif: "tablo tablo--kart" });
-    tablo.append(el("thead", {}, [el("tr", {}, ["Token", "Balance", "Price", "Value", ""].map((b) => el("th", { yazi: b })))]));
-    tablo.append(el("tbody", {}, liste.map((x) => el("tr", {}, [
-      el("td", { attr: { "data-et": "Token" } }, [el("a", { sinif: "jeton", attr: { href: "#/terminal?t=" + x.token } }, [
-        el("div", { sinif: "jeton__logo jeton__logo--bos", yazi: (x.sembol || "?").slice(0, 3).toUpperCase() }),
-        el("div", { sinif: "jeton__yazi" }, [el("div", { sinif: "jeton__sembol", yazi: x.sembol || "?" }), el("div", { sinif: "jeton__ad", yazi: (x.ad || "") + (x.v9 ? " · v9" : "") })])])]),
-      el("td", { sinif: "sayi", attr: { "data-et": "Balance" }, yazi: jetonMiktar(x.miktar) }),
-      el("td", { sinif: "sayi", attr: { "data-et": "Price" }, yazi: x.fiyat == null ? "—" : (x.fiyat >= 0.01 ? para(x.fiyat) : "$" + x.fiyat.toPrecision(3)) }),
-      el("td", { sinif: "sayi", attr: { "data-et": "Value" }, yazi: x.deger == null ? "—" : para(x.deger) }),
-      el("td", { attr: { "data-et": "" } }, [el("a", { sinif: "dugme dugme--kucuk", attr: { href: "#/terminal?t=" + x.token }, yazi: "Open" }), el("a", { sinif: "dugme dugme--marka dugme--kucuk", attr: { href: "#/merkez?t=" + x.token, style: "margin-left:6px" }, yazi: "Buy / sell" })]),
-    ]))));
-    tutKap.replaceChildren(
-      el("div", { sinif: "izgara izgara--olcum" }, [olcum("Value at pool price", para(top), liste.length + " token" + (liste.length === 1 ? "" : "s") + " on Arc")]),
-      el("div", { sinif: "tablo-sarmal" }, [tablo]),
-      el("div", { sinif: "yazi yazi--kucuk yazi--sessiz", yazi: "Price is the token's Arc pool price now (the same pool every chain trades through); value is balance × price, before fees." }));
-  }).catch((e) => {
-    tutKap.replaceChildren(el("div", { sinif: "yazi yazi--kucuk yazi--sessiz", yazi: "Could not read the registries: " + ((e && e.message) || e) }));
   });
 
   if (!cuzdan.zincirdeMi()) {

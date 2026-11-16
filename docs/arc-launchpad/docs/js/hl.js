@@ -128,7 +128,8 @@ export async function tumVarliklar(user) {
   ]);
   /* profit and loss over 24 h / 7 d / 30 d / all time: Hyperliquid's own pnlHistory (last minus first point) */
   const kz = {};
-  for (const [ad, v] of gecmis || []) { const l = (v && v.pnlHistory) || []; if (l.length) kz[ad] = Number(l[l.length - 1][1]) - Number(l[0][1]); }
+  const deger = {};   /* account value over time, per period (day/week/month/allTime): the Portfolio chart */
+  for (const [ad, v] of gecmis || []) { const l = (v && v.pnlHistory) || []; deger[ad] = ((v && v.accountValueHistory) || []).map((x) => [x[0], Number(x[1])]); if (l.length) kz[ad] = Number(l[l.length - 1][1]) - Number(l[0][1]); }
   const poz = (c, dex) => (c && c.assetPositions || []).map((x) => x.position).filter((p) => Number(p.szi) !== 0).map((p) => ({ ...p, dex }));
   let pozisyonlar = poz(ch, "");
   let perpDeger = Number(ch.marginSummary.accountValue) || 0;
@@ -147,7 +148,7 @@ export async function tumVarliklar(user) {
     return { coin: b.coin, miktar, kilitli: Number(b.hold || 0), fiyat: f == null ? null : f, deger: f == null ? null : miktar * f, maliyet: Number(b.entryNtl || 0) };
   }).sort((a, b) => (b.deger || 0) - (a.deger || 0));
   for (const p of pozisyonlar) { const m = Number(mids[p.coin]); p.mark = m || Math.abs(Number(p.positionValue) / Number(p.szi)); }
-  return { perpDeger, cekilebilir: Number(ch.withdrawable) || 0, pozisyonlar, spotlar, kz, emirler: emirler || [], spotDeger: spotlar.reduce((t, x) => t + (x.deger || 0), 0) };
+  return { perpDeger, cekilebilir: Number(ch.withdrawable) || 0, pozisyonlar, spotlar, kz, deger, emirler: emirler || [], spotDeger: spotlar.reduce((t, x) => t + (x.deger || 0), 0) };
 }
 
 /** Mid prices of every perp, fresh, just before an order is priced. */
