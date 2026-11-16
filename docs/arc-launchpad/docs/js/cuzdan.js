@@ -464,6 +464,12 @@ export const cuzdan = {
     return _hesap;
   },
   pulseMi() { return !!_pw; },
+  /** 16 Nov 2026: how the wallet is linked, in one line, for the waiting messages (no address, nothing stored) */
+  baglantiBilgisi() {
+    const p = saglayici();
+    const tur = _pw ? "Pulse Wallet" : _wc && _wc.session ? "WalletConnect · " + ((wcCuzdan() || {}).ad || "?") : p ? (p.isMetaMask ? "MetaMask in this browser" : p.isCoinbaseWallet ? "Coinbase Wallet in this browser" : p.isTrust ? "Trust Wallet in this browser" : "a wallet in this browser") : "no wallet";
+    return tur + " · network " + (_zincir ? parseInt(_zincir, 16) : "?");
+  },
 
   dinle(f) {
     _dinleyiciler.add(f);

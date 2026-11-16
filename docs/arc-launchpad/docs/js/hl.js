@@ -461,7 +461,7 @@ export async function arcaCekTeklif(user, miktar, tek = true) {
 }
 /* a phone wallet (WalletConnect) shows a request only while its app is open: after 15 s of silence, say where to look */
 async function bekleyenImza(t, durum, ne) {
-  const z = setTimeout(() => durum(ne + " — open your wallet app: the signature request is waiting there."), 15000);
+  const z = setTimeout(() => durum(ne + " — open your wallet app: the signature request is waiting there. (Linked: " + (cuzdan.baglantiBilgisi ? cuzdan.baglantiBilgisi() : "?") + ")"), 15000);
   try { return await cuzdan.imzalaTipli(t); } catch (e) { throw imzaHatasi(e); } finally { clearTimeout(z); }
 }
 export async function arcaCekGonder(user, q, durum = () => {}, devam = async () => {}) {
