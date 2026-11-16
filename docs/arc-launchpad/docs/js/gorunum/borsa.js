@@ -260,6 +260,7 @@ export async function ciz({ param }) {
         if (tokHam == null) { elde.textContent = ""; return; }
       }
       const adet = Number(tokHam) / 10 ** ondalik;
+      if (adet > 0) import("../cuzdan-varlik.js").then((M) => M.hatirla({ z: t.zincir.k, a: t.adres, s: t.sembol, d: ondalik, g: t.resim })).catch(() => {});
       elde.replaceChildren("You hold ", el("b", { yazi: adet.toLocaleString("en-US", { maximumFractionDigits: adet >= 1 ? 2 : 6 }) + " " + t.sembol }),
         Number(t.fiyat) > 0 ? " ≈ $" + (adet * Number(t.fiyat)).toFixed(2) : "", " on " + t.zincir.ad);
     };
@@ -330,6 +331,10 @@ export async function ciz({ param }) {
       kaynak = el("select", { attr: { "aria-label": "Pay from" } }, [...(sol ? [SOL_AG] : []), ...V.evmler()].map((a) => el("option", { attr: { value: a.anahtar }, yazi: a.ad + " · " + (a.dolarSembol || "USDC") + (bakiye[a.anahtar] != null ? " · $" + bakiye[a.anahtar].toFixed(2) : "") })));
       const enIyi = Object.entries(bakiye).sort((x, y) => y[1] - x[1])[0];
       kaynak.value = enIyi && enIyi[1] >= 1 ? enIyi[0] : "arc";
+      /* 16 Nov 2026 (owner: "işlem açmak için ağ değiştirmesin"): pay from the network the wallet is already on when it
+         holds enough there ($10, the default amount) — then no network switch is asked at all */
+      { const simdiki = cuzdan.zincirId() ? V.evmler().find((a) => a.id === parseInt(cuzdan.zincirId(), 16)) : null;
+        if (simdiki && bakiye[simdiki.anahtar] >= 10) kaynak.value = simdiki.anahtar; }
       girdi = el("input", { attr: { type: "number", inputmode: "decimal", min: "1", step: "1", value: "10", "aria-label": "Amount in USD" } });
       govde.push(solSatir(), elde, el("label", { sinif: "bx-et", yazi: "Pay from (your balance)" }), kaynak, el("label", { sinif: "bx-et", yazi: "Amount (USD)" }), girdi,
         el("div", { sinif: "bx-cip" }, [10, 25, 50, 100].map((v) => el("button", { attr: { type: "button" }, yazi: "$" + v, on: { click: () => { girdi.value = String(v); yeniden(); } } }))));
@@ -359,7 +364,8 @@ export async function ciz({ param }) {
             durum.textContent = "Confirm in your Solana wallet…";
             await m.relayAdimi(it.data);
           }
-          durum.textContent = taraf === "al" ? "Paid ✓ " + t.sembol + " arrives in your Solana wallet, usually within a minute." : (!alim || alim.value === "solana") ? "Sold ✓ USDC arrives in your Solana wallet, usually within a minute." : "Sold ✓ USDC arrives on Arc at " + cuzdan.hesap().slice(0, 6) + "…, usually within a minute.";
+          if (taraf === "al") import("../cuzdan-varlik.js").then((M) => M.hatirla({ z: t.zincir.k, a: t.adres, s: t.sembol, d: ondalik, g: t.resim })).catch(() => {});
+        durum.textContent = taraf === "al" ? "Paid ✓ " + t.sembol + " arrives in your Solana wallet, usually within a minute." : (!alim || alim.value === "solana") ? "Sold ✓ USDC arrives in your Solana wallet, usually within a minute." : "Sold ✓ USDC arrives on Arc at " + cuzdan.hesap().slice(0, 6) + "…, usually within a minute.";
           setTimeout(() => { eldeYaz(); }, 15000);
           return;
         }
@@ -373,6 +379,7 @@ export async function ciz({ param }) {
           const h = await cuzdan.agdaGonder(ag, { to: d.to, data: d.data, value: "0x" + BigInt(d.value || 0).toString(16) });
           if ((await V.makbuz(ag, h)) !== 1) throw new Error("Reverted: " + h);
         }
+        if (taraf === "al") import("../cuzdan-varlik.js").then((M) => M.hatirla({ z: t.zincir.k, a: t.adres, s: t.sembol, d: ondalik, g: t.resim })).catch(() => {});
         durum.textContent = taraf === "al" ? "Paid ✓ " + t.sembol + " arrives on " + t.zincir.ad + (sol ? " at " + solAdres().slice(0, 6) + "…" : "") + ", usually within a minute." : "Sold ✓ USDC arrives on Arc, usually within a minute.";
         setTimeout(() => { dolarBakiyeleri().then(() => {}); eldeYaz(); }, 20000);
       } catch (e) { durum.textContent = (e && (e.shortMessage || e.message)) || "Could not send."; }

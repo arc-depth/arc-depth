@@ -83,7 +83,7 @@ export function portfoyUst(hesap, { tekHavuzTutulan, hlKapat }) {
   /* hero */
   const toplam = el("div", { sinif: "pf-toplam pf-gizle", yazi: "…" });
   const degisim = el("div", { sinif: "pf-degisim pf-gizle" });
-  const toplamEt = el("div", { sinif: "pf-et", yazi: "Total · Hyperliquid + tokens on Arc" });
+  const toplamEt = el("div", { sinif: "pf-et", yazi: "Total · every chain + Hyperliquid" });
   const grafik = el("div", { sinif: "pf-grafik pf-gizle" });
   const aralik = el("div", { sinif: "pf-aralik", attr: { role: "group", "aria-label": "Chart range" } });
   const ARALIK = [["day", "1D"], ["week", "1W"], ["month", "1M"], ["allTime", "All"]];
@@ -105,7 +105,7 @@ export function portfoyUst(hesap, { tekHavuzTutulan, hlKapat }) {
   const govde = el("div", { attr: { role: "tabpanel" } }, [el("div", { sinif: "pf-bos", yazi: "Reading your wallet…" })]);
   kok.append(el("div", { sinif: "pf-ikiz" }, [el("div", { sinif: "yigin" }, [sol, eylem]), el("div", {}, [sekmeBar, govde])]));
 
-  let V = null, T = null, F = null, hata = null;
+  let V = null, T = null, F = null, hata = null, W = null;   // W: the wallets' holdings on every chain (js/cuzdan-varlik.js)
   const sekmeCiz = () => {
     sekmeBar.replaceChildren(...SEKME.map(([k, ad]) => {
       const n = k === "poz" && V ? " (" + V.pozisyonlar.length + ")" : "";
@@ -123,6 +123,8 @@ export function portfoyUst(hesap, { tekHavuzTutulan, hlKapat }) {
   function govdeCiz() {
     if (sekme === "tok") {
       const satirlar = [];
+      /* 16 Nov 2026: every chain at once — dollars, tokens bought here (EVM and Solana), SOL; the network the wallet is on does not matter */
+      for (const x of W || []) satirlar.push(satir({ href: x.href, ini: (x.sembol || "?").slice(0, 4).toUpperCase(), zincir: x.zincir, ad: x.sembol, alt: miktarYaz(x.miktar) + (x.fiyat != null && !x.dolar ? " · " + fiyatYaz(x.fiyat) : "") + " · " + x.zincir, deger: x.deger != null ? usd(x.deger) : "—", kz: null }));
       for (const x of T || []) satirlar.push(satir({ href: "#/terminal?t=" + x.token, ini: (x.sembol || "?").slice(0, 3).toUpperCase(), zincir: "Arc", ad: x.sembol || "?", alt: miktarYaz(x.miktar) + " · " + fiyatYaz(x.fiyat), deger: usd(x.deger), kz: null }));
       for (const x of V ? V.spotlar : []) {
         const kz = x.coin !== "USDC" && x.maliyet > 0 && x.deger != null ? x.deger - x.maliyet : null;
@@ -185,7 +187,7 @@ export function portfoyUst(hesap, { tekHavuzTutulan, hlKapat }) {
   const fillOku = async () => { try { const hl = await import("../hl.js"); F = await hl.dolgularOku(hesap); } catch (e) { F = []; } if (sekme === "akt") govdeCiz(); };
 
   function kahramanCiz() {
-    const tokDeger = (T || []).reduce((t, x) => t + (x.deger || 0), 0);
+    const tokDeger = (T || []).reduce((t, x) => t + (x.deger || 0), 0) + (W || []).reduce((t, x) => t + (x.deger || 0), 0);
     const hlDeger = V ? V.perpDeger + V.spotDeger : 0;
     toplam.textContent = V || T ? usd(hlDeger + tokDeger) : "…";
     const g = V && V.kz[secili];
@@ -210,6 +212,13 @@ export function portfoyUst(hesap, { tekHavuzTutulan, hlKapat }) {
     kahramanCiz(); sekmeCiz(); govdeCiz();
     if (kok.isConnected) setTimeout(yenile, 15000);
   };
+  const cuzdanOku = async () => {
+    try { const M = await import("../cuzdan-varlik.js"); let sol = M.solAdresi(); try { const S = await import("../solana-ikiz.js"); sol = S.solanaCuzdan.hesap() || sol; } catch (e) { /* no Solana module */ }
+      W = await M.varliklar(hesap, sol); } catch (e) { W = W || []; }
+    kahramanCiz(); govdeCiz();
+    if (kok.isConnected) setTimeout(cuzdanOku, 60000);
+  };
+  setTimeout(cuzdanOku, 0);
   tekHavuzTutulan(hesap).then((l) => { T = l; }).catch(() => { T = []; }).then(() => { kahramanCiz(); sekmeCiz(); govdeCiz(); });
   kahramanCiz(); sekmeCiz(); setTimeout(yenile, 0);
   return kok;
