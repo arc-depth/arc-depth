@@ -139,6 +139,17 @@ export function paraPaneli({ kim, cuzdan, hesapYukle }) {
       evet.addEventListener("click", async () => {
         evet.disabled = true; hayir.disabled = true;
         if (islemMi()) {
+          /* a WalletConnect session made before HyperEVM was on our chain list cannot carry the transaction: pair again once */
+          if (cuzdan.wcZincirVar && !cuzdan.wcZincirVar(999)) {
+            yaz(cDurum, "Your wallet link was made before HyperEVM was added. Reconnect once (same wallet, same address), then press Sign and send again.", "hata");
+            const yb = el("button", { sinif: "dugme dugme--marka", attr: { type: "button", style: "width:100%;margin-top:8px" }, yazi: "Reconnect wallet", on: { click: async () => {
+              yb.disabled = true;
+              try { await cuzdan.wcYenidenBagla(); yb.remove(); yaz(cDurum, cuzdan.wcZincirVar(999) ? "Reconnected ✓ Press Sign and send." : "Reconnected, but the wallet did not allow HyperEVM. Add the HyperEVM network in your wallet, then reconnect.", cuzdan.wcZincirVar(999) ? "ok" : "hata"); }
+              catch (e) { yb.disabled = false; yaz(cDurum, (e && e.message) || String(e), "hata"); }
+              evet.disabled = false; hayir.disabled = false; } } });
+            cDurum.after(yb);
+            return;
+          }
           try {
             const r = await hl.arcaCekIslemle(kim, a, (m) => yaz(cDurum, m));
             yaz(cDurum, r.durum === "arrived" ? "Done ✓ ≈ " + usd(gelen) + " USDC is in your wallet on Arc." : "Sent ✓ relay.link is paying it out on Arc; it usually lands within a minute.", "ok");

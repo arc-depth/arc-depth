@@ -55,7 +55,8 @@ const WC_PROJE = "3732e09480d6f286889688c0f4a70918";
 export const WC_ACIK = true;
 /* HyperEVM (999) is left out on purpose: chainid.network lists 999 as
    "Wanchain Testnet", so wallets that check the registry flag it. */
-const WC_ZINCIRLER = [5042, 4663, 8453, 42161, 1, 56, 43114, 143];
+/* 16 Nov 2026: + 999 HyperEVM (the perps withdrawal's transaction goes there; a session without it never shows the request) */
+const WC_ZINCIRLER = [5042, 4663, 8453, 42161, 1, 56, 43114, 143, 999];
 const WC_ISARET = "arcpulse-wc";
 /* Set when the visitor presses Disconnect: an extension wallet keeps the site's permission, so
    without this a refresh would quietly reconnect through eth_accounts. Cleared by Connect. */
@@ -180,6 +181,8 @@ const KAYITLI = {
     blockExplorerUrls: ["https://robinhoodchain.blockscout.com"] },
   8453: { chainName: "Base", nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
     rpcUrls: ["https://mainnet.base.org"], blockExplorerUrls: ["https://basescan.org"] },
+  999: { chainName: "HyperEVM", nativeCurrency: { name: "HYPE", symbol: "HYPE", decimals: 18 },
+    rpcUrls: ["https://rpc.hyperliquid.xyz/evm"], blockExplorerUrls: ["https://hyperevmscan.io"] },
   42161: { chainName: "Arbitrum One", nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
     rpcUrls: ["https://arb1.arbitrum.io/rpc"], blockExplorerUrls: ["https://arbiscan.io"] },
   1: { chainName: "Ethereum Mainnet", nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
@@ -262,6 +265,15 @@ export const cuzdan = {
     duyur();
   },
   wcMi() { return !!(_wc && _wc.session); },
+  /** does the WalletConnect session cover chain uid=197609(omen) gid=197121 groups=197121? (true for any other kind of wallet) */
+  wcZincirVar(id) {
+    if (!(_wc && _wc.session)) return true;
+    const ns = (_wc.session.namespaces || {}).eip155 || {};
+    const l = [...(ns.chains || []), ...(ns.accounts || []).map((a) => a.split(":").slice(0, 2).join(":"))];
+    return l.includes("eip155:" + id);
+  },
+  /** end the WalletConnect session and pair again (a new session asks for the current chain list) */
+  async wcYenidenBagla() { await this.kes(); return this.walletConnect(); },
   wcCuzdanAdi() { const c = wcCuzdan(); return c ? c.ad : null; },
 
   /** Disconnect and forget this device: ends a WalletConnect session and wipes everything this
