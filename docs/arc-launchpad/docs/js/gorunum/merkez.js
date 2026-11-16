@@ -106,6 +106,41 @@ async function ayarSec(t) {
   return VT();
 }
 const S = () => (VT() ? { kapi: VT().kapi, lp: VT().launchpad, ucu: VT().ucu } : { kapi: KAPI, lp: LP, ucu: UCU });
+/* 16 Nov 2026 (owner: a first-generation token, PTEST1, "ne alınıyor ne satılıyor"): a token of the FIRST gate (KAPI)
+   was sent to the second gate's satArc and reverted, and that gate never sold Arc-held tokens anyway. Such tokens now
+   buy and sell on Arc through relay.link, which swaps in the token's own pool (checked: 4M PTEST1 -> 7.81 USDC), and
+   redeem through the first gate's basket (UCU). */
+const _ilk = new Map();
+async function ilkNesilMi(t) {
+  t = String(t || "").trim().toLowerCase();
+  if (_ilk.has(t)) return _ilk.get(t);
+  let r = false;
+  try {
+    const kapi = (a) => new Contract(a, ["function vekilOf(address) view returns (address)"], arc).vekilOf(t).catch(() => SIFIR);
+    const [eski, yeni] = await Promise.all([kapi(KAPI), VT() ? kapi(VT().kapi) : Promise.resolve(SIFIR)]);
+    r = eski !== SIFIR && yeni === SIFIR;
+  } catch (e) { /* unknown: treated as not first-generation */ }
+  _ilk.set(t, r); return r;
+}
+const RELAY_API = "https://api.relay.link";
+/** relay.link quote for a swap on Arc: sat=true sells `miktar` (raw token units) for USDC, else buys with `miktar` (USDC, 6 dp) */
+async function relayArcTeklif(t, ben, miktar, sat) {
+  const g = { user: ben, recipient: ben, originChainId: 5042, destinationChainId: 5042, originCurrency: sat ? t : ARC_USDC, destinationCurrency: sat ? ARC_USDC : t,
+    amount: miktar.toString(), tradeType: "EXACT_INPUT", refundTo: ben };
+  const q = await fetch(RELAY_API + "/quote", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(g) }).then((x) => x.json());
+  if (!q.details) throw new Error("No route on Arc right now (" + (q.message || "relay.link") + ").");
+  return q;
+}
+async function relayArcGonder(q, durum) {
+  const arcAg = AGLAR.find((a) => a.anahtar === "arc");
+  for (const adim of q.steps) for (const it of adim.items || []) {
+    if (adim.kind !== "transaction") continue;
+    durum((adim.id === "approve" ? "Approve" : "Confirm the swap") + " in your wallet…");
+    const d = it.data;
+    const h = await cuzdan.agdaGonder(arcAg, { to: d.to, data: d.data, value: "0x" + BigInt(d.value || 0).toString(16) });
+    if ((await makbuz(arcAg, h)).status !== 1) throw new Error("Reverted: " + h);
+  }
+}
 /* v2: Circle forwarding delivers sale and founder dollars on these chains by itself */
 const ILERI_DOMAIN = new Set([26, 6, 3, 0, 1, 15, 19, 5]);
 /* v2: where relay delivers dollars on the two chains Circle does not reach (an open deposit address on Arc) */
@@ -1089,6 +1124,13 @@ export async function ciz({ param, kayit } = {}) {
         deger = (lz * 13n) / 10n;
         durum(alDurum.textContent + "  LayerZero delivery to " + ag.ad + ": $" + (Number(lz) / 1e18).toFixed(2) + " (+30% margin, the unused part comes back to your address on Arc).");
       }
+      if (ag.anahtar === "arc" && (await ilkNesilMi(t))) {
+        durum("Finding the route in the token's pool…");
+        const q = await relayArcTeklif(t, ben, usdc6, false);
+        durum("You get ≈ " + Number(q.details.currencyOut.amountFormatted).toLocaleString("en-US", { maximumFractionDigits: 0 }) + " tokens.");
+        await relayArcGonder(q, durum);
+        return durum("Bought ✓ ≈ " + Number(q.details.currencyOut.amountFormatted).toLocaleString("en-US", { maximumFractionDigits: 0 }) + " tokens are in your wallet on Arc.");
+      }
       if (ag.anahtar === "arc" && V2) {
         const izin = await new Contract(ARC_USDC, ["function allowance(address,address) view returns (uint256)"], arc).allowance(ben, S().kapi).catch(() => 0n);
         if (izin < usdc6) {
@@ -1132,6 +1174,22 @@ export async function ciz({ param, kayit } = {}) {
         const miktar = BigInt(Math.round(Number(satTutar.value))) * 10n ** 18n;
         const tk = new Contract(t, ["function balanceOf(address) view returns (uint256)", "function approve(address,uint256) returns (bool)"], arc);
         if ((await tk.balanceOf(ben)) < miktar) return durum("You hold less than that on Arc.");
+        if (await ilkNesilMi(t)) {
+          if (tur === 0) {
+            durum("Finding the route in the token's pool…");
+            const q = await relayArcTeklif(t, ben, miktar, true);
+            durum("You get ≈ $" + Number(q.details.currencyOut.amountFormatted).toFixed(2) + " USDC.");
+            await relayArcGonder(q, durum);
+            return durum("Sold ✓ ≈ $" + Number(q.details.currencyOut.amountFormatted).toFixed(2) + " USDC is in your wallet on Arc.");
+          }
+          durum("Approve the burn (1/2)…");
+          let h0 = await cuzdan.agdaGonder(ag, { to: t, data: tk.interface.encodeFunctionData("approve", [UCU, miktar]), value: "0x0" });
+          if ((await makbuz(ag, h0)).status !== 1) throw new Error("Reverted: " + h0);
+          durum("Redeem (2/2)…");
+          h0 = await cuzdan.agdaGonder(ag, { to: UCU, data: new Interface(["function itfa(address,uint256,uint32,bytes32)"]).encodeFunctionData("itfa", [t, miktar, ARC_DOMAIN, zeroPadValue(ben, 32)]), value: "0x0" });
+          if ((await makbuz(ag, h0)).status !== 1) throw new Error("Reverted: " + h0);
+          return durum("Burned for redemption; each vault sells your share and pays you on Arc.");
+        }
         if (tur === 0) {
           if (!V2) return durum("Selling tokens held on Arc from this page opens with the gate's next version. Redeeming from the basket works now.");
           /* v2: the gate sells in one call and pays here; what a price limit leaves unsold comes back */
@@ -1418,13 +1476,31 @@ export async function ciz({ param, kayit } = {}) {
         bakSat.replaceChildren(el("span", { yazi: "You hold on " + a.ad }), el("b", { yazi: kisaltT(tk) + " " + (sym || "tokens") + deger }));
         if (!tk && baska.length) bakSat.append(el("small", { yazi: "You hold " + baska.join(", ") + ": pick that chain above to sell." }));
       }
+      /* a first-generation token: relay.link's own quote in its pool (the curve reader is for the newer gates) */
+      if (ag.anahtar === "arc" && (await ilkNesilMi(tAdr))) {
+        const al0 = taraf === "al", ben1 = cuzdan.hesap() || "0x89189c84dc95d0520aeec9c8cf3ba5b9d42611d0";
+        const n = al0 ? Number(alTutar.value) || 0 : Number(satTutar.value) || 0;
+        if (!(n > 0)) { teklif.textContent = ""; return; }
+        try {
+          const q = await relayArcTeklif(tAdr, ben1, al0 ? BigInt(Math.round(n * 1e6)) : BigInt(Math.round(n)) * 10n ** 18n, !al0);
+          if ((al0 ? Number(alTutar.value) || 0 : Number(satTutar.value) || 0) !== n || (taraf === "al") !== al0) return;
+          const d = q.details, fe = q.fees || {};
+          teklif.replaceChildren(el("span", { yazi: "You receive" }), el("b", { yazi: (al0 ? "≈ " + kisaltT(Number(d.currencyOut.amountFormatted)) + (sym ? " " + sym : "") : "≈ $" + Number(d.currencyOut.amountFormatted).toFixed(2)) + " (pool, now)" }),
+            el("span", { yazi: "Route" }), el("b", { yazi: "relay.link · first-generation pool" }),
+            el("span", { yazi: "Fees" }), el("b", { yazi: "$" + (Number((fe.relayer && fe.relayer.amountUsd) || 0) + Number((fe.gas && fe.gas.amountUsd) || 0)).toFixed(3) + " route + gas" }));
+        } catch (x) { teklif.replaceChildren(el("span", { yazi: "Quote" }), el("b", { yazi: "no route right now" })); }
+        return;
+      }
       const s0 = await durumOku();
       if (!s0) { teklif.textContent = ""; return; }
       if (al) { const e = egri.alim(s0, Number(alTutar.value) || 0); teklif.replaceChildren(el("span", { yazi: "You receive" }), el("b", { yazi: "≈ " + kisaltT(e.token) + (sym ? " " + sym : "") }), el("span", { yazi: "Price impact" }), el("b", { yazi: "+" + (e.etki * 100).toFixed(2) + "%" }), el("span", { yazi: "Fees" }), el("b", { yazi: "$" + e.ucret.toFixed(2) + " (2.2% + " + (s0.vergi * 100).toFixed(0) + "% collateral tax)" })); }
       else {
         /* on Arc with the sale already approved: the gate's own answer (the curve estimate ran ~11% high) */
         let kesin = null; const ben0 = cuzdan.hesap(), adet = Number(satTutar.value) || 0;
-        if (ag.anahtar === "arc" && V2 && ben0 && adet > 0) {
+        if (ag.anahtar === "arc" && adet > 0 && (await ilkNesilMi(tAdr))) {
+          try { const q = await relayArcTeklif(tAdr, ben0 || "0x89189c84dc95d0520aeec9c8cf3ba5b9d42611d0", BigInt(Math.round(adet)) * 10n ** 18n, true); kesin = Number(q.details.currencyOut.amountFormatted); } catch (x) { /* estimate below */ }
+        }
+        if (kesin == null && ag.anahtar === "arc" && V2 && ben0 && adet > 0 && !(await ilkNesilMi(tAdr))) {
           try {
             const m18 = BigInt(Math.round(adet)) * 10n ** 18n;
             const izin = await new Contract(tAdr, ["function allowance(address,address) view returns (uint256)"], arc).allowance(ben0, VT().kapi);
