@@ -39,6 +39,9 @@ const RISK_ANAHTAR = "hl-risk-onay-v1";
 const HL_APP = "https://app.hyperliquid.xyz";
 
 const STIL =
+  ".hl-bakiye span:last-child{color:var(--yazi-1);font-weight:600}" +
+  ".hl-liq{padding:6px 8px;margin:2px -8px;border-radius:8px;background:rgba(240,165,94,.08)}.hl-liq span:last-child{color:#f7c89a;font-weight:700}" +
+  ".hl-liq--orta{background:rgba(240,165,94,.16)}.hl-liq--yakin{background:rgba(255,107,122,.16)}.hl-liq--yakin span:last-child{color:#ff9aa5}" +
   ".hl-cip{display:grid;grid-template-columns:repeat(auto-fit,minmax(44px,1fr));gap:6px}" +
   ".hl-cip button{height:34px;border-radius:9px;border:1px solid var(--cizgi-guclu);background:var(--yuzey-2);color:var(--yazi-1);font:600 13px var(--yazi-tipi);cursor:pointer}" +
   ".hl-cip button[aria-pressed=true]{border-color:var(--marka);background:var(--marka-zemin)}" +
@@ -335,12 +338,25 @@ export async function ciz({ param, cuzdan }) {
   }
 
   function ucretCiz(t) {
-    if (!(t.gercekUsd > 0)) { ucretKutu.replaceChildren(el("div", {}, [el("span", { yazi: "Fees are shown here before you confirm." })])); return; }
     const satir = (a, b, sinif = "") => el("div", { sinif }, [el("span", { yazi: a }), el("span", { yazi: b })]);
+    const bakiye = H ? satir("Your balance", usd(H.cekilebilir) + " available · " + usd(H.deger) + " account", "hl-bakiye") : satir("Your balance", kim ? "reading…" : "connect your wallet", "hl-bakiye");
+    if (!(t.gercekUsd > 0)) { ucretKutu.replaceChildren(bakiye, el("div", {}, [el("span", { yazi: "Enter a size to see margin, liquidation price and fees." })])); return; }
+    let liqSatir = null;
+    if (!t.azalt) {
+      if (!H) liqSatir = satir("Liquidation price", kim ? "after your account is read" : "connect your wallet to estimate");
+      else if (t.liq == null || !(t.liq > 0)) liqSatir = satir("Liquidation price", "none at this size", "hl-liq");
+      else {
+        const uzak = Math.abs(t.liq / t.ref - 1) * 100;
+        liqSatir = el("div", { sinif: "hl-liq" + (uzak < 5 ? " hl-liq--yakin" : uzak < 15 ? " hl-liq--orta" : "") }, [
+          el("span", { yazi: "Liquidated if price " + (t.alis ? "falls" : "rises") + " to ≈" }),
+          el("span", { yazi: fiyat(t.liq) + " (" + (t.alis ? "−" : "+") + uzak.toFixed(1) + "%)" })]);
+      }
+    }
     const hlSatir = t.limit
       ? satir("Hyperliquid fee (" + (t.yapici * 100).toFixed(3) + "% if it rests, " + (t.alici * 100).toFixed(3) + "% if it fills at once)", "up to " + usd(t.hlUcret, 4))
       : satir("Hyperliquid fee, est. (" + (t.alici * 100).toFixed(3) + "% taker)", usd(t.hlUcret, 4));
     ucretKutu.replaceChildren(
+      bakiye, liqSatir,
       satir("Order value", usd(t.gercekUsd) + " · " + t.boyut + " " + P.ad),
       satir("Margin used (" + t.kal + "× " + (t.capraz ? "cross" : "isolated") + ")", usd(t.teminat)),
       hlSatir,
@@ -826,7 +842,7 @@ export async function ciz({ param, cuzdan }) {
     const sayfaKapat = () => { if (yerTutucu.parentNode) yerTutucu.replaceWith(formPanel); perde.hidden = true; };
     kapatS.addEventListener("click", sayfaKapat);
     perde.addEventListener("click", (e) => { if (e.target === perde) sayfaKapat(); });
-    document.body.append(perde);
+    /* a redraw (e.g. the wallet connecting) builds the page again: drop the previous page's bars first */
     const git = (y) => {
       yon = y; yonCiz(); girdi();
       if (window.matchMedia("(max-width: 860px)").matches) { if (!yerTutucu.parentNode) formPanel.replaceWith(yerTutucu); sayfa.append(formPanel); perde.hidden = false; }
@@ -835,7 +851,11 @@ export async function ciz({ param, cuzdan }) {
     const dock = el("div", { sinif: "hl-dock" }, [
       el("button", { attr: { type: "button" }, yazi: "Long", on: { click: () => git("alis") } }),
       el("button", { attr: { type: "button" }, yazi: "Short", on: { click: () => git("satis") } })]);
-    document.body.append(dock);   /* on <body>: the page's entrance transform would trap a fixed bar inside the content */
+    /* on <body> (the page's entrance transform would trap a fixed bar), and only once THIS page is on screen: a page
+       built for a view that was replaced meanwhile (e.g. the wallet connected mid-load) must not leave its bar on top */
+    let deneme = 0;
+    const tak = () => { if (kap.isConnected) { document.querySelectorAll(".hl-dock, .hl-perde").forEach((x) => x.remove()); document.body.append(perde, dock); } else if (++deneme < 100) setTimeout(tak, 100); };
+    tak();
     const temizlik = () => setTimeout(() => { if (!kap.isConnected) { dock.remove(); perde.remove(); window.removeEventListener("hashchange", temizlik); } }, 0);
     window.addEventListener("hashchange", temizlik);
   }

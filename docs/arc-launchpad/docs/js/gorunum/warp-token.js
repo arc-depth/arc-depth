@@ -211,7 +211,10 @@ export function tokenDetay(x) {
     else if (x.dis) dock.append(el("a", { attr: { href: x.dis, target: "_blank", rel: "noopener noreferrer", style: "background:var(--yuzey-3);color:var(--yazi-1);border:1px solid var(--cizgi-guclu)" }, yazi: "Sell ↗" }));
     if (dock.children.length === 1) dock.style.gridTemplateColumns = "1fr";
     /* fixed layers live on <body>: the page entrance animation (a transform) would otherwise trap them in the content */
-    document.body.append(dock, perde);
+    /* only once this page is on screen (a stale redraw must not leave its bar on top), replacing an older one */
+    let deneme = 0;
+    const tak = () => { if (kap.isConnected) { document.querySelectorAll(".tk2-dock, .tk2-perde").forEach((x) => x.remove()); document.body.append(dock, perde); } else if (++deneme < 100) setTimeout(tak, 100); };
+    tak();
     const sok = () => { if (!kap.isConnected) { dock.remove(); perde.remove(); window.removeEventListener("hashchange", sok); } };
     window.addEventListener("hashchange", () => setTimeout(sok, 0));
   }
