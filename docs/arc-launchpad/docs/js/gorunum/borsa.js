@@ -178,8 +178,19 @@ export async function ciz({ param }) {
     const t = secili;
     const geri = el("button", { sinif: "dugme dugme--sade dugme--kucuk bx-geri", attr: { type: "button" }, yazi: "← Markets", on: { click: () => { kok.dataset.gorunum = "liste"; kok.dataset.sayfa = ""; bxDock.hidden = true; } } });
     const islemler = el("div", {}, [el("div", { sinif: "bx-bos", yazi: "Loading the pool's swaps…" })]);
+    /* 17 Nov 2026 (owner: "öyle bir düğme yok"): a device-only Solana account shows its link offer ON the page, not only
+       inside the Buy/Sell sheet */
+    let bagUyari = "";
+    try {
+      if (t.zincir.k === "solana" && localStorage.getItem("arcpulse-sol-adres-cihaz") === "1" && localStorage.getItem("arcpulse-sol-tur") !== "bagli" && localStorage.getItem("arcpulse-sol-cihaz")) {
+        bagUyari = el("div", { sinif: "bx-kart", attr: { style: "padding:12px 14px;margin-bottom:10px;border-color:var(--marka,#7c5cff)" } }, [
+          el("div", { attr: { style: "font-weight:600;margin-bottom:4px" }, yazi: "Your Solana tokens are on this phone only" }),
+          el("div", { sinif: "k", attr: { style: "margin-bottom:8px" }, yazi: "Link them to your wallet once: then the same wallet opens them on any phone, nothing to back up." }),
+          el("button", { sinif: "dugme dugme--marka dugme--kucuk", attr: { type: "button" }, yazi: "Link to my wallet", on: { click: () => { kutuCiz("sat"); if (window.matchMedia("(max-width: 860px)").matches) sayfaAc(); } } })]);
+      }
+    } catch (e) { /* storage blocked */ }
     orta.replaceChildren(
-      geri,
+      geri, bagUyari,
       el("div", { sinif: "bx-kart" }, [
         el("div", { sinif: "bx-ust" }, [logo(t), el("div", { attr: { style: "min-width:0" } }, [el("h1", { yazi: t.sembol }), el("div", { sinif: "k", yazi: (t.ad && t.ad !== t.sembol ? t.ad + " · " : "") + t.zincir.ad + (t.dex ? " · " + t.dex : "") + " · " + t.adres.slice(0, 6) + "…" + t.adres.slice(-4) })]),
           el("div", { sinif: "bx-fiyat" }, [el("b", { yazi: fiyatYaz(Number(t.fiyat)) }), yuzde(t.degisim == null ? null : Number(t.degisim))])]),
