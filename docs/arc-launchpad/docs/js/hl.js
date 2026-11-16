@@ -442,3 +442,52 @@ export function emirSonucu(yanit, coin) {
   if (st.resting) return "Order placed on the book (order " + st.resting.oid + ")." + ekYazi;
   return "Hyperliquid accepted the order." + ekYazi;
 }
+
+/* 16 Nov 2026 (owner: "USDC olarak Arc'a geçsin"): withdraw straight to USDC on Arc through relay.link, which
+   takes deposits ON Hyperliquid (chain 1337): (1) the wallet signs relay's NonceMapping (EIP-712, on the chain the
+   wallet is on) and it is posted to relay's /authorize; (2) the wallet signs Hyperliquid's own sendAsset of the USDC
+   to relay's depositor, sent to Hyperliquid's /exchange like any user-signed action; relay then pays USDC on Arc to
+   the same address. Measured: $5 in -> $4.977 out (relay's fee ~$0.02; Hyperliquid's own withdrawal costs $1). */
+const RELAY_API = "https://api.relay.link";
+export async function arcaCekTeklif(user, miktar) {
+  const g = { user, recipient: user, originChainId: 1337, destinationChainId: 5042, originCurrency: "0x00000000000000000000000000000000",
+    destinationCurrency: "0x3600000000000000000000000000000000000000", amount: String(Math.floor(Number(miktar) * 1e8)), tradeType: "EXACT_INPUT" };
+  const q = await fetch(RELAY_API + "/quote", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(g) }).then((r) => r.json());
+  if (!q.details) throw new Error("No route to Arc right now (" + (q.message || "relay.link") + ").");
+  return q;
+}
+export async function arcaCekGonder(user, q, durum = () => {}) {
+  const zid = parseInt(zincirHex(), 16);
+  for (const adim of q.steps) for (const it of adim.items || []) {
+    const d = it.data || {};
+    if (adim.kind === "signature" && d.sign) {
+      durum("Sign 1 of 2 in your wallet (links the withdrawal to your order, moves nothing)…");
+      let sig;
+      try { sig = await cuzdan.imzalaTipli({ domain: { ...d.sign.domain, chainId: zid }, types: d.sign.types, primaryType: d.sign.primaryType, message: d.sign.value }); } catch (e) { throw imzaHatasi(e); }
+      const u = new URL(RELAY_API + d.post.endpoint); u.searchParams.set("signature", sig);
+      const r = await fetch(u, { method: d.post.method || "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...d.post.body, signatureChainId: zid }) });
+      if (!r.ok) throw new Error("relay.link did not accept the link signature (HTTP " + r.status + "). Nothing was sent.");
+    } else if (adim.kind === "transaction" && d.action) {
+      durum("Sign 2 of 2 in your wallet (sends the USDC from Hyperliquid)…");
+      const p = d.action.parameters;
+      const action = { type: d.action.type, signatureChainId: "0x" + zid.toString(16), ...p };
+      const t = { domain: { name: "HyperliquidSignTransaction", version: "1", chainId: zid, verifyingContract: SIFIR }, types: d.eip712Types, primaryType: d.eip712PrimaryType, message: p };
+      sonEylem = { action, nonce: d.nonce };
+      let sig;
+      try { sig = await cuzdan.imzalaTipli(t); } catch (e) { throw imzaHatasi(e); }
+      await gonder(action, d.nonce, sig);
+      /* follow relay until it has paid on Arc (or give up waiting; the money is then on its way) */
+      if (it.check) {
+        for (let i = 0; i < 40; i++) {
+          await new Promise((x) => setTimeout(x, 3000));
+          const s = await fetch(RELAY_API + it.check.endpoint).then((r) => r.json()).catch(() => null);
+          if (s && s.status === "success") return "arrived";
+          if (s && (s.status === "failure" || s.status === "refund")) throw new Error("relay.link reports " + s.status + ": the USDC " + (s.status === "refund" ? "was refunded to your Hyperliquid account." : "did not go through; check app.hyperliquid.xyz."));
+          durum("Sent ✓ waiting for USDC on Arc… (" + ((i + 1) * 3) + "s)");
+        }
+        return "pending";
+      }
+    }
+  }
+  return "pending";
+}
