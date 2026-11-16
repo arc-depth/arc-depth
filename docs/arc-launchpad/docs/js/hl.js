@@ -469,6 +469,10 @@ async function bekleyenImza(t, durum, ne) {
    custom network such as Arc some never show the request. Money-moving signatures switch the wallet to Arbitrum first. */
 const ARB = { id: 42161, ad: "Arbitrum", anahtar: "arbitrum", rpc: "https://arb1.arbitrum.io/rpc", gaz: "ETH", kasif: "https://arbiscan.io" };
 async function arbitrumaGec(durum) {
+  /* 16 Nov 2026, later: switched OFF. Inside the MetaMask app the network switch itself was approved and then the flow
+     went quiet (the app reloads or drops the page on a network change), so the signature never came. Sign on the
+     network the wallet is already on; Hyperliquid accepts any signatureChainId. */
+  return;
   if (parseInt(cuzdan.zincirId() || "0", 16) === 42161) return;
   durum("Switching your wallet to Arbitrum for the signature (nothing is paid there)… (" + (cuzdan.baglantiBilgisi ? cuzdan.baglantiBilgisi() : "") + ")");
   try { await cuzdan.agaGec(ARB); } catch (e) { throw imzaHatasi(e); }
