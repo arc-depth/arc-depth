@@ -25,6 +25,7 @@ import { el, sayfaUst, panel, not, olcum, ayrinti } from "../ui.js";
 import * as hl from "../hl.js";
 import { paraPaneli } from "./hl-para.js";
 import { gecmisPaneli } from "./hl-gecmis.js";
+import { islemlereBol, kapananGorunum, fonlamaGorunum } from "./hl-islemler.js";
 import { kaskPaneli } from "./hl-kask.js";
 import { fuzePaneli } from "./hl-fuze.js";
 import { grafikPaneli } from "./hl-grafik.js";
@@ -37,6 +38,18 @@ const RISK_ANAHTAR = "hl-risk-onay-v1";
 const HL_APP = "https://app.hyperliquid.xyz";
 
 const STIL =
+  /* 16 Nov 2026: on phones the account (positions, trades) comes first, then the chart, then the form */
+  "@media (max-width:900px){.hl-sayfa .hl-izgara{grid-template-areas:'h' 'g' 'f'}}" +
+  ".hl-hesap-ozet{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}" +
+  ".hl-hesap-ozet>div,.hl-isl-ozet>div{padding:10px 12px;border-radius:12px;background:var(--yuzey-0);border:1px solid var(--cizgi);min-width:0}" +
+  ".hl-hesap-ozet span,.hl-isl-ozet span{display:block;font-size:11.5px;color:var(--yazi-3)}" +
+  ".hl-hesap-ozet b,.hl-isl-ozet b{display:block;font-size:18px;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}" +
+  ".hl-hesap-ozet small{display:block;font-size:11px;color:var(--yazi-3);margin-top:2px}" +
+  ".hl-isl-ozet{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}" +
+  ".hl-sekme{display:flex;gap:18px;border-bottom:1px solid var(--cizgi);overflow-x:auto;scrollbar-width:none;margin-top:4px}.hl-sekme::-webkit-scrollbar{display:none}" +
+  ".hl-sekme button{flex:none;background:none;border:0;border-bottom:2px solid transparent;padding:0 0 10px;color:var(--yazi-3);font:500 14px var(--yazi-tipi);cursor:pointer}" +
+  ".hl-sekme button[aria-selected=true]{color:var(--yazi-1);font-weight:600;border-bottom-color:var(--marka)}" +
+  "@media (max-width:860px){.hl-hesap-ozet{grid-template-columns:repeat(2,minmax(0,1fr))}.hl-hesap-ozet>div:first-child{grid-column:1/-1}.hl-hesap-ozet>div:first-child b{font-size:24px}}" +
   ".hl-kurulum{display:grid;gap:8px;padding:12px;border-radius:12px;background:#15121f;border:1px solid #2e2650}" +
   ".hl-kurulum[hidden]{display:none}" +
   ".hl-kurulum__adim{display:grid;grid-template-columns:22px 1fr;column-gap:8px;align-items:center;color:var(--yazi-3);font-size:13px}" +
@@ -500,7 +513,7 @@ export async function ciz({ param, cuzdan }) {
 
   /* ---- account panel ---- */
   const hesapGovde = el("div", { sinif: "yigin yigin--sik" });
-  const hesapPanel = panel(salt ? "Account (read-only view)" : "Your Hyperliquid account", hesapGovde);
+  const hesapPanel = panel(salt ? "Account (read-only view)" : "Your account · positions · trades", hesapGovde);
 
   function satirOnay(hedef, metin, eylem, dugmeYazi, dugmeSinif, cuzdanla = false, alanlar = null) {
     /* an inline confirm under a table: one sentence, Confirm / Keep */
@@ -536,10 +549,18 @@ export async function ciz({ param, cuzdan }) {
     }
     if (hesapHata && !H) { hesapGovde.replaceChildren(not("Your Hyperliquid account could not be read: " + hesapHata, "uyari")); return; }
     if (!H) { hesapGovde.replaceChildren(el("div", { sinif: "ikincil", yazi: "Reading your Hyperliquid account…" })); return; }
+    /* 16 Nov 2026 (owner: "ne poz açtığın belli ne kapattığın ne kazandığın cüzdanda ne var o belli değil"):
+       the money first, in five figures; then one tab bar for what is open, what closed and what funding paid */
+    const acikKz = H.pozisyonlar.reduce((t, p) => t + Number(p.unrealizedPnl), 0);
+    const rakam = (et, deger, sinif = "", alt = "") => el("div", {}, [el("span", { yazi: et }), el("b", { sinif, yazi: deger }), alt ? el("small", { yazi: alt }) : null]);
+    const isr = (x) => (x > 0 ? "+" : x < 0 ? "−" : "") + usd(Math.abs(x));
     const kalemler = [
-      el("div", { sinif: "izgara izgara--olcum" }, [
-        olcum("Account value", usd(H.deger)), olcum("Available to trade or withdraw", usd(H.cekilebilir)), olcum("Margin in use", usd(H.teminat)),
-        H.spotUsdc > 0.009 ? olcum("Spot USDC", usd(H.spotUsdc), "separate from perps") : null]),
+      el("div", { sinif: "hl-hesap-ozet" }, [
+        rakam("Account value", usd(H.deger), "", H.spotUsdc > 0.009 ? "+ " + usd(H.spotUsdc) + " spot USDC" : ""),
+        rakam("Open P&L", isr(acikKz), acikKz > 0 ? "hl-art" : acikKz < 0 ? "hl-eks" : "", H.pozisyonlar.length + " position" + (H.pozisyonlar.length === 1 ? "" : "s")),
+        rakam("P&L today", gunKz == null ? "…" : isr(gunKz), gunKz > 0 ? "hl-art" : gunKz < 0 ? "hl-eks" : "", "Hyperliquid's figure"),
+        rakam("Available", usd(H.cekilebilir), "", "to trade or withdraw"),
+        rakam("Margin in use", usd(H.teminat))]),
     ];
     if (salt) kalemler.unshift(not("Read-only view of " + kim + ". Nothing can be signed in this view.", "bilgi"));
     else kalemler.push(el("a", { sinif: "dugme dugme--sade dugme--kucuk", attr: { href: "#/portfoy", style: "align-self:flex-start" }, yazi: "All your coins and positions → Portfolio" }));
@@ -610,7 +631,7 @@ export async function ciz({ param, cuzdan }) {
       })));
       pozKap.prepend(el("div", { sinif: "hl-sarmal" }, [t]));
     }
-    kalemler.push(el("h3", { sinif: "panel__baslik", attr: { style: "margin:6px 0 0;font-size:14px" }, yazi: "Positions" }), pozKap);
+
 
     /* open orders */
     const emKap = el("div", { sinif: "yigin yigin--sik" });
@@ -662,7 +683,12 @@ export async function ciz({ param, cuzdan }) {
       })));
       emKap.prepend(el("div", { sinif: "hl-sarmal" }, [t]));
     }
-    kalemler.push(el("h3", { sinif: "panel__baslik", attr: { style: "margin:6px 0 0;font-size:14px" }, yazi: "Open orders" }), emKap);
+    const SEKME = [["poz", "Positions (" + H.pozisyonlar.length + ")"], ["emir", "Open orders (" + H.emirler.length + ")"], ["kap", "Closed trades" + (kapanan ? " (" + kapanan.length + ")" : "")], ["fon", "Funding"]];
+    const sekmeBar = el("div", { sinif: "hl-sekme", attr: { role: "tablist" } }, SEKME.map(([k, ad]) => el("button", { attr: { type: "button", role: "tab", "aria-selected": String(hesapSekme === k) }, yazi: ad, on: { click: () => { hesapSekme = k; hesapCiz(); if ((k === "kap" && !kapanan) || (k === "fon" && !fonlar)) gecmisYukle(); } } })));
+    const sekmeIc = hesapSekme === "poz" ? pozKap : hesapSekme === "emir" ? emKap
+      : hesapSekme === "kap" ? (kapanan ? kapananGorunum(kapanan) : el("div", { sinif: "ikincil", yazi: "Reading your trades from Hyperliquid…" }))
+      : (fonlar ? fonlamaGorunum(fonlar) : el("div", { sinif: "ikincil", yazi: "Reading funding payments…" }));
+    kalemler.push(sekmeBar, sekmeIc);
 
     /* money in and out, and the fee approval */
     const onayli = H.onay >= hl.BUILDER_F;
@@ -675,11 +701,32 @@ export async function ciz({ param, cuzdan }) {
         el("button", { sinif: "dugme dugme--sade dugme--kucuk", attr: { type: "button" }, yazi: "Forget this device", on: { click: () => satirOnay(onayKap, "Delete this device's trading key? Orders here then need Enable trading again. The key stays listed on Hyperliquid's API page until it is replaced or removed there; without the key nobody can use it.", async () => { hl.ajanSil(kim); ajan = null; ajanDurum = "yok"; return "Trading key deleted from this device."; }, "Forget this device", "dugme--satis") } }),
         disBag(HL_APP + "/API", "Agents on Hyperliquid ↗")]));
     }
-    kalemler.push(onayKap);
+    kalemler.push(ayrinti("Trading settings: ARC PULSE fee approval, this device's trading key", onayKap));
     hesapGovde.replaceChildren(...kalemler);
   }
 
+  let hesapSekme = "poz", kapanan = null, fonlar = null, gunKz = null, gunKzZaman = 0;
+  async function gecmisYukle() {
+    if (!kim) return;
+    try {
+      if (hesapSekme === "kap") kapanan = islemlereBol(await hl.dolgularOku(kim));
+      if (hesapSekme === "fon") fonlar = await hl.fonlamaOku(kim, Date.now() - 7 * 864e5, Date.now());
+    } catch (e) { if (hesapSekme === "kap") kapanan = []; else fonlar = []; }
+    if (!hesapGovde.querySelector(".hl-onizle")) hesapCiz();
+  }
+  async function gunKzYukle() {
+    if (!kim || Date.now() - gunKzZaman < 60000) return;
+    gunKzZaman = Date.now();
+    try {
+      const p = await hl.bilgi({ type: "portfolio", user: kim.toLowerCase() });
+      const d = (p || []).find((x) => x[0] === "perpDay") || (p || []).find((x) => x[0] === "day");
+      const l = d && d[1] && d[1].pnlHistory || [];
+      gunKz = l.length ? Number(l[l.length - 1][1]) - Number(l[0][1]) : 0;
+    } catch (e) { /* stays unknown */ }
+  }
   async function hesapYukle() {
+    gunKzYukle();
+    if (hesapSekme === "kap" || hesapSekme === "fon") gecmisYukle();
     if (!kim) { hesapCiz(); formGuncelle(); return; }
     try {
       const coin = P.ad;
