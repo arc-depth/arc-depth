@@ -449,9 +449,12 @@ export function emirSonucu(yanit, coin) {
    to relay's depositor, sent to Hyperliquid's /exchange like any user-signed action; relay then pays USDC on Arc to
    the same address. Measured: $5 in -> $4.977 out (relay's fee ~$0.02; Hyperliquid's own withdrawal costs $1). */
 const RELAY_API = "https://api.relay.link";
-export async function arcaCekTeklif(user, miktar) {
+/* tek=true: relay's deposit-address route — ONE Hyperliquid signature (usdSend, the same kind as Hyperliquid's own
+   withdrawal), about $1 more (Hyperliquid charges $1 to send to a new address). tek=false: two signatures (relay's
+   NonceMapping + sendAsset), about $0.03; some phone wallets never show the first one (16 Nov 2026, owner's phone). */
+export async function arcaCekTeklif(user, miktar, tek = true) {
   const g = { user, recipient: user, originChainId: 1337, destinationChainId: 5042, originCurrency: "0x00000000000000000000000000000000",
-    destinationCurrency: "0x3600000000000000000000000000000000000000", amount: String(Math.floor(Number(miktar) * 1e8)), tradeType: "EXACT_INPUT" };
+    destinationCurrency: "0x3600000000000000000000000000000000000000", amount: String(Math.floor(Number(miktar) * 1e8)), tradeType: "EXACT_INPUT", refundTo: user, ...(tek ? { useDepositAddress: true } : {}) };
   const q = await fetch(RELAY_API + "/quote", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(g) }).then((r) => r.json());
   if (!q.details) throw new Error("No route to Arc right now (" + (q.message || "relay.link") + ").");
   return q;
@@ -463,6 +466,7 @@ async function bekleyenImza(t, durum, ne) {
 }
 export async function arcaCekGonder(user, q, durum = () => {}, devam = async () => {}) {
   const zid = parseInt(zincirHex(), 16);
+  let imzaOldu = false;
   for (const adim of q.steps) for (const it of adim.items || []) {
     const d = it.data || {};
     if (adim.kind === "signature" && d.sign) {
@@ -471,16 +475,17 @@ export async function arcaCekGonder(user, q, durum = () => {}, devam = async () 
       const u = new URL(RELAY_API + d.post.endpoint); u.searchParams.set("signature", sig);
       const r = await fetch(u, { method: d.post.method || "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...d.post.body, signatureChainId: zid }) });
       if (!r.ok) throw new Error("relay.link did not accept the link signature (HTTP " + r.status + "). Nothing was sent.");
+      imzaOldu = true;
     } else if (adim.kind === "transaction" && d.action) {
       /* the second request goes out on a tap: a phone wallet then opens for it instead of waiting unseen */
-      await devam();
-      durum("Sign 2 of 2 in your wallet (sends the USDC from Hyperliquid)…");
-      const p = d.action.parameters;
+      if (imzaOldu) await devam();
+      durum(imzaOldu ? "Sign 2 of 2 in your wallet (sends the USDC from Hyperliquid)…" : "Sign in your wallet (sends the USDC from Hyperliquid, no gas)…");
+      const p = d.action.parameters, nonce = d.nonce != null ? d.nonce : p.time != null ? p.time : p.nonce;
       const action = { type: d.action.type, signatureChainId: "0x" + zid.toString(16), ...p };
       const t = { domain: { name: "HyperliquidSignTransaction", version: "1", chainId: zid, verifyingContract: SIFIR }, types: d.eip712Types, primaryType: d.eip712PrimaryType, message: p };
-      sonEylem = { action, nonce: d.nonce };
-      const sig = await bekleyenImza(t, durum, "Signature 2 of 2");
-      await gonder(action, d.nonce, sig);
+      sonEylem = { action, nonce };
+      const sig = await bekleyenImza(t, durum, imzaOldu ? "Signature 2 of 2" : "Signature");
+      await gonder(action, nonce, sig);
       /* follow relay until it has paid on Arc (or give up waiting; the money is then on its way) */
       if (it.check) {
         for (let i = 0; i < 40; i++) {

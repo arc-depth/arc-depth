@@ -97,17 +97,19 @@ export function paraPaneli({ kim, cuzdan, hesapYukle }) {
   /* 16 Nov 2026 (owner: "USDC olarak Arc'a geçsin"): where it goes — USDC on Arc through relay.link (default, ~$0.02),
      or Hyperliquid's own withdrawal to Arbitrum ($1) */
   const hedef = el("select", { sinif: "girdi", attr: { "aria-label": "Withdraw to" } }, [
-    el("option", { attr: { value: "arc" }, yazi: "To USDC on Arc (relay.link, ≈ $0.02 fee)" }),
+    el("option", { attr: { value: "arc" }, yazi: "To USDC on Arc · one signature (≈ $1 fee)" }),
+    el("option", { attr: { value: "arc2" }, yazi: "To USDC on Arc · two signatures (≈ $0.03 fee)" }),
     el("option", { attr: { value: "arb" }, yazi: "To USDC on Arbitrum (Hyperliquid, $1 fee)" })]);
   const cekDug = el("button", { sinif: "dugme dugme--marka", attr: { type: "button" }, yazi: "Withdraw" });
-  const arcMi = () => hedef.value === "arc";
+  const arcMi = () => hedef.value === "arc" || hedef.value === "arc2";
+  const tekMi = () => hedef.value === "arc";
   const cekOnay = el("div", { sinif: "hl-onizle", attr: { hidden: true } });
   const cDurum = durumKutu();
   const asagi2 = (x) => Math.floor(x * 100 + 1e-9) / 100;
   const ipucuCiz = () => {
     const a = Number(cekMiktar.value);
     cekIpucu.textContent = "Available to withdraw: " + (H ? usd(H.cekilebilir) : "–") + ". Goes to " + kisaAdres(kim) + " (your own address) on " + (arcMi() ? "Arc" : "Arbitrum") + "." +
-      (arcMi() ? " relay.link's fee is about $0.02; you see the exact amount before you sign." : a >= 2 ? " You receive ≈ " + usd(a - hl.CEK_UCRETI) + " USDC after Hyperliquid's $" + hl.CEK_UCRETI + " fee." : " Hyperliquid keeps $" + hl.CEK_UCRETI + ".");
+      (arcMi() ? (tekMi() ? " One signature; about $1 goes to fees (Hyperliquid charges $1 to send to a new address)." : " Cheapest, but some phone wallets do not show the first of the two signatures.") + " You see the exact amount before you sign." : a >= 2 ? " You receive ≈ " + usd(a - hl.CEK_UCRETI) + " USDC after Hyperliquid's $" + hl.CEK_UCRETI + " fee." : " Hyperliquid keeps $" + hl.CEK_UCRETI + ".");
   };
   cekMiktar.addEventListener("input", () => { cekOnay.hidden = true; ipucuCiz(); });
   hedef.addEventListener("change", () => { cekOnay.hidden = true; ipucuCiz(); });
@@ -119,16 +121,16 @@ export function paraPaneli({ kim, cuzdan, hesapYukle }) {
       if (!H || a > H.cekilebilir + 1e-9) { yaz(cDurum, "That is more than you can withdraw now (" + (H ? usd(H.cekilebilir) : "–") + "). Margin held by open positions and orders cannot be withdrawn.", "hata"); return; }
       yaz(cDurum, "Getting the exact amount from relay.link…");
       let q;
-      try { q = await hl.arcaCekTeklif(kim, a); } catch (e) { yaz(cDurum, e.message, "hata"); return; }
+      try { q = await hl.arcaCekTeklif(kim, a, tekMi()); } catch (e) { yaz(cDurum, e.message, "hata"); return; }
       const gelen = Number(q.details.currencyOut.amountFormatted);
-      const evet = el("button", { sinif: "dugme dugme--marka", attr: { type: "button" }, yazi: "Sign and send to Arc" });
+      const evet = el("button", { sinif: "dugme dugme--marka", attr: { type: "button" }, yazi: "Sign and send" });
       const hayir = el("button", { sinif: "dugme dugme--sade", attr: { type: "button" }, yazi: "Keep", on: { click: () => { cekOnay.hidden = true; } } });
-      cekOnay.replaceChildren(el("div", { yazi: "Send " + a + " USDC from Hyperliquid to " + kim + " on Arc. You receive ≈ " + usd(gelen) + " USDC on Arc (relay.link's fee " + usd(a - gelen) + "), usually within a minute. Your wallet signs twice, no gas." }), el("div", { sinif: "hl-sec" }, [hayir, evet]));
+      cekOnay.replaceChildren(el("div", { yazi: "Send " + a + " USDC from Hyperliquid to " + kisaAdres(kim) + " (you) on Arc. You receive ≈ " + usd(gelen) + " USDC on Arc (fees " + usd(a - gelen) + "), usually within a minute. Your wallet signs " + (tekMi() ? "once" : "twice") + ", no gas." }), el("div", { sinif: "hl-sec" }, [hayir, evet]));
       cekOnay.hidden = false; yaz(cDurum, "");
       evet.addEventListener("click", async () => {
         evet.disabled = true; hayir.disabled = true;
         try {
-          const q2 = await hl.arcaCekTeklif(kim, a);   // a fresh quote: the first one may be a minute old
+          const q2 = await hl.arcaCekTeklif(kim, a, tekMi());   // a fresh quote: the first one may be a minute old
           const s = await hl.arcaCekGonder(kim, q2, (m) => yaz(cDurum, m), () => new Promise((tamam) => {
             const b = el("button", { sinif: "dugme dugme--marka", attr: { type: "button", style: "width:100%;margin-top:8px" }, yazi: "Step 2 of 2: sign to send the USDC", on: { click: () => { b.remove(); tamam(); } } });
             yaz(cDurum, "Signature 1 of 2 done ✓ Tap the button to sign the transfer."); cDurum.after(b);
