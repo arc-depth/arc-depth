@@ -89,7 +89,7 @@ function yolLinki(y, sinifEk = "") {
 /* The rail folds: thirty-seven modules at once read as a wall. Explore and the group of the open page
    stay open; the others fold to their heading and open with a click. A visitor's own folding is kept on
    this device only (a convenience, nothing else is stored). */
-const RAY_ANAHTAR = "arcpulse-ray2";
+const RAY_ANAHTAR = "arcpulse-ray3";   // 16 Nov 2026: new default (main links on top, every group folded)
 const rayOku = () => { try { return JSON.parse(localStorage.getItem(RAY_ANAHTAR) || "{}"); } catch (e) { return {}; } };
 const OK_SVG = '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 /* the rail's sponsor tile shows only on browsing pages: never on money or trust pages, and not where the page has its own slot */
@@ -101,12 +101,18 @@ function rayiCiz() {
   const secim = rayOku();
   const aktif = yolBul(hashiCoz().yol);
   const nav = el("nav", { sinif: "ray__nav", attr: { "aria-label": "Main navigation" } });
+  /* 16 Nov 2026 (owner: "platform hala çok acemi"): six main links on top, as a trading app has; every group stays
+     below, folded, so nothing is removed. Portfolio only with a wallet connected. */
+  const ANA = [["kesfet", "Discover"], ["terminal", "Trade"], ["perps-trade", "Perps"], ["olustur", "Launch"], ["warp", "Warp"], ...(cuzdan.hesap() ? [["portfoy", "Portfolio"]] : [])];
+  const anaYollar = ANA.map(([k]) => k);
+  nav.append(el("div", { sinif: "ray__grup ray__ana" }, ANA.map(([k, ad]) => { const y = yolBul(k); return y ? yolLinki({ ...y, ebeveyn: null, ad, durum: "canli" }) : null; }).filter(Boolean)));
+  nav.append(el("div", { sinif: "ray__ayrac", yazi: "All sections" }));
   for (const g of GRUPLAR) {
     /* 16 Nov 2026 (owner): the wallet's own group (Portfolio, P&L, invites, points) shows only once a wallet is connected */
     if (g.anahtar === "sen" && !cuzdan.hesap()) continue;
     const ogeler = grubunYollari(g.anahtar);
     if (!ogeler.length) continue;
-    const acik = g.anahtar in secim ? secim[g.anahtar] : (g.anahtar === "kesif" || (aktif && aktif.grup === g.anahtar));
+    const acik = g.anahtar in secim ? secim[g.anahtar] : !!(aktif && aktif.grup === g.anahtar && !anaYollar.includes(altYol() || aktif.yol));
     const grup = el("div", { sinif: "ray__grup", veri: { grup: g.anahtar, kapali: acik ? "0" : "1" } });
     const baslik = el("button", { sinif: "ray__baslik ray__baslik--dugme", attr: { type: "button", "aria-expanded": String(acik), style: "--gr:" + (GRUP_RENK[g.anahtar] || "") } }, [
       el("b", {}, [el("i"), g.ad]), el("span", { sinif: "ray__sayi", yazi: String(ogeler.length) }), el("span", { html: OK_SVG })]);
@@ -229,9 +235,12 @@ function aramayiCiz() {
   window.addEventListener("hashchange", aramaKapat);
 }
 
+/* #/perps/trade|targets|alerts sit inside the "perps" route; their own rail entries are perps-trade etc. */
+const altYol = () => { const m = (location.hash || "").match(/^#\/perps\/(trade|targets|alerts)(?![\w-])/); return m ? "perps-" + m[1] : null; };
 function etkinIsaretle(aktif) {
+  const alt = altYol();
   for (const a of document.querySelectorAll("[data-yol]")) {
-    if (a.dataset.yol === aktif) a.setAttribute("aria-current", "page");
+    if (alt ? a.dataset.yol === alt : a.dataset.yol === aktif) a.setAttribute("aria-current", "page");
     else a.removeAttribute("aria-current");
   }
 }

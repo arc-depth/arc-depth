@@ -312,3 +312,7 @@
 @media (max-width: 480px) {
   .ustbar__marka > span { display: none; }
 }
+
+/* 16 Nov 2026: the rail's main links and the divider above the folded groups */
+.ray__ana .yol-oge { font-weight: var(--kalin-yari); }
+.ray__ayrac { padding: var(--bosluk-2) var(--bosluk-3) 0; border-top: 1px solid var(--cizgi); font-size: var(--boy-xs); letter-spacing: 0.08em; text-transform: uppercase; color: var(--yazi-4); }
