@@ -444,10 +444,21 @@ async function ciz() {
 
 /* ---- wallet button -------------------------------------------------- */
 
+/* 16 Nov 2026 (owner: "cüzdan ağını yukarda belirt"): the wallet button shows the network the wallet is on (a coloured
+   dot, and its name where there is room) and a ◎ when a Solana wallet is linked too; the menu switches networks and
+   links or unlinks the Solana wallet. Holdings never depend on the network: every chain is read whatever it is on. */
+const AG_GORUNUM = { 5042: ["Arc", "#7c5cff"], 8453: ["Base", "#0052ff"], 42161: ["Arbitrum", "#28a0f0"], 1: ["Ethereum", "#627eea"], 56: ["BNB", "#f0b90b"],
+  43114: ["Avalanche", "#e84142"], 143: ["Monad", "#836ef9"], 999: ["HyperEVM", "#50e3c2"], 4663: ["Robinhood", "#ccff00"], 99901: ["Elysium", "#c6f86b"] };
+let _solHesap = null;
+import("./solana-ikiz.js").then((m) => { const bak = () => { const a = m.solanaCuzdan.hesap(); if (a !== _solHesap) { _solHesap = a; cuzdanDugmesiniTazele(); } }; setInterval(bak, 3000); }).catch(() => {});
 function cuzdanDugmesiniTazele() {
   const h = cuzdan.hesap();
   if (h) {
-    kCuzdanDugme.textContent = h.slice(0, 6) + "…" + h.slice(-4);
+    const zid = cuzdan.zincirId() ? parseInt(cuzdan.zincirId(), 16) : null;
+    const [agAd, agRenk] = AG_GORUNUM[zid] || [zid ? "Chain " + zid : "?", "#8f8f9e"];
+    kCuzdanDugme.replaceChildren(el("i", { sinif: "ag-nokta", attr: { style: "--z:" + agRenk, title: "Network: " + agAd, "aria-hidden": "true" } }),
+      el("span", { sinif: "ag-ad", yazi: agAd }), el("span", { sinif: "adr-uzun", yazi: h.slice(0, 6) + "…" + h.slice(-4) }), el("span", { sinif: "adr-kisa", yazi: "…" + h.slice(-4) }), _solHesap ? el("span", { sinif: "sol-isaret", attr: { title: "Solana wallet linked" }, yazi: "◎" }) : "");
+    kCuzdanDugme.title = "Network: " + agAd + (_solHesap ? " · Solana linked" : "");
     kCuzdanDugme.classList.remove("dugme--marka");
     kCuzdanDugme.classList.add("mono");
   } else {
@@ -462,6 +473,24 @@ kCuzdanDugme.addEventListener("click", () => {
   cuzdanSec();
 });
 
+/* the network row of the wallet menu: where the wallet is now, and a one-tap switch to any of our chains */
+function agSecici(kapat) {
+  const zid = cuzdan.zincirId() ? parseInt(cuzdan.zincirId(), 16) : null;
+  const ac = el("div", { sinif: "ag-liste", attr: { hidden: true } });
+  const bas = el("button", { sinif: "hesap-menu__oge", attr: { type: "button" } }, [el("i", { sinif: "ag-nokta", attr: { style: "--z:" + ((AG_GORUNUM[zid] || [])[1] || "#8f8f9e") } }),
+    " Network: " + ((AG_GORUNUM[zid] || [])[0] || (zid ? "Chain " + zid : "?")) + " ▾"]);
+  bas.addEventListener("click", async (e) => {
+    e.stopPropagation(); ac.hidden = !ac.hidden; if (ac.childElementCount) return;
+    const { AGLAR } = await import("./aglar.js");
+    for (const id of Object.keys(AG_GORUNUM).map(Number)) {
+      const ag = AGLAR.find((a) => a.id === id); if (!ag) continue;
+      ac.append(el("button", { sinif: "hesap-menu__oge ag-oge", attr: { type: "button", "aria-current": String(id === zid) } }, [el("i", { sinif: "ag-nokta", attr: { style: "--z:" + AG_GORUNUM[id][1] } }), " " + AG_GORUNUM[id][0]]));
+      ac.lastChild.addEventListener("click", async () => { kapat(); try { await cuzdan.agaGec(ag); } catch (x) { /* the wallet said no */ } cuzdanDugmesiniTazele(); });
+    }
+  });
+  return el("div", {}, [bas, ac]);
+}
+
 /* Connected: the address button opens a small menu — portfolio, copy, disconnect. */
 function hesapMenusu() {
   const eski = document.querySelector(".hesap-menu");
@@ -474,6 +503,9 @@ function hesapMenusu() {
   const menu = el("div", { sinif: "hesap-menu", attr: { role: "menu", style:
     "top:" + Math.round(r.bottom + 6) + "px;right:" + Math.max(8, Math.round(innerWidth - r.right)) + "px" } }, [
     el("div", { sinif: "hesap-menu__adres mono", yazi: h.slice(0, 10) + "…" + h.slice(-8) }),
+    agSecici(kapat),
+    el("div", { sinif: "hesap-menu__adres", yazi: _solHesap ? "Solana: " + _solHesap.slice(0, 6) + "…" + _solHesap.slice(-4) : "Solana: not linked" }),
+    _solHesap ? null : satir("Link a Solana wallet (Phantom…)", async () => { kapat(); try { const m = await import("./solana-ikiz.js"); _solHesap = await m.solanaCuzdan.baglan(); cuzdanDugmesiniTazele(); } catch (e) { alert((e && e.message) || "No Solana wallet in this browser. Open the site in Phantom's browser to link one."); } }),
     satir("Portfolio", () => { kapat(); location.hash = "#/portfoy"; }),
     satir("Copy address", async () => { try { await navigator.clipboard.writeText(h); } catch (e) { /* clipboard blocked */ } kapat(); }),
     satir("Disconnect", async () => { kapat(); await cuzdan.kes(); }, true),

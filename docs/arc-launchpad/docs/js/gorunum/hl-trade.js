@@ -115,6 +115,8 @@ const STIL =
   ".hl-ucret div{display:flex;justify-content:space-between;gap:10px}.hl-ucret span:last-child{font-variant-numeric:tabular-nums;white-space:nowrap}" +
   ".hl-ucret .hl-top{border-top:1px solid var(--cizgi);padding-top:4px;font-weight:700}" +
   ".hl-onizle{border:1px solid var(--marka);border-radius:14px;padding:12px;display:grid;gap:10px}" +
+  /* 16 Nov 2026: long words and nowrap buttons pushed the confirm box past the phone screen */
+  ".hl-onizle{min-width:0;overflow-wrap:anywhere;grid-template-columns:minmax(0,1fr)}.hl-onizle .dugme{white-space:normal;min-width:0;max-width:100%}.hl-onizle .hl-sec{min-width:0}" +
   ".hl-durum{font-size:13.5px;min-height:1.2em}.hl-durum.hl-eks{font-weight:600}" +
   ".hl-tablo{width:100%;border-collapse:collapse}.hl-tablo th{font-size:12px;color:var(--yazi-3);text-align:left;padding:6px;border-bottom:1px solid var(--cizgi);white-space:nowrap;font-weight:600}" +
   ".hl-tablo td{font-size:13.5px;padding:8px 6px;border-bottom:1px solid var(--cizgi);font-variant-numeric:tabular-nums;white-space:nowrap}.hl-tablo .sayi{text-align:right}" +
