@@ -53,22 +53,87 @@ async function tekHavuzTutulan(hesap, kac = 200) {
   }));
 }
 
+const usdK = (x) => x == null || !isFinite(x) ? "—" : (Math.abs(x) >= 0.01 || x === 0 ? para(x) : "$" + x.toPrecision(3));
+const fiyatK = (x) => x == null || !isFinite(x) ? "—" : x >= 1000 ? "$" + x.toLocaleString("en-US", { maximumFractionDigits: 1 }) : x >= 1 ? "$" + String(Number(x.toFixed(4))) : "$" + x.toPrecision(4);
+const isaretli = (x, t) => (x > 0 ? "+" : "") + t;
+
+/* Hyperliquid: positions and spot coins of hesap (read-only here; trading is on the Trade perps page) */
+function hlPaneli(hesap) {
+  const govde = el("div", { sinif: "yigin" }, [el("div", { sinif: "yazi yazi--kucuk yazi--sessiz", yazi: "Reading your Hyperliquid account…" })]);
+  const kutu = panel("Hyperliquid: positions and coins", govde);
+  let ilk = true;
+  const yenile = async () => {
+    if (!ilk && !kutu.isConnected) return;   // the page was left: stop refreshing
+    ilk = false;
+    try {
+      const hl = await import("../hl.js");
+      const V = await hl.tumVarliklar(hesap);
+      const parca = [el("div", { sinif: "izgara izgara--olcum" }, [
+        olcum("Total on Hyperliquid", usdK(V.perpDeger + V.spotDeger), "perps account + spot coins"),
+        olcum("Perps account", usdK(V.perpDeger), V.pozisyonlar.length + " open position" + (V.pozisyonlar.length === 1 ? "" : "s")),
+        olcum("Spot coins", usdK(V.spotDeger), V.spotlar.length + " coin" + (V.spotlar.length === 1 ? "" : "s")),
+      ])];
+      parca.push(el("h3", { sinif: "panel__baslik", attr: { style: "margin:6px 0 0;font-size:14px" }, yazi: "Open positions" }));
+      if (!V.pozisyonlar.length) parca.push(el("div", { sinif: "ikincil", yazi: "No open perp positions at this address." }));
+      else {
+        const t = el("table", { sinif: "tablo tablo--kart" });
+        t.append(el("thead", {}, [el("tr", {}, ["Market", "Size", "Entry", "Mark", "Unrealized P&L", "Liq. price", ""].map((b) => el("th", { yazi: b })))]));
+        t.append(el("tbody", {}, V.pozisyonlar.map((p) => {
+          const szi = Number(p.szi), uzun = szi > 0, pnl = Number(p.unrealizedPnl), roe = Number(p.returnOnEquity) * 100;
+          return el("tr", {}, [
+            el("td", { attr: { "data-et": "Market" } }, [el("strong", { yazi: p.coin }), " ", el("span", { sinif: "etiket " + (uzun ? "etiket--alis" : "etiket--satis"), yazi: (uzun ? "Long " : "Short ") + (p.leverage ? p.leverage.value + "×" : "") })]),
+            el("td", { sinif: "sayi", attr: { "data-et": "Size" }, yazi: Math.abs(szi) + " (" + usdK(Math.abs(Number(p.positionValue))) + ")" }),
+            el("td", { sinif: "sayi", attr: { "data-et": "Entry" }, yazi: fiyatK(Number(p.entryPx)) }),
+            el("td", { sinif: "sayi", attr: { "data-et": "Mark" }, yazi: fiyatK(p.mark) }),
+            el("td", { sinif: "sayi", attr: { "data-et": "Unrealized P&L", style: "color:" + (pnl > 0 ? "var(--alis, #2ecc71)" : pnl < 0 ? "var(--satis, #ff5c5c)" : "inherit") }, yazi: isaretli(pnl, usdK(pnl)) + " (" + isaretli(roe, roe.toFixed(1)) + "%)" }),
+            el("td", { sinif: "sayi", attr: { "data-et": "Liq. price" }, yazi: p.liquidationPx ? fiyatK(Number(p.liquidationPx)) : "–" }),
+            el("td", { attr: { "data-et": "" } }, p.dex ? [el("span", { sinif: "ikincil", yazi: "on " + p.dex })] : [el("a", { sinif: "dugme dugme--kucuk", attr: { href: "#/perps/trade?coin=" + encodeURIComponent(p.coin) }, yazi: "Manage" })]),
+          ]);
+        })));
+        parca.push(el("div", { sinif: "tablo-sarmal" }, [t]));
+      }
+      parca.push(el("h3", { sinif: "panel__baslik", attr: { style: "margin:6px 0 0;font-size:14px" }, yazi: "Spot coins" }));
+      if (!V.spotlar.length) parca.push(el("div", { sinif: "ikincil", yazi: "No spot coins on Hyperliquid at this address." }));
+      else {
+        const t = el("table", { sinif: "tablo tablo--kart" });
+        t.append(el("thead", {}, [el("tr", {}, ["Coin", "Balance", "Price", "Value", "P&L vs cost"].map((b) => el("th", { yazi: b })))]));
+        t.append(el("tbody", {}, V.spotlar.map((x) => {
+          const kz = x.coin !== "USDC" && x.maliyet > 0 && x.deger != null ? x.deger - x.maliyet : null;
+          return el("tr", {}, [
+            el("td", { attr: { "data-et": "Coin" } }, [el("strong", { yazi: x.coin })]),
+            el("td", { sinif: "sayi", attr: { "data-et": "Balance" }, yazi: jetonMiktar(x.miktar) + (x.kilitli > 0 ? " (" + jetonMiktar(x.kilitli) + " in orders)" : "") }),
+            el("td", { sinif: "sayi", attr: { "data-et": "Price" }, yazi: fiyatK(x.fiyat) }),
+            el("td", { sinif: "sayi", attr: { "data-et": "Value" }, yazi: usdK(x.deger) }),
+            el("td", { sinif: "sayi", attr: { "data-et": "P&L vs cost", style: "color:" + (kz > 0 ? "var(--alis, #2ecc71)" : kz < 0 ? "var(--satis, #ff5c5c)" : "inherit") }, yazi: kz == null ? "—" : isaretli(kz, usdK(kz)) + " (" + isaretli(kz, (kz / x.maliyet * 100).toFixed(1)) + "%)" }),
+          ]);
+        })));
+        parca.push(el("div", { sinif: "tablo-sarmal" }, [t]));
+      }
+      parca.push(el("div", { sinif: "satir", attr: { style: "gap:8px;flex-wrap:wrap" } }, [
+        el("a", { sinif: "dugme dugme--marka dugme--kucuk", attr: { href: "#/perps/trade" }, yazi: "Trade perps" }),
+        el("a", { sinif: "dugme dugme--sade dugme--kucuk", attr: { href: "https://app.hyperliquid.xyz/portfolio", target: "_blank", rel: "noopener" }, yazi: "Open on Hyperliquid ↗" })]),
+        el("div", { sinif: "yazi yazi--kucuk yazi--sessiz", yazi: "Read live from Hyperliquid for the connected address and refreshed every 15 s. Spot P&L is against Hyperliquid's own cost figure for the balance. Your Hyperliquid account is the same address as your wallet." }));
+      govde.replaceChildren(...parca);
+    } catch (e) {
+      govde.replaceChildren(el("div", { sinif: "yazi yazi--kucuk yazi--sessiz", yazi: "Could not read Hyperliquid: " + ((e && e.message) || e) }));
+    }
+    if (kutu.isConnected) setTimeout(yenile, 15000);
+  };
+  setTimeout(yenile, 0);
+  return kutu;
+}
+
 export async function ciz({ cuzdan }) {
   const kap = el("div", { sinif: "yigin" });
   const hesap = cuzdan.hesap();
 
   kap.append(sayfaUst("Portfolio", hesap ? null : "No wallet connected"));
-  /* 13 Nov 2026: Pulse Points, opened at this wallet when one is connected */
-  kap.append(el("a", { sinif: "jeton-kart", attr: { href: "#/points" + (hesap ? "?a=" + hesap : "") } }, [
-    el("div", { sinif: "satir" }, [el("span", { sinif: "ucuncul", html: ikon("kupa", "yol-oge__ikon") }), el("strong", { yazi: "Pulse Points" })]),
-    el("div", { sinif: "ikincil", yazi: hesap ? "See this wallet's points for creating tokens and backing new launches." : "Points for creating tokens and backing new launches. Check any address, no wallet needed." })
-  ]));
 
+  /* 16 Nov 2026 (owner): none of the wallet sections shows before a wallet is connected */
   if (!hesap) {
     kap.append(bos(
-      "No wallet connected",
-      "Connect a wallet to read balances. The page sends nothing; it only " +
-      "reads.",
+      "Connect your wallet",
+      "Your coins, your Hyperliquid positions and your launch tokens show here once a wallet is connected. The page only reads; nothing is stored.",
       el("button", {
         sinif: "dugme dugme--marka",
         yazi: "Connect wallet",
@@ -78,6 +143,16 @@ export async function ciz({ cuzdan }) {
     ));
     return kap;
   }
+
+  /* 16 Nov 2026 (owner: "coinler nerde nasıl takip etcem ... açtığım pozisyonlar nerde"): Hyperliquid first:
+     perp positions (main list and every HIP-3 DEX) and every spot coin, refreshed every 15 s while the page is open */
+  kap.append(hlPaneli(hesap));
+
+  /* 13 Nov 2026: Pulse Points, opened at this wallet */
+  kap.append(el("a", { sinif: "jeton-kart", attr: { href: "#/points?a=" + hesap } }, [
+    el("div", { sinif: "satir" }, [el("span", { sinif: "ucuncul", html: ikon("kupa", "yol-oge__ikon") }), el("strong", { yazi: "Pulse Points" })]),
+    el("div", { sinif: "ikincil", yazi: "See this wallet's points for creating tokens and backing new launches." })
+  ]));
 
   /* Launch tokens on every chain are read from each chain directly, so
      this part does not care which network the wallet is on. */

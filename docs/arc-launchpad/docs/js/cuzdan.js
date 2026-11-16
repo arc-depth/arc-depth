@@ -24,6 +24,9 @@ const ONALTILIK_ID = "0x" + ZINCIR.id.toString(16);
 
 let _hesap = null;
 let _zincir = null;
+/* 16 Nov 2026: some mobile wallets report the chain id as a number (or a decimal string), which crashed every
+   page that compared it ("_zincir.toLowerCase is not a function"); keep it as lowercase hex everywhere */
+const hexZincir = (c) => { if (c == null || c === "") return null; if (typeof c === "number" || typeof c === "bigint") return "0x" + c.toString(16); const t = String(c).trim().toLowerCase(); return t.startsWith("0x") ? t : /^d+$/.test(t) ? "0x" + Number(t).toString(16) : t; };
 const _dinleyiciler = new Set();
 
 /* EIP-6963: wallets announce themselves instead of fighting over
@@ -86,7 +89,7 @@ async function wcKur() {
     },
   });
   _wc.on("accountsChanged", (h) => { _hesap = h && h.length ? h[0] : null; duyur(); });
-  _wc.on("chainChanged", (c) => { _zincir = typeof c === "number" ? "0x" + c.toString(16) : c; duyur(); });
+  _wc.on("chainChanged", (c) => { _zincir = hexZincir(c); duyur(); });
   _wc.on("disconnect", () => {
     try { localStorage.removeItem(WC_ISARET); } catch (e) { /* storage may be blocked */ }
     _wc = null; _hesap = null; _zincir = null; duyur();
@@ -172,7 +175,7 @@ async function zinciriOku() {
   const p = saglayici();
   if (!p) return null;
   try {
-    _zincir = await p.request({ method: "eth_chainId" });
+    _zincir = hexZincir(await p.request({ method: "eth_chainId" }));
   } catch (e) {
     _zincir = null;
   }
@@ -183,7 +186,7 @@ export const cuzdan = {
   varMi() { return !!saglayici(); },
   hesap() { return _hesap; },
   zincirId() { return _zincir; },
-  zincirdeMi() { return _zincir != null && _zincir.toLowerCase() === ONALTILIK_ID; },
+  zincirdeMi() { return _zincir != null && hexZincir(_zincir) === ONALTILIK_ID; },
 
   /** Report an already-authorised account. Never prompts. */
   async sessizBagla() {
@@ -424,7 +427,7 @@ setTimeout(() => {
   const p = saglayici();
   if (p && p.on) {
     p.on("accountsChanged", (h) => { _hesap = !kopukMu() && h && h.length ? h[0] : null; duyur(); });
-    p.on("chainChanged", (c) => { _zincir = c; duyur(); });
+    p.on("chainChanged", (c) => { _zincir = hexZincir(c); duyur(); });
   }
   /* a WalletConnect session left open on this device: restore it quietly */
   let wcVar = false;

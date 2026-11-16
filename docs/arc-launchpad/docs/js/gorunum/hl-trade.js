@@ -486,6 +486,8 @@ export async function ciz({ param, cuzdan }) {
   }
 
   function hesapCiz() {
+    /* 16 Nov 2026 (owner): the account section stays hidden until a wallet is connected */
+    hesapPanel.style.display = kim ? "" : "none";
     if (!kim) {
       hesapGovde.replaceChildren(el("div", { sinif: "ikincil", yazi: "Connect your wallet to see your Hyperliquid balance, positions and orders here. Your Hyperliquid account is the same address as your wallet." }),
         el("button", { sinif: "dugme dugme--marka", attr: { type: "button" }, yazi: "Connect wallet", on: { click: () => cuzdan.bagla().catch(() => {}) } }));
@@ -499,6 +501,7 @@ export async function ciz({ param, cuzdan }) {
         H.spotUsdc > 0.009 ? olcum("Spot USDC", usd(H.spotUsdc), "separate from perps") : null]),
     ];
     if (salt) kalemler.unshift(not("Read-only view of " + kim + ". Nothing can be signed in this view.", "bilgi"));
+    else kalemler.push(el("a", { sinif: "dugme dugme--sade dugme--kucuk", attr: { href: "#/portfoy", style: "align-self:flex-start" }, yazi: "All your coins and positions → Portfolio" }));
 
     /* positions */
     const pozKap = el("div", { sinif: "yigin yigin--sik" });

@@ -102,6 +102,8 @@ function rayiCiz() {
   const aktif = yolBul(hashiCoz().yol);
   const nav = el("nav", { sinif: "ray__nav", attr: { "aria-label": "Main navigation" } });
   for (const g of GRUPLAR) {
+    /* 16 Nov 2026 (owner): the wallet's own group (Portfolio, P&L, invites, points) shows only once a wallet is connected */
+    if (g.anahtar === "sen" && !cuzdan.hesap()) continue;
     const ogeler = grubunYollari(g.anahtar);
     if (!ogeler.length) continue;
     const acik = g.anahtar in secim ? secim[g.anahtar] : (g.anahtar === "kesif" || (aktif && aktif.grup === g.anahtar));
@@ -457,6 +459,7 @@ cuzdan.dinle(({ hesap }) => {
   cuzdanDugmesiniTazele();
   if ((hesap || "").toLowerCase() === (_sonHesap || "").toLowerCase()) return;
   _sonHesap = hesap;
+  rayiCiz();
   ciz();
 });
 

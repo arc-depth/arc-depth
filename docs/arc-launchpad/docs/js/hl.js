@@ -112,6 +112,39 @@ export async function hesapOku(user) {
   };
 }
 
+/** 16 Nov 2026 (owner: "coinler nerde nasıl takip etcem"): everything an address holds on Hyperliquid, for the
+ *  Portfolio page: perp positions on the main list AND on every builder-deployed (HIP-3) perp DEX, plus every spot
+ *  token priced at its USDC market. Public reads only; nothing is stored. */
+export async function tumVarliklar(user) {
+  const u = user.toLowerCase();
+  const [ch, spot, sm, dexler, mids] = await Promise.all([
+    bilgi({ type: "clearinghouseState", user: u }),
+    bilgi({ type: "spotClearinghouseState", user: u }).catch(() => null),
+    bilgi({ type: "spotMetaAndAssetCtxs" }).catch(() => null),
+    bilgi({ type: "perpDexs" }).catch(() => []),
+    bilgi({ type: "allMids" }).catch(() => ({})),
+  ]);
+  const poz = (c, dex) => (c && c.assetPositions || []).map((x) => x.position).filter((p) => Number(p.szi) !== 0).map((p) => ({ ...p, dex }));
+  let pozisyonlar = poz(ch, "");
+  let perpDeger = Number(ch.marginSummary.accountValue) || 0;
+  const ekDex = (dexler || []).filter((d) => d && d.name);
+  const ek = await Promise.all(ekDex.map((d) => bilgi({ type: "clearinghouseState", user: u, dex: d.name }).catch(() => null)));
+  ek.forEach((c, i) => { if (!c) return; pozisyonlar = pozisyonlar.concat(poz(c, ekDex[i].name)); perpDeger += Number(c.marginSummary.accountValue) || 0; });
+  /* spot price of each token: its pair against USDC (token 0) */
+  const fiyat = new Map([[0, 1]]);
+  if (sm) {
+    const [meta, ctx] = sm;
+    for (const p of meta.universe || []) if (p.tokens[1] === 0 && ctx[p.index] && !fiyat.has(p.tokens[0])) fiyat.set(p.tokens[0], Number(ctx[p.index].markPx) || Number(ctx[p.index].midPx) || null);
+  }
+  const spotlar = ((spot && spot.balances) || []).filter((b) => Number(b.total) > 0).map((b) => {
+    const f = fiyat.get(b.token);
+    const miktar = Number(b.total);
+    return { coin: b.coin, miktar, kilitli: Number(b.hold || 0), fiyat: f == null ? null : f, deger: f == null ? null : miktar * f, maliyet: Number(b.entryNtl || 0) };
+  }).sort((a, b) => (b.deger || 0) - (a.deger || 0));
+  for (const p of pozisyonlar) { const m = Number(mids[p.coin]); p.mark = m || Math.abs(Number(p.positionValue) / Number(p.szi)); }
+  return { perpDeger, cekilebilir: Number(ch.withdrawable) || 0, pozisyonlar, spotlar, spotDeger: spotlar.reduce((t, x) => t + (x.deger || 0), 0) };
+}
+
 /** Mid prices of every perp, fresh, just before an order is priced. */
 export const ortaFiyatlar = () => bilgi({ type: "allMids" });
 /** Best bid and ask of a market (for checking that a changed limit price would not fill at once). */
