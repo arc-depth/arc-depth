@@ -737,3 +737,6 @@ textarea.girdi { height: auto; min-height: 84px; padding: var(--bosluk-3); resiz
 .hesap-menu__oge { all: unset; box-sizing: border-box; width: 100%; padding: 11px 12px; border-radius: 10px; font-size: 14.5px; color: var(--yazi-1); cursor: pointer; }
 .hesap-menu__oge:hover, .hesap-menu__oge:focus-visible { background: var(--yuzey-3); }
 .hesap-menu__oge--kirmizi { color: #ff9aa5; }
+
+/* 16 Nov 2026: the invite bar on a solid panel too (its "kart" class has no style) */
+.davet-cubuk { background: #16161e; border: 1px solid var(--cizgi-guclu); border-radius: 14px; padding: 10px 14px; box-shadow: 0 16px 40px rgba(0,0,0,.6); }
