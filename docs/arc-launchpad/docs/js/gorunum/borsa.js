@@ -264,8 +264,26 @@ export async function ciz({ param }) {
       elde.replaceChildren("You hold ", el("b", { yazi: adet.toLocaleString("en-US", { maximumFractionDigits: adet >= 1 ? 2 : 6 }) + " " + t.sembol }),
         Number(t.fiyat) > 0 ? " ≈ $" + (adet * Number(t.fiyat)).toFixed(2) : "", " on " + t.zincir.ad);
     };
+    /* 16 Nov 2026 (owner: "kullanıcı hangi ağda olursa olsun sadece Buy basmalı"; decision: a device account): a visitor
+       with no Solana address of their own gets one made on this phone the first time a Solana token is quoted, and the
+       box just says where the tokens go, with a backup button. Their own address can still be typed instead. */
+    const cihazHazirla = async () => {
+      const m = _solM || (_solM = await import("../solana-ikiz.js"));
+      const a = await m.cihazAdresi(); try { localStorage.setItem(SOL_ANAHTAR, a); localStorage.setItem("arcpulse-sol-adres-cihaz", "1"); } catch (e) { /* blocked */ }
+      return a;
+    };
+    const cihazMi = () => { try { return localStorage.getItem("arcpulse-sol-adres-cihaz") === "1"; } catch (e) { return false; } };
     const solSatir = () => {
       if (!sol) return "";
+      if (!solAdres() || cihazMi()) {
+        const yedekDug = el("button", { sinif: "dugme dugme--sade dugme--kucuk", attr: { type: "button" }, yazi: "Back up", on: { click: async () => {
+          const m = _solM || (_solM = await import("../solana-ikiz.js"));
+          if (!confirm("Your Solana account's secret key will show on screen. Write it down or import it into Phantom / Solflare. Anyone who sees it can take the tokens. Show it?")) return;
+          const k = await m.cihazYedek(); prompt("Your Solana account's secret key (copy it, keep it private):", k); } } });
+        const kendi = el("button", { sinif: "dugme dugme--sade dugme--kucuk", attr: { type: "button" }, yazi: "Use my own Solana address", on: { click: () => {
+          try { localStorage.removeItem("arcpulse-sol-adres-cihaz"); localStorage.removeItem(SOL_ANAHTAR); } catch (e) { /* blocked */ } kutuCiz(taraf); } } });
+        return el("div", { sinif: "bx-elde" }, ["Your ", t.sembol, " goes to your ARC PULSE Solana account on this phone", solAdres() ? " (" + solAdres().slice(0, 4) + "…" + solAdres().slice(-4) + ")" : "", ". Back it up once: without a backup, clearing this browser loses it. ", el("div", { attr: { style: "display:flex;gap:6px;margin-top:6px;flex-wrap:wrap" } }, [yedekDug, kendi])]);
+      }
       const giris = el("input", { attr: { placeholder: "Your Solana address (where tokens go)", autocomplete: "off", spellcheck: "false", "aria-label": "Your Solana address" } });
       giris.value = solAdres() || "";
       giris.addEventListener("input", () => { const a = giris.value.trim(); if (solGecerli(a)) { try { localStorage.setItem(SOL_ANAHTAR, a); } catch (e) { /* blocked */ } eldeYaz(); yeniden(); } });
@@ -286,8 +304,8 @@ export async function ciz({ param }) {
       if (taraf === "al") {
         const usd = Number(girdi.value), ag = kaynakAg();
         if (!(usd >= 1)) { teklifK.replaceChildren(...teklifSatir("At least $1", "")); return; }
-        const alici = sol ? solAdres() : kim;
-        if (sol && !alici) { teklifK.replaceChildren(el("span", { sinif: "uyari", yazi: "Add your Solana address above: that is where the " + t.sembol + " go." })); return; }
+        let alici = sol ? solAdres() : kim;
+        if (sol && !alici) { try { alici = await cihazHazirla(); eldeYaz(); } catch (e) { teklifK.replaceChildren(el("span", { sinif: "uyari", yazi: "This browser cannot make a Solana account (" + ((e && e.message) || e) + "). Type a Solana address above." })); return; } }
         const odeyen = ag === SOL_AG ? solAdres() : kim;
         if (ag === SOL_AG && !odeyen) { teklifK.replaceChildren(el("span", { sinif: "uyari", yazi: "Connect your Solana wallet above to pay from Solana." })); return; }
         govde = { user: odeyen, recipient: alici, originChainId: ag.id, destinationChainId: t.zincir.relay, originCurrency: ag.dolar, destinationCurrency: t.adres, amount: (ag === SOL_AG ? BigInt(Math.round(usd * 1e6)) : V.dolarHam(ag, usd)).toString(), tradeType: "EXACT_INPUT", refundTo: odeyen, appFees: [{ recipient: V.UCRET_ALICI, fee: V.UCRET_BPS }] };
@@ -381,6 +399,17 @@ export async function ciz({ param }) {
           const d = it.data;
           const h = await cuzdan.agdaGonder(ag, { to: d.to, data: d.data, value: "0x" + BigInt(d.value || 0).toString(16) });
           if ((await V.makbuz(ag, h)) !== 1) throw new Error("Reverted: " + h);
+        }
+        if (sol && taraf === "al" && cihazMi() && ag !== SOL_AG) {
+          try {
+            const sa = solAdres();
+            const bk = await fetch("https://solana-rpc.publicnode.com", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "getBalance", params: [sa] }) }).then((r) => r.json());
+            if (((bk.result && bk.result.value) || 0) < 3000000) {   // under 0.003 SOL
+              durum.textContent = "One more confirm: $0.50 of SOL to your Solana account, for its future sell fees (first time only)…";
+              const g = await fetch(V.RELAY + "/quote", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ user: cuzdan.hesap(), recipient: sa, originChainId: ag.id, destinationChainId: 792703809, originCurrency: ag.dolar, destinationCurrency: "11111111111111111111111111111111", amount: V.dolarHam(ag, 0.5).toString(), tradeType: "EXACT_INPUT", refundTo: cuzdan.hesap() }) }).then((r) => r.json());
+              for (const a2 of g.steps || []) for (const i2 of a2.items || []) { if (a2.kind !== "transaction") continue; const h2 = await cuzdan.agdaGonder(ag, { to: i2.data.to, data: i2.data.data, value: "0x" + BigInt(i2.data.value || 0).toString(16) }); await V.makbuz(ag, h2); }
+            }
+          } catch (e) { /* the buy went through; the SOL for fees can be added later */ }
         }
         if (taraf === "al") import("../cuzdan-varlik.js").then((M) => M.hatirla({ z: t.zincir.k, a: t.adres, s: t.sembol, d: ondalik, g: t.resim })).catch(() => {});
         durum.textContent = taraf === "al" ? "Paid ✓ " + t.sembol + " arrives on " + t.zincir.ad + (sol ? " at " + solAdres().slice(0, 6) + "…" : "") + ", usually within a minute." : "Sold ✓ USDC arrives on Arc, usually within a minute.";

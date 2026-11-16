@@ -52,9 +52,48 @@ function solCuzdani() {
   if (eski) return { ad: "Phantom", eski };
   /* 16 Nov 2026: the Solana account of the wallet paired by WalletConnect (cuzdan.js asks for it when pairing) */
   if (_cuz && _cuz.wcSolanaAdresi && _cuz.wcSolanaAdresi()) return { ad: (_cuz.wcCuzdanAdi && _cuz.wcCuzdanAdi()) || "your wallet", wc: true };
+  if (cihazVar()) return { ad: "ARC PULSE Solana account (this device)", cihaz: true };
   return null;
 }
 let _cuz = null;
+/* ---- 16 Nov 2026 (owner's decision: "cihazda otomatik hesap"): a Solana account made on THIS device for a visitor whose
+   wallet shares no Solana account, so a Solana token is bought with one Buy press from any chain. Ed25519 key made by
+   the browser (WebCrypto), kept only in this browser's storage (localStorage "arcpulse-sol-cihaz"), never sent anywhere.
+   It signs this account's own sells. The page asks the visitor to back it up (the 64-byte secret, base58, imports
+   into Phantom / Solflare). Lost browser data without a backup = lost tokens: the page says so. */
+const CIHAZ = "arcpulse-sol-cihaz";
+const b2h = (b) => [...new Uint8Array(b)].map((x) => x.toString(16).padStart(2, "0")).join("");
+export function cihazVar() { try { return !!localStorage.getItem(CIHAZ); } catch (e) { return false; } }
+async function cihazAnahtar() {
+  let k = null; try { k = JSON.parse(localStorage.getItem(CIHAZ) || "null"); } catch (e) { /* none */ }
+  if (!k) {
+    const cift = await crypto.subtle.generateKey({ name: "Ed25519" }, true, ["sign", "verify"]);
+    const pk8 = new Uint8Array(await crypto.subtle.exportKey("pkcs8", cift.privateKey));
+    const pub = new Uint8Array(await crypto.subtle.exportKey("raw", cift.publicKey));
+    k = { pk8: b2h(pk8), pub: b2h(pub), t: Date.now(), yedek: false };
+    localStorage.setItem(CIHAZ, JSON.stringify(k));
+  }
+  const ozel = await crypto.subtle.importKey("pkcs8", hexB(k.pk8), { name: "Ed25519" }, false, ["sign"]);
+  const { bs58 } = await vendor();
+  return { ozel, adres: bs58.encode(hexB(k.pub)), k };
+}
+export async function cihazAdresi() { return (await cihazAnahtar()).adres; }
+/** the backup: the 64-byte secret key (seed + public key) in base58 — what Phantom's "import private key" takes */
+export async function cihazYedek() {
+  const { k } = await cihazAnahtar(); const { bs58 } = await vendor();
+  const pk8 = hexB(k.pk8), tohum = pk8.slice(pk8.length - 32);
+  const tam = new Uint8Array(64); tam.set(tohum, 0); tam.set(hexB(k.pub), 32);
+  k.yedek = true; localStorage.setItem(CIHAZ, JSON.stringify(k));
+  return bs58.encode(tam);
+}
+export function cihazYedekli() { try { return !!(JSON.parse(localStorage.getItem(CIHAZ) || "null") || {}).yedek; } catch (e) { return false; } }
+async function cihazImzala(vtx) {
+  const { ozel } = await cihazAnahtar();
+  const imza = new Uint8Array(await crypto.subtle.sign({ name: "Ed25519" }, ozel, vtx.message.serialize()));
+  const { PublicKey } = await vendor();
+  vtx.addSignature(new PublicKey((await cihazAnahtar()).adres), imza);
+  return vtx;
+}
 import("./cuzdan.js").then((m) => { _cuz = m.cuzdan; }).catch(() => {});
 let _hesap = null;
 export const solanaCuzdan = {
@@ -64,6 +103,7 @@ export const solanaCuzdan = {
     const c = solCuzdani();
     if (!c) throw new Error("No Solana wallet found. Install Phantom (or any Solana wallet) and reload.");
     if (c.wc) { _hesap = { address: _cuz.wcSolanaAdresi(), wc: true }; return _hesap.address; }
+    if (c.cihaz) { _hesap = { address: await cihazAdresi(), cihaz: true }; return _hesap.address; }
     if (c.standart) {
       const r = await c.standart.features["standard:connect"].connect();
       _hesap = (r.accounts || c.standart.accounts)[0];
@@ -80,6 +120,7 @@ export const solanaCuzdan = {
     if (!_hesap) await this.baglan();
     const { Connection, bs58 } = await vendor();
     const conn = new Connection(SOL.rpc, "confirmed");
+    if (c.cihaz) { const imzali = await cihazImzala(vtx); return conn.sendRawTransaction(imzali.serialize(), { skipPreflight: false }); }
     if (c.wc) {
       const b64 = btoa(String.fromCharCode(...vtx.serialize()));
       try { const r = await _cuz.wcSolanaIstek("solana_signAndSendTransaction", { transaction: b64 }); if (r && r.signature) return r.signature; }
