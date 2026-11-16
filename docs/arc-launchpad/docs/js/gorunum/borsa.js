@@ -272,7 +272,10 @@ export async function ciz({ param }) {
       const bag = el("button", { sinif: "dugme dugme--sade dugme--kucuk", attr: { type: "button" }, yazi: "Connect Solana wallet", on: { click: async () => {
         try { const m = _solM || (_solM = await import("../solana-ikiz.js")); const a = await m.solanaCuzdan.baglan(); giris.value = a; try { localStorage.setItem(SOL_ANAHTAR, a); } catch (e) { /* blocked */ } eldeYaz(); yeniden(); }
         catch (e) { durum.textContent = (e && e.message) || "No Solana wallet found."; } } } });
-      return el("div", { sinif: "bx-sol" }, [el("label", { sinif: "bx-et", yazi: "Solana address (kept on this device only)" }), giris, bag]);
+      /* a phone wallet paired before Solana was asked for: one reconnect brings its Solana account in */
+      const yb = cuzdan.wcMi && cuzdan.wcMi() && !cuzdan.wcSolanaAdresi() && !solAdres() ? el("button", { sinif: "dugme dugme--marka dugme--kucuk", attr: { type: "button" }, yazi: "Use my wallet's Solana account (reconnect once)", on: { click: async () => {
+        try { await cuzdan.wcYenidenBagla(); if (cuzdan.wcSolanaAdresi()) { kutuCiz(taraf); } else durum.textContent = "Your wallet did not share a Solana account. Type a Solana address above."; } catch (e) { durum.textContent = (e && e.message) || "Could not reconnect."; } } } }) : "";
+      return el("div", { sinif: "bx-sol" }, [el("label", { sinif: "bx-et", yazi: "Solana address (kept on this device only)" }), giris, yb, bag]);
     };
 
     const teklifSatir = (a, b) => [el("span", { yazi: a }), el("b", { yazi: b })];

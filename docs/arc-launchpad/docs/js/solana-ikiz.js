@@ -50,8 +50,12 @@ function solCuzdani() {
   if (w) return { ad: w.name, standart: w };
   const eski = typeof window !== "undefined" && ((window.phantom && window.phantom.solana) || window.solana);
   if (eski) return { ad: "Phantom", eski };
+  /* 16 Nov 2026: the Solana account of the wallet paired by WalletConnect (cuzdan.js asks for it when pairing) */
+  if (_cuz && _cuz.wcSolanaAdresi && _cuz.wcSolanaAdresi()) return { ad: (_cuz.wcCuzdanAdi && _cuz.wcCuzdanAdi()) || "your wallet", wc: true };
   return null;
 }
+let _cuz = null;
+import("./cuzdan.js").then((m) => { _cuz = m.cuzdan; }).catch(() => {});
 let _hesap = null;
 export const solanaCuzdan = {
   varMi: () => !!solCuzdani(),
@@ -59,6 +63,7 @@ export const solanaCuzdan = {
   async baglan() {
     const c = solCuzdani();
     if (!c) throw new Error("No Solana wallet found. Install Phantom (or any Solana wallet) and reload.");
+    if (c.wc) { _hesap = { address: _cuz.wcSolanaAdresi(), wc: true }; return _hesap.address; }
     if (c.standart) {
       const r = await c.standart.features["standard:connect"].connect();
       _hesap = (r.accounts || c.standart.accounts)[0];
@@ -75,6 +80,15 @@ export const solanaCuzdan = {
     if (!_hesap) await this.baglan();
     const { Connection, bs58 } = await vendor();
     const conn = new Connection(SOL.rpc, "confirmed");
+    if (c.wc) {
+      const b64 = btoa(String.fromCharCode(...vtx.serialize()));
+      try { const r = await _cuz.wcSolanaIstek("solana_signAndSendTransaction", { transaction: b64 }); if (r && r.signature) return r.signature; }
+      catch (e) { if (!/method|not supported|unsupported/i.test(String(e && e.message))) throw e; }
+      const r = await _cuz.wcSolanaIstek("solana_signTransaction", { transaction: b64 });
+      const imzali = r && r.transaction ? Uint8Array.from(atob(r.transaction), (ch) => ch.charCodeAt(0)) : null;
+      if (imzali) return conn.sendRawTransaction(imzali, { skipPreflight: false });
+      throw new Error("The wallet returned no signed Solana transaction.");
+    }
     if (c.standart && c.standart.features["solana:signAndSendTransaction"]) {
       const [r] = await c.standart.features["solana:signAndSendTransaction"].signAndSendTransaction({ account: _hesap, chain: SOL.zincir, transaction: vtx.serialize() });
       return bs58.encode(r.signature);

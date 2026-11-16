@@ -55,6 +55,7 @@ const WC_PROJE = "3732e09480d6f286889688c0f4a70918";
 export const WC_ACIK = true;
 /* HyperEVM (999) is left out on purpose: chainid.network lists 999 as
    "Wanchain Testnet", so wallets that check the registry flag it. */
+const WC_SOL = "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp";   // Solana mainnet in WalletConnect's naming
 /* 16 Nov 2026: + 999 HyperEVM (the perps withdrawal's transaction goes there; a session without it never shows the request) */
 const WC_ZINCIRLER = [5042, 4663, 8453, 42161, 1, 56, 43114, 143, 999];
 const WC_ISARET = "arcpulse-wc";
@@ -116,6 +117,15 @@ async function wcKur() {
       icons: [new URL("veri/ikon.png", location.href).href],
     },
   });
+  /* 16 Nov 2026 (owner: "cüzdanı biri bağladı, para hangi ağda olursa olsun sistem kendisi köprüleyip coini alabilsin"):
+     one connection, every chain — the pairing also asks (optionally) for the wallet's SOLANA account. Wallets that keep
+     one (MetaMask, Trust, Phantom…) share it, so Solana tokens can be bought to it and sold from it without a second
+     wallet; the others simply pair without it. */
+  { const asil = _wc.signer.connect.bind(_wc.signer);
+    _wc.signer.connect = (o = {}) => asil({ ...o, optionalNamespaces: { ...(o.optionalNamespaces || {}),
+      solana: { chains: [WC_SOL], methods: ["solana_signTransaction", "solana_signAndSendTransaction", "solana_signMessage"], events: [] } } })
+      /* a wallet that refuses a proposal naming Solana: pair again without it, EVM only, as before */
+      .catch((e) => { if (/namespace|unsupported|chain/i.test(String(e && e.message))) return asil(o); throw e; }); }
   _wc.on("accountsChanged", (h) => { _hesap = h && h.length ? h[0] : null; duyur(); });
   _wc.on("chainChanged", (c) => { _zincir = hexZincir(c); duyur(); });
   _wc.on("disconnect", () => {
@@ -230,6 +240,7 @@ export const cuzdan = {
     try {
       const h = kopukMu() ? [] : await p.request({ method: "eth_accounts" });
       _hesap = h && h.length ? h[0] : null;
+      const sa = _hesap && this.wcSolanaAdresi(); if (sa) { try { localStorage.setItem("arcpulse-sol-adres", sa); } catch (x) { /* storage blocked */ } }
     } catch (e) {
       _hesap = null;
     }
@@ -245,6 +256,8 @@ export const cuzdan = {
     if (!p.session) await p.connect();
     try { localStorage.setItem(WC_ISARET, "1"); } catch (e) { /* storage may be blocked */ }
     _hesap = p.accounts && p.accounts.length ? p.accounts[0] : null;
+    /* the wallet's Solana account, when it shared one: the trade boxes use it as the Solana address */
+    const sa = this.wcSolanaAdresi(); if (sa) { try { localStorage.setItem("arcpulse-sol-adres", sa); } catch (e) { /* storage blocked */ } }
     await zinciriOku();
     duyur();
     return _hesap;
@@ -274,6 +287,13 @@ export const cuzdan = {
   },
   /** end the WalletConnect session and pair again (a new session asks for the current chain list) */
   async wcYenidenBagla() { await this.kes(); return this.walletConnect(); },
+  /** the Solana account the WalletConnect wallet shared, or null */
+  wcSolanaAdresi() {
+    const a = _wc && _wc.session && _wc.session.namespaces && _wc.session.namespaces.solana && _wc.session.namespaces.solana.accounts;
+    return a && a.length ? a[0].split(":")[2] : null;
+  },
+  /** send a Solana request over the WalletConnect session (solana_signAndSendTransaction / solana_signTransaction) */
+  wcSolanaIstek(method, params) { return _wc.signer.request({ method, params }, WC_SOL); },
   wcCuzdanAdi() { const c = wcCuzdan(); return c ? c.ad : null; },
 
   /** Disconnect and forget this device: ends a WalletConnect session and wipes everything this
