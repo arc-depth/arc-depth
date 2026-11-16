@@ -77,6 +77,8 @@ function wcCuzdan() {
   return { ad: m.name || "your wallet", link: r.native || r.universal || (bil && bil[1]) || null };
 }
 async function wcIle(is) {
+  /* 16 Nov 2026 (owner: "işaretlediğim şey çıkmasın"): the floating bar covered the page; the pages say it in their own status lines now */
+  return is();
   if (!(_wc && _wc.session)) return is();
   const c = wcCuzdan();
   const bar = document.createElement("div");
@@ -260,6 +262,7 @@ export const cuzdan = {
     duyur();
   },
   wcMi() { return !!(_wc && _wc.session); },
+  wcCuzdanAdi() { const c = wcCuzdan(); return c ? c.ad : null; },
 
   /** Disconnect and forget this device: ends a WalletConnect session and wipes everything this
       site and the WalletConnect library keep in this browser (local/session storage, IndexedDB).

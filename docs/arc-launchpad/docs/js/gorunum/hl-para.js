@@ -125,7 +125,12 @@ export function paraPaneli({ kim, cuzdan, hesapYukle }) {
       const gelen = Number(q.details.currencyOut.amountFormatted);
       const evet = el("button", { sinif: "dugme dugme--marka", attr: { type: "button" }, yazi: "Sign and send" });
       const hayir = el("button", { sinif: "dugme dugme--sade", attr: { type: "button" }, yazi: "Keep", on: { click: () => { cekOnay.hidden = true; } } });
-      cekOnay.replaceChildren(el("div", { yazi: "Send " + a + " USDC from Hyperliquid to " + kisaAdres(kim) + " (you) on Arc. You receive ≈ " + usd(gelen) + " USDC on Arc (fees " + usd(a - gelen) + "), usually within a minute. Your wallet signs " + (tekMi() ? "once" : "twice") + ", no gas." }), el("div", { sinif: "hl-sec" }, [hayir, evet]));
+      /* 16 Nov 2026 (owner's phone: Chrome + MetaMask over WalletConnect never showed Hyperliquid's signature): a phone
+         wallet linked from another browser gets a one-tap way to finish inside the wallet's own browser */
+      const wcAdi = cuzdan.wcMi && cuzdan.wcMi() ? (cuzdan.wcCuzdanAdi && cuzdan.wcCuzdanAdi()) || "your wallet" : null;
+      const icindeAc = wcAdi ? el("a", { sinif: "dugme dugme--sade", attr: { href: "https://metamask.app.link/dapp/" + location.host + location.pathname + location.hash, style: "width:100%;margin-top:8px" },
+        yazi: /metamask/i.test(wcAdi) ? "Phone wallet does not ask? Open this page in the MetaMask app" : "Open this page in your wallet app's browser", on: { click: (e) => { if (!/metamask/i.test(wcAdi)) { e.preventDefault(); navigator.clipboard && navigator.clipboard.writeText(location.href); e.target.textContent = "Link copied: paste it in your wallet app's browser"; } } } }) : "";
+      cekOnay.replaceChildren(el("div", { yazi: "Send " + a + " USDC from Hyperliquid to " + kisaAdres(kim) + " (you) on Arc. You receive ≈ " + usd(gelen) + " USDC on Arc (fees " + usd(a - gelen) + "), usually within a minute. Your wallet signs " + (tekMi() ? "once" : "twice") + ", no gas." }), el("div", { sinif: "hl-sec" }, [hayir, evet]), icindeAc);
       cekOnay.hidden = false; yaz(cDurum, "");
       evet.addEventListener("click", async () => {
         evet.disabled = true; hayir.disabled = true;
