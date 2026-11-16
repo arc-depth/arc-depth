@@ -122,18 +122,23 @@ export async function ciz({ cuzdan, param } = {}) {
     olcum("Last updated", veri.guncellendi ? zamanYaz(veri.guncellendi) : "–", "every hour · formula " + (veri.surum || "v1")),
   ]));
 
-  /* check any address: no wallet needed */
+  /* 16 Nov 2026 (owner): an address's own points show only to that connected wallet; no lookup of other addresses */
   const girdi = el("input", { sinif: "girdi", attr: { type: "text", inputmode: "text", autocomplete: "off", spellcheck: "false", placeholder: "0x… or a Solana address", "aria-label": "Address to check" } });
   const sonuc = el("div", { sinif: "pp-sonuc", attr: { "aria-live": "polite" } });
   const bak = () => { sonuc.replaceChildren(...[sonucKarti(veri, girdi.value)].filter(Boolean)); };
   girdi.addEventListener("keydown", (e) => { if (e.key === "Enter") bak(); });
-  const ilk = (param && param.get("a")) || ben;
-  if (ilk) { girdi.value = ilk; bak(); }
-  kap.append(panel("Check an address", el("div", {}, [
-    el("div", { sinif: "pp-ara" }, [girdi, el("button", { sinif: "dugme dugme--marka", attr: { type: "button" }, yazi: "Check", on: { click: bak } })]),
-    el("div", { sinif: "ucuncul", attr: { style: "margin-top:8px" }, yazi: ben ? "Your connected wallet is filled in and highlighted below. Nothing is sent." : "No wallet connection needed: paste any address. Nothing is sent or stored." }),
-    sonuc,
-  ])));
+  if (ben) {
+    girdi.value = ben; bak();
+    kap.append(panel("Your points", el("div", {}, [
+      sonuc,
+      el("div", { sinif: "ucuncul", attr: { style: "margin-top:8px" }, yazi: "Shown only to the wallet connected in this browser. Nothing is sent or stored." }),
+    ])));
+  } else {
+    kap.append(panel("Your points", el("div", { sinif: "yigin yigin--sik" }, [
+      el("div", { sinif: "ikincil", yazi: "Connect your wallet to see your own points." }),
+      el("button", { sinif: "dugme dugme--marka", attr: { type: "button", style: "align-self:flex-start" }, yazi: "Connect wallet", on: { click: () => { const d = document.getElementById("cuzdan-dugme"); if (d) d.click(); } } }),
+    ])));
+  }
 
   const liste = veri.liste || [];
   kap.append(panel("Leaderboard" + (liste.length ? " · top " + liste.length : ""), liste.length ? tablo(liste, ben)

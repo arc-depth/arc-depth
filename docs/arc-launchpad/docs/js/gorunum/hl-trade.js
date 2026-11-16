@@ -160,10 +160,10 @@ export async function ciz({ param, cuzdan }) {
   const istenen = (param.get("coin") || "").trim();
   let P = adIle.get(istenen) || [...adIle.values()].find((p) => p.ad.toUpperCase() === istenen.toUpperCase()) || adIle.get("BTC") || piyasalar[0];
 
-  /* who: the connected wallet, or a read-only debug address */
-  const asParam = (param.get("as") || "").trim();
-  const salt = /^0x[0-9a-fA-F]{40}$/.test(asParam);
-  const kim = salt ? asParam.toLowerCase() : (cuzdan.hesap() || null);
+  /* who: the connected wallet only. 16 Nov 2026 (owner: "bu cüzdanı bağlayınca sadece cüzdan sahibi görmeli"):
+     the read-only ?as=<address> view is gone; an account shows only to the wallet connected in this browser */
+  const salt = false;
+  const kim = cuzdan.hesap() || null;
   let H = null;           // account data (hl.hesapOku)
   let ajan = null;        // this device's trading key (ethers Wallet), see hl.js
   let ajanDurum = "bilinmiyor";   // "gecerli" once Hyperliquid lists it as an agent of kim, "yok" when there is none

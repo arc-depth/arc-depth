@@ -149,7 +149,7 @@ export async function ciz({ cuzdan }) {
   kap.append(hlPaneli(hesap));
 
   /* 13 Nov 2026: Pulse Points, opened at this wallet */
-  kap.append(el("a", { sinif: "jeton-kart", attr: { href: "#/points?a=" + hesap } }, [
+  kap.append(el("a", { sinif: "jeton-kart", attr: { href: "#/points" } }, [
     el("div", { sinif: "satir" }, [el("span", { sinif: "ucuncul", html: ikon("kupa", "yol-oge__ikon") }), el("strong", { yazi: "Pulse Points" })]),
     el("div", { sinif: "ikincil", yazi: "See this wallet's points for creating tokens and backing new launches." })
   ]));
