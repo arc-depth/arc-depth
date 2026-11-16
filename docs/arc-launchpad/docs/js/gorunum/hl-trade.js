@@ -39,6 +39,8 @@ const RISK_ANAHTAR = "hl-risk-onay-v1";
 const HL_APP = "https://app.hyperliquid.xyz";
 
 const STIL =
+  ".hl-nerede{display:grid;gap:6px;padding:10px 12px;border-radius:12px;background:#121a2a;border:1px solid #1f3352;font-size:12.5px;line-height:1.5;color:var(--yazi-2)}" +
+  ".hl-link{all:unset;cursor:pointer;color:#b9a6ff;text-decoration:underline}" +
   ".hl-bakiye span:last-child{color:var(--yazi-1);font-weight:600}" +
   ".hl-liq{padding:6px 8px;margin:2px -8px;border-radius:8px;background:rgba(240,165,94,.08)}.hl-liq span:last-child{color:#f7c89a;font-weight:700}" +
   ".hl-liq--orta{background:rgba(240,165,94,.16)}.hl-liq--yakin{background:rgba(255,107,122,.16)}.hl-liq--yakin span:last-child{color:#ff9aa5}" +
@@ -604,6 +606,10 @@ export async function ciz({ param, cuzdan }) {
         rakam("P&L today", gunKz == null ? "…" : isr(gunKz), gunKz > 0 ? "hl-art" : gunKz < 0 ? "hl-eks" : "", "Hyperliquid's figure"),
         rakam("Available", usd(H.cekilebilir), "", "to trade or withdraw"),
         rakam("Margin in use", usd(H.teminat))]),
+      el("div", { sinif: "hl-nerede" }, [
+        el("div", { yazi: "This money is in your own Hyperliquid account at " + kim.slice(0, 6) + "…" + kim.slice(-4) + ", held by Hyperliquid, not by ARC PULSE. Wallet apps (MetaMask and others) do not show Hyperliquid balances; app.hyperliquid.xyz shows the same figure." }),
+        !salt && ajanHazir() ? el("div", {}, ["Orders here are signed by this device's trading key, so your wallet does not pop up for each one. The key can open and close positions only: it cannot withdraw or transfer money. ",
+          el("button", { sinif: "hl-link", attr: { type: "button" }, yazi: "Remove the key (ask my wallet every time)", on: { click: () => { hl.ajanSil(kim); ajan = null; ajanDurum = "yok"; hesapCiz(); formGuncelle(); durumYaz("This device's trading key is removed. Your wallet will be asked to sign each order.", "ok"); } } })]) : null]),
     ];
     if (salt) kalemler.unshift(not("Read-only view of " + kim + ". Nothing can be signed in this view.", "bilgi"));
     else kalemler.push(el("a", { sinif: "dugme dugme--sade dugme--kucuk", attr: { href: "#/portfoy", style: "align-self:flex-start" }, yazi: "All your coins and positions → Portfolio" }));
