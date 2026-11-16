@@ -512,7 +512,8 @@ function cuzdanSec() {
   const mobil = mobilMi();
   const tarayici = tarayiciCuzdani();
   const liste = [];
-  if (tarayici) liste.push(eylem(tarayici.ad, "Connect the wallet in this browser", "Detected", tarayici.ikon, () => cuzdan.bagla()));
+  if (tarayici) liste.push(el("div", { sinif: "cuzdan-grup", yazi: "Found in this browser" }), eylem(tarayici.ad, "Connect the wallet in this browser", "Detected", tarayici.ikon, () => cuzdan.bagla()));
+  if (tarayici) liste.push(el("div", { sinif: "cuzdan-grup", yazi: "Other ways" }));
   if (WC_ACIK) liste.push(eylem("WalletConnect", mobil ? "Any wallet app on this phone" : "Scan a QR code with any wallet app", tarayici ? null : "Any wallet", null,
     /* hidden, not closed, while the WalletConnect modal is up: if pairing
        fails the error still has a dialog to land in */
@@ -529,16 +530,18 @@ function cuzdanSec() {
   }
 
   const kutu = el("div", { sinif: "cuzdan-kutu", attr: { role: "dialog", "aria-modal": "true", "aria-labelledby": "cuzdan-baslik" } }, [
+    el("div", { sinif: "cuzdan-tutamak", attr: { "aria-hidden": "true" } }),
     el("div", { sinif: "cuzdan-kutu__ust" }, [
-      el("h2", { sinif: "cuzdan-kutu__baslik", attr: { id: "cuzdan-baslik" }, yazi: "Connect a wallet" }),
+      el("div", {}, [el("h2", { sinif: "cuzdan-kutu__baslik", attr: { id: "cuzdan-baslik" }, yazi: "Connect a wallet" }),
+        el("p", { sinif: "cuzdan-kutu__metin", attr: { style: "font-size:13px;margin-top:4px" }, yazi: "Pick the wallet you already use. You stay on this page." })]),
       el("button", { sinif: "dugme dugme--sade", attr: { type: "button", "aria-label": "Close" }, yazi: "✕", on: { click: kapat } }),
     ]),
     el("div", { sinif: "cuzdan-liste" }, liste),
     durum,
-    el("p", { sinif: "cuzdan-kutu__guven", yazi:
-      "ARC PULSE never asks for a seed phrase or a private key. Your wallet only connects and signs transactions you can read in the wallet before you approve them." }),
-    el("p", { sinif: "cuzdan-kutu__guven", yazi:
-      "Private by design: no accounts, no cookies, no analytics, no server of ours. We cannot see who connects. See Documentation → Privacy." }),
+    el("ul", { sinif: "cuzdan-guven" }, [
+      el("li", { yazi: "Connecting is free. Nothing moves until you approve something in your wallet." }),
+      el("li", { yazi: "We never ask for a seed phrase or a private key." }),
+      el("li", { yazi: "Private by design: no accounts, no cookies, no analytics. We store nothing about you." })]),
     el("button", { sinif: "dugme dugme--sade", attr: { type: "button" }, yazi: "Disconnect and forget this device",
       on: { click: async () => { await cuzdan.unut(); durum.textContent = "Disconnected. Nothing about you is stored in this browser now."; } } }),
     el("p", { sinif: "cuzdan-kutu__guven", attr: { style: "opacity:.7" }, yazi: "WalletConnect: Portions © 2025 Reown, Inc. All Rights Reserved." }),

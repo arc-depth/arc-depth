@@ -716,3 +716,17 @@ textarea.girdi { height: auto; min-height: 84px; padding: var(--bosluk-3); resiz
 
 /* the wallet button: "Connect" on a narrow phone, "Connect wallet" elsewhere */
 @media (max-width: 480px) { .cuzdan-uzun { display: none; } #cuzdan-dugme { padding: 0 12px; } }
+
+/* 16 Nov 2026 redesign: the connect dialog (approved demo, screen 3) */
+.cuzdan-kutu { border-radius: 20px; background: #14141b; }
+.cuzdan-tutamak { display: none; }
+.cuzdan-grup { font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--yazi-3); font-weight: 600; margin-top: 4px; }
+.cuzdan-guven { list-style: none; margin: 0; padding: 12px; display: grid; gap: 8px; border-radius: 14px; background: var(--yuzey-0); border: 1px solid var(--cizgi); }
+.cuzdan-guven li { position: relative; padding-left: 24px; font-size: 12.5px; line-height: 1.45; color: var(--yazi-2); }
+.cuzdan-guven li::before { content: ""; position: absolute; left: 2px; top: 3px; width: 11px; height: 6px; border-left: 2.4px solid var(--alis); border-bottom: 2.4px solid var(--alis); transform: rotate(-45deg); }
+@media (max-width: 860px) {
+  .cuzdan-perde { align-items: flex-end; padding: 0; }
+  .cuzdan-kutu { max-width: none; border-radius: 24px 24px 0 0; padding: 10px 18px calc(22px + env(safe-area-inset-bottom, 0px)); max-height: 90vh; overflow: auto; }
+  .cuzdan-tutamak { display: block; width: 40px; height: 5px; border-radius: 3px; background: #34343f; margin: 0 auto 2px; }
+}
+
