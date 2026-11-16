@@ -44,7 +44,20 @@ const VARSAYILAN = "kesfet";
      Phone: a bottom bar of five equal columns (Discover, Trade, Create, Portfolio, More);
      More (#/daha) is quick access plus every group. Every route has a home in both, which
      scripts/ray-kapsami.js checks. */
-const ALT_BAR = ["kesfet", "terminal", "olustur", "portfoy"];
+const ALT_BAR = ["kesfet", "terminal", "olustur", "perps-trade", "portfoy"];
+/* 16 Nov 2026 redesign: the phone bar is Home, Trade, Launch (raised), Perps, Portfolio; More moved to the header */
+const ALT_AD = { kesfet: "Home", terminal: "Trade", olustur: "Launch", "perps-trade": "Perps", portfoy: "Portfolio" };
+/* the desktop top navigation (the left rail is gone on desktop; every module stays in More, #/daha) */
+const UST_NAV = [["kesfet", "Discover", "#/kesfet"], ["terminal", "Trade", "#/terminal"], ["perps-trade", "Perps", "#/perps/trade"], ["olustur", "Launch", "#/olustur"], ["warp", "Warp", "#/warp"], ["portfoy", "Portfolio", "#/portfoy"], ["daha", "More", "#/daha"]];
+let kUstNav = null;
+function ustNavCiz() {
+  if (!kUstNav) { kUstNav = el("nav", { sinif: "ust-nav", attr: { "aria-label": "Main" } }); const m = document.querySelector(".ustbar__marka"); if (m) m.after(kUstNav); }
+  temizle(kUstNav);
+  for (const [yol, ad, href] of UST_NAV) {
+    if (yol === "portfoy" && !cuzdan.hesap()) continue;   // the wallet's own page shows once a wallet is connected
+    kUstNav.append(el("a", { sinif: "ust-nav__oge", attr: { href }, veri: { yol }, yazi: ad }));
+  }
+}
 
 const kIcerik = document.getElementById("icerik");
 const kRay = document.getElementById("ray");
@@ -142,7 +155,7 @@ function ustYoluCiz() {
   temizle(kUstYol);
   kUstYol.append(
     el("a", { sinif: "ust-cip", attr: { href: "presale.html", title: "ARCP 2 presale on Arc" }, veri: { yol: "presale" } }, [el("i", { attr: { "aria-hidden": "true" } }), el("span", { sinif: "ust-cip__uzun", yazi: "ARCP presale" }), el("span", { sinif: "ust-cip__kisa", yazi: "Presale" })]),
-    el("a", { sinif: "dugme dugme--marka ust-olustur", attr: { href: "#/olustur" }, veri: { yol: "olustur" } }, [el("span", { html: ikon("arti", "yol-oge__ikon") }), el("span", { yazi: "Create" })]));
+    el("a", { sinif: "ust-daha", attr: { href: "#/daha", "aria-label": "More: every module" }, veri: { yol: "daha" }, html: ikon("daha", "yol-oge__ikon") }));
 }
 
 function sekmeleriCiz() {
@@ -156,17 +169,9 @@ function sekmeleriCiz() {
       veri: { yol: y.yol }
     }, [
       el("span", { sinif: "sekme-oge__kap", html: ikon(ad === "olustur" ? "arti" : y.ikon, "sekme-oge__ikon") }),
-      el("span", { yazi: ad === "olustur" ? "Create" : y.kisa || y.ad })
+      el("span", { yazi: ALT_AD[ad] || y.kisa || y.ad })
     ]));
   }
-  kSekme.append(el("a", {
-    sinif: "sekme-oge",
-    attr: { href: "#/daha" },
-    veri: { yol: "daha" }
-  }, [
-    el("span", { sinif: "sekme-oge__kap", html: ikon("daha", "sekme-oge__ikon") }),
-    el("span", { yazi: "More" })
-  ]));
 }
 
 /* Search: tokens by name, symbol or address (Enter), and pages by name (the list under the box).
@@ -469,6 +474,7 @@ cuzdan.dinle(({ hesap }) => {
   if ((hesap || "").toLowerCase() === (_sonHesap || "").toLowerCase()) return;
   _sonHesap = hesap;
   rayiCiz();
+  ustNavCiz();
   ciz();
 });
 
@@ -549,6 +555,7 @@ window.addEventListener("cuzdan-yok", cuzdanSec);
 
 rayiCiz();
 ustYoluCiz();
+ustNavCiz();
 sekmeleriCiz();
 aramayiCiz();
 cuzdanDugmesiniTazele();

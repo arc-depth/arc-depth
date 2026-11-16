@@ -23,36 +23,37 @@
   /* ---- surfaces ---------------------------------------------------
      Five steps, each a real step. A panel that is 3% lighter than its
      background reads as a rendering artifact rather than a panel. */
-  --yuzey-0: #0a0b0d;        /* page */
-  --yuzey-1: #101216;        /* cards, panels */
-  --yuzey-2: #171a20;        /* raised: inputs, hovered rows */
-  --yuzey-3: #1f232b;        /* highest: menus, tooltips, active tabs */
-  --yuzey-ust: #262b35;      /* borders that need to be seen */
+  /* 16 Nov 2026 redesign: the approved demo's palette (violet-tinted near black) */
+  --yuzey-0: #0b0b10;        /* page */
+  --yuzey-1: #13131a;        /* cards, panels */
+  --yuzey-2: #1a1a23;        /* raised: inputs, hovered rows */
+  --yuzey-3: #23232e;        /* highest: menus, tooltips, active tabs */
+  --yuzey-ust: #2a2a36;      /* borders that need to be seen */
 
   /* ---- hairlines --------------------------------------------------
      Borders carry the layout here instead of shadows, because shadow on
      near-black is mud. Two weights: one that separates, one that frames. */
-  --cizgi: #1c2027;
-  --cizgi-guclu: #2a3039;
+  --cizgi: #1f1f29;
+  --cizgi-guclu: #2a2a36;
 
   /* ---- text -------------------------------------------------------
      Four levels. Anything below the fourth is unreadable on this
      background and would be decoration pretending to be information. */
-  --yazi-1: #e8eaed;         /* primary */
-  --yazi-2: #a4abb6;         /* secondary */
-  --yazi-3: #6f7784;         /* tertiary: labels, units */
-  --yazi-4: #4a515c;         /* disabled, placeholders */
+  --yazi-1: #f2f2f5;         /* primary */
+  --yazi-2: #b4b4c2;         /* secondary */
+  --yazi-3: #8f8f9e;         /* tertiary: labels, units (4.5:1 on panels) */
+  --yazi-4: #5a5a68;         /* disabled, placeholders */
 
   /* ---- signal -----------------------------------------------------
      Buy green and sell red, and they are NOT the brand colour. A brand
      accent that looks like a buy is a brand accent that gets misread in
      the one place misreading costs money. */
-  --alis: #26c281;
-  --alis-zemin: rgba(38, 194, 129, 0.12);
-  --alis-cizgi: rgba(38, 194, 129, 0.35);
-  --satis: #f0484b;
-  --satis-zemin: rgba(240, 72, 75, 0.12);
-  --satis-cizgi: rgba(240, 72, 75, 0.35);
+  --alis: #2ed18a;
+  --alis-zemin: rgba(46, 209, 138, 0.12);
+  --alis-cizgi: rgba(46, 209, 138, 0.35);
+  --satis: #ff6b7a;
+  --satis-zemin: rgba(255, 107, 122, 0.12);
+  --satis-cizgi: rgba(255, 107, 122, 0.35);
 
   /* ---- brand ------------------------------------------------------
      Violet, deliberately far from both signals on the hue wheel. */
@@ -83,9 +84,9 @@
   /* 1.2 ratio from 13px. Small sizes are tight because this interface is
      dense on purpose; a trading table with 16px rows shows four tokens. */
   --boy-xs: 10.5px;
-  --boy-s: 12px;
-  --boy-m: 13px;          /* body */
-  --boy-l: 15.5px;
+  --boy-s: 12.5px;
+  --boy-m: 14px;          /* body (16 Nov 2026: 13 -> 14, read on phones) */
+  --boy-l: 16px;
   --boy-xl: 18.5px;
   --boy-2xl: 22px;
   --boy-3xl: 27px;

@@ -316,3 +316,25 @@
 /* 16 Nov 2026: the rail's main links and the divider above the folded groups */
 .ray__ana .yol-oge { font-weight: var(--kalin-yari); }
 .ray__ayrac { padding: var(--bosluk-2) var(--bosluk-3) 0; border-top: 1px solid var(--cizgi); font-size: var(--boy-xs); letter-spacing: 0.08em; text-transform: uppercase; color: var(--yazi-4); }
+
+/* ---- 16 Nov 2026 redesign (approved demo): desktop top navigation instead of the left rail;
+   phone keeps the five-tab bar and gets More in the header ---- */
+.ust-nav { display: none; gap: 2px; align-items: center; }
+.ust-nav__oge { padding: 8px 12px; border-radius: 9px; color: var(--yazi-2); text-decoration: none; font-size: 14px; font-weight: 500; white-space: nowrap; }
+.ust-nav__oge:hover { color: var(--yazi-1); background: var(--yuzey-2); }
+.ust-nav__oge[aria-current="page"] { color: var(--yazi-1); background: var(--yuzey-3); font-weight: 600; }
+.ust-daha { display: inline-grid; place-items: center; width: 40px; height: 40px; border-radius: 10px; border: 1px solid var(--cizgi-guclu); color: var(--yazi-2); flex: none; }
+.ust-daha[aria-current="page"] { color: var(--yazi-1); border-color: var(--marka-cizgi); background: var(--marka-zemin); }
+.ust-daha svg { width: 18px; height: 18px; }
+@media (min-width: 861px) {
+  .govde { grid-template-columns: minmax(0, 1fr); }
+  .ray { display: none; }
+  .ust-nav { display: flex; }
+  .ust-daha { display: none; }
+  .govde > .icerik { width: 100%; margin-inline: auto; box-sizing: border-box; }
+}
+@media (min-width: 861px) and (max-width: 1180px) {
+  .ust-nav__oge { padding: 8px 9px; font-size: 13.5px; }
+  .ust-cip__uzun { display: none; } .ust-cip__kisa { display: inline; }
+}
+
