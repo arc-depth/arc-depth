@@ -251,13 +251,13 @@ export async function ciz({ cuzdan }) {
     const tablo = el("table", { sinif: "tablo tablo--kart" });
     tablo.append(el("thead", {}, [el("tr", {}, ["Token", "Balance", "Price", "Value", ""].map((b) => el("th", { yazi: b })))]));
     tablo.append(el("tbody", {}, liste.map((x) => el("tr", {}, [
-      el("td", { attr: { "data-et": "Token" } }, [el("a", { sinif: "jeton", attr: { href: "#/merkez?t=" + x.token } }, [
+      el("td", { attr: { "data-et": "Token" } }, [el("a", { sinif: "jeton", attr: { href: "#/terminal?t=" + x.token } }, [
         el("div", { sinif: "jeton__logo jeton__logo--bos", yazi: (x.sembol || "?").slice(0, 3).toUpperCase() }),
         el("div", { sinif: "jeton__yazi" }, [el("div", { sinif: "jeton__sembol", yazi: x.sembol || "?" }), el("div", { sinif: "jeton__ad", yazi: (x.ad || "") + (x.v9 ? " · v9" : "") })])])]),
       el("td", { sinif: "sayi", attr: { "data-et": "Balance" }, yazi: jetonMiktar(x.miktar) }),
       el("td", { sinif: "sayi", attr: { "data-et": "Price" }, yazi: x.fiyat == null ? "—" : (x.fiyat >= 0.01 ? para(x.fiyat) : "$" + x.fiyat.toPrecision(3)) }),
       el("td", { sinif: "sayi", attr: { "data-et": "Value" }, yazi: x.deger == null ? "—" : para(x.deger) }),
-      el("td", { attr: { "data-et": "" } }, [el("a", { sinif: "dugme dugme--kucuk", attr: { href: "#/merkez?t=" + x.token }, yazi: "Trade" })]),
+      el("td", { attr: { "data-et": "" } }, [el("a", { sinif: "dugme dugme--kucuk", attr: { href: "#/terminal?t=" + x.token }, yazi: "Open" }), el("a", { sinif: "dugme dugme--marka dugme--kucuk", attr: { href: "#/merkez?t=" + x.token, style: "margin-left:6px" }, yazi: "Buy / sell" })]),
     ]))));
     tutKap.replaceChildren(
       el("div", { sinif: "izgara izgara--olcum" }, [olcum("Value at pool price", para(top), liste.length + " token" + (liste.length === 1 ? "" : "s") + " on Arc")]),

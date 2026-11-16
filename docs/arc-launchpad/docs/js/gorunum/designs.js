@@ -225,7 +225,7 @@ async function profil({ cuzdan }, adres) {
   tasarimciJetonlari(adres).then((js) => {
     temizle(jetonlar);
     if (!js.length) { jetonlar.append(el("span", { sinif: "ds-cihaz", yazi: "No designer token founded by this wallet." })); return; }
-    for (const j of js) jetonlar.append(el("a", { sinif: "dugme dugme--kucuk", attr: { href: "#/merkez?t=" + j.token, title: "Trade " + (j.sembol || "") }, yazi: "$" + (j.sembol || kisa(j.token)) + " · Trade" }));
+    for (const j of js) jetonlar.append(el("a", { sinif: "dugme dugme--kucuk", attr: { href: "#/terminal?t=" + j.token, title: "Trade " + (j.sembol || "") }, yazi: "$" + (j.sembol || kisa(j.token)) + " · Trade" }));
   }).catch(() => { temizle(jetonlar); jetonlar.append(el("span", { sinif: "ds-cihaz", yazi: "Could not read the type record." })); });
 
   kap.append(el("div", { sinif: "ds-profil" }, [avatar(adres, true), el("div", { sinif: "ds-profil__bilgi" }, [
@@ -362,7 +362,7 @@ async function detay({ cuzdan }, id) {
   yan.append(el("div", { sinif: "ds-kutu" }, [
     el("div", { sinif: "ds-satir" }, [el("span", { yazi: "Designer" }), el("a", { attr: { href: "#/designs/u/" + t.tasarimci }, yazi: kisa(t.tasarimci) })]),
     el("div", { sinif: "ds-satir" }, [el("span", { yazi: "Owner" }), t.sahip ? el("a", { attr: { href: "#/designs/u/" + t.sahip }, yazi: esit(t.sahip, ben) ? "you" : kisa(t.sahip) }) : el("span", { yazi: "none (burned)" })]),
-    el("div", { sinif: "ds-satir" }, [el("span", { yazi: "Designer token" }), el("a", { attr: { href: "#/merkez?t=" + t.token }, yazi: "$" + sym + " · Trade" })]),
+    el("div", { sinif: "ds-satir" }, [el("span", { yazi: "Designer token" }), el("a", { attr: { href: "#/terminal?t=" + t.token }, yazi: "$" + sym + " · Trade" })]),
     el("div", { sinif: "ds-satir" }, [el("span", { yazi: "Exact file hash" }), el("span", { sinif: "ds-mono", attr: { title: t.dosyaHash }, yazi: t.dosyaHash.slice(0, 18) + "…" })]),
     el("div", { sinif: "ds-satir" }, [el("span", { yazi: "Fingerprint" }), el("span", { sinif: "ds-mono", attr: { title: t.algiHash }, yazi: t.algiHash.slice(0, 18) + "…" })]),
     meta && meta.arcpulse && meta.arcpulse.file ? el("div", { sinif: "ds-satir" }, [el("span", { yazi: "File" }), el("span", { yazi: (meta.arcpulse.file.name || "file") + (meta.arcpulse.file.size ? " · " + Math.ceil(meta.arcpulse.file.size / 1024) + " KB" : "") + " · encrypted" })]) : null,

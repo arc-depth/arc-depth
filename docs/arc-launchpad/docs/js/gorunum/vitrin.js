@@ -651,7 +651,7 @@ export async function ciz() {
     const bizim = (!secili || secili.k === "arc") ? await bizimTokenler().catch(() => []) : [];
     const serit = bizim.length ? [el("h2", { sinif: "vt-h2", attr: { style: "margin-top:0" } }, ["ARC PULSE launches", el("span", { sinif: "vt-teminat", yazi: "COLLATERAL-BACKED" })]),
       el("p", { sinif: "vt-alt", yazi: "One pool on Arc, a collateral basket behind every token, tradable from thirteen chains." }),
-      el("div", { sinif: "vt-bizim" }, bizim.map((b) => el("a", { attr: { href: "#/merkez?t=" + b.adres } }, [ikonYok({ adres: b.adres, sembol: b.sembol || "?" }),
+      el("div", { sinif: "vt-bizim" }, bizim.map((b) => el("a", { attr: { href: "#/terminal?t=" + b.adres } }, [ikonYok({ adres: b.adres, sembol: b.sembol || "?" }),
         el("div", {}, [el("div", { sinif: "vt-ad", yazi: b.ad }), el("div", { sinif: "vt-k", yazi: "$" + b.sembol + " · " + once(new Date(b.zaman * 1000).toISOString()) })])])))] : [];
     if (eski(bu)) return;
     temizle(govde).append(el("div", { sinif: "vt" }, [

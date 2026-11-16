@@ -84,7 +84,7 @@ function teminatKarti(s, cfg) {
   const fiyat = el("div", { sinif: "dg", yazi: "—" });
   const kalemler = el("div", { sinif: "yazi yazi--kucuk yazi--sessiz", yazi: "reading the vaults…" });
   const olc = (et, dg) => el("div", { sinif: "jeton-kart__olcum" }, [el("div", { sinif: "et", yazi: et }), dg]);
-  const kart = el("a", { sinif: "jeton-kart tk", attr: { href: "#/merkez?t=" + s.token } }, [
+  const kart = el("a", { sinif: "jeton-kart tk", attr: { href: "#/terminal?t=" + s.token } }, [
     el("div", { sinif: "tk__ust" }, [
       el("div", { sinif: "jeton" }, [
         el("div", { sinif: "jeton__logo jeton__logo--bos", yazi: (s.sembol || "?").slice(0, 3).toUpperCase() }),

@@ -475,7 +475,16 @@ export async function ciz({ param, kayit } = {}) {
   }
   const kap = el("div", { sinif: "yigin mk-kok" });
   if (!document.getElementById("mk-stil")) document.head.append(el("style", { attr: { id: "mk-stil" }, yazi: MK_STIL }));
-  kap.append(sayfaUst("Create a token", "Launch a token three ways, or manage one you already have"));
+  /* 16 Nov 2026 (owner): reached with a token (?t=, from a token page or the Portfolio) this is that token's buy / sell
+     screen: its own title, no Create cover, no Launch tab; every other way in is unchanged */
+  const ticaretModu = /^0x[0-9a-fA-F]{40}$/.test(((param && param.get("t")) || "").trim());
+  if (ticaretModu) {
+    const tAdres = param.get("t").trim();
+    const baslik = el("h1", { attr: { style: "font-size:22px;margin:0" }, yazi: "Buy · sell · redeem" });
+    kap.append(el("div", { attr: { style: "display:flex;align-items:baseline;gap:12px;flex-wrap:wrap" } }, [baslik,
+      el("a", { sinif: "dugme dugme--sade dugme--kucuk", attr: { href: "#/terminal?t=" + tAdres }, yazi: "← Token page (chart, market)" })]));
+    new Contract(tAdres, ["function symbol() view returns (string)"], arc).symbol().then((sym) => { if (sym) baslik.textContent = "Buy · sell · redeem $" + sym; }).catch(() => {});
+  } else kap.append(sayfaUst("Create a token", "Launch a token three ways, or manage one you already have"));
   /* 12 Nov 2026 redesign: the page is two tabs (Launch a token / Manage tokens); the launch tab opens with a
      three-way chooser and the ARC PULSE launch is a three-step wizard over the same form and handlers below.
      Every control that was on this page is still here; only where it is shown changed. */
@@ -968,7 +977,7 @@ export async function ciz({ param, kayit } = {}) {
 
   const launchBolum = el("div", { sinif: "yigin", attr: { role: "tabpanel" } }, [secimEkrani, sihirbaz]);
   const yonetBolum = el("div", { sinif: "yigin", attr: { role: "tabpanel" } }, [
-    not("Tools for a token that already exists: paste its address on Arc, or open it here from its token page. Buying and selling are also on every token page.", "bilgi")]);
+    ticaretModu ? null : not("Tools for a token that already exists: paste its address on Arc, or open it here from its token page. Buying and selling are also on every token page.", "bilgi")]);
   const launchGorunum = (g) => {
     secimEkrani.hidden = g !== "secim"; sihirbaz.hidden = g === "secim";
     if (kap.isConnected) kap.scrollIntoView({ behavior: "auto", block: "start" });
@@ -980,6 +989,7 @@ export async function ciz({ param, kayit } = {}) {
   };
   const sekmeCubugu = sekmeler(SEKMELER, "launch", (k) => sekmeGec(k));
   sekmeCubugu.classList.add("mk-sekmeler");
+  if (ticaretModu) sekmeCubugu.hidden = true;   // a token's buy / sell screen: no Launch / Manage tabs
   kap.append(sekmeCubugu, launchBolum, yonetBolum);
   /* where the page opens: a token (?t=) opens Manage tokens, as the Trade page's "Buy, sell or redeem" link
      expects; #/merkez, a preselected product type or founder lock, or any other link with parameters opens the
@@ -1303,7 +1313,21 @@ export async function ciz({ param, kayit } = {}) {
   satDugme.addEventListener("click", tekSefer(satDugme, () => gonder(0)));
   itfaDugme.addEventListener("click", tekSefer(itfaDugme, () => gonder(1)));
 
-  yonetBolum.append(panel("Buy, sell, redeem", el("div", { sinif: "yigin" }, [
+  /* 16 Nov 2026 (owner): with a token, Buy and Sell come first, each under its own heading; the founder's product
+     type and the slippage limit move below them. The same controls and handlers, only their order changes. */
+  const altBaslik = (y) => el("h3", { attr: { style: "margin:6px 0 0;font-size:15px" }, yazi: y });
+  if (ticaretModu) { token.hidden = true; yonetBolum.append(panel("Buy · sell", el("div", { sinif: "yigin" }, [
+    token, fiyatYazi, teminatYazi,
+    altBaslik("Buy"),
+    el("div", { sinif: "alan__ipucu", yazi: "Pay on your chain in its gas token; the tokens arrive on your chain." }),
+    el("div", { sinif: "girdi-grup" }, [alTutar, el("span", { sinif: "girdi-grup__son", yazi: "$" })]), alDugme, alDurum,
+    altBaslik("Sell or redeem"),
+    el("div", { sinif: "alan__ipucu", yazi: "Tokens you hold on your chain. A sale that cannot meet its minimum returns the tokens to your address on Arc instead; nothing is left in the gate." }),
+    el("div", { sinif: "girdi-grup" }, [satTutar, el("span", { sinif: "girdi-grup__son", yazi: "tokens" })]),
+    el("div", { sinif: "girdi-grup" }, [satDugme, itfaDugme]), satDurum,
+    el("div", { sinif: "girdi-grup" }, [kayma, el("span", { sinif: "girdi-grup__son", yazi: "% slippage limit" })]),
+    el("div", {}, [turRozet]), turAyar]))); }
+  else yonetBolum.append(panel("Buy, sell, redeem", el("div", { sinif: "yigin" }, [
     token, fiyatYazi, teminatYazi, el("div", {}, [turRozet]), turAyar,
     el("div", { sinif: "girdi-grup" }, [kayma, el("span", { sinif: "girdi-grup__son", yazi: "% slippage limit" })]),
     el("div", { sinif: "alan__ipucu", yazi: "Buy: pay on your chain in its gas token; the tokens arrive on your chain." }),
