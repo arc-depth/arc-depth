@@ -412,6 +412,7 @@ export async function ajanOnayla(user) {
 
 /** Withdraw `miktar` (decimal string) from the perps balance to the SAME address on Arbitrum. Main wallet signs. */
 export async function cekGonder(user, miktar) {
+  await arbitrumaGec(() => {});
   const action = cekEylemi(zincirHex(), user, miktar, nonceAl());
   sonEylem = { action, nonce: action.time };
   let sig;
@@ -464,7 +465,16 @@ async function bekleyenImza(t, durum, ne) {
   const z = setTimeout(() => durum(ne + " — open your wallet app: the signature request is waiting there. (Linked: " + (cuzdan.baglantiBilgisi ? cuzdan.baglantiBilgisi() : "?") + ")"), 15000);
   try { return await cuzdan.imzalaTipli(t); } catch (e) { throw imzaHatasi(e); } finally { clearTimeout(z); }
 }
+/* 16 Nov 2026: phone wallets sign Hyperliquid's typed data reliably on Arbitrum (what app.hyperliquid.xyz uses); on a
+   custom network such as Arc some never show the request. Money-moving signatures switch the wallet to Arbitrum first. */
+const ARB = { id: 42161, ad: "Arbitrum", anahtar: "arbitrum", rpc: "https://arb1.arbitrum.io/rpc", gaz: "ETH", kasif: "https://arbiscan.io" };
+async function arbitrumaGec(durum) {
+  if (parseInt(cuzdan.zincirId() || "0", 16) === 42161) return;
+  durum("Switching your wallet to Arbitrum for the signature (nothing is paid there)… (" + (cuzdan.baglantiBilgisi ? cuzdan.baglantiBilgisi() : "") + ")");
+  try { await cuzdan.agaGec(ARB); } catch (e) { throw imzaHatasi(e); }
+}
 export async function arcaCekGonder(user, q, durum = () => {}, devam = async () => {}) {
+  await arbitrumaGec(durum);
   const zid = parseInt(zincirHex(), 16);
   let imzaOldu = false;
   for (const adim of q.steps) for (const it of adim.items || []) {
@@ -479,7 +489,7 @@ export async function arcaCekGonder(user, q, durum = () => {}, devam = async () 
     } else if (adim.kind === "transaction" && d.action) {
       /* the second request goes out on a tap: a phone wallet then opens for it instead of waiting unseen */
       if (imzaOldu) await devam();
-      durum(imzaOldu ? "Sign 2 of 2 in your wallet (sends the USDC from Hyperliquid)…" : "Sign in your wallet (sends the USDC from Hyperliquid, no gas)…");
+      durum(imzaOldu ? "Sign 2 of 2 in your wallet (sends the USDC from Hyperliquid)…" : "Sign in your wallet (sends the USDC from Hyperliquid, no gas)… (" + (cuzdan.baglantiBilgisi ? cuzdan.baglantiBilgisi() : "") + ")");
       const p = d.action.parameters, nonce = d.nonce != null ? d.nonce : p.time != null ? p.time : p.nonce;
       const action = { type: d.action.type, signatureChainId: "0x" + zid.toString(16), ...p };
       const t = { domain: { name: "HyperliquidSignTransaction", version: "1", chainId: zid, verifyingContract: SIFIR }, types: d.eip712Types, primaryType: d.eip712PrimaryType, message: p };
