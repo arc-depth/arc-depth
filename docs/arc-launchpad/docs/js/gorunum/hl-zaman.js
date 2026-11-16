@@ -149,14 +149,14 @@ export function zamanMakinesi({ plan, fiyat }) {
       if (olay < 8) iki2.push(el("div", { sinif: "tm__m tm__u", yazi: "Few separate episodes: treat this as a handful of past stories, not as odds." }));
       iki2.push(el("div", { sinif: "tm__n", yazi: "Those 60 days were one kind of market (mostly falling). Past chart setups do not have to repeat." }));
     }
-    metin.replaceChildren(
-      ...iki2,
+    metin.replaceChildren(...[
+      /* replaceChildren would print a null as the text "null" */ ...iki2,
       diger ? el("div", { sinif: "tm__m", yazi: (mod === 2 ? "Time Machine 1 (forward model, no direction)" : "Time Machine 2 (chart setups)") + " gives the same plan " + uc(diger) + " (TP first / stop first / neither)." }) : null,
       el("div", { sinif: "tm__m", yazi: "Where the price ends after " + ufuk + "h if nothing closes the trade (middle 90% of futures): " + fiyat(serbest.aralik.p05) + " – " + fiyat(serbest.aralik.p95) + " (half of them between " + fiyat(serbest.aralik.p25) + " and " + fiyat(serbest.aralik.p75) + ")." }),
       ...katlar.map((k) => el("div", { sinif: "tm__m", yazi: k })),
       mod === 2 ? null : el("div", { sinif: "tm__n", yazi: "Without the forward-looking layers (past volatility only) the same plan gives " + Math.round((sade.tp / sade.n) * 100) + " / " + Math.round((sade.sl / sade.n) * 100) + " / " + Math.round((sade.hic / sade.n) * 100) + (fark ? " — the forward inputs move take-profit-first by " + (fark > 0 ? "+" : "") + fark + "." : ".") }),
       el("div", { sinif: "tm__n", yazi: trackRecord(S) }),
-      el("div", { sinif: "tm__n", yazi: (mod === 2 ? "Replays of past moves after similar charts, not a forecast and not advice." : "Odds from a model of possible futures, not a forecast of the price and not advice. The model has no view on direction.") + " News it cannot see can change everything. Runs in your browser; your plan is not sent anywhere." }));
+      el("div", { sinif: "tm__n", yazi: (mod === 2 ? "Replays of past moves after similar charts, not a forecast and not advice." : "Odds from a model of possible futures, not a forecast of the price and not advice. The model has no view on direction.") + " News it cannot see can change everything. Runs in your browser; your plan is not sent anywhere." })].filter(Boolean));
   });
   return { kutu };
 }
