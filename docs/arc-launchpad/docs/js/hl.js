@@ -515,3 +515,59 @@ export async function arcaCekGonder(user, q, durum = () => {}, devam = async () 
   }
   return "pending";
 }
+
+/* 16 Nov 2026 (owner, Chrome on iPhone + MetaMask over WalletConnect: the wallet never shows Hyperliquid's typed-data
+   signature, but it does show ordinary transactions). Withdraw to Arc with TRANSACTIONS only:
+     1. relay.link's deposit-address route gives a Hyperliquid address that pays out USDC on Arc;
+     2. one transaction on HyperEVM to Hyperliquid's CoreWriter (0x3333…3333) sends the USDC there from the user's own
+        HyperCore account: action 13 "send asset" (destination, subAccount 0, source_dex 0 = perps, destination_dex 0,
+        token 0 = USDC, wei with USDC's 8 decimals) — encoding: version 0x01, action id 3 bytes big-endian, ABI args
+        (docs: hyperliquid.gitbook.io … /hyperevm/interacting-with-hypercore);
+     3. gas is HYPE on HyperEVM (~47k gas, a fraction of a cent); when the wallet has none, a little is bought there
+        from Arc USDC through relay.link first (one more transaction).
+   CoreWriter's transaction succeeds even when HyperCore refuses the action, so success is read from relay's status
+   and the account's balance, never from the receipt alone. */
+const COREWRITER = "0x3333333333333333333333333333333333333333";
+const HEVM_RPC = "https://rpc.hyperliquid.xyz/evm";
+const hevm = (method, params) => fetch(HEVM_RPC, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }) }).then((r) => r.json()).then((j) => j.result);
+export async function arcaCekIslemle(user, miktar, durum = () => {}) {
+  const { AGLAR } = await import("./aglar.js");
+  const { AbiCoder, Interface, ZeroAddress } = await import("../vendor/ethers.min.js");
+  const hevmAg = AGLAR.find((a) => a.id === 999), arcAg = AGLAR.find((a) => a.id === 5042);
+  /* 1. the route */
+  const q = await arcaCekTeklif(user, miktar, true);
+  const adim = q.steps[0], it = adim.items[0];
+  const hedefAdr = (adim.depositAddress || (it.data && it.data.action && it.data.action.parameters && it.data.action.parameters.destination) || "").toLowerCase();
+  if (!/^0x[0-9a-f]{40}$/.test(hedefAdr)) throw new Error("relay.link gave no deposit address. Nothing was sent.");
+  /* 2. gas on HyperEVM */
+  let hype = BigInt(await hevm("eth_getBalance", [user, "latest"]) || "0x0");
+  if (hype < 20000000000000n) {   // 0.00002 HYPE
+    durum("Your wallet has no HYPE for gas on HyperEVM: buying ≈ $0.50 of it from your Arc USDC (one transaction on Arc)…");
+    const g = await fetch(RELAY_API + "/quote", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ user, recipient: user, originChainId: 5042, destinationChainId: 999,
+      originCurrency: "0x3600000000000000000000000000000000000000", destinationCurrency: "0x0000000000000000000000000000000000000000", amount: "500000", tradeType: "EXACT_INPUT" }) }).then((r) => r.json());
+    if (!g.steps) throw new Error("Could not buy gas: " + (g.message || "no route") + ". Nothing was sent.");
+    for (const s of g.steps) for (const x of s.items || []) if (s.kind === "transaction") await cuzdan.agdaGonder(arcAg, { to: x.data.to, data: x.data.data, value: "0x" + BigInt(x.data.value || 0).toString(16) });
+    for (let i = 0; i < 30 && hype < 20000000000000n; i++) { await new Promise((r) => setTimeout(r, 3000)); hype = BigInt(await hevm("eth_getBalance", [user, "latest"]) || "0x0"); durum("Waiting for the HYPE gas on HyperEVM… (" + ((i + 1) * 3) + "s)"); }
+    if (hype < 20000000000000n) throw new Error("The HYPE gas has not arrived on HyperEVM yet. Try again in a minute; your USDC is still on Hyperliquid.");
+  }
+  /* 3. the CoreWriter transaction */
+  const wei = BigInt(Math.floor(Number(miktar) * 1e6)) * 100n;   // USDC on HyperCore: 8 decimals
+  const args = AbiCoder.defaultAbiCoder().encode(["address", "address", "uint32", "uint32", "uint64", "uint64"], [hedefAdr, ZeroAddress, 0, 0, 0, wei]);
+  const ham = "0x01" + "00000d" + args.slice(2);
+  const data = new Interface(["function sendRawAction(bytes)"]).encodeFunctionData("sendRawAction", [ham]);
+  const once = await hesapOku(user).then((h) => h.cekilebilir).catch(() => null);
+  durum("Confirm the transaction on HyperEVM in your wallet (sends " + miktar + " USDC from your Hyperliquid account; gas is a fraction of a cent)…");
+  const h = await cuzdan.agdaGonder(hevmAg, { to: COREWRITER, data, value: "0x0" });
+  /* 4. follow it: Hyperliquid's balance, then relay's payout on Arc */
+  for (let i = 0; i < 60; i++) {
+    await new Promise((r) => setTimeout(r, 3000));
+    const s = it.check ? await fetch(RELAY_API + it.check.endpoint).then((r) => r.json()).catch(() => null) : null;
+    if (s && s.status === "success") return { durum: "arrived", hash: h };
+    if (s && (s.status === "failure" || s.status === "refund")) throw new Error("relay.link reports " + s.status + "; check your Hyperliquid account.");
+    const simdi = await hesapOku(user).then((x) => x.cekilebilir).catch(() => null);
+    const gitti = once != null && simdi != null && once - simdi > Number(miktar) * 0.9;
+    durum((gitti ? "Left Hyperliquid ✓ relay.link is paying it out on Arc…" : "Transaction sent ✓ waiting for Hyperliquid to move the USDC…") + " (" + ((i + 1) * 3) + "s)");
+    if (!gitti && i === 20) throw new Error("Hyperliquid has not moved the USDC after a minute (transaction " + h.slice(0, 10) + "…). Your USDC is still on Hyperliquid; nothing is lost.");
+  }
+  return { durum: "pending", hash: h };
+}
