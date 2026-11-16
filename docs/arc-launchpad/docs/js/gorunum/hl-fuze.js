@@ -26,7 +26,11 @@ const STIL =
   ".fz__iki{display:grid;grid-template-columns:1fr 1fr;gap:6px}.fz__iki button[aria-pressed=false]{background:transparent;color:var(--yazi-2);border-color:var(--cizgi)}" +
   ".fz label{font-size:12px;color:var(--yazi-3)}.fz .girdi{height:40px;font-size:15px}" +
   ".fz__plan{display:grid;gap:3px;border-top:1px solid var(--cizgi);padding-top:8px}.fz__plan div{display:flex;justify-content:space-between;gap:10px}.fz__plan span:last-child{font-variant-numeric:tabular-nums;white-space:nowrap}" +
-  ".fz__n{font-size:11.5px;color:var(--yazi-3);line-height:1.4}.fz__h{color:var(--satis);font-weight:600}";
+  ".fz__n{font-size:11.5px;color:var(--yazi-3);line-height:1.4}.fz__h{color:var(--satis);font-weight:600}" +
+  /* 16 Nov 2026: never wider than the phone (grid items sized to their unbroken text overflowed the sheet) */
+  ".fz{grid-template-columns:minmax(0,1fr);min-width:0;max-width:100%;box-sizing:border-box;overflow:hidden}.fz>*{min-width:0}" +
+  ".fz__sec{grid-template-columns:repeat(3,minmax(0,1fr))}.fz__iki{grid-template-columns:repeat(2,minmax(0,1fr))}" +
+  "@media (max-width:520px){.fz__plan div{flex-wrap:wrap;column-gap:8px}.fz__plan span:last-child{white-space:normal;margin-left:auto;text-align:right}}";
 
 const GENISLIK = { dar: { ad: "Tight", k: (o) => o.saat * 1.5, aciklama: "1.5 typical hours" }, normal: { ad: "Normal", k: (o) => o.gun * 0.5, aciklama: "half a typical day" }, genis: { ad: "Wide", k: (o) => o.gun, aciklama: "one typical day" } };
 

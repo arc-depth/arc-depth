@@ -213,3 +213,7 @@ body::before {
 .icindekiler button { border: 1px solid var(--cizgi-guclu); background: transparent; color: var(--yazi-2); border-radius: 999px; padding: 5px 11px; font: inherit; font-size: 12.5px; cursor: pointer; }
 .icindekiler button:hover { color: var(--yazi-1); border-color: var(--marka-cizgi); background: var(--marka-zemin); }
 .panel { scroll-margin-top: calc(var(--ust-bar, 56px) + 12px); }
+
+/* 16 Nov 2026: a folded section never widens its column */
+.ayrinti { min-width: 0; max-width: 100%; box-sizing: border-box; }
+.ayrinti__govde, .ayrinti > div { min-width: 0; max-width: 100%; }

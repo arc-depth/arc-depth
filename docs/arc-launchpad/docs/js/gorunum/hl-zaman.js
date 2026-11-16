@@ -15,7 +15,7 @@ import { simule, girdiHazirla, girdiHazirla2 } from "../tm-motor.js";
 import { GEVSET, GEVSET_AD, durumYazi } from "../gosterge.js";
 
 const STIL =
-  ".tm{display:grid;gap:8px;border-top:1px solid var(--cizgi);padding-top:8px}" +
+  ".tm{display:grid;gap:8px;border-top:1px solid var(--cizgi);padding-top:8px;grid-template-columns:minmax(0,1fr);min-width:0;max-width:100%;overflow:hidden}.tm>*{min-width:0}" +
   ".tm__bas{display:flex;justify-content:space-between;align-items:center;gap:8px}.tm__bas b{font-size:13.5px}" +
   ".tm__ufuk{display:flex;gap:4px}.tm__ufuk button[aria-pressed=true]{border-color:var(--marka);color:var(--yazi-1);background:var(--marka-zemin,rgba(124,92,255,.12))}" +
   ".tm__tuval{position:relative;height:210px;border-radius:10px;background:#0b1020;overflow:hidden}.tm__tuval canvas{width:100%;height:100%;display:block}" +
