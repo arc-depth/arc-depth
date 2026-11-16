@@ -102,14 +102,42 @@ export async function ciz({ param }) {
   let sekme = "trend", zincir = "", secili = null, piyasa = { trend: [], yeni: [] }, bizim = null;
   const bxDock = el("div", { sinif: "bx-dock", attr: { hidden: true } });
 
+  /* 16 Nov 2026 (owner: "hani nerde trendler" — Base showed 1 token, New was empty): the list held only the global
+     page-1 trending/new pools (~20, most new ones below the liquidity floor), and a chain chip just filtered that.
+     Now each chain's own trending + new pools are loaded (when its chip is picked, and the big chains in the
+     background for "All chains"), and merged without duplicates. */
+  const zv = {};
+  const birlestir = (...ler) => ler.flat().filter((t, i, a) => t && a.findIndex((x) => x.zincir.k === t.zincir.k && x.adres.toLowerCase() === t.adres.toLowerCase()) === i);
+  const zincirYukle = async (k) => {
+    if (zv[k]) return; zv[k] = { yukleniyor: true, trend: [], yeni: [] };
+    const z = V.ZINCIRLER.find((x) => x.k === k);
+    try { const d = await V.veri(z); zv[k] = { trend: V.suz(d.trend.filter((t) => t.likidite >= V.ESIK)), yeni: V.suz(d.yeni.filter((t) => t.likidite >= V.ESIK_YENI)) }; }
+    catch (e) { zv[k] = { hata: true, trend: [], yeni: [] }; setTimeout(() => { delete zv[k]; }, 60000); }
+    listeCiz();
+  };
+  const kaynakListe = (tur) => {
+    const ek = Object.values(zv).flatMap((x) => x[tur] || []);
+    const l = birlestir(piyasa[tur], ek);
+    if (tur === "yeni") return l.sort((a, b) => Date.parse(b.kuruldu || 0) - Date.parse(a.kuruldu || 0));
+    return [...birlestir(piyasa.trend), ...birlestir(ek).filter((t) => !piyasa.trend.includes(t)).sort((a, b) => Number(b.hacim) - Number(a.hacim))].filter((t, i, a) => a.indexOf(t) === i);
+  };
   const listeCiz = () => {
     sekmeBar.replaceChildren(...SEKME.map(([k, ad]) => el("button", { attr: { type: "button", role: "tab", "aria-selected": String(sekme === k) }, yazi: ad, on: { click: () => { sekme = k; listeCiz(); if (k === "biz" && !bizim) bizimYukle(); } } })));
-    zincirBar.replaceChildren(...[["", "All chains"], ...V.ZINCIRLER.map((z) => [z.k, z.ad])].map(([k, ad]) => el("button", { attr: { type: "button", "aria-pressed": String(zincir === k) }, yazi: ad, on: { click: () => { zincir = k; listeCiz(); } } })));
-    let l = sekme === "trend" ? piyasa.trend : sekme === "yeni" ? piyasa.yeni : sekme === "yukselen" ? [...piyasa.trend, ...piyasa.yeni].filter((t, i, a) => a.findIndex((x) => x.adres === t.adres) === i && Number(t.degisim) > 0).sort((a, b) => Number(b.degisim) - Number(a.degisim)) : (bizim || []);
+    zincirBar.replaceChildren(...[["", "All chains"], ...V.ZINCIRLER.map((z) => [z.k, z.ad])].map(([k, ad]) => el("button", { attr: { type: "button", "aria-pressed": String(zincir === k) }, yazi: ad, on: { click: () => { zincir = k; listeCiz(); if (k) zincirYukle(k); } } })));
+    let l = sekme === "trend" ? kaynakListe("trend") : sekme === "yeni" ? kaynakListe("yeni") : sekme === "yukselen" ? [...kaynakListe("trend"), ...kaynakListe("yeni")].filter((t, i, a) => a.findIndex((x) => x.adres === t.adres) === i && Number(t.degisim) > 0).sort((a, b) => Number(b.degisim) - Number(a.degisim)) : (bizim || []);
     if (zincir) l = l.filter((t) => t.zincir && t.zincir.k === zincir);
     const q = ara.value.trim().toLowerCase();
     if (q) l = l.filter((t) => [t.sembol, t.ad, t.adres].join(" ").toLowerCase().includes(q));
-    if (!l.length) { satirlar.replaceChildren(el("div", { sinif: "bx-bos", yazi: sekme === "biz" && !bizim ? "Loading ARC PULSE launches…" : piyasa.trend.length || piyasa.yeni.length ? "No market matches." : "Loading markets…" })); return; }
+    if (!l.length) {
+      const zad = zincir ? (V.ZINCIRLER.find((x) => x.k === zincir) || {}).ad : "";
+      const yaz = sekme === "biz" ? (bizim ? "No ARC PULSE launch matches." : "Loading ARC PULSE launches…")
+        : q ? "No market matches “" + ara.value.trim() + "”."
+        : zincir && zv[zincir] && zv[zincir].yukleniyor ? "Loading " + zad + " markets…"
+        : zincir && zv[zincir] && zv[zincir].hata ? "The market data service is busy. Pick " + zad + " again in a minute."
+        : zincir ? "No " + zad + " market with enough liquidity right now (pools under $" + (sekme === "yeni" ? V.ESIK_YENI : V.ESIK).toLocaleString("en-US") + " are hidden for your safety)."
+        : piyasa.trend.length || piyasa.yeni.length ? "Loading more markets…" : "Loading markets…";
+      satirlar.replaceChildren(el("div", { sinif: "bx-bos", yazi: yaz })); return;
+    }
     satirlar.replaceChildren(...l.slice(0, 80).map((t) => el("button", { sinif: "bx-satir", attr: { type: "button", "aria-current": String(!!secili && secili.adres === t.adres) }, on: { click: () => sec(t) } }, [
       el("span", { sinif: "bx-ad" }, [logo(t), el("span", { attr: { style: "min-width:0" } }, [el("b", { yazi: t.sembol }), el("small", { yazi: (t.zincir ? t.zincir.ad : "") + " · Vol " + kisa(Number(t.hacim)) })])]),
       el("span", { sinif: "bx-f", yazi: fiyatYaz(Number(t.fiyat)) }),
@@ -304,6 +332,8 @@ export async function ciz({ param }) {
     piyasa = { trend: V.suz(d.trend.filter((t) => t.likidite >= V.ESIK)), yeni: V.suz(d.yeni.filter((t) => t.likidite >= V.ESIK_YENI)) };
   } catch (e) { satirlar.replaceChildren(el("div", { sinif: "bx-bos", yazi: "The market data service is busy. Try again in a minute." })); }
   listeCiz();
+  /* the big chains' own lists, one after another (the free data service allows ~30 calls a minute) */
+  (async () => { for (const k of ["base", "solana", "bsc", "ethereum"]) { if (!kok.isConnected && zv.solana) break; await zincirYukle(k); await new Promise((x) => setTimeout(x, 4000)); } })();
   /* the market from the link (?z=&a=), or the last one picked on this device, or the top trending one (desktop) */
   const za = param && param.get("z"), aa = param && param.get("a");
   let ilk = null;
