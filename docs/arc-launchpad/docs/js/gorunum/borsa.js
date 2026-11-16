@@ -236,12 +236,23 @@ export async function ciz({ param }) {
     const solGecerli = (a) => /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(String(a || "").trim());
     const solAdres = () => { if (_solM && _solM.solanaCuzdan.hesap()) return _solM.solanaCuzdan.hesap(); try { const a = localStorage.getItem(SOL_ANAHTAR); return solGecerli(a) ? a : null; } catch (e) { return null; } };
     const elde = el("div", { sinif: "bx-elde", yazi: "" });
+    /* 16 Nov 2026 (owner: "solanada usdc var"): Solana tokens trade against USDC on Solana too — pay from it, and
+       receive the sale in it (same wallet, no bridge). Signed by the Solana wallet. */
+    const SOL_USDC = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
+    const SOL_AG = { anahtar: "solana", ad: "Solana", id: 792703809, dolar: SOL_USDC, dolarSembol: "USDC" };
+    const kaynakAg = () => (kaynak && kaynak.value === "solana" ? SOL_AG : V.evmler().find((a) => a.anahtar === (kaynak ? kaynak.value : "arc")));
+    let alim = null;   // the sell's receive-to select (Solana tokens)
     const eldeYaz = async () => {
       if (sol) {
         const a = solAdres();
         if (!a) { elde.textContent = "Add your Solana address to see what you hold."; tokHam = null; return; }
         elde.textContent = "Reading your " + t.sembol + " on Solana…";
-        try { const m = _solM || (_solM = await import("../solana-ikiz.js")); tokHam = await m.splBakiye(a, t.adres); } catch (e) { tokHam = null; elde.textContent = "Could not read your Solana balance."; return; }
+        try {
+          const m = _solM || (_solM = await import("../solana-ikiz.js"));
+          const [h, u] = await Promise.all([m.splBakiye(a, t.adres), m.splBakiye(a, SOL_USDC).catch(() => null)]);
+          tokHam = h;
+          if (u != null) { bakiye.solana = Number(u) / 1e6; if (kaynak) { const o = [...kaynak.options].find((x) => x.value === "solana"); if (o) o.textContent = "Solana · USDC · $" + bakiye.solana.toFixed(2); if (bakiye.solana >= 1 && !(bakiye[kaynak.value] >= 1)) { kaynak.value = "solana"; yeniden(); } } }
+        } catch (e) { tokHam = null; elde.textContent = "Could not read your Solana balance."; return; }
       } else {
         if (!cuzdan.hesap()) { elde.textContent = "Connect your wallet to see what you hold."; tokHam = null; return; }
         elde.textContent = "Reading your " + t.sembol + " on " + t.zincir.ad + "…";
@@ -269,11 +280,13 @@ export async function ciz({ param }) {
       const kim = cuzdan.hesap() || V.UCRET_ALICI;
       let govde;
       if (taraf === "al") {
-        const usd = Number(girdi.value), ag = V.evmler().find((a) => a.anahtar === kaynak.value);
+        const usd = Number(girdi.value), ag = kaynakAg();
         if (!(usd >= 1)) { teklifK.replaceChildren(...teklifSatir("At least $1", "")); return; }
         const alici = sol ? solAdres() : kim;
         if (sol && !alici) { teklifK.replaceChildren(el("span", { sinif: "uyari", yazi: "Add your Solana address above: that is where the " + t.sembol + " go." })); return; }
-        govde = { user: kim, recipient: alici, originChainId: ag.id, destinationChainId: t.zincir.relay, originCurrency: ag.dolar, destinationCurrency: t.adres, amount: V.dolarHam(ag, usd).toString(), tradeType: "EXACT_INPUT", refundTo: kim, appFees: [{ recipient: V.UCRET_ALICI, fee: V.UCRET_BPS }] };
+        const odeyen = ag === SOL_AG ? solAdres() : kim;
+        if (ag === SOL_AG && !odeyen) { teklifK.replaceChildren(el("span", { sinif: "uyari", yazi: "Connect your Solana wallet above to pay from Solana." })); return; }
+        govde = { user: odeyen, recipient: alici, originChainId: ag.id, destinationChainId: t.zincir.relay, originCurrency: ag.dolar, destinationCurrency: t.adres, amount: (ag === SOL_AG ? BigInt(Math.round(usd * 1e6)) : V.dolarHam(ag, usd)).toString(), tradeType: "EXACT_INPUT", refundTo: odeyen, appFees: [{ recipient: V.UCRET_ALICI, fee: V.UCRET_BPS }] };
       } else {
         if (!tokenAg && !sol) { teklifK.replaceChildren(el("span", { sinif: "uyari", yazi: "Selling " + t.zincir.ad + " tokens from here is not available yet." })); return; }
         const adet = Number(girdi.value);
@@ -282,7 +295,8 @@ export async function ciz({ param }) {
           const sa = solAdres();
           if (!sa) { teklifK.replaceChildren(el("span", { sinif: "uyari", yazi: "Connect your Solana wallet above to sell." })); return; }
           const hamS = BigInt(Math.floor(adet * 10 ** Math.min(ondalik, 6))) * 10n ** BigInt(Math.max(0, ondalik - 6));
-          govde = { user: sa, recipient: cuzdan.hesap() || V.UCRET_ALICI, originChainId: 792703809, destinationChainId: 5042, originCurrency: t.adres, destinationCurrency: "0x3600000000000000000000000000000000000000", amount: hamS.toString(), tradeType: "EXACT_INPUT", refundTo: sa, appFees: [{ recipient: V.UCRET_ALICI, fee: V.UCRET_BPS }] };
+          const solaGel = !alim || alim.value === "solana";
+          govde = { user: sa, recipient: solaGel ? sa : (cuzdan.hesap() || V.UCRET_ALICI), originChainId: 792703809, destinationChainId: solaGel ? 792703809 : 5042, originCurrency: t.adres, destinationCurrency: solaGel ? SOL_USDC : "0x3600000000000000000000000000000000000000", amount: hamS.toString(), tradeType: "EXACT_INPUT", refundTo: sa, appFees: [{ recipient: V.UCRET_ALICI, fee: V.UCRET_BPS }] };
         } else {
         const ham = BigInt(Math.floor(adet * 1e6)) * 10n ** BigInt(Math.max(0, ondalik - 6));
         govde = { user: kim, recipient: kim, originChainId: t.zincir.relay, destinationChainId: 5042, originCurrency: t.adres, destinationCurrency: "0x3600000000000000000000000000000000000000", amount: ham.toString(), tradeType: "EXACT_INPUT", refundTo: kim, appFees: [{ recipient: V.UCRET_ALICI, fee: V.UCRET_BPS }] };
@@ -294,14 +308,14 @@ export async function ciz({ param }) {
         if (bu !== sayac) return;
         if (!q.details) {
           let neden = q.message || "no route";
-          if (taraf === "al") { const ag = V.evmler().find((a) => a.anahtar === kaynak.value), var_ = bakiye[ag.anahtar]; if (var_ != null && var_ < Number(girdi.value)) neden = "You have $" + var_.toFixed(2) + " on " + ag.ad + "."; }
+          if (taraf === "al") { const ag = kaynakAg(), var_ = bakiye[ag.anahtar]; if (var_ != null && var_ < Number(girdi.value)) neden = "You have $" + var_.toFixed(2) + " on " + ag.ad + "."; }
           teklifK.replaceChildren(el("span", { sinif: "uyari", yazi: "No route right now: " + neden })); return;
         }
         son = q; const d = q.details, f = q.fees || {};
-        const ag = taraf === "al" ? V.evmler().find((a) => a.anahtar === kaynak.value) : (tokenAg || { ad: "Solana", anahtar: "solana" });
+        const ag = taraf === "al" ? kaynakAg() : (tokenAg || SOL_AG);
         teklifK.replaceChildren(
           ...teklifSatir("You pay", Number(d.currencyIn.amountFormatted).toLocaleString("en-US", { maximumFractionDigits: 4 }) + " " + d.currencyIn.currency.symbol + " on " + ag.ad),
-          ...teklifSatir("You get", "≈ " + Number(d.currencyOut.amountFormatted).toLocaleString("en-US", { maximumFractionDigits: 4 }) + " " + d.currencyOut.currency.symbol + (taraf === "al" ? " on " + t.zincir.ad : " on Arc")),
+          ...teklifSatir("You get", "≈ " + Number(d.currencyOut.amountFormatted).toLocaleString("en-US", { maximumFractionDigits: 4 }) + " " + d.currencyOut.currency.symbol + (taraf === "al" ? " on " + t.zincir.ad : sol && (!alim || alim.value === "solana") ? " on Solana" : " on Arc")),
           ...teklifSatir("Worth", "$" + Number(d.currencyOut.amountUsd).toFixed(2)),
           ...teklifSatir("Route", V.rotaYazi(q, t)),
           ...teklifSatir("Route + gas", "$" + (Number((f.relayer && f.relayer.amountUsd) || 0) + Number((f.gas && f.gas.amountUsd) || 0)).toFixed(3)),
@@ -313,7 +327,7 @@ export async function ciz({ param }) {
 
     const govde = [el("div", { sinif: "bx-tab", attr: { role: "tablist" } }, [tabAl, tabSat])];
     if (taraf === "al") {
-      kaynak = el("select", { attr: { "aria-label": "Pay from" } }, V.evmler().map((a) => el("option", { attr: { value: a.anahtar }, yazi: a.ad + " · " + (a.dolarSembol || "USDC") + (bakiye[a.anahtar] != null ? " · $" + bakiye[a.anahtar].toFixed(2) : "") })));
+      kaynak = el("select", { attr: { "aria-label": "Pay from" } }, [...(sol ? [SOL_AG] : []), ...V.evmler()].map((a) => el("option", { attr: { value: a.anahtar }, yazi: a.ad + " · " + (a.dolarSembol || "USDC") + (bakiye[a.anahtar] != null ? " · $" + bakiye[a.anahtar].toFixed(2) : "") })));
       const enIyi = Object.entries(bakiye).sort((x, y) => y[1] - x[1])[0];
       kaynak.value = enIyi && enIyi[1] >= 1 ? enIyi[0] : "arc";
       girdi = el("input", { attr: { type: "number", inputmode: "decimal", min: "1", step: "1", value: "10", "aria-label": "Amount in USD" } });
@@ -324,15 +338,18 @@ export async function ciz({ param }) {
       girdi = el("input", { attr: { type: "number", inputmode: "decimal", min: "0", step: "any", placeholder: "0", "aria-label": "Tokens to sell" } });
       govde.push(solSatir(), el("label", { sinif: "bx-et", yazi: "Amount to sell (" + t.sembol + " on " + t.zincir.ad + ")" }), girdi, elde,
         el("div", { sinif: "bx-cip" }, [25, 50, 75, 100].map((p) => el("button", { attr: { type: "button" }, yazi: p + "%", on: { click: () => { if (tokHam == null) return; const x = (tokHam * BigInt(p)) / 100n; girdi.value = String(Number(x / 10n ** BigInt(Math.max(0, ondalik - 6))) / 1e6); yeniden(); } } }))),
-        el("div", { sinif: "bx-not", yazi: "You receive USDC on Arc, at your same address." }));
+        sol ? (alim = el("select", { attr: { "aria-label": "Receive" } }, [el("option", { attr: { value: "solana" }, yazi: "Receive USDC on Solana (same wallet)" }), el("option", { attr: { value: "arc" }, yazi: "Receive USDC on Arc (your EVM address)" })])) : "",
+        sol ? "" : el("div", { sinif: "bx-not", yazi: "You receive USDC on Arc, at your same address." }));
+      if (alim) alim.addEventListener("change", yeniden);
     }
     eldeYaz();
     girdi.addEventListener("input", yeniden);
     ana.addEventListener("click", async () => {
       if (ana._m) return; ana._m = true; ana.disabled = true;
       try {
-        if (!cuzdan.hesap()) { await cuzdan.bagla(); await dolarBakiyeleri(); kutuCiz(taraf); return; }
-        if (sol && taraf === "sat") {
+        const solYalniz = (sol && taraf === "sat" && (!alim || alim.value === "solana")) || (taraf === "al" && kaynak && kaynak.value === "solana");
+        if (!cuzdan.hesap() && !solYalniz) { await cuzdan.bagla(); await dolarBakiyeleri(); kutuCiz(taraf); return; }
+        if ((sol && taraf === "sat") || (taraf === "al" && kaynak && kaynak.value === "solana")) {
           const m = _solM || (_solM = await import("../solana-ikiz.js"));
           if (!m.solanaCuzdan.hesap()) { durum.textContent = "Connect your Solana wallet…"; await m.solanaCuzdan.baglan(); }
           await teklif();
@@ -342,13 +359,13 @@ export async function ciz({ param }) {
             durum.textContent = "Confirm in your Solana wallet…";
             await m.relayAdimi(it.data);
           }
-          durum.textContent = "Sold ✓ USDC arrives on Arc at " + cuzdan.hesap().slice(0, 6) + "…, usually within a minute.";
+          durum.textContent = taraf === "al" ? "Paid ✓ " + t.sembol + " arrives in your Solana wallet, usually within a minute." : (!alim || alim.value === "solana") ? "Sold ✓ USDC arrives in your Solana wallet, usually within a minute." : "Sold ✓ USDC arrives on Arc at " + cuzdan.hesap().slice(0, 6) + "…, usually within a minute.";
           setTimeout(() => { eldeYaz(); }, 15000);
           return;
         }
         await teklif();
         const q = son; if (!q) { durum.textContent = "No route to send."; return; }
-        const ag = taraf === "al" ? V.evmler().find((a) => a.anahtar === kaynak.value) : tokenAg;
+        const ag = taraf === "al" ? kaynakAg() : tokenAg;
         for (const adim of q.steps) for (const it of adim.items || []) {
           if (adim.kind !== "transaction") continue;
           durum.textContent = (adim.id === "approve" ? "Approve " : "Confirm ") + "in your wallet…";
