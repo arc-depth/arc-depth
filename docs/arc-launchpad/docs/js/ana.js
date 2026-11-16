@@ -163,6 +163,12 @@ function sekmeleriCiz() {
   for (const ad of ALT_BAR) {   // the phone bar: Discover, Trade, Create (raised, centre), Portfolio, then More
     const y = yolBul(ad);
     if (!y) continue;
+    /* 16 Nov 2026 (owner): the wallet's own page shows only once connected; until then its slot connects a wallet */
+    if (ad === 'portfoy' && !cuzdan.hesap()) {
+      kSekme.append(el('button', { sinif: 'sekme-oge', attr: { type: 'button' }, on: { click: () => cuzdanSec() } }, [
+        el('span', { sinif: 'sekme-oge__kap', html: ikon(y.ikon, 'sekme-oge__ikon') }), el('span', { yazi: 'Connect' })]));
+      continue;
+    }
     kSekme.append(el("a", {
       sinif: "sekme-oge" + (ad === "olustur" ? " sekme-oge--olustur" : ""),
       attr: { href: "#/" + y.yol },
@@ -475,6 +481,7 @@ cuzdan.dinle(({ hesap }) => {
   _sonHesap = hesap;
   rayiCiz();
   ustNavCiz();
+  sekmeleriCiz();
   ciz();
 });
 

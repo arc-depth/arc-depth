@@ -273,25 +273,19 @@ export async function ciz({ param }) {
   else izgara.append(olcum("Collateral chains", SEPET_ACIK.length + " of 12", "Robinhood waits on Circle's CCTP route; Solana not open yet"));
   kap.append(izgara);
 
-  /* ---- the one pool on Arc: collateral cards, newest first ---- */
-  const BASLIK = "ARC PULSE launches · collateral-backed";
-  if (arcS.status !== "fulfilled") {
-    kap.append(panel(BASLIK, bos("Could not read the registry", String(arcS.reason && arcS.reason.message || arcS.reason))));
-  } else if (!arcS.value.liste.length) {
-    kap.append(panel(BASLIK, bos(eskiN ? "No launches in this generation yet" : "No launches yet",
-      "The registry on Arc (PulseLaunchpad5) is deployed and empty. The first launch made from any chain appears here, with its collateral read from the vaults." +
-      (eskiN ? " The " + (eskiN === 1 ? "launch" : eskiN + " launches") + " counted above " + (eskiN === 1 ? "is" : "are") + " in the first generation, listed further down this page." : ""))));
-  } else {
-    const v = arcS.value;
-    const satirlar = v.liste.filter(uyar);
-    const izg = el("div", { sinif: "izgara izgara--kart" }, satirlar.map((x) => teminatKarti(x, cfg)));
-    kap.append(panel(BASLIK, el("div", { sinif: "yigin" }, [
-      ayrinti("How is the collateral counted?", "Collateral now = what each vault holds for the token at market price (DexScreener; the vault's last auction price where the market has none) plus dollars waiting to be bought. Change is against what the founder put in. Newest first; the 2,000 newest are kept."),
-      satirlar.length ? izg : bos("No matches", 'Nothing on this page for "' + arama + '".'),
-      v.sayfaSayisi > 1 ? sayfalayici(v.sayfa, v.sayfaSayisi) : el("span"),
-    ]), el("span", { sinif: "tk__canli", yazi: "live · " + v.n + " token · page " + v.sayfa + " of " + v.sayfaSayisi })));
-
-    /* new launches: page 1 redraws itself when the registry grows */
+  /* ---- every launch in ONE list, newest first (16 Nov 2026, owner: the three separate boxes — main, Designer,
+     First generation — looked broken with one token each). Each card says its kind with a small badge; the
+     explanations are folded at the top; each registry keeps its own pager. ---- */
+  const BASLIK = "ARC PULSE launches";
+  const kartlar = [], notlar = [], sayfalar = [];
+  let toplamN = 0;
+  const rozetli = (kart, yazi) => { const y = kart.querySelector(".jeton__yazi"); if (y) y.append(el("span", { sinif: "tk__tur", yazi })); return kart; };
+  if (arcS.status !== "fulfilled") notlar.push("Could not read the main registry: " + String(arcS.reason && arcS.reason.message || arcS.reason));
+  else {
+    const v = arcS.value; toplamN += v.n;
+    kartlar.push(...v.liste.filter(uyar).map((x) => ({ z: x.zaman, k: teminatKarti(x, cfg) })));
+    if (v.sayfaSayisi > 1) sayfalar.push(sayfalayici(v.sayfa, v.sayfaSayisi));
+    /* new launches: page 1 redraws itself when a registry grows */
     if (v.sayfa === 1) {
       const zamanlayici = setInterval(async () => {
         if (!document.body.contains(kap)) return clearInterval(zamanlayici);
@@ -301,30 +295,29 @@ export async function ciz({ param }) {
       }, 30_000);
     }
   }
-
-  /* ---- the v9 set (PulseHook6 with its time-weighted price): designer tokens launch here. Each card
-     prices from the v9 launchpad's pool key (the PulseHook6 pool) and reads its collateral from the
-     v9 Defter and the vaults bound to it (sepet-v9.json). ---- */
   if (v9) {
-    const B9 = "Designer launches · collateral-backed";
-    if (v9S.status !== "fulfilled") kap.append(panel(B9, bos("Could not read the v9 registry", String(v9S.reason && v9S.reason.message || v9S.reason))));
+    if (v9S.status !== "fulfilled") notlar.push("Could not read the designer registry: " + String(v9S.reason && v9S.reason.message || v9S.reason));
     else if (v9S.value && v9S.value.liste.length) {
-      const v = v9S.value, satirlar = v.liste.filter(uyar);
-      kap.append(panel(B9, el("div", { sinif: "yigin" }, [
-        ayrinti("What is different about designer tokens?", "Designer tokens launch on the v9 set (PulseHook6): the same one pool on Arc and the same 2.2% fee, with a time-weighted price that lets buyers pay for designs in the designer's token. Its basket vaults are on Arc and the eight EVM chains bound to the v9 Defter."),
-        satirlar.length ? el("div", { sinif: "izgara izgara--kart" }, satirlar.map((x) => teminatKarti(x, v9))) : bos("No matches", 'Nothing on this page for "' + arama + '".'),
-        v.sayfaSayisi > 1 ? sayfalayici(v.sayfa, v.sayfaSayisi, "s9") : el("span"),
-      ]), el("span", { sinif: "tk__canli", yazi: "live · " + v.n + " token · page " + v.sayfa + " of " + v.sayfaSayisi })));
-    } else {
-      kap.append(panel(B9, bos("No launches on the v9 set yet", "Designer tokens launch on the v9 set (PulseHook6). The first one appears here with its price and its collateral read from the v9 Defter and vaults.",
-        el("a", { sinif: "dugme dugme--marka", attr: { href: "#/olustur" }, yazi: "Create a token" }))));
+      const v = v9S.value; toplamN += v.n;
+      kartlar.push(...v.liste.filter(uyar).map((x) => ({ z: x.zaman, k: teminatKarti(x, v9) })));
+      if (v.sayfaSayisi > 1) sayfalar.push(sayfalayici(v.sayfa, v.sayfaSayisi, "s9"));
     }
   }
-
-  /* ---- the first generation (before the second was wired): its launches stay readable ---- */
   if (eskiS.status === "fulfilled" && eskiS.value && eskiS.value.liste.length) {
-    kap.append(panel("First generation", el("div", { sinif: "izgara izgara--kart" }, eskiS.value.liste.filter(uyar).map((x) => teminatKarti(x, SEPET)))));
+    toplamN += eskiS.value.liste.length;
+    kartlar.push(...eskiS.value.liste.filter(uyar).map((x) => ({ z: x.zaman, k: rozetli(teminatKarti(x, SEPET), "First generation") })));
   }
+  kartlar.sort((a, b) => Number(b.z || 0) - Number(a.z || 0));
+  kap.append(panel(BASLIK, el("div", { sinif: "yigin" }, [
+    ayrinti("How is the collateral counted?", "Collateral now = what each vault holds for the token at market price (DexScreener; the vault's last auction price where the market has none) plus dollars waiting to be bought. Change is against what the founder put in. Newest first; the 2,000 newest are kept." +
+      (v9 ? " Designer tokens launch on the v9 set (PulseHook6): the same one pool on Arc and the same 2.2% fee, with a time-weighted price that lets buyers pay for designs in the designer's token." : "") +
+      " First-generation tokens were launched before the second gate was wired; they stay tradable."),
+    ...notlar.map((n) => el("div", { sinif: "yazi yazi--kucuk yazi--sessiz", yazi: n })),
+    kartlar.length ? el("div", { sinif: "izgara izgara--kart" }, kartlar.map((x) => x.k))
+      : arama ? bos("No matches", 'Nothing on this page for "' + arama + '".')
+      : bos("No launches yet", "The first launch made from any chain appears here, with its collateral read from the vaults.", el("a", { sinif: "dugme dugme--marka", attr: { href: "#/olustur" }, yazi: "Create a token" })),
+    ...sayfalar,
+  ]), el("span", { sinif: "tk__canli", yazi: "live · " + toplamN + " token" + (toplamN === 1 ? "" : "s") })));
 
   /* ---- tokens living on Sui and Aptos ---- */
   const move = [];

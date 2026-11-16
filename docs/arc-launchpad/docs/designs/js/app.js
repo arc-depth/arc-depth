@@ -50,7 +50,9 @@ function kabukCiz() {
   const alt = document.getElementById("dz-alt");
   temizle(yan); temizle(alt);
   yan.append(el("a", { sinif: "dz-marka", attr: { href: "#/" } }, [markaIkon(), el("span", { yazi: "ARC PULSE Designs" })]));
+  /* 16 Nov 2026 (owner): personal tabs (Inbox, Studio) show only once a wallet is connected */
   for (const [k, ad, ik] of SEKMELER) {
+    if ((k === "messages" || k === "me") && !cuzdan.hesap()) continue;
     yan.append(el("a", { sinif: "dz-yan__oge", attr: { href: "#/" + k, "data-sekme": k } }, [ik === "kisi" && cuzdan.hesap() ? avatar(cuzdan.hesap(), 24) : ikon(ik), el("span", { yazi: ad })]));
     alt.append(el("a", { sinif: "dz-alt__oge", attr: { href: "#/" + k, "data-sekme": k } }, [ik === "kisi" && cuzdan.hesap() ? avatar(cuzdan.hesap(), 24) : ikon(ik, 24), el("span", { sinif: "dz-alt__ad", yazi: ad })]));
   }
