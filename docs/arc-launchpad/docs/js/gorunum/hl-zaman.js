@@ -42,7 +42,7 @@ export function zamanMakinesi({ plan, fiyat }) {
   const sonuc = el("div", { sinif: "tm__sonuc" });
   const metin = el("div", { sinif: "yigin yigin--sik" });
   const ufukK = el("div", { sinif: "tm__ufuk" });
-  const modK = el("div", { sinif: "tm__ufuk", attr: { style: "display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:6px 0" } });
+  const modK = el("div", { sinif: "tm__ufuk", attr: { style: "display:flex;flex-wrap:wrap;gap:6px;margin:6px 0;min-width:0" } });
   const aciklama = el("div", { sinif: "tm__n" });
   const calistir = el("button", { sinif: "dugme dugme--marka dugme--tam", attr: { type: "button" }, yazi: "🔮 Run the Time Machine (10,000 futures)" });
   const kutu = el("div", { sinif: "tm" }, [
@@ -58,7 +58,7 @@ export function zamanMakinesi({ plan, fiyat }) {
     1: "Time Machine 1 · forward model: 10,000 possible futures from this market's forecast volatility, options pricing, scheduled events and liquidation levels. It takes no view on direction.",
     2: "Time Machine 2 · chart setups: finds the past hours of this market whose 1 h chart looked like now (RSI, trend, Bollinger, volume, MACD) and replays what really followed, scaled to today's volatility, 10,000 times. Direction comes from those past moves.",
   };
-  const modCiz = () => { modK.replaceChildren(...[[1, "Time Machine 1 · Forward model"], [2, "Time Machine 2 · Chart setups 📈"]].map(([k, ad]) => el("button", { sinif: "dugme dugme--sade dugme--kucuk", attr: { type: "button", "aria-pressed": String(mod === k) }, yazi: ad, on: { click: () => { mod = k; modCiz(); } } }))); aciklama.textContent = ACIK[mod]; };
+  const modCiz = () => { modK.replaceChildren(...[[1, "Time Machine 1 · Forward model"], [2, "Time Machine 2 · Chart setups 📈"]].map(([k, ad]) => el("button", { sinif: "dugme dugme--sade dugme--kucuk", attr: { type: "button", "aria-pressed": String(mod === k), style: "flex:1 1 140px;min-width:0;white-space:normal" }, yazi: ad, on: { click: () => { mod = k; modCiz(); } } }))); aciklama.textContent = ACIK[mod]; };
   modCiz();
 
   let anim = 0;

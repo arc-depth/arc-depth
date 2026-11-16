@@ -443,7 +443,7 @@ export async function ciz({ param, cuzdan }) {
     durumYaz("Aim assist filled the order form. Check Pulse HUD below, then press Review.", "ok");
     anaDugme.scrollIntoView({ behavior: "smooth", block: "center" });
   } }, aim === "short" ? "satis" : aim === "long" ? "alis" : null);
-  const fuzeYeri = aim === "long" || aim === "short" ? fuze.kutu : ayrinti("🎯 Aim assist + 🔮 Time Machine: size, stop and target from your risk, then two Time Machines: 10,000 possible futures and replays of similar past charts", fuze.kutu);
+  const fuzeYeri = aim === "long" || aim === "short" ? fuze.kutu : ayrinti("🎯 Aim assist + 🔮 Time Machine 1 & 2: size, stop and target from your risk, then 10,000 possible futures and replays of similar past charts", fuze.kutu);
   /* open by default on wide screens, so the Time Machine is in sight; phones keep it one tap away above the form */
   if (fuzeYeri.tagName === "DETAILS" && window.matchMedia("(min-width: 900px)").matches) fuzeYeri.open = true;
   fuze.hesapla();
