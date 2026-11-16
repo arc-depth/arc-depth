@@ -182,11 +182,16 @@ export async function ciz({ param }) {
        inside the Buy/Sell sheet */
     let bagUyari = "";
     try {
-      if (t.zincir.k === "solana" && localStorage.getItem("arcpulse-sol-adres-cihaz") === "1" && localStorage.getItem("arcpulse-sol-tur") !== "bagli" && localStorage.getItem("arcpulse-sol-cihaz")) {
+      if (t.zincir.k === "solana" && localStorage.getItem("arcpulse-sol-cihaz") && localStorage.getItem("arcpulse-sol-tasindi") !== "1") {
         bagUyari = el("div", { sinif: "bx-kart", attr: { style: "padding:12px 14px;margin-bottom:10px;border-color:var(--marka,#7c5cff)" } }, [
           el("div", { attr: { style: "font-weight:600;margin-bottom:4px" }, yazi: "Your Solana tokens are on this phone only" }),
           el("div", { sinif: "k", attr: { style: "margin-bottom:8px" }, yazi: "Link them to your wallet once: then the same wallet opens them on any phone, nothing to back up." }),
-          el("button", { sinif: "dugme dugme--marka dugme--kucuk", attr: { type: "button" }, yazi: "Link to my wallet", on: { click: () => { kutuCiz("sat"); if (window.matchMedia("(max-width: 860px)").matches) sayfaAc(); } } })]);
+          el("button", { sinif: "dugme dugme--marka dugme--kucuk", attr: { type: "button" }, yazi: "Link to my wallet", on: { click: async () => {
+            /* point the box back at the device account so its "Link to my wallet" step shows, whatever was stored since */
+            try { const m = await import("../solana-ikiz.js"); const a = await m.cihazAdresi();
+              localStorage.setItem("arcpulse-sol-adres", a); localStorage.setItem("arcpulse-sol-adres-cihaz", "1"); localStorage.setItem("arcpulse-sol-tur", "cihaz"); } catch (e) { /* blocked */ }
+            if (!cuzdan.hesap()) { try { await cuzdan.bagla(); } catch (e) { return; } }
+            kutuCiz("sat"); if (window.matchMedia("(max-width: 860px)").matches) sayfaAc(); } } })]);
       }
     } catch (e) { /* storage blocked */ }
     orta.replaceChildren(
@@ -324,7 +329,7 @@ export async function ciz({ param }) {
             const M = await import("../cuzdan-varlik.js");
             const mintler = [...new Set([t.adres, ...M.hatirlanan().filter((x) => x.z === "solana").map((x) => x.a)])];
             await m.cihazdanBagliyaTasi(hedef, mintler, (x) => { durum.textContent = x; });
-            try { localStorage.setItem(SOL_ANAHTAR, hedef); localStorage.setItem("arcpulse-sol-tur", "bagli"); } catch (e) { /* blocked */ }
+            try { localStorage.setItem(SOL_ANAHTAR, hedef); localStorage.setItem("arcpulse-sol-tur", "bagli"); localStorage.setItem("arcpulse-sol-tasindi", "1"); } catch (e) { /* blocked */ }
             durum.textContent = "Done ✓ your Solana tokens are in the account linked to your wallet (" + hedef.slice(0, 4) + "…" + hedef.slice(-4) + ").";
             kutuCiz(taraf);
           } catch (e) { durum.textContent = (e && (e.shortMessage || e.message)) || "Could not link."; bagla.disabled = false; }
