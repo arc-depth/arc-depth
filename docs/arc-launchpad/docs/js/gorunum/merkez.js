@@ -1333,19 +1333,64 @@ export async function ciz({ param, kayit } = {}) {
     const sekAl = el("button", { attr: { type: "button" }, yazi: "Buy" }), sekSat = el("button", { attr: { type: "button" }, yazi: "Sell" });
     const teklif = el("div", { sinif: "tb-teklif" });
     const ciplerAl = el("div", { sinif: "tb-cip" }, [10, 25, 50, 100].map((v) => { const b = el("button", { attr: { type: "button" }, yazi: "$" + v }); b.addEventListener("click", () => { alTutar.value = String(v); guncelle(); }); return b; }));
-    const ciplerSat = el("div", { sinif: "tb-cip" }, [100000, 1000000, 10000000].map((v) => { const b = el("button", { attr: { type: "button" }, yazi: kisaltT(v) }); b.addEventListener("click", () => { satTutar.value = String(v); guncelle(); }); return b; }));
+    const bakiye = { tok: {}, para: {}, okundu: false };
+    const paraYaz = (x, a) => !a ? "" : a.anahtar === "arc" ? (x || 0).toFixed(2) + " USDC" : ((x || 0) >= 1 ? (x || 0).toFixed(3) : (x || 0) > 0 ? (x || 0).toPrecision(3) : "0") + " " + a.gaz;
+    const bakAl = el("div", { sinif: "tb-bak" }), bakSat = el("div", { sinif: "tb-bak" });
+    const ciplerSat = el("div", { sinif: "tb-cip" }, [25, 50, 75, 100].map((p) => { const b = el("button", { attr: { type: "button" }, yazi: p + "%" }); b.addEventListener("click", () => { const v = bakiye.tok[ag.anahtar] || 0; satTutar.value = String(p === 100 ? Math.floor(v) : Math.floor(v * p / 100)); guncelle(); }); return b; }));
+    satTutar.value = ""; satTutar.setAttribute("placeholder", "0"); satTutar.setAttribute("step", "any");
+    const bakiyeOku = async () => {
+      const ben = cuzdan.hesap();
+      if (!ben) { bakAl.textContent = bakSat.textContent = "Connect a wallet to see your balance."; return; }
+      bakAl.textContent = bakSat.textContent = "Reading your balances on every chain…";
+      const ERC = ["function balanceOf(address) view returns (uint256)"];
+      const zaman = (pr) => Promise.race([pr, new Promise((_, r) => setTimeout(() => r(new Error("timeout")), 9000))]);
+      let ikiz = null; try { ikiz = await new Contract(YAYICI, ["function ikizAdresi(address) view returns (address)"], arc).ikizAdresi(tAdr); } catch (e) { /* no twin yet */ }
+      await Promise.all(odemeAglari().map(async (a) => {
+        try {
+          if (a.anahtar === "arc") {
+            const [t, u] = await Promise.all([zaman(new Contract(tAdr, ERC, arc).balanceOf(ben)).catch(() => 0n), zaman(new Contract(ARC_USDC, ERC, arc).balanceOf(ben)).catch(() => 0n)]);
+            bakiye.tok.arc = Number(t) / 1e18; bakiye.para.arc = Number(u) / 1e6; return;
+          }
+          const p = new JsonRpcProvider(a.rpc, a.id, { staticNetwork: true });
+          const [n, t] = await Promise.all([zaman(p.getBalance(ben)).catch(() => 0n), ikiz && !a.sadeceOdeme ? zaman(new Contract(ikiz, ERC, p).balanceOf(ben)).catch(() => 0n) : Promise.resolve(0n)]);
+          bakiye.para[a.anahtar] = Number(n) / 1e18; bakiye.tok[a.anahtar] = Number(t) / 1e18;
+        } catch (e) { /* that chain stays unknown */ }
+      }));
+      bakiye.okundu = true;
+      for (const o of zincirSec.options) {
+        const a = odemeAglari().find((x) => x.anahtar === o.value); if (!a) continue;
+        const tk = bakiye.tok[o.value] || 0;
+        o.textContent = a.ad + " · " + paraYaz(bakiye.para[o.value], a) + (tk > 0 ? " · " + kisaltT(tk) + " " + (sym || "tokens") : "");
+      }
+      /* the chain to start on: where the token is held (most), else Arc when it holds USDC, else the richest gas balance */
+      const tokEn = Object.entries(bakiye.tok).sort((x, y) => y[1] - x[1])[0];
+      let hedef = tokEn && tokEn[1] > 0 ? tokEn[0] : (bakiye.para.arc > 1 ? "arc" : null);
+      if (hedef && zincirSec.value !== hedef) { zincirSec.value = hedef; zincirSec.dispatchEvent(new Event("change")); }
+      guncelle();
+    };
+    zincirSec.addEventListener("change", () => guncelle());
     alTutar.classList.add("tb-buyuk"); satTutar.classList.add("tb-buyuk");
     alDugme.className = "tb-ana tb-ana--al"; satDugme.className = "tb-ana tb-ana--sat"; itfaDugme.className = "dugme dugme--sade";
+    const zincirEt = el("label", { sinif: "tb-et", yazi: "Chain · your balance there" });
     const alGorunum = el("div", { sinif: "tb-gor" }, [
-      el("label", { sinif: "tb-et", yazi: "Pay from" }), zincirSec,
-      el("div", { sinif: "tb-tutar" }, [el("span", { yazi: "$" }), alTutar]), ciplerAl]);
+      el("div", { sinif: "tb-tutar" }, [el("span", { yazi: "$" }), alTutar]), bakAl, ciplerAl]);
     const satGorunum = el("div", { sinif: "tb-gor" }, [
-      el("div", { sinif: "tb-tutar" }, [satTutar, el("span", { sinif: "tb-birim", yazi: "tokens" })]), ciplerSat,
-      el("div", { sinif: "tb-not", yazi: "Sells the tokens you hold on the chain picked under Buy. Redeem takes your share of the collateral basket instead of selling." })]);
+      el("label", { sinif: "tb-et", yazi: "Amount to sell (type it, or pick a share)" }),
+      el("div", { sinif: "tb-tutar" }, [satTutar, el("span", { sinif: "tb-birim", yazi: "tokens" })]), bakSat, ciplerSat,
+      el("div", { sinif: "tb-not", yazi: "Redeem takes your share of the collateral basket instead of selling in the pool." })]);
     const guncelle = async () => {
       const al = taraf === "al";
       alDugme.textContent = "Buy $" + (Number(alTutar.value) || 0) + (sym ? " of " + sym : "");
       satDugme.textContent = "Sell " + kisaltT(Number(satTutar.value) || 0) + (sym ? " " + sym : "");
+      if (bakiye.okundu) {
+        const a = ag, tk = bakiye.tok[a.anahtar] || 0, pr = bakiye.para[a.anahtar] || 0;
+        const baska = Object.entries(bakiye.tok).filter(([k, v]) => k !== a.anahtar && v > 0).map(([k, v]) => kisaltT(v) + " on " + (odemeAglari().find((x) => x.anahtar === k) || {}).ad);
+        bakAl.replaceChildren(el("span", { yazi: "Balance on " + a.ad }), el("b", { yazi: paraYaz(pr, a) }));
+        bakAl.classList.toggle("tb-bak--az", a.anahtar === "arc" && pr < (Number(alTutar.value) || 0));
+        const deger = st && tk > 0 ? " ≈ $" + (tk * st.fiyat).toFixed(2) : "";
+        bakSat.replaceChildren(el("span", { yazi: "You hold on " + a.ad }), el("b", { yazi: kisaltT(tk) + " " + (sym || "tokens") + deger }));
+        if (!tk && baska.length) bakSat.append(el("small", { yazi: "You hold " + baska.join(", ") + ": pick that chain above to sell." }));
+      }
       const s0 = await durumOku();
       if (!s0) { teklif.textContent = ""; return; }
       if (al) { const e = egri.alim(s0, Number(alTutar.value) || 0); teklif.replaceChildren(el("span", { yazi: "You receive" }), el("b", { yazi: "≈ " + kisaltT(e.token) + (sym ? " " + sym : "") }), el("span", { yazi: "Price impact" }), el("b", { yazi: "+" + (e.etki * 100).toFixed(2) + "%" }), el("span", { yazi: "Fees" }), el("b", { yazi: "$" + e.ucret.toFixed(2) + " (2.2% + " + (s0.vergi * 100).toFixed(0) + "% collateral tax)" })); }
@@ -1384,14 +1429,22 @@ export async function ciz({ param, kayit } = {}) {
 .tb-kayma{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:12.5px;color:var(--yazi-3)}
 .tb-kayma input{width:70px;height:32px}
 .tb-not{font-size:12px;color:var(--yazi-3);line-height:1.5}
+.tb-bak{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 10px;font-size:13px;color:var(--yazi-3);font-variant-numeric:tabular-nums}
+.tb-bak b{color:var(--yazi-1);font-weight:600}.tb-bak small{flex-basis:100%;color:#f5c26b;font-size:12px}
+.tb-bak--az b{color:var(--satis)}
 ` }));
     const kutu = el("div", { sinif: "tb" }, [
       el("div", { sinif: "tb-sekme", attr: { role: "tablist" } }, [sekAl, sekSat]),
+      el("div", { sinif: "tb-gor" }, [zincirEt, zincirSec]),
       alGorunum, satGorunum, teklif, alDugme, alDurum, satDugme, itfaDugme, satDurum,
       el("div", { sinif: "tb-kayma" }, [el("span", { yazi: "Slippage limit (%)" }), kayma]),
       el("div", { sinif: "tb-not", yazi: "One pool on Arc, the same price from every chain. Memecoins are risky: buy only what you can afford to lose." }),
       el("a", { sinif: "tb-not", attr: { href: "#/merkez?t=" + tAdr }, yazi: "Move tokens, limit orders and upkeep →" })]);
     ciz();
+    bakiyeOku();
+    cuzdan.dinle(() => { if (kutu.isConnected || !bakiye.okundu) bakiyeOku(); });
+    const bakTekrar = setInterval(() => { if (!kutu.isConnected && bakiye.okundu) return clearInterval(bakTekrar); if (kutu.isConnected && document.visibilityState === "visible") bakiyeOku(); }, 30000);
+    for (const d of [alDugme, satDugme, itfaDugme]) d.addEventListener("click", () => setTimeout(bakiyeOku, 15000));
     if (param && param.get("gomu") === "1") return kutu;
     kutu.lastChild.remove();   // its "Move tokens, limit orders and upkeep" link points at this very page
     ticaretKutusu = kutu;
