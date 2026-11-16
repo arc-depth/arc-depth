@@ -161,6 +161,8 @@ async function detay(K, istenen) {
 
 export async function ciz({ param } = {}) {
   if (param && param.get("ag")) return (await import("./terminal-ag.js")).ciz({ param });
+  /* 16 Nov 2026 (owner: "cex gibi görünsün dex gibi çalışsın"): Trade is the exchange screen (borsa.js); a token of ours (?t=) keeps its own page */
+  if (!(param && param.get("t"))) return (await import("./borsa.js")).ciz({ param });
   launchStil();
   const K = await (await import("../launch-kaynak.js")).launchKaynagi();
   const satirlar = K.satirlar, hatalar = K.hatalar;

@@ -730,3 +730,6 @@ export function tokenAl({ zincir, adres, sembol, ad, resim = null, fiyat = 0, fd
   if (!z) throw new Error("Unknown chain " + zincir);
   alKutusu({ zincir: z, adres, sembol, ad, resim, fiyat, fdv, hacim, degisim, likidite, havuz, kuruldu: kuruldu || new Date(0).toISOString(), karar: 18 });
 }
+
+/* 16 Nov 2026: the Trade screen (borsa.js) reuses the market feed, the routing and the buy box */
+export const borsaYardim = { veri, suz, ESIK, ESIK_YENI, ZINCIRLER, evmler, dolarHam, makbuz, RELAY, UCRET_BPS, UCRET_ALICI, alKutusu, STIL, gecko };

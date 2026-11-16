@@ -104,7 +104,7 @@ export function anaTahta() {
     let rows = [];
     if (k === "trend" || k === "yeni") {
       const l = k === "trend" ? d.trend : d.yeni;
-      rows = l.map((t) => satir({ tik: () => d.al(t), resim: t.resim, ad: t.sembol, zincir: t.zincir.ad, alt: "MC " + kisa(Number(t.fdv)) + (t.kuruldu ? " · " + yas(Date.parse(t.kuruldu)) : ""), fiyat: fiyatYaz(Number(t.fiyat)), deg: t.degisim == null ? null : Number(t.degisim), alTik: () => d.al(t) }));
+      rows = l.map((t) => satir({ href: "#/terminal?z=" + t.zincir.k + "&a=" + t.adres, resim: t.resim, ad: t.sembol, zincir: t.zincir.ad, alt: "MC " + kisa(Number(t.fdv)) + (t.kuruldu ? " · " + yas(Date.parse(t.kuruldu)) : ""), fiyat: fiyatYaz(Number(t.fiyat)), deg: t.degisim == null ? null : Number(t.degisim), alTik: () => d.al(t) }));
     } else if (k === "biz") {
       rows = d.map(({ s, v }) => satir({ href: "#/terminal?t=" + encodeURIComponent(s.token), resim: s.gorsel || (v && v.resim), ad: s.sembol || s.ad || "?", zincir: s.zincir, alt: "MC " + kisa(v && v.mcap) + (s.zaman ? " · " + yas(s.zaman * 1000) : "") + (s.demo ? " · demo" : ""), fiyat: v ? fiyatYaz(Number(v.fiyat)) : "—", deg: v && v.deg != null ? Number(v.deg) : null, alHref: s.git || "#/terminal?t=" + encodeURIComponent(s.token) }));
     } else {
