@@ -308,7 +308,7 @@ export const cuzdan = {
     /* a Pulse Wallet's encrypted phrase is the wallet itself: wiping it would lose the money. Kept; it is removed
        only from its own page ("Remove from this device"). */
     let pwSakla = [];
-    try { const P = await import("./pulse-cuzdan.js"); pwSakla = [...P.PW_ANAHTARLAR, "arcpulse-sol-cihaz", "arcpulse-sol-adres", "arcpulse-sol-adres-cihaz"].map((k) => [k, localStorage.getItem(k)]).filter((x) => x[1] != null); } catch (e) { /* none */ }
+    try { const P = await import("./pulse-cuzdan.js"); pwSakla = [...P.PW_ANAHTARLAR, "arcpulse-sol-cihaz", "arcpulse-sol-adres", "arcpulse-sol-adres-cihaz", "arcpulse-sol-bagli", "arcpulse-sol-tur"].map((k) => [k, localStorage.getItem(k)]).filter((x) => x[1] != null); } catch (e) { /* none */ }
     try { localStorage.clear(); } catch (e) { /* storage may be blocked */ }
     try { for (const [k, v] of pwSakla) localStorage.setItem(k, v); } catch (e) { /* blocked */ }
     try { sessionStorage.clear(); } catch (e) { /* storage may be blocked */ }

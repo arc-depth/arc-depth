@@ -52,6 +52,7 @@ function solCuzdani() {
   if (eski) return { ad: "Phantom", eski };
   /* 16 Nov 2026: the Solana account of the wallet paired by WalletConnect (cuzdan.js asks for it when pairing) */
   if (_cuz && _cuz.wcSolanaAdresi && _cuz.wcSolanaAdresi()) return { ad: (_cuz.wcCuzdanAdi && _cuz.wcCuzdanAdi()) || "your wallet", wc: true };
+  if (bagliVar(_cuz && _cuz.hesap())) return { ad: "ARC PULSE Solana account (linked to your wallet)", bagli: true };
   if (cihazVar()) return { ad: "ARC PULSE Solana account (this device)", cihaz: true };
   return null;
 }
@@ -63,6 +64,44 @@ let _cuz = null;
    into Phantom / Solflare). Lost browser data without a backup = lost tokens: the page says so. */
 const CIHAZ = "arcpulse-sol-cihaz";
 const b2h = (b) => [...new Uint8Array(b)].map((x) => x.toString(16).padStart(2, "0")).join("");
+/* 16 Nov 2026, later (owner: "kaybolur ne demek, böyle bir şey olmasın"): the Solana account is now DERIVED from the
+   visitor's own EVM wallet: one personal_sign of a fixed text, hashed (SHA-256) into an Ed25519 seed. Wallets sign
+   deterministically (RFC 6979), so the same wallet re-opens the same account on any phone, any time: nothing to back up,
+   nothing lost with the browser. The key is only ever computed in this browser; the signature never leaves it. The
+   page remembers the derived key here for convenience (losing that copy loses nothing: signing again brings it back).
+   The older device-made account (arcpulse-sol-cihaz) keeps working for what it already holds. */
+const BAGLI = "arcpulse-sol-bagli";
+const bagliMetin = (evm) => "ARC PULSE · Solana account\n\nSign to open your ARC PULSE Solana account. The same wallet always opens the same account, on any device. Signing is free and moves nothing.\n\nOnly sign this on arcpulse.app.\n\nWallet: " + evm.toLowerCase();
+async function tohumdanAnahtar(tohum) {
+  const on = hexB("302e020100300506032b657004220420"), pk8 = new Uint8Array(48); pk8.set(on, 0); pk8.set(tohum, 16);
+  const ozel = await crypto.subtle.importKey("pkcs8", pk8, { name: "Ed25519" }, true, ["sign"]);
+  const jwk = await crypto.subtle.exportKey("jwk", ozel);
+  const pub = Uint8Array.from(atob(jwk.x.replace(/-/g, "+").replace(/_/g, "/") + "==".slice((jwk.x.length + 2) % 4 || 2)), (c) => c.charCodeAt(0));
+  return { pk8, pub };
+}
+export function bagliVar(evm) { try { const k = JSON.parse(localStorage.getItem(BAGLI) || "null"); return !!(k && k.evm === String(evm || "").toLowerCase()); } catch (e) { return false; } }
+/** the wallet-linked Solana account: from the stored copy, or by asking the EVM wallet to sign once */
+export async function bagliHesap(evm, imzala) {
+  evm = String(evm).toLowerCase();
+  let k = null; try { k = JSON.parse(localStorage.getItem(BAGLI) || "null"); } catch (e) { /* none */ }
+  if (!k || k.evm !== evm) {
+    const sig = await imzala(bagliMetin(evm));
+    const tohum = new Uint8Array(await crypto.subtle.digest("SHA-256", hexB(sig)));
+    const { pk8, pub } = await tohumdanAnahtar(tohum);
+    k = { evm, pk8: b2h(pk8), pub: b2h(pub) };
+    try { localStorage.setItem(BAGLI, JSON.stringify(k)); } catch (e) { /* this visit only */ }
+  }
+  const { bs58 } = await vendor();
+  return { adres: bs58.encode(hexB(k.pub)), k };
+}
+async function bagliImzala(vtx) {
+  const k = JSON.parse(localStorage.getItem(BAGLI) || "null"); if (!k) throw new Error("Open your Solana account first (one signature).");
+  const ozel = await crypto.subtle.importKey("pkcs8", hexB(k.pk8), { name: "Ed25519" }, false, ["sign"]);
+  const imza = new Uint8Array(await crypto.subtle.sign({ name: "Ed25519" }, ozel, vtx.message.serialize()));
+  const { PublicKey, bs58 } = await vendor();
+  vtx.addSignature(new PublicKey(bs58.encode(hexB(k.pub))), imza);
+  return vtx;
+}
 export function cihazVar() { try { return !!localStorage.getItem(CIHAZ); } catch (e) { return false; } }
 async function cihazAnahtar() {
   let k = null; try { k = JSON.parse(localStorage.getItem(CIHAZ) || "null"); } catch (e) { /* none */ }
@@ -103,6 +142,7 @@ export const solanaCuzdan = {
     const c = solCuzdani();
     if (!c) throw new Error("No Solana wallet found. Install Phantom (or any Solana wallet) and reload.");
     if (c.wc) { _hesap = { address: _cuz.wcSolanaAdresi(), wc: true }; return _hesap.address; }
+    if (c.bagli) { _hesap = { address: (await bagliHesap(_cuz.hesap(), (m) => _cuz.imzala(m))).adres, bagli: true }; return _hesap.address; }
     if (c.cihaz) { _hesap = { address: await cihazAdresi(), cihaz: true }; return _hesap.address; }
     if (c.standart) {
       const r = await c.standart.features["standard:connect"].connect();
@@ -120,6 +160,7 @@ export const solanaCuzdan = {
     if (!_hesap) await this.baglan();
     const { Connection, bs58 } = await vendor();
     const conn = new Connection(SOL.rpc, "confirmed");
+    if (c.bagli) { const imzali = await bagliImzala(vtx); return conn.sendRawTransaction(imzali.serialize(), { skipPreflight: false }); }
     if (c.cihaz) { const imzali = await cihazImzala(vtx); return conn.sendRawTransaction(imzali.serialize(), { skipPreflight: false }); }
     if (c.wc) {
       const b64 = btoa(String.fromCharCode(...vtx.serialize()));
@@ -330,4 +371,41 @@ export async function splBakiye(sahip, mint) {
     if (h && h.data.length >= 72) top += new DataView(h.data.buffer, h.data.byteOffset).getBigUint64(64, true);
   }
   return top;
+}
+
+/* 16 Nov 2026: move what the older device-only account holds into the wallet-linked one (so nothing depends on this
+   browser's storage). Tokens: the remembered Solana mints (cuzdan-varlik.js) plus USDC; each moves with a
+   TransferChecked from its token account (classic or Token-2022), the destination account made if missing; the SOL
+   left after the fee goes last. The device account pays the fees, so it needs a little SOL first. */
+export async function cihazdanBagliyaTasi(hedef, mintler, durum = () => {}) {
+  const { Connection, PublicKey, TransactionInstruction, SystemProgram, TOKEN_PROGRAM_ID, getAssociatedTokenAddressSync, createAssociatedTokenAccountIdempotentInstruction } = await vendor();
+  const conn = new Connection(SOL.rpc, "confirmed");
+  const ben = new PublicKey(await cihazAdresi()), alici = new PublicKey(hedef);
+  const T22 = new PublicKey("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb");
+  const ixs = [];
+  for (const mintS of [...new Set([SOL.usdc, ...mintler])]) {
+    const mint = new PublicKey(mintS);
+    const mh = await conn.getAccountInfo(mint).catch(() => null); if (!mh) continue;
+    const prog = mh.owner.equals(T22) ? T22 : TOKEN_PROGRAM_ID;
+    const kaynak = getAssociatedTokenAddressSync(mint, ben, false, prog);
+    const kh = await conn.getAccountInfo(kaynak).catch(() => null);
+    if (!kh || kh.data.length < 72) continue;
+    const miktar = new DataView(kh.data.buffer, kh.data.byteOffset).getBigUint64(64, true); if (miktar === 0n) continue;
+    const ondalik = mh.data[44];
+    const hedefAta = getAssociatedTokenAddressSync(mint, alici, false, prog);
+    ixs.push(createAssociatedTokenAccountIdempotentInstruction(ben, hedefAta, alici, mint, prog));
+    const d = new Uint8Array(10); d[0] = 12; new DataView(d.buffer).setBigUint64(1, miktar, true); d[9] = ondalik;
+    ixs.push(new TransactionInstruction({ programId: prog, data: d, keys: [{ pubkey: kaynak, isSigner: false, isWritable: true }, { pubkey: mint, isSigner: false, isWritable: false }, { pubkey: hedefAta, isSigner: false, isWritable: true }, { pubkey: ben, isSigner: true, isWritable: false }] }));
+  }
+  if (ixs.length) {
+    durum("Moving your tokens to your wallet-linked Solana account…");
+    const tx = await v0(conn, ben, ixs); const imza = await conn.sendRawTransaction((await cihazImzala(tx)).serialize()); await onayBekle(imza);
+  }
+  /* the SOL left, minus the fee of this last transfer */
+  const kalan = await conn.getBalance(ben);
+  if (kalan > 10000) {
+    const tx = await v0(conn, ben, [SystemProgram.transfer({ fromPubkey: ben, toPubkey: alici, lamports: kalan - 5000 })]);
+    const imza = await conn.sendRawTransaction((await cihazImzala(tx)).serialize()); await onayBekle(imza);
+  }
+  return true;
 }

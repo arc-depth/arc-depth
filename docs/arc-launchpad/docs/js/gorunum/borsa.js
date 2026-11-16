@@ -269,7 +269,16 @@ export async function ciz({ param }) {
        box just says where the tokens go, with a backup button. Their own address can still be typed instead. */
     const cihazHazirla = async () => {
       const m = _solM || (_solM = await import("../solana-ikiz.js"));
-      const a = await m.cihazAdresi(); try { localStorage.setItem(SOL_ANAHTAR, a); localStorage.setItem("arcpulse-sol-adres-cihaz", "1"); } catch (e) { /* blocked */ }
+      /* first choice (16 Nov 2026, owner: nothing may be lost): the account linked to the EVM wallet by one free signature;
+         the device-only account is the fallback when the wallet does not answer that signature */
+      let a = null;
+      if (cuzdan.hesap()) {
+        durum.textContent = "One free signature in your wallet opens your Solana account (moves nothing; the same wallet always opens the same account)…";
+        try { a = (await Promise.race([m.bagliHesap(cuzdan.hesap(), (x) => cuzdan.imzala(x)), new Promise((_, r) => setTimeout(() => r(new Error("timeout")), 45000))])).adres; durum.textContent = ""; }
+        catch (e) { durum.textContent = ""; a = null; }
+      }
+      if (a) { try { localStorage.setItem(SOL_ANAHTAR, a); localStorage.setItem("arcpulse-sol-adres-cihaz", "1"); localStorage.setItem("arcpulse-sol-tur", "bagli"); } catch (e) { /* blocked */ } return a; }
+      a = await m.cihazAdresi(); try { localStorage.setItem(SOL_ANAHTAR, a); localStorage.setItem("arcpulse-sol-adres-cihaz", "1"); localStorage.setItem("arcpulse-sol-tur", "cihaz"); } catch (e) { /* blocked */ }
       return a;
     };
     const cihazMi = () => { try { return localStorage.getItem("arcpulse-sol-adres-cihaz") === "1"; } catch (e) { return false; } };
@@ -282,7 +291,34 @@ export async function ciz({ param }) {
           const k = await m.cihazYedek(); prompt("Your Solana account's secret key (copy it, keep it private):", k); } } });
         const kendi = el("button", { sinif: "dugme dugme--sade dugme--kucuk", attr: { type: "button" }, yazi: "Use my own Solana address", on: { click: () => {
           try { localStorage.removeItem("arcpulse-sol-adres-cihaz"); localStorage.removeItem(SOL_ANAHTAR); } catch (e) { /* blocked */ } kutuCiz(taraf); } } });
-        return el("div", { sinif: "bx-elde" }, ["Your ", t.sembol, " goes to your ARC PULSE Solana account on this phone", solAdres() ? " (" + solAdres().slice(0, 4) + "…" + solAdres().slice(-4) + ")" : "", ". Back it up once: without a backup, clearing this browser loses it. ", el("div", { attr: { style: "display:flex;gap:6px;margin-top:6px;flex-wrap:wrap" } }, [yedekDug, kendi])]);
+        let bagli = false; try { bagli = localStorage.getItem("arcpulse-sol-tur") === "bagli" && !!solAdres(); } catch (e) { /* blocked */ }
+        if (bagli || (!solAdres() && cuzdan.hesap())) return el("div", { sinif: "bx-elde" }, ["Your ", t.sembol, " goes to your ARC PULSE Solana account linked to your wallet", solAdres() ? " (" + solAdres().slice(0, 4) + "…" + solAdres().slice(-4) + ")" : "", ". The same wallet opens it on any phone: nothing to back up. ", el("div", { attr: { style: "margin-top:6px" } }, [kendi])]);
+        /* an older device-only account: one tap links it to the wallet (moves its tokens; then nothing depends on this phone) */
+        const bagla = cuzdan.hesap() && solAdres() ? el("button", { sinif: "dugme dugme--marka dugme--kucuk", attr: { type: "button" }, yazi: "Link to my wallet (nothing to back up)", on: { click: async () => {
+          bagla.disabled = true;
+          try {
+            const m = _solM || (_solM = await import("../solana-ikiz.js"));
+            durum.textContent = "One free signature in your wallet opens your wallet-linked Solana account…";
+            const hedef = (await m.bagliHesap(cuzdan.hesap(), (x) => cuzdan.imzala(x))).adres;
+            const kaynakAdr = solAdres();
+            const bk = await fetch("https://solana-rpc.publicnode.com", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "getBalance", params: [kaynakAdr] }) }).then((r) => r.json());
+            if (((bk.result && bk.result.value) || 0) < 1000000) {
+              const ag0 = V.evmler().filter((x) => bakiye[x.anahtar] >= 0.6).sort((x, y) => bakiye[y.anahtar] - bakiye[x.anahtar])[0];
+              if (!ag0) throw new Error("Moving needs about $0.50 of SOL for Solana's fee, and no chain in your wallet has $0.60 of USDC.");
+              durum.textContent = "$0.50 of SOL for Solana's fee (once). Confirm in your wallet…";
+              const g = await fetch(V.RELAY + "/quote", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ user: cuzdan.hesap(), recipient: kaynakAdr, originChainId: ag0.id, destinationChainId: 792703809, originCurrency: ag0.dolar, destinationCurrency: "11111111111111111111111111111111", amount: V.dolarHam(ag0, 0.5).toString(), tradeType: "EXACT_INPUT", refundTo: cuzdan.hesap() }) }).then((r) => r.json());
+              for (const a2 of g.steps || []) for (const i2 of a2.items || []) { if (a2.kind !== "transaction") continue; const h2 = await cuzdan.agdaGonder(ag0, { to: i2.data.to, data: i2.data.data, value: "0x" + BigInt(i2.data.value || 0).toString(16) }); await V.makbuz(ag0, h2); }
+              for (let i = 0; i < 30; i++) { await new Promise((r) => setTimeout(r, 3000)); durum.textContent = "Waiting for the SOL on Solana… (" + ((i + 1) * 3) + "s)"; const b2 = await fetch("https://solana-rpc.publicnode.com", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "getBalance", params: [kaynakAdr] }) }).then((r) => r.json()).catch(() => null); if (b2 && b2.result && b2.result.value >= 1000000) break; }
+            }
+            const M = await import("../cuzdan-varlik.js");
+            const mintler = [...new Set([t.adres, ...M.hatirlanan().filter((x) => x.z === "solana").map((x) => x.a)])];
+            await m.cihazdanBagliyaTasi(hedef, mintler, (x) => { durum.textContent = x; });
+            try { localStorage.setItem(SOL_ANAHTAR, hedef); localStorage.setItem("arcpulse-sol-tur", "bagli"); } catch (e) { /* blocked */ }
+            durum.textContent = "Done ✓ your Solana tokens are in the account linked to your wallet (" + hedef.slice(0, 4) + "…" + hedef.slice(-4) + ").";
+            kutuCiz(taraf);
+          } catch (e) { durum.textContent = (e && (e.shortMessage || e.message)) || "Could not link."; bagla.disabled = false; }
+        } } }) : "";
+        return el("div", { sinif: "bx-elde" }, ["Your ", t.sembol, " goes to your ARC PULSE Solana account on this phone", solAdres() ? " (" + solAdres().slice(0, 4) + "…" + solAdres().slice(-4) + ")" : "", ". Back it up once: without a backup, clearing this browser loses it. ", el("div", { attr: { style: "display:flex;gap:6px;margin-top:6px;flex-wrap:wrap" } }, [bagla, yedekDug, kendi])]);
       }
       const giris = el("input", { attr: { placeholder: "Your Solana address (where tokens go)", autocomplete: "off", spellcheck: "false", "aria-label": "Your Solana address" } });
       giris.value = solAdres() || "";
