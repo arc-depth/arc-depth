@@ -172,8 +172,14 @@ export async function ciz({ param }) {
   /* 16 Nov 2026 redesign (approved demo): Home is one live board (Trending / New / ARC PULSE / Perps); the cover,
      the perps banner and the card grids stay for a search (?q=) or a chain (?zincir=) */
   const zkAna = String((param && param.get("zincir")) || "").trim();
-  const tahtaModu = !arama && !zkAna;
-  if (tahtaModu) { const { anaTahta } = await import("./ana-tahta.js"); kap.dataset.icindekilerYok = "1"; kap.append(anaTahta()); }
+  /* 16 Nov 2026 (owner: the collateral cards on Home "yeri orası değil"): Home is the board only; every launch with its
+     collateral, the counters and the Sui/Aptos tokens moved to their own page, #/kesfet?liste=1, linked under the board */
+  const tahtaModu = !arama && !zkAna && !(param && param.get("liste"));
+  if (tahtaModu) {
+    const { anaTahta } = await import("./ana-tahta.js"); kap.dataset.icindekilerYok = "1"; kap.append(anaTahta());
+    kap.append(el("a", { sinif: "dugme dugme--sade", attr: { href: "#/kesfet?liste=1", style: "align-self:center" }, yazi: "All ARC PULSE launches and their collateral →" }));
+    return kap;
+  }
   if (!tahtaModu) kap.append(sayfaUst("Discover", "Collateral-backed tokens: one pool on Arc, reachable from thirteen chains", [
     el("a", { sinif: "dugme dugme--marka", attr: { href: "#/olustur" } }, [
       el("span", { html: ikon("arti", "yol-oge__ikon") }), el("span", { yazi: "Create a token" })]),
