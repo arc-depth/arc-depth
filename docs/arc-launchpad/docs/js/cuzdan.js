@@ -64,6 +64,31 @@ const kopukMu = () => { try { return localStorage.getItem(KOPUK) === "1"; } catc
 const kopukYaz = (v) => { try { v ? localStorage.setItem(KOPUK, "1") : localStorage.removeItem(KOPUK); } catch (e) { /* storage may be blocked */ } };
 let _wc = null;
 
+/* 16 Nov 2026 (owner, Chrome on iPhone + a phone wallet over WalletConnect: "cüzdanı onayladım ama kaldı öyle"): a
+   request sent over WalletConnect waits in the wallet app until that app is opened, and the page never said so. While
+   one is pending, a bar at the bottom says "Open <wallet> to confirm" with the wallet's own link (its WalletConnect
+   metadata, else a known scheme). It goes away when the wallet answers. */
+const BILINEN = [[/metamask/i, "metamask://"], [/trust/i, "trust://"], [/coinbase/i, "cbwallet://"], [/rainbow/i, "rainbow://"], [/okx/i, "okx://"], [/phantom/i, "phantom://"], [/rabby/i, "rabby://"], [/zerion/i, "zerion://"]];
+function wcCuzdan() {
+  const m = _wc && _wc.session && _wc.session.peer && _wc.session.peer.metadata;
+  if (!m) return null;
+  const r = m.redirect || {};
+  const bil = BILINEN.find(([x]) => x.test(m.name || ""));
+  return { ad: m.name || "your wallet", link: r.native || r.universal || (bil && bil[1]) || null };
+}
+async function wcIle(is) {
+  if (!(_wc && _wc.session)) return is();
+  const c = wcCuzdan();
+  const bar = document.createElement("div");
+  bar.setAttribute("role", "status");
+  bar.style.cssText = "position:fixed;left:12px;right:12px;bottom:calc(84px + env(safe-area-inset-bottom));z-index:3000;display:flex;gap:10px;align-items:center;justify-content:space-between;padding:12px 14px;border-radius:14px;background:#1c1730;border:1px solid #7c5cff;color:#e6deff;font:600 14px system-ui;box-shadow:0 10px 30px rgba(0,0,0,.5)";
+  const t = document.createElement("span"); t.textContent = "Confirm in " + c.ad + " — open the app, the request is waiting there.";
+  bar.append(t);
+  if (c.link) { const a = document.createElement("a"); a.href = c.link; a.textContent = "Open " + c.ad.split(" ")[0]; a.style.cssText = "flex:none;padding:8px 12px;border-radius:10px;background:#7c5cff;color:#fff;text-decoration:none"; bar.append(a); }
+  document.body.append(bar);
+  try { return await is(); } finally { bar.remove(); }
+}
+
 async function wcKur() {
   if (_wc) return _wc;
   const { EthereumProvider } = await import("../vendor/walletconnect.mjs");
@@ -337,7 +362,7 @@ export const cuzdan = {
     if (!_hesap) throw new Error("Wallet not connected");
     if (!this.zincirdeMi()) await this.arcaGec();
     if (!this.zincirdeMi()) throw new Error("Wallet is not on the Arc network");
-    return p.request({ method: "eth_sendTransaction", params: [{ from: _hesap, ...islem }] });
+    return wcIle(() => p.request({ method: "eth_sendTransaction", params: [{ from: _hesap, ...islem }] }));
   },
 
   /* ---- any of the nine chains (aglar.js) -------------------------- */
@@ -356,7 +381,7 @@ export const cuzdan = {
     if (!p) throw new Error("No wallet");
     const hex = "0x" + ag.id.toString(16);
     try {
-      await p.request({ method: "wallet_switchEthereumChain", params: [{ chainId: hex }] });
+      await wcIle(() => p.request({ method: "wallet_switchEthereumChain", params: [{ chainId: hex }] }));
     } catch (e) {
       if (e && e.code === 4902) {
         await p.request({ method: "wallet_addEthereumChain", params: [agEkleParam(ag.id, {
@@ -379,7 +404,7 @@ export const cuzdan = {
     if (!_hesap) throw new Error("Wallet not connected");
     if (!this.agdaMi(ag)) await this.agaGec(ag);
     if (!this.agdaMi(ag)) throw new Error("Wallet is not on " + ag.ad);
-    return p.request({ method: "eth_sendTransaction", params: [{ from: _hesap, ...islem }] });
+    return wcIle(() => p.request({ method: "eth_sendTransaction", params: [{ from: _hesap, ...islem }] }));
   },
 
   /**
@@ -397,7 +422,7 @@ export const cuzdan = {
     const { hexlify, toUtf8Bytes, verifyMessage, getBytes } = await import("../vendor/ethers.min.js");
     const metin = typeof mesaj === "string";
     const veri = metin ? hexlify(toUtf8Bytes(mesaj)) : hexlify(mesaj);
-    const sig = await p.request({ method: "personal_sign", params: [veri, ben] });
+    const sig = await wcIle(() => p.request({ method: "personal_sign", params: [veri, ben] }));
     const kim = verifyMessage(metin ? mesaj : getBytes(mesaj), sig);
     if (kim.toLowerCase() !== ben.toLowerCase()) throw new Error("The wallet signed with " + kim + ", not the connected account " + ben + ".");
     return sig;
@@ -417,7 +442,7 @@ export const cuzdan = {
     const { verifyTypedData } = await import("../vendor/ethers.min.js");
     const alanTip = [{ name: "name", type: "string" }, { name: "version", type: "string" }, { name: "chainId", type: "uint256" }, { name: "verifyingContract", type: "address" }];
     const tam = { domain: veri.domain, types: { EIP712Domain: alanTip, ...veri.types }, primaryType: veri.primaryType, message: veri.message };
-    const sig = await p.request({ method: "eth_signTypedData_v4", params: [ben, JSON.stringify(tam)] });
+    const sig = await wcIle(() => p.request({ method: "eth_signTypedData_v4", params: [ben, JSON.stringify(tam)] }));
     const kim = verifyTypedData(veri.domain, veri.types, veri.message, sig);
     if (kim.toLowerCase() !== ben.toLowerCase()) throw new Error("The wallet signed with " + kim + ", not the connected account " + ben + ".");
     return sig;
