@@ -339,8 +339,14 @@ export async function ciz({ param }) {
   let ilk = null;
   const tum = [...piyasa.trend, ...piyasa.yeni];
   if (za && aa) ilk = tum.find((t) => t.zincir.k === za && t.adres.toLowerCase() === aa.toLowerCase());
+  /* 16 Nov 2026: a token linked from Feed (or anywhere) that is not in the lists: read its own pools */
+  if (za && aa && !ilk) {
+    const z = V.ZINCIRLER.find((x) => x.k === za);
+    if (z) { const l = await V.gecko("/networks/" + z.gecko + "/tokens/" + aa + "/pools?include=base_token,network&page=1").catch(() => []); ilk = l.find((t) => t.adres.toLowerCase() === aa.toLowerCase()) || null; }
+  }
+  const yonSat = param && param.get("yon") === "sat";
   if (!ilk) { try { const s = JSON.parse(localStorage.getItem("arcpulse-borsa-son") || "null"); if (s) ilk = tum.find((t) => t.zincir.k === s.z && t.adres.toLowerCase() === s.a.toLowerCase()); } catch (e) { /* none */ } }
-  const ekrandaSec = (t) => { let n = 0; const b = () => { if (kok.isConnected) sec(t); else if (++n < 100) setTimeout(b, 100); }; b(); };
+  const ekrandaSec = (t) => { let n = 0; const b = () => { if (kok.isConnected) { sec(t); if (yonSat && t === ilk) { kutuCiz("sat"); if (window.matchMedia("(max-width: 860px)").matches) sayfaAc(); } } else if (++n < 100) setTimeout(b, 100); }; b(); };
   if (ilk && (za || !window.matchMedia("(max-width: 860px)").matches)) ekrandaSec(ilk);
   else if (!window.matchMedia("(max-width: 860px)").matches && piyasa.trend[0]) ekrandaSec(piyasa.trend[0]);
   return kok;

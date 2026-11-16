@@ -44,6 +44,8 @@ const STIL = `
 .ak-alt { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 12px; color: var(--yazi-3); }
 .ak-al { display: flex; gap: 6px; }
 .ak-al button { background: rgba(46,209,138,.12); color: var(--alis); border: 1px solid rgba(46,209,138,.35); border-radius: 999px; padding: 4px 10px; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
+.ak-sat { background: rgba(255,107,122,.12); color: var(--satis); border: 1px solid rgba(255,107,122,.35); border-radius: 999px; padding: 4px 10px; font-size: 12px; font-weight: 700; text-decoration: none; }
+.ak-al { flex-wrap: wrap; }
 .ak-bos { padding: 28px 12px; text-align: center; color: var(--yazi-3); border: 1px dashed var(--cizgi); border-radius: 14px; }
 .ak-bos b { display: block; color: var(--yazi-1); margin-bottom: 4px; }
 .ak-tablo { display: flex; flex-direction: column; gap: 6px; }
@@ -156,7 +158,9 @@ export async function ciz() {
       el("div", { sinif: "ak-ne" }, [el("b", { sinif: x.tur === "buy" ? "al" : "sat", yazi: (x.tur === "buy" ? "bought " : "sold ") + dolar(x.usd) }), el("span", { yazi: "of" }),
         el("a", { sinif: "ak-tok", attr: { href: x.t.bizim ? "#/terminal?t=" + x.t.adres : "#/terminal?z=" + x.z + "&a=" + x.t.adres } }, [tokenLogo(x.t), "$" + x.t.sembol])]),
       el("div", { sinif: "ak-alt" }, [el("span", { yazi: zad + " · price " + fiyatYaz(Number(x.t.fiyat)) + (x.t.degisim != null ? " · 24h " + (Number(x.t.degisim) >= 0 ? "+" : "") + Number(x.t.degisim).toFixed(1) + "%" : "") }),
-        el("div", { sinif: "ak-al" }, [10, 25, 50].map((v) => el("button", { attr: { type: "button", "aria-label": "Buy $" + v + " of " + x.t.sembol }, yazi: "Buy $" + v, on: { click: () => V.alKutusu(x.t, v) } })))]),
+        el("div", { sinif: "ak-al" }, [...[10, 25, 50].map((v) => el("button", { attr: { type: "button", "aria-label": "Buy $" + v + " of " + x.t.sembol }, yazi: "Buy $" + v, on: { click: () => V.alKutusu(x.t, v) } })),
+          /* 16 Nov 2026 (owner: "buy var sell yok"): Sell opens the token on Trade with the Sell box (your balance, 25–100%) */
+          el("a", { sinif: "ak-sat", attr: { href: "#/terminal?z=" + x.z + "&a=" + x.t.adres + "&yon=sat" }, yazi: "Sell" })])]),
     ])]);
     x.yeni = false;
     return kart;
