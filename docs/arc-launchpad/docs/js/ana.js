@@ -398,7 +398,7 @@ async function ciz() {
     const parca = await mod.ciz({ kayit, param, cuzdan });
     if (bu !== sonCizim) return;
     temizle(kIcerik).append(...geri(), parca);
-    if (yol !== "kesfet") sayfaIcindekiler(parca);   // Discover leads with its live board
+    if (yol !== "kesfet" && !(parca.dataset && parca.dataset.icindekilerYok)) sayfaIcindekiler(parca);   // a page may opt out (trading screens)   // Discover leads with its live board
   } catch (e) {
     if (bu !== sonCizim) return;
     temizle(kIcerik).append(...geri(),

@@ -37,6 +37,14 @@ const RISK_ANAHTAR = "hl-risk-onay-v1";
 const HL_APP = "https://app.hyperliquid.xyz";
 
 const STIL =
+  /* 16 Nov 2026: slim title bar, one-line risk notice, tool strip */
+  ".hl-bas{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}.hl-bas__ad{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;min-width:0}" +
+  ".hl-bas h1{font-size:22px;margin:0;letter-spacing:-.01em}.hl-bas__ad span{font-size:13px;color:var(--yazi-3)}" +
+  ".hl-risk{border:1px solid rgba(240,185,11,.35);background:rgba(240,185,11,.06);border-radius:10px;padding:7px 12px;font-size:12.5px;color:var(--yazi-2)}" +
+  ".hl-risk summary{display:flex;justify-content:space-between;gap:12px;cursor:pointer;list-style:none}.hl-risk summary::-webkit-details-marker{display:none}" +
+  ".hl-risk__daha{color:var(--yazi-3);white-space:nowrap;text-decoration:underline}.hl-risk[open]>div{margin-top:6px;line-height:1.5}" +
+  ".hl-araclar{display:flex;flex-wrap:wrap;gap:6px}.hl-araclar .dugme{min-height:34px}" +
+  "@media (max-width:700px){.hl-bas__ad span{display:none}}" +
   ".hl-ust{display:grid;grid-template-columns:minmax(0,220px) minmax(0,1fr);gap:12px;align-items:end}" +
   ".hl-ust select{width:100%;height:46px;font-size:16px;font-weight:700}" +
   ".hl-olc{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}" +
@@ -70,7 +78,9 @@ const STIL =
   ".hl-tablo thead{display:none}.hl-tablo,.hl-tablo tbody,.hl-tablo tr,.hl-tablo td{display:block;width:100%}" +
   ".hl-tablo tr{display:grid;grid-template-columns:1fr 1fr;gap:4px 10px;padding:10px;border:1px solid var(--cizgi);border-radius:12px;margin-top:8px}" +
   ".hl-tablo td{border:0;padding:0;text-align:left!important;white-space:normal}.hl-tablo td::before{content:attr(data-et);display:block;font-size:11px;color:var(--yazi-3)}" +
-  ".hl-tablo td.hl-tam{grid-column:1/-1}.hl-tablo td.hl-tam::before{content:none}.hl-tablo td.hl-tam .dugme{width:100%;min-height:42px}}";
+  ".hl-tablo td.hl-tam{grid-column:1/-1}.hl-tablo td.hl-tam::before{content:none}.hl-tablo td.hl-tam .dugme{width:100%;min-height:42px}}" +
+  /* 16 Nov 2026: phones — tools in one swipeable row, market figures three across and compact */
+  "@media (max-width:700px){.hl-araclar{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin:0 -4px;padding:0 4px}.hl-araclar::-webkit-scrollbar{display:none}.hl-araclar .dugme{flex:none}.hl-olc{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.hl-olc>div{padding:6px 8px}.hl-olc b{font-size:13.5px}.hl-olc small{font-size:10.5px}.hl-bas h1{font-size:20px}}";
 
 /* ---- formatting ------------------------------------------------------ */
 const usd = (x, d = 2) => (x == null || !isFinite(x) ? "–" : (x < 0 ? "-$" : "$") + Math.abs(x).toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d }));
@@ -131,15 +141,16 @@ function grafikCiz(tuval, mumlar) {
 export async function ciz({ param, cuzdan }) {
   if (!document.getElementById("hl-stil")) document.head.append(el("style", { attr: { id: "hl-stil" }, yazi: STIL }));
   document.title = "Trade Hyperliquid perps — ARC PULSE";
-  const kap = el("div", { sinif: "yigin" });
-  kap.append(sayfaUst("Trade Hyperliquid perps", "Hyperliquid's order book, from your own wallet. Your funds stay in your Hyperliquid account.", [
-    el("a", { sinif: "dugme dugme--sade", attr: { href: "#/perps/targets" }, yazi: "🎯 Target Radar" }),
-    el("a", { sinif: "dugme dugme--sade", attr: { href: "#/perps/alerts?coin=" + encodeURIComponent(param.get("coin") || "BTC") }, yazi: "🔔 Alerts" }),
-    el("a", { sinif: "dugme dugme--sade", attr: { href: "#/perps" }, yazi: "Perps Radar" })]));
-  kap.append(not(RISK, "uyari"));
-  /* the cockpit at a glance: what is on this page and next to it */
+  /* 16 Nov 2026 (owner: "platform hala çok acemi"): a trading screen, not a brochure. A slim title bar instead of the
+     cover, the risk notice in one line (full text one tap away, and still confirmed in the order form), the tools as
+     one strip of buttons that open them; no "On this page" chips. Nothing removed, only placed. */
+  const kap = el("div", { sinif: "yigin hl-sayfa", veri: { icindekilerYok: "1" } });
   const git = (sec) => () => { const e = document.querySelector(sec); if (e) { if (e.closest("details")) e.closest("details").open = true; e.scrollIntoView({ behavior: "smooth", block: "start" }); } };
-  kap.append(el("div", { attr: { style: "display:flex;flex-wrap:wrap;gap:6px" } }, [
+  kap.append(el("div", { sinif: "hl-bas" }, [
+    el("div", { sinif: "hl-bas__ad" }, [el("h1", { yazi: "Trade perps" }), el("span", { yazi: "Hyperliquid order book · your own wallet · funds stay in your Hyperliquid account" })]),
+  ]));
+  kap.append(el("details", { sinif: "hl-risk" }, [el("summary", {}, [el("span", { yazi: "⚠ Perps use leverage: you can lose more than you expect, quickly. Not available in restricted regions." }), el("span", { sinif: "hl-risk__daha", yazi: "Details" })]), el("div", { yazi: RISK })]));
+  kap.append(el("div", { sinif: "hl-araclar" }, [
     el("button", { sinif: "dugme dugme--sade dugme--kucuk", attr: { type: "button" }, yazi: "📟 Pulse HUD", on: { click: git(".hud") } }),
     el("button", { sinif: "dugme dugme--sade dugme--kucuk", attr: { type: "button" }, yazi: "🎯 Aim assist", on: { click: git(".fz") } }),
     el("button", { sinif: "dugme dugme--sade dugme--kucuk", attr: { type: "button" }, yazi: "🔮 Time Machine 1 & 2", on: { click: git(".tm") } }),
@@ -443,9 +454,8 @@ export async function ciz({ param, cuzdan }) {
     durumYaz("Aim assist filled the order form. Check Pulse HUD below, then press Review.", "ok");
     anaDugme.scrollIntoView({ behavior: "smooth", block: "center" });
   } }, aim === "short" ? "satis" : aim === "long" ? "alis" : null);
-  const fuzeYeri = aim === "long" || aim === "short" ? fuze.kutu : ayrinti("🎯 Aim assist + 🔮 Time Machine 1 & 2: size, stop and target from your risk, then 10,000 possible futures and replays of similar past charts", fuze.kutu);
-  /* open by default on wide screens, so the Time Machine is in sight; phones keep it one tap away above the form */
-  if (fuzeYeri.tagName === "DETAILS" && window.matchMedia("(min-width: 900px)").matches) fuzeYeri.open = true;
+  /* 16 Nov 2026: closed by default everywhere (the tool strip and this line open it); opens itself from a Target Radar card */
+  const fuzeYeri = aim === "long" || aim === "short" ? fuze.kutu : ayrinti("🎯 Aim assist · 🔮 Time Machine 1 & 2 — size, stop and target from your risk, then the odds", fuze.kutu);
   fuze.hesapla();
   const formPanel = panel("Place an order", el("div", { sinif: "yigin yigin--sik" }, [
     fuzeYeri, yonDug, turDug, limitAlan,
@@ -453,7 +463,7 @@ export async function ciz({ param, cuzdan }) {
     el("div", { sinif: "hl-alan" }, [el("label", { yazi: "Leverage" }), el("div", { sinif: "hl-kal" }, [kalGirdi, kalYazi]), el("div", { sinif: "hl-kal" }, [modSec, el("span")]), kalIpucu]),
     el("label", { sinif: "hl-kutu", attr: { for: "hl-azalt" } }, [azaltKutu, el("span", { yazi: "Reduce only (only makes an open position smaller)" })]),
     tpslSatir, tpslAlan,
-    ucretKutu, kask.kutu, riskSatir, yatirKutu, onayAciklama, anaDugme, onizle, durum, zincirNotu,
+    ucretKutu, ayrinti("📟 Pulse HUD · holding cost, risk vs normal moves, fill estimate", kask.kutu), riskSatir, yatirKutu, onayAciklama, anaDugme, onizle, durum, zincirNotu,
     ayrinti("How does this work?", el("div", { sinif: "ikincil", yazi: "Your wallet signs each order (a signature, not a transaction: no gas). The order goes straight to Hyperliquid, which matches it, holds your margin and settles it. A market order is sent as an immediate-or-cancel limit " + (hl.KAYMA * 100) + "% through the current price, the way Hyperliquid's own app does it. The first time, you approve ARC PULSE's 0.05% fee once and create a trading key for this device. Take profit / stop loss are market orders that Hyperliquid sends when the mark price reaches them (up to 10% slippage), reduce only. The liquidation price shown before you confirm is an approximation from Hyperliquid's formula; Hyperliquid's own figure is in the Positions table once the position is open." })),
   ]));
 
@@ -508,7 +518,7 @@ export async function ciz({ param, cuzdan }) {
     if (!H.pozisyonlar.length) pozKap.append(el("div", { sinif: "ikincil", yazi: "No open positions." }));
     else {
       const t = el("table", { sinif: "hl-tablo" });
-      t.append(el("thead", {}, [el("tr", {}, ["Market", "Size", "Entry", "Mark", "Unrealized PnL", "Liq. price", ""].map((b, i) => el("th", { sinif: i > 1 && i < 6 ? "sayi" : "", yazi: b })))]));
+      t.append(el("thead", {}, [el("tr", {}, ["Market", "Size", "Entry", "Mark", "Unrealized PnL", "Liq. price", "TP / SL", ""].map((b, i) => el("th", { sinif: i > 1 && i < 7 ? "sayi" : "", yazi: b })))]));
       t.append(el("tbody", {}, H.pozisyonlar.map((p) => {
         const m = adIle.get(p.coin);
         const szi = Number(p.szi), uzun = szi > 0;
@@ -559,6 +569,11 @@ export async function ciz({ param, cuzdan }) {
           el("td", { sinif: "sayi", attr: { "data-et": "Mark" }, yazi: fiyat(mark) }),
           el("td", { sinif: "sayi " + isaretSinif(pnl), attr: { "data-et": "Unrealized PnL" }, yazi: usd(pnl) + " (" + yuzde(roe, 1) + ")" }),
           el("td", { sinif: "sayi", attr: { "data-et": "Liq. price" }, yazi: p.liquidationPx ? fiyat(Number(p.liquidationPx)) : "–" }),
+          /* 16 Nov 2026: this position's take profit / stop loss in its own row, as on a pro terminal */
+          (() => { const tet = H.emirler.filter((o) => o.coin === p.coin && o.isTrigger && o.reduceOnly);
+            const tp = tet.filter((o) => /Take Profit/i.test(o.orderType)).map((o) => fiyat(Number(o.triggerPx)));
+            const sl = tet.filter((o) => /Stop/i.test(o.orderType)).map((o) => fiyat(Number(o.triggerPx)));
+            return el("td", { sinif: "sayi", attr: { "data-et": "TP / SL" } }, [el("span", { sinif: tp.length ? "hl-art" : "", yazi: tp.join(", ") || "–" }), " / ", el("span", { sinif: sl.length ? "hl-eks" : "", yazi: sl.join(", ") || "–" })]); })(),
           el("td", { sinif: "hl-tam" }, salt ? [] : [el("span", { attr: { style: "display:inline-flex;gap:6px" } }, [tpslDug, kapat])]),
         ]);
       })));
