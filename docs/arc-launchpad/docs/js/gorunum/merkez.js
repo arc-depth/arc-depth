@@ -1089,6 +1089,25 @@ export async function ciz({ param, kayit } = {}) {
         deger = (lz * 13n) / 10n;
         durum(alDurum.textContent + "  LayerZero delivery to " + ag.ad + ": $" + (Number(lz) / 1e18).toFixed(2) + " (+30% margin, the unused part comes back to your address on Arc).");
       }
+      if (ag.anahtar === "arc" && V2) {
+        const izin = await new Contract(ARC_USDC, ["function allowance(address,address) view returns (uint256)"], arc).allowance(ben, S().kapi).catch(() => 0n);
+        if (izin < usdc6) {
+          durum("Approve the USDC in your wallet (1/2)…");
+          const h0 = await cuzdan.agdaGonder(ag, { to: ARC_USDC, data: E.encodeFunctionData("approve", [S().kapi, usdc6]), value: "0x0" });
+          if ((await makbuz(ag, h0)).status !== 1) throw new Error("Reverted: " + h0);
+        }
+        const sorgu = KAPI_ABI.encodeFunctionData("al", [t, usdc6, 0n, 0, zeroPadValue(ben, 32), "0x", ben]);
+        let gercek;
+        try { gercek = BigInt(await arc.call({ from: ben, to: S().kapi, data: sorgu })); }
+        catch (x) { return durum("The pool would not take this buy right now (" + ((x && x.shortMessage) || (x && x.message) || "reverted").slice(0, 120) + "). Check your USDC on Arc."); }
+        const enAz = (gercek * BigInt(Math.round((1 - kaymaOrani()) * 10000))) / 10000n;
+        durum("You get ≈ " + Math.floor(Number(gercek) / 1e18).toLocaleString("en-US") + " tokens. Confirm the buy in your wallet (" + (izin < usdc6 ? "2/2" : "1/1") + ")…");
+        const h1 = await cuzdan.agdaGonder(ag, { to: S().kapi, data: KAPI_ABI.encodeFunctionData("al", [t, usdc6, enAz, 0, zeroPadValue(ben, 32), "0x", ben]), value: "0x0" });
+        if ((await makbuz(ag, h1)).status !== 1) throw new Error("Reverted: " + h1);
+        return durum("Bought ✓ ≈ " + Math.floor(Number(gercek) / 1e18).toLocaleString("en-US") + " tokens are in your wallet on Arc.");
+      }
+      /* from another chain the curve estimate is all there is before paying: keep a wider margin (it ran ~11% high on 16 Nov) */
+      if (V2) asgari = (asgari * 85n) / 100n;
       const txs = [
         { to: ARC_USDC, data: E.encodeFunctionData("approve", [S().kapi, usdc6]), value: "0" },
         { to: S().kapi, data: KAPI_ABI.encodeFunctionData("al", [t, usdc6, asgari, teslimEid(ag), zeroPadValue(ben, 32), teslimEid(ag) ? sec(100_000n) : "0x", ben]), value: deger.toString() },
@@ -1116,17 +1135,23 @@ export async function ciz({ param, kayit } = {}) {
         if (tur === 0) {
           if (!V2) return durum("Selling tokens held on Arc from this page opens with the gate's next version. Redeeming from the basket works now.");
           /* v2: the gate sells in one call and pays here; what a price limit leaves unsold comes back */
-          const st = await egri.zincirdenDurum({ Contract, AbiCoder, keccak256 }, arc, VT().launchpad, PM, t);
-          const e = egri.satim(st, Number(miktar / 10n ** 12n) / 1e6);
-          if (e.bitti) return durum("The pool cannot buy all of that: only ~$" + e.dolar.toFixed(2) + " is there for it. Sell less, or redeem from the basket.");
-          const asgari = BigInt(Math.floor(e.dolar * (1 - kaymaOrani()) * 1e6));
-          durum("Estimate: ~$" + e.dolar.toFixed(2) + " after fees ($" + e.ucret.toFixed(2) + "), price impact " + (e.etki * 100).toFixed(2) + "%. Approve the sale (1/2)…");
-          let h = await cuzdan.agdaGonder(ag, { to: t, data: tk.interface.encodeFunctionData("approve", [VT().kapi, miktar]), value: "0x0" });
-          if ((await makbuz(ag, h)).status !== 1) throw new Error("Reverted: " + h);
-          durum("Sell (2/2)…");
+          const izinVar = (await new Contract(t, ["function allowance(address,address) view returns (uint256)"], arc).allowance(ben, VT().kapi).catch(() => 0n)) >= miktar;
+          let h;
+          if (!izinVar) {
+            durum("Approve the sale in your wallet (1/2)…");
+            h = await cuzdan.agdaGonder(ag, { to: t, data: tk.interface.encodeFunctionData("approve", [VT().kapi, miktar]), value: "0x0" });
+            if ((await makbuz(ag, h)).status !== 1) throw new Error("Reverted: " + h);
+          }
+          /* the gate's own answer for this exact sale, now */
+          const sorgu = KAPI2_ABI.encodeFunctionData("satArc", [t, miktar, 0n, ARC_DOMAIN, zeroPadValue(ben, 32), 0n]);
+          let gercek;
+          try { gercek = BigInt(await arc.call({ from: ben, to: VT().kapi, data: sorgu })); }
+          catch (x) { return durum("The pool would not take this sale right now (" + ((x && x.shortMessage) || (x && x.message) || "reverted").slice(0, 120) + "). Try a smaller amount, or redeem from the basket."); }
+          const asgari = (gercek * BigInt(Math.round((1 - kaymaOrani()) * 10000))) / 10000n;
+          durum("You get ≈ $" + (Number(gercek) / 1e6).toFixed(2) + " (at least $" + (Number(asgari) / 1e6).toFixed(2) + "). Confirm the sale in your wallet (" + (izinVar ? "1/1" : "2/2") + ")…");
           h = await cuzdan.agdaGonder(ag, { to: VT().kapi, data: KAPI2_ABI.encodeFunctionData("satArc", [t, miktar, asgari, ARC_DOMAIN, zeroPadValue(ben, 32), 0n]), value: "0x0" });
           if ((await makbuz(ag, h)).status !== 1) throw new Error("Reverted: " + h);
-          return durum("Sold in the Arc pool; the USDC is in your wallet on Arc.");
+          return durum("Sold ✓ ≈ $" + (Number(gercek) / 1e6).toFixed(2) + " USDC is in your wallet on Arc.");
         }
         /* v4: the vault orders' fees go with the burn (0 while no vault holds anything of the launch) */
         const ucret = v4mu() ? await itfaUcreti(t, miktar, ARC_DOMAIN, zeroPadValue(ben, 32)) : 0n;
@@ -1396,7 +1421,20 @@ export async function ciz({ param, kayit } = {}) {
       const s0 = await durumOku();
       if (!s0) { teklif.textContent = ""; return; }
       if (al) { const e = egri.alim(s0, Number(alTutar.value) || 0); teklif.replaceChildren(el("span", { yazi: "You receive" }), el("b", { yazi: "≈ " + kisaltT(e.token) + (sym ? " " + sym : "") }), el("span", { yazi: "Price impact" }), el("b", { yazi: "+" + (e.etki * 100).toFixed(2) + "%" }), el("span", { yazi: "Fees" }), el("b", { yazi: "$" + e.ucret.toFixed(2) + " (2.2% + " + (s0.vergi * 100).toFixed(0) + "% collateral tax)" })); }
-      else { const e = egri.satim(s0, Number(satTutar.value) || 0); teklif.replaceChildren(el("span", { yazi: "You receive" }), el("b", { yazi: "≈ $" + e.dolar.toFixed(2) }), el("span", { yazi: "Price impact" }), el("b", { yazi: (e.etki * 100).toFixed(2) + "%" }), el("span", { yazi: "Fees" }), el("b", { yazi: "$" + e.ucret.toFixed(2) })); }
+      else {
+        /* on Arc with the sale already approved: the gate's own answer (the curve estimate ran ~11% high) */
+        let kesin = null; const ben0 = cuzdan.hesap(), adet = Number(satTutar.value) || 0;
+        if (ag.anahtar === "arc" && V2 && ben0 && adet > 0) {
+          try {
+            const m18 = BigInt(Math.round(adet)) * 10n ** 18n;
+            const izin = await new Contract(tAdr, ["function allowance(address,address) view returns (uint256)"], arc).allowance(ben0, VT().kapi);
+            if (izin >= m18) kesin = Number(BigInt(await arc.call({ from: ben0, to: VT().kapi, data: KAPI2_ABI.encodeFunctionData("satArc", [tAdr, m18, 0n, ARC_DOMAIN, zeroPadValue(ben0, 32), 0n]) }))) / 1e6;
+          } catch (x) { /* falls back to the estimate */ }
+        }
+        if (taraf !== "sat" || (Number(satTutar.value) || 0) !== adet) return;
+        const e = egri.satim(s0, adet);
+        teklif.replaceChildren(el("span", { yazi: "You receive" }), el("b", { yazi: kesin != null ? "$" + kesin.toFixed(2) + " (pool, now)" : "≈ $" + (e.dolar * 0.89).toFixed(2) + " (estimate)" }), el("span", { yazi: "Price impact" }), el("b", { yazi: (e.etki * 100).toFixed(2) + "%" }), el("span", { yazi: "Fees" }), el("b", { yazi: "$" + e.ucret.toFixed(2) }));
+      }
     };
     alTutar.addEventListener("input", guncelle); satTutar.addEventListener("input", guncelle);
     const ciz = () => {
