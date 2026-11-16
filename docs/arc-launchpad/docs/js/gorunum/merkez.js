@@ -1317,7 +1317,9 @@ export async function ciz({ param, kayit } = {}) {
      page to embed (right column on desktop, bottom sheet on a phone). The SAME inputs, buttons and handlers as
      below (alTutar/alDugme, satTutar/satDugme/itfaDugme, zincirSec, kayma); only the layout is new: Buy | Sell
      tabs, quick amounts, a live "you receive" line from the pool curve, one big button. */
-  if (ticaretModu && param && param.get("gomu") === "1") {
+  /* 16 Nov 2026 (owner, "bu düzelmemiş"): #/merkez?t= itself shows the same new box too, not the old form */
+  let ticaretKutusu = null;
+  if (ticaretModu) {
     const tAdr = token.value.trim();
     let sym = "", st = null, stZaman = 0, taraf = (param.get("taraf") === "sat" ? "sat" : "al");
     new Contract(tAdr, ["function symbol() view returns (string)"], arc).symbol().then((x) => { sym = x || ""; ciz(); }).catch(() => {});
@@ -1390,13 +1392,22 @@ export async function ciz({ param, kayit } = {}) {
       el("div", { sinif: "tb-not", yazi: "One pool on Arc, the same price from every chain. Memecoins are risky: buy only what you can afford to lose." }),
       el("a", { sinif: "tb-not", attr: { href: "#/merkez?t=" + tAdr }, yazi: "Move tokens, limit orders and upkeep →" })]);
     ciz();
-    return kutu;
+    if (param && param.get("gomu") === "1") return kutu;
+    kutu.lastChild.remove();   // its "Move tokens, limit orders and upkeep" link points at this very page
+    ticaretKutusu = kutu;
   }
 
   /* 16 Nov 2026 (owner): with a token, Buy and Sell come first, each under its own heading; the founder's product
      type and the slippage limit move below them. The same controls and handlers, only their order changes. */
   const altBaslik = (y) => el("h3", { attr: { style: "margin:6px 0 0;font-size:15px" }, yazi: y });
-  if (ticaretModu) { token.hidden = true; yonetBolum.append(panel("Buy · sell", el("div", { sinif: "yigin" }, [
+  if (ticaretModu && ticaretKutusu) {
+    token.hidden = true;
+    yonetBolum.append(el("div", { attr: { style: "max-width:460px;padding:16px;border-radius:18px;background:var(--yuzey-1);border:1px solid var(--cizgi-guclu)" } }, [ticaretKutusu]));
+    yonetBolum.append(ayrinti("Token details: price, pool and collateral", el("div", { sinif: "yigin yigin--sik" }, [token, fiyatYazi, teminatYazi])));
+    const kurucuKap = el("div", { sinif: "yigin" }, [el("div", {}, [turRozet]), turAyar]);
+    yonetBolum.append(ayrinti("Founder settings: product type and description", kurucuKap));
+  }
+  else if (ticaretModu) { token.hidden = true; yonetBolum.append(panel("Buy · sell", el("div", { sinif: "yigin" }, [
     token, fiyatYazi, teminatYazi,
     altBaslik("Buy"),
     el("div", { sinif: "alan__ipucu", yazi: "Pay on your chain in its gas token; the tokens arrive on your chain." }),
@@ -1416,7 +1427,7 @@ export async function ciz({ param, kayit } = {}) {
     el("div", { sinif: "girdi-grup" }, [satTutar, el("span", { sinif: "girdi-grup__son", yazi: "tokens" })]),
     el("div", { sinif: "girdi-grup" }, [satDugme, itfaDugme]), satDurum])));
   /* moving to Solana / Sui / Aptos and the upkeep anyone may do for a token: the same controls, in their own panel */
-  if (V2) yonetBolum.append(panel("Move and upkeep", el("div", { sinif: "yigin" }, [
+  if (V2) yonetBolum.append(((icerik) => ticaretModu ? ayrinti("Move to Solana, Sui or Aptos, and upkeep", icerik) : panel("Move and upkeep", icerik))(el("div", { sinif: "yigin" }, [
     el("div", { sinif: "alan__ipucu", yazi: "These act on the token address in \"Buy, sell, redeem\" above." }),
     ...[el("div", { sinif: "alan__ipucu", yazi: "Move tokens you hold on Arc to Solana, Sui or Aptos. The first one to move a token to a chain creates its twin there." }),
       el("div", { sinif: "girdi-grup" }, [tasZincir, tasTutar, el("span", { sinif: "girdi-grup__son", yazi: "tokens" })]), tasAlici, tasDugme, tasDurum,

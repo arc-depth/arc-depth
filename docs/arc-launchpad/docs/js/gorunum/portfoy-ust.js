@@ -123,7 +123,7 @@ export function portfoyUst(hesap, { tekHavuzTutulan, hlKapat }) {
   function govdeCiz() {
     if (sekme === "tok") {
       const satirlar = [];
-      for (const x of T || []) satirlar.push(satir({ href: "#/merkez?t=" + x.token, ini: (x.sembol || "?").slice(0, 3).toUpperCase(), zincir: "Arc", ad: x.sembol || "?", alt: miktarYaz(x.miktar) + " · " + fiyatYaz(x.fiyat), deger: usd(x.deger), kz: null }));
+      for (const x of T || []) satirlar.push(satir({ href: "#/terminal?t=" + x.token, ini: (x.sembol || "?").slice(0, 3).toUpperCase(), zincir: "Arc", ad: x.sembol || "?", alt: miktarYaz(x.miktar) + " · " + fiyatYaz(x.fiyat), deger: usd(x.deger), kz: null }));
       for (const x of V ? V.spotlar : []) {
         const kz = x.coin !== "USDC" && x.maliyet > 0 && x.deger != null ? x.deger - x.maliyet : null;
         satirlar.push(satir({ href: null, ini: x.coin.slice(0, 4), zincir: "HL", ad: x.coin, alt: miktarYaz(x.miktar) + " · " + fiyatYaz(x.fiyat), deger: usd(x.deger), kz, kzYuzde: kz != null ? kz / x.maliyet * 100 : null }));
