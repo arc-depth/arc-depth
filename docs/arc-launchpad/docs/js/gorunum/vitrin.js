@@ -423,6 +423,7 @@ function alKutusu(t, onTutar) {
         satir("Worth", para(d.currencyOut.amountUsd)),
         satir("ARC PULSE fee (0.5%)", para(f.app && f.app.amountUsd)),
         el("div", { sinif: "vt-k", attr: { style: "display:block;padding-top:2px" }, yazi: "0.20% buys and burns ARCP · 0.15% developer pool · 0.10% marketing · 0.05% founder" }),
+        satir("Route", rotaYazi(q, t)),
         satir("Network + route", para(Number((f.relayer && f.relayer.amountUsd) || 0) + Number((f.gas && f.gas.amountUsd) || 0))),
         satir("Time", "~" + (d.timeEstimate || 1) + "s"),
         bakiye[ag().anahtar] != null && bakiye[ag().anahtar] < usd ? el("div", { sinif: "vt-uyari", attr: { style: "display:block" }, yazi: "You have $" + bakiye[ag().anahtar].toFixed(2) + " on " + ag().ad + ": not enough for $" + usd + ". Lower the amount to $" + Math.floor(bakiye[ag().anahtar]) + " or less." }) : "");
@@ -732,4 +733,22 @@ export function tokenAl({ zincir, adres, sembol, ad, resim = null, fiyat = 0, fd
 }
 
 /* 16 Nov 2026: the Trade screen (borsa.js) reuses the market feed, the routing and the buy box */
-export const borsaYardim = { veri, suz, ESIK, ESIK_YENI, ZINCIRLER, evmler, dolarHam, makbuz, RELAY, UCRET_BPS, UCRET_ALICI, alKutusu, STIL, gecko };
+/* 16 Nov 2026 (owner: "bu hangi pazar üzerinden alıp satıyor"): the route in plain words, from relay.link's own quote
+   (details.route.origin/destination.router: relay = relay.link's bridge, kyberswap/0x/odos… = the DEX aggregator it used)
+   plus the token's main pool from GeckoTerminal (t.dex). */
+const ROUTER_AD = { relay: "relay.link", kyberswap: "KyberSwap", "0x": "0x", odos: "Odos", uniswap: "Uniswap", jupiter: "Jupiter", okx: "OKX DEX", lifi: "LI.FI", paraswap: "ParaSwap", oneinch: "1inch", "1inch": "1inch", openocean: "OpenOcean", bebop: "Bebop" };
+const dexAd = (id) => String(id || "").replace(/[-_](base|bsc|eth|ethereum|arbitrum|solana|avax|avalanche|monad|hyperevm|robinhood|arc)$/i, "").split(/[-_]/).map((w) => /^v\d/.test(w) ? w : w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+function rotaYazi(q, t) {
+  const r = (q && q.details && q.details.route) || {};
+  const ad = (x) => ROUTER_AD[String(x || "").toLowerCase()] || (x ? dexAd(x).replace(/^Pancakeswap/, "PancakeSwap").replace(/^Kyberswap/, "KyberSwap") : null);
+  const o = ad(r.origin && r.origin.router), d = ad(r.destination && r.destination.router);
+  const ciktiZ = q && q.details && q.details.currencyOut && q.details.currencyOut.currency && q.details.currencyOut.currency.chainId;
+  const girdiZ = q && q.details && q.details.currencyIn && q.details.currencyIn.currency && q.details.currencyIn.currency.chainId;
+  const parca = [];
+  if (girdiZ && ciktiZ && girdiZ !== ciktiZ) parca.push("relay.link bridge");
+  for (const x of [o, d]) if (x && x !== "relay.link" && !parca.includes(x)) parca.push(x);
+  if (!parca.length) parca.push("relay.link");
+  const havuz = t && t.dex ? dexAd(t.dex) : "";
+  return parca.join(" → ") + (havuz ? " · main pool: " + havuz : "");
+}
+export const borsaYardim = { rotaYazi, veri, suz, ESIK, ESIK_YENI, ZINCIRLER, evmler, dolarHam, makbuz, RELAY, UCRET_BPS, UCRET_ALICI, alKutusu, STIL, gecko };

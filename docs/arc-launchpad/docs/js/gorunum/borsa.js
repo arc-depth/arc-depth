@@ -258,6 +258,7 @@ export async function ciz({ param }) {
           ...teklifSatir("You pay", Number(d.currencyIn.amountFormatted).toLocaleString("en-US", { maximumFractionDigits: 4 }) + " " + d.currencyIn.currency.symbol + " on " + ag.ad),
           ...teklifSatir("You get", "≈ " + Number(d.currencyOut.amountFormatted).toLocaleString("en-US", { maximumFractionDigits: 4 }) + " " + d.currencyOut.currency.symbol + (taraf === "al" ? " on " + t.zincir.ad : " on Arc")),
           ...teklifSatir("Worth", "$" + Number(d.currencyOut.amountUsd).toFixed(2)),
+          ...teklifSatir("Route", V.rotaYazi(q, t)),
           ...teklifSatir("Route + gas", "$" + (Number((f.relayer && f.relayer.amountUsd) || 0) + Number((f.gas && f.gas.amountUsd) || 0)).toFixed(3)),
           ...teklifSatir("ARC PULSE fee (0.5%)", "$" + Number((f.app && f.app.amountUsd) || 0).toFixed(3)),
           taraf === "al" && bakiye[ag.anahtar] != null && bakiye[ag.anahtar] < Number(girdi.value) ? el("span", { sinif: "uyari", yazi: "You have $" + bakiye[ag.anahtar].toFixed(2) + " on " + ag.ad + ": not enough." }) : el("span"));
