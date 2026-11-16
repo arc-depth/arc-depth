@@ -58,26 +58,74 @@ const fiyatK = (x) => x == null || !isFinite(x) ? "—" : x >= 1000 ? "$" + x.to
 const isaretli = (x, t) => (x > 0 ? "+" : "") + t;
 
 /* Hyperliquid: positions and spot coins of hesap (read-only here; trading is on the Trade perps page) */
+/* 16 Nov 2026 (owner: portfolio as a home): close a main-list position at market from here. Uses this device's
+   trading key when Hyperliquid still lists it, otherwise the wallet signs. The ARC PULSE fee approval is needed
+   (the order carries the builder fee); without it the visitor is sent to Trade perps to enable trading once. */
+async function hlKapat(hesap, p) {
+  const hl = await import("../hl.js");
+  const [onay, liste, mids] = await Promise.all([hl.bilgi({ type: "maxBuilderFee", user: hesap.toLowerCase(), builder: hl.BUILDER }).catch(() => 0), hl.piyasalar(), hl.ortaFiyatlar()]);
+  if (!(Number(onay) >= hl.BUILDER_F)) throw Object.assign(new Error("Trading is not enabled on ARC PULSE for this wallet yet. Enable it once on Trade perps, then close from here."), { git: true });
+  const m = liste.find((x) => x.ad === p.coin);
+  if (!m) throw new Error("This market is not on Hyperliquid's main list; close it on Hyperliquid.");
+  let ajan = hl.ajanOku(hesap);
+  if (ajan && !(await hl.ajanGecerliMi(hesap, ajan).catch(() => false))) ajan = null;
+  const szi = Number(p.szi), uzun = szi > 0, mid = Number(mids[p.coin]) || p.mark;
+  const px = mid * (uzun ? 1 - hl.KAYMA : 1 + hl.KAYMA);
+  const y = await hl.l1Gonder(hl.emirEylemi({ a: m.i, alis: !uzun, px: hl.fiyatYaz(px, m.szDec), sz: hl.boyutYaz(Math.abs(szi), m.szDec), azalt: true, tif: "Ioc" }), ajan);
+  return hl.emirSonucu(y, p.coin);
+}
+
 function hlPaneli(hesap) {
   const govde = el("div", { sinif: "yigin" }, [el("div", { sinif: "yazi yazi--kucuk yazi--sessiz", yazi: "Reading your Hyperliquid account…" })]);
   const kutu = panel("Hyperliquid: positions and coins", govde);
-  let ilk = true;
+  let ilk = true, bekleyen = false;
+  const kapatDugmesi = (p) => {
+    const d = el("button", { sinif: "dugme dugme--satis dugme--kucuk", attr: { type: "button" }, yazi: "Close" });
+    d.addEventListener("click", () => {
+      const satir = d.closest("tr");
+      if (!satir || satir.nextElementSibling && satir.nextElementSibling.classList.contains("pf-onay")) return;
+      const szi = Number(p.szi), uzun = szi > 0;
+      const yazi = el("div", { yazi: "Close " + Math.abs(szi) + " " + p.coin + " " + (uzun ? "long" : "short") + " at market (at most 1% from " + fiyatK(p.mark) + "). Fees: Hyperliquid's taker fee + ARC PULSE 0.05%." });
+      const durum = el("div", { sinif: "ikincil", attr: { role: "status" } });
+      const evet = el("button", { sinif: "dugme dugme--satis dugme--kucuk", attr: { type: "button" }, yazi: "Confirm close" });
+      const hayir = el("button", { sinif: "dugme dugme--sade dugme--kucuk", attr: { type: "button" }, yazi: "Keep" });
+      const td = el("td", { attr: { colspan: "8", style: "grid-column:1/-1" } }, [el("div", { sinif: "yigin yigin--sik" }, [yazi, el("span", { attr: { style: "display:inline-flex;gap:8px" } }, [hayir, evet]), durum])]);
+      const tr = el("tr", { sinif: "pf-onay" }, [td]);
+      satir.after(tr); bekleyen = true;
+      hayir.addEventListener("click", () => { tr.remove(); bekleyen = false; });
+      evet.addEventListener("click", async () => {
+        evet.disabled = true; hayir.disabled = true; durum.textContent = "Sending… (your wallet may ask you to sign)";
+        try { durum.textContent = await hlKapat(hesap, p); durum.style.color = "var(--alis, #2ecc71)"; setTimeout(() => { bekleyen = false; yenile(); }, 2500); }
+        catch (e) {
+          durum.replaceChildren((e && e.message) || String(e)); durum.style.color = "var(--satis, #ff5c5c)";
+          if (e && e.git) durum.append(" ", el("a", { attr: { href: "#/perps/trade?coin=" + encodeURIComponent(p.coin) }, yazi: "Open Trade perps →" }));
+          hayir.disabled = false; hayir.textContent = "OK";
+        }
+      });
+    });
+    return d;
+  };
   const yenile = async () => {
     if (!ilk && !kutu.isConnected) return;   // the page was left: stop refreshing
+    if (bekleyen) { setTimeout(yenile, 5000); return; }   // a close confirm is open: do not redraw under it
     ilk = false;
     try {
       const hl = await import("../hl.js");
       const V = await hl.tumVarliklar(hesap);
       const parca = [el("div", { sinif: "izgara izgara--olcum" }, [
-        olcum("Total on Hyperliquid", usdK(V.perpDeger + V.spotDeger), "perps account + spot coins"),
-        olcum("Perps account", usdK(V.perpDeger), V.pozisyonlar.length + " open position" + (V.pozisyonlar.length === 1 ? "" : "s")),
-        olcum("Spot coins", usdK(V.spotDeger), V.spotlar.length + " coin" + (V.spotlar.length === 1 ? "" : "s")),
+        olcum("Total on Hyperliquid", usdK(V.perpDeger + V.spotDeger), "perps " + usdK(V.perpDeger) + " · spot " + usdK(V.spotDeger)),
+        ...[["day", "P&L 24 h"], ["week", "P&L 7 days"], ["month", "P&L 30 days"]].map(([k, ad]) => {
+          const x = V.kz[k];
+          const e = olcum(ad, x == null ? "—" : isaretli(x, usdK(x)), "Hyperliquid's own figure");
+          if (x) { const b = e.querySelector("b, strong, .olcum__deger"); if (b) b.style.color = x > 0 ? "var(--alis, #2ecc71)" : "var(--satis, #ff5c5c)"; }
+          return e;
+        }),
       ])];
       parca.push(el("h3", { sinif: "panel__baslik", attr: { style: "margin:6px 0 0;font-size:14px" }, yazi: "Open positions" }));
       if (!V.pozisyonlar.length) parca.push(el("div", { sinif: "ikincil", yazi: "No open perp positions at this address." }));
       else {
         const t = el("table", { sinif: "tablo tablo--kart" });
-        t.append(el("thead", {}, [el("tr", {}, ["Market", "Size", "Entry", "Mark", "Unrealized P&L", "Liq. price", ""].map((b) => el("th", { yazi: b })))]));
+        t.append(el("thead", {}, [el("tr", {}, ["Market", "Size", "Entry", "Mark", "Unrealized P&L", "Liq. price", "TP / SL", ""].map((b) => el("th", { yazi: b })))]));
         t.append(el("tbody", {}, V.pozisyonlar.map((p) => {
           const szi = Number(p.szi), uzun = szi > 0, pnl = Number(p.unrealizedPnl), roe = Number(p.returnOnEquity) * 100;
           return el("tr", {}, [
@@ -87,7 +135,13 @@ function hlPaneli(hesap) {
             el("td", { sinif: "sayi", attr: { "data-et": "Mark" }, yazi: fiyatK(p.mark) }),
             el("td", { sinif: "sayi", attr: { "data-et": "Unrealized P&L", style: "color:" + (pnl > 0 ? "var(--alis, #2ecc71)" : pnl < 0 ? "var(--satis, #ff5c5c)" : "inherit") }, yazi: isaretli(pnl, usdK(pnl)) + " (" + isaretli(roe, roe.toFixed(1)) + "%)" }),
             el("td", { sinif: "sayi", attr: { "data-et": "Liq. price" }, yazi: p.liquidationPx ? fiyatK(Number(p.liquidationPx)) : "–" }),
-            el("td", { attr: { "data-et": "" } }, p.dex ? [el("span", { sinif: "ikincil", yazi: "on " + p.dex })] : [el("a", { sinif: "dugme dugme--kucuk", attr: { href: "#/perps/trade?coin=" + encodeURIComponent(p.coin) }, yazi: "Manage" })]),
+            (() => { const tet = V.emirler.filter((o) => o.coin === p.coin && o.isTrigger && o.reduceOnly);
+              const tp = tet.filter((o) => /Take Profit/i.test(o.orderType)).map((o) => fiyatK(Number(o.triggerPx))).join(", ") || "–";
+              const sl = tet.filter((o) => /Stop/i.test(o.orderType)).map((o) => fiyatK(Number(o.triggerPx))).join(", ") || "–";
+              return el("td", { sinif: "sayi", attr: { "data-et": "TP / SL" }, yazi: tp + " / " + sl }); })(),
+            el("td", { attr: { "data-et": "" } }, p.dex ? [el("span", { sinif: "ikincil", yazi: "on " + p.dex })] : [el("span", { attr: { style: "display:inline-flex;gap:6px;flex-wrap:wrap" } }, [
+              el("a", { sinif: "dugme dugme--sade dugme--kucuk", attr: { href: "#/perps/trade?coin=" + encodeURIComponent(p.coin) }, yazi: "Manage" }),
+              kapatDugmesi(p)])]),
           ]);
         })));
         parca.push(el("div", { sinif: "tablo-sarmal" }, [t]));
@@ -124,10 +178,13 @@ function hlPaneli(hesap) {
 }
 
 export async function ciz({ cuzdan }) {
-  const kap = el("div", { sinif: "yigin" });
+  /* 16 Nov 2026 (owner: "platform hala çok acemi"): a slim title, no cover and no "On this page" chips; the money first */
+  const kap = el("div", { sinif: "yigin", veri: { icindekilerYok: "1" } });
   const hesap = cuzdan.hesap();
 
-  kap.append(sayfaUst("Portfolio", hesap ? null : "No wallet connected"));
+  kap.append(el("div", { attr: { style: "display:flex;align-items:baseline;gap:12px;flex-wrap:wrap" } }, [
+    el("h1", { attr: { style: "font-size:22px;margin:0" }, yazi: "Portfolio" }),
+    hesap ? el("span", { sinif: "mono", attr: { style: "font-size:13px;color:var(--yazi-3)" }, yazi: hesap.slice(0, 6) + "…" + hesap.slice(-4) }) : null]));
 
   /* 16 Nov 2026 (owner): none of the wallet sections shows before a wallet is connected */
   if (!hesap) {

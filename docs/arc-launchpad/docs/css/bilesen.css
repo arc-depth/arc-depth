@@ -324,6 +324,11 @@
   .tablo--kart tbody td:first-child::before { content: none; }
 }
 
+/* 16 Nov 2026: on a phone one figure per line (two across overlapped long prices, e.g. TP / SL) */
+@media (max-width: 480px) {
+  .tablo--kart tbody tr { grid-template-columns: minmax(0, 1fr); }
+}
+
 /* ---- badges --------------------------------------------------------- */
 
 .etiket {
