@@ -308,7 +308,8 @@ function hashiCoz() {
    missing file is a clear error instead of a silent 404 import. */
 const GORUNUMLER = {
   kesfet: () => import("./gorunum/kesfet.js"),
-  akis: () => import("./gorunum/akis.js"),   // Feed: who buys what, follow wallets (16 Nov 2026)
+  akis: () => import("./gorunum/akis.js"),
+  "pulse-wallet": () => import("./gorunum/pulse-wallet.js"),   // Pulse Wallet PREVIEW, in no menu until approved   // Feed: who buys what, follow wallets (16 Nov 2026)
   olustur: () => import("./gorunum/merkez.js"),   // the one-pool launch: 5 collateral slots, any chain
   merkez: () => import("./gorunum/merkez.js"),
   "olustur-move": () => import("./gorunum/olustur.js"),   // paying from a Sui or Aptos wallet

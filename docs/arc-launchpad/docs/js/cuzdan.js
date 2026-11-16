@@ -97,8 +97,13 @@ async function wcKur() {
   return _wc;
 }
 
+/* 16 Nov 2026: Pulse Wallet (preview, js/pulse-cuzdan.js): the in-page wallet opened with the phone's lock.
+   When the visitor chose it, it is the provider; its key never leaves the browser. */
+let _pw = null;
+const PW_AKTIF = "arcpulse-pw-aktif";
 function saglayici() {
   if (typeof window === "undefined") return null;
+  if (_pw) return _pw;
   if (_wc && _wc.session) return _wc;
   const mm = _duyurulan.find((x) => /metamask/i.test(x.info.rdns || x.info.name || ""));
   if (mm) return mm.provider;
@@ -219,6 +224,7 @@ export const cuzdan = {
       site's permission (wallet_revokePermissions: MetaMask, Rabby and others) and, whether or not
       the wallet supports that, stops this page from reconnecting until the visitor presses Connect. */
   async kes() {
+    if (_pw) { _pw = null; try { localStorage.removeItem(PW_AKTIF); } catch (e) { /* blocked */ } _hesap = null; _zincir = null; duyur(); return; }
     if (_wc) await _wc.disconnect().catch(() => {});
     _wc = null;
     try { localStorage.removeItem(WC_ISARET); } catch (e) { /* storage may be blocked */ }
@@ -238,8 +244,13 @@ export const cuzdan = {
     if (_wc) await _wc.disconnect().catch(() => {});
     const p = saglayici();
     if (p) { try { await p.request({ method: "wallet_revokePermissions", params: [{ eth_accounts: {} }] }); } catch (e) { /* not supported */ } }
-    _wc = null; _hesap = null; _zincir = null;
+    _wc = null; _hesap = null; _zincir = null; _pw = null;
+    /* a Pulse Wallet's encrypted phrase is the wallet itself: wiping it would lose the money. Kept; it is removed
+       only from its own page ("Remove from this device"). */
+    let pwSakla = [];
+    try { const P = await import("./pulse-cuzdan.js"); pwSakla = P.PW_ANAHTARLAR.map((k) => [k, localStorage.getItem(k)]).filter((x) => x[1] != null); } catch (e) { /* none */ }
     try { localStorage.clear(); } catch (e) { /* storage may be blocked */ }
+    try { for (const [k, v] of pwSakla) localStorage.setItem(k, v); } catch (e) { /* blocked */ }
     try { sessionStorage.clear(); } catch (e) { /* storage may be blocked */ }
     try {
       const dbs = indexedDB.databases ? await indexedDB.databases() : [];
@@ -412,6 +423,23 @@ export const cuzdan = {
     return sig;
   },
 
+  /** Use the Pulse Wallet on this device as the site's wallet (preview). sifreSor: async () => password | null. */
+  async pulseBagla(sifreSor) {
+    const P = await import("./pulse-cuzdan.js");
+    const p = P.saglayiciKur({ sifreSor });
+    if (!p) throw new Error("No Pulse Wallet on this device.");
+    _pw = p;
+    p.on("chainChanged", (c) => { if (_pw === p) { _zincir = hexZincir(c); duyur(); } });
+    try { localStorage.setItem(PW_AKTIF, "1"); } catch (e) { /* blocked */ }
+    kopukYaz(false);
+    const h = await p.request({ method: "eth_accounts" });
+    _hesap = h[0];
+    await zinciriOku();
+    duyur();
+    return _hesap;
+  },
+  pulseMi() { return !!_pw; },
+
   dinle(f) {
     _dinleyiciler.add(f);
     return () => _dinleyiciler.delete(f);
@@ -423,7 +451,13 @@ export const cuzdan = {
    a page that will show somebody the wrong balance. */
 /* Wallets announce over EIP-6963 a moment after the page loads, so the
    listeners and the silent reconnect wait one tick for them. */
-setTimeout(() => {
+setTimeout(async () => {
+  /* the Pulse Wallet chosen on this device: back without asking (the address is public; signing asks the lock) */
+  let pwAktif = false;
+  try { pwAktif = localStorage.getItem(PW_AKTIF) === "1"; } catch (e) { /* blocked */ }
+  if (pwAktif) {
+    try { await cuzdan.pulseBagla(async () => { const s = prompt("Pulse Wallet password:"); return s == null ? null : s; }); return; } catch (e) { /* gone: fall back to the browser wallet */ }
+  }
   const p = saglayici();
   if (p && p.on) {
     p.on("accountsChanged", (h) => { _hesap = !kopukMu() && h && h.length ? h[0] : null; duyur(); });
