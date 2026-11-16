@@ -348,7 +348,7 @@ let sonCizim = 0;
    cover, each one a jump to its section. Built from what the page already shows; nothing new is read. */
 function sayfaIcindekiler(parca) {
   const basliklar = [...parca.querySelectorAll(":scope > .panel > .panel__baslik, :scope > .panel .panel__baslik")].filter((b, i, a) => a.indexOf(b) === i);
-  if (basliklar.length < 4) return;
+  return;   /* 16 Nov 2026 redesign: no "On this page" chips anywhere (owner found them cluttered); the code below stays */
   const serit = el("nav", { sinif: "icindekiler", attr: { "aria-label": "On this page" } }, [el("span", { sinif: "icindekiler__et", yazi: "On this page" })]);
   basliklar.forEach((b, i) => {
     const bolum = b.closest(".panel");

@@ -338,3 +338,9 @@
   .ust-cip__uzun { display: none; } .ust-cip__kisa { display: inline; }
 }
 
+
+/* 16 Nov 2026 redesign: the slim page title (no cover) */
+.sayfa-ust { display: flex; align-items: center; justify-content: space-between; gap: 10px 16px; flex-wrap: wrap; margin-bottom: 14px; }
+.sayfa-ust h1 { font-size: 22px; margin: 0; letter-spacing: -.01em; }
+.sayfa-ust__alt { font-size: 13px; color: var(--yazi-3); }
+@media (max-width: 860px) { .sayfa-ust h1 { font-size: 20px; } }

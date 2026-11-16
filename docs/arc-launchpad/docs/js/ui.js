@@ -95,7 +95,9 @@ export function sayfaUst(baslik, alt, eylemler = []) {
   /* the page's own route gives the cover its group, colour, icon and a plain sentence on what the page is for */
   const yol = (location.hash || "").replace(/^#\/?/, "").split(/[?/]/)[0];
   const kayit = yol ? yolBul(yol) : yolBul("kesfet");
-  if (kayit) {
+  /* 16 Nov 2026 redesign (approved demo): every page opens with a slim title row, not a cover; the cover code stays
+     below for a page that asks for it with sayfaUst.kapak = true */
+  if (kayit && sayfaUst.kapak) {
     const grup = GRUPLAR.find((g) => g.anahtar === kayit.grup);
     /* the plain sentence only when it says something the subtitle does not */
     const yalin = (x) => String(x || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
