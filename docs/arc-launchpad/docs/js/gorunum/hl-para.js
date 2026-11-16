@@ -135,5 +135,7 @@ export function paraPaneli({ kim, cuzdan, hesapYukle }) {
   kutu.classList.add("hl-para");
   /* 16 Nov 2026: the account summary's "Move to Hyperliquid" opens this with the chain and amount filled in */
   const doldur = (id, tutar) => { zincirSec.value = String(id); paraCiz(); paraSec.value = "usd"; miktar.value = String(tutar); sifirla(); yaz(yDurum, "Press Get quote: you will see what arrives before you sign."); kutu.scrollIntoView({ behavior: "smooth", block: "start" }); };
-  return { panel: kutu, doldur, guncelle(h) { H = h; if (document.activeElement !== cekMiktar) ipucuCiz(); } };
+  /* 16 Nov 2026 (owner: "burda para çekme yok"): the summary's Withdraw opens this with the whole available amount */
+  const cekAc = () => { if (H) cekMiktar.value = String(asagi2(H.cekilebilir)); cekOnay.hidden = true; ipucuCiz(); cek.scrollIntoView({ behavior: "smooth", block: "center" }); setTimeout(() => cekMiktar.focus({ preventScroll: true }), 400); };
+  return { panel: kutu, doldur, cekAc, guncelle(h) { H = h; if (document.activeElement !== cekMiktar) ipucuCiz(); } };
 }

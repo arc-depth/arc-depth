@@ -608,6 +608,10 @@ export async function ciz({ param, cuzdan }) {
         rakam("P&L today", gunKz == null ? "…" : isr(gunKz), gunKz > 0 ? "hl-art" : gunKz < 0 ? "hl-eks" : "", "Hyperliquid's figure"),
         rakam("Available", usd(H.cekilebilir), "", "to trade or withdraw"),
         rakam("Margin in use", usd(H.teminat))]),
+      /* 16 Nov 2026 (owner: "burda para çekme yok"): deposit and withdraw right under the figures */
+      !salt && para ? el("div", { sinif: "hl-sec", attr: { style: "display:grid;grid-template-columns:1fr 1fr;gap:8px" } }, [
+        el("button", { sinif: "dugme dugme--marka", attr: { type: "button" }, yazi: "Deposit", on: { click: () => para.panel.scrollIntoView({ behavior: "smooth", block: "start" }) } }),
+        el("button", { sinif: "dugme dugme--sade", attr: { type: "button" }, yazi: "Withdraw " + usd(Math.max(0, H.cekilebilir)), on: { click: () => para.cekAc() } })]) : null,
       cuzdanUsdc && cuzdanUsdc.length ? el("div", { sinif: "hl-cuzdan" }, [
         el("div", { yazi: "In your wallet, not on Hyperliquid yet: " + cuzdanUsdc.map((x) => usd(x.m) + " " + x.k.sembol + " on " + x.k.ad).join(" · ") }),
         el("button", { sinif: "dugme dugme--marka dugme--kucuk", attr: { type: "button" }, yazi: "Move " + usd(cuzdanUsdc[0].m) + " from " + cuzdanUsdc[0].k.ad + " to Hyperliquid", on: { click: () => { if (para) para.doldur(cuzdanUsdc[0].k.id, Math.floor(cuzdanUsdc[0].m * 100) / 100); } } })]) : null,
