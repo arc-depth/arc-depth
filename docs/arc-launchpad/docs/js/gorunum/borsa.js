@@ -378,6 +378,21 @@ export async function ciz({ param }) {
         if ((sol && taraf === "sat") || (taraf === "al" && kaynak && kaynak.value === "solana")) {
           const m = _solM || (_solM = await import("../solana-ikiz.js"));
           if (!m.solanaCuzdan.hesap()) { durum.textContent = "Connect your Solana wallet…"; await m.solanaCuzdan.baglan(); }
+          /* the device account pays its own Solana fee: when it has no SOL (the first buy's top-up was skipped), add $0.50
+             of SOL from the EVM wallet first — one confirm, once */
+          if (taraf === "sat" && cihazMi() && cuzdan.hesap()) {
+            const sa = solAdres();
+            const bk = await fetch("https://solana-rpc.publicnode.com", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "getBalance", params: [sa] }) }).then((r) => r.json()).catch(() => null);
+            if (bk && ((bk.result && bk.result.value) || 0) < 1000000) {
+              const ag0 = V.evmler().filter((x) => bakiye[x.anahtar] >= 0.6).sort((x, y) => bakiye[y.anahtar] - bakiye[x.anahtar])[0];
+              if (!ag0) throw new Error("Your Solana account needs about $0.50 of SOL for the network fee, and no chain in your wallet has $0.60 of USDC to send it.");
+              durum.textContent = "First: $0.50 of SOL to your Solana account for the network fee (once). Confirm in your wallet…";
+              const g = await fetch(V.RELAY + "/quote", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ user: cuzdan.hesap(), recipient: sa, originChainId: ag0.id, destinationChainId: 792703809, originCurrency: ag0.dolar, destinationCurrency: "11111111111111111111111111111111", amount: V.dolarHam(ag0, 0.5).toString(), tradeType: "EXACT_INPUT", refundTo: cuzdan.hesap() }) }).then((r) => r.json());
+              if (!g.steps) throw new Error("Could not send SOL for the fee: " + (g.message || "no route"));
+              for (const a2 of g.steps) for (const i2 of a2.items || []) { if (a2.kind !== "transaction") continue; const h2 = await cuzdan.agdaGonder(ag0, { to: i2.data.to, data: i2.data.data, value: "0x" + BigInt(i2.data.value || 0).toString(16) }); await V.makbuz(ag0, h2); }
+              for (let i = 0; i < 30; i++) { await new Promise((r) => setTimeout(r, 3000)); const b2 = await fetch("https://solana-rpc.publicnode.com", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "getBalance", params: [sa] }) }).then((r) => r.json()).catch(() => null); durum.textContent = "Waiting for the SOL on Solana… (" + ((i + 1) * 3) + "s)"; if (b2 && b2.result && b2.result.value >= 1000000) break; }
+            }
+          }
           await teklif();
           const q = son; if (!q) { durum.textContent = "No route to send."; return; }
           for (const adim of q.steps) for (const it of adim.items || []) {
