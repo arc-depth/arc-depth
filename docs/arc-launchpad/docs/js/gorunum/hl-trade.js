@@ -37,6 +37,19 @@ const RISK_ANAHTAR = "hl-risk-onay-v1";
 const HL_APP = "https://app.hyperliquid.xyz";
 
 const STIL =
+  ".hl-kurulum{display:grid;gap:8px;padding:12px;border-radius:12px;background:#15121f;border:1px solid #2e2650}" +
+  ".hl-kurulum[hidden]{display:none}" +
+  ".hl-kurulum__adim{display:grid;grid-template-columns:22px 1fr;column-gap:8px;align-items:center;color:var(--yazi-3);font-size:13px}" +
+  ".hl-kurulum__adim span{width:20px;height:20px;border-radius:50%;border:2px solid #34343f;display:grid;place-items:center;font-size:11px;font-weight:700}" +
+  ".hl-kurulum__adim small{grid-column:2;font-size:11.5px;color:var(--yazi-3)}" +
+  ".hl-kurulum__adim.ok{color:var(--yazi-2)}.hl-kurulum__adim.ok span{background:var(--alis);border-color:var(--alis);color:#04150e}" +
+  ".hl-kurulum__adim.simdi{color:var(--yazi-1)}.hl-kurulum__adim.simdi span{border-color:var(--marka);color:var(--yazi-1)}" +
+  ".hl-dock{display:none}" +
+  "@media (max-width:860px){.hl-dock{display:grid;grid-template-columns:1fr 1fr;gap:10px;position:fixed;left:0;right:0;bottom:calc(var(--alt-bar) + env(safe-area-inset-bottom,0px));z-index:50;padding:10px 16px;background:rgba(11,11,16,.96);border-top:1px solid var(--cizgi)}" +
+  ".hl-dock button{height:50px;border-radius:14px;border:0;font:700 16px var(--yazi-tipi);cursor:pointer}.hl-dock button:first-child{background:var(--alis);color:#04150e}.hl-dock button:last-child{background:var(--satis);color:#2a0509}" +
+  ".hl-sayfa{padding-bottom:80px}}" +
+  /* the market figures: one slim strip on desktop, not six boxes */
+  "@media (min-width:901px){.hl-ust .hl-olc{display:flex;flex-wrap:wrap;gap:6px 28px;align-items:end}.hl-ust .hl-olc>div{border:0;background:transparent;padding:0}.hl-ust .hl-olc b{font-size:15px}}" +
   /* 16 Nov 2026: slim title bar, one-line risk notice, tool strip */
   ".hl-bas{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}.hl-bas__ad{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;min-width:0}" +
   ".hl-bas h1{font-size:22px;margin:0;letter-spacing:-.01em}.hl-bas__ad span{font-size:13px;color:var(--yazi-3)}" +
@@ -242,6 +255,16 @@ export async function ciz({ param, cuzdan }) {
   const onayAciklama = el("div", { sinif: "ikincil", attr: { hidden: true }, yazi: ONAY_METIN });
   const yatirKutu = el("div", { attr: { hidden: true } });
   const onizle = el("div", { sinif: "hl-onizle", attr: { hidden: true } });
+  /* the three steps to the first trade, until all three are done: connect, deposit, enable trading */
+  const kurulum = el("div", { sinif: "hl-kurulum", attr: { hidden: true } });
+  const kurulumCiz = (adimlar) => {
+    const hepsi = adimlar.every((a) => a.ok);
+    kurulum.hidden = hepsi;
+    if (hepsi) return;
+    const ilkEksik = adimlar.findIndex((a) => !a.ok);
+    kurulum.replaceChildren(...adimlar.map((a, i) => el("div", { sinif: "hl-kurulum__adim" + (a.ok ? " ok" : i === ilkEksik ? " simdi" : "") }, [
+      el("span", { yazi: a.ok ? "✓" : String(i + 1) }), el("b", { yazi: a.ad }), a.alt ? el("small", { yazi: a.alt }) : null])));
+  };
 
   const yonCiz = () => yonDug.replaceChildren(
     el("button", { sinif: "dugme dugme--alis", attr: { type: "button", "aria-pressed": String(yon === "alis") }, yazi: "Long", on: { click: () => { yon = "alis"; yonCiz(); girdi(); } } }),
@@ -316,6 +339,14 @@ export async function ciz({ param, cuzdan }) {
     tpslSatir.hidden = azaltKutu.checked; tpslAlan.hidden = azaltKutu.checked || !tpslKutu.checked;
     onayAciklama.hidden = true; yatirKutu.hidden = true;
     anaDugme.disabled = false;
+    {
+      const yatirildi = !!(H && (H.deger > 0 || H.pozisyonlar.length || (H.birlesik && H.spotUsdc > 0)));
+      kurulumCiz([
+        { ad: "Connect your wallet", alt: "free, nothing moves", ok: !!kim },
+        { ad: "Deposit USDC", alt: "from any chain, min. $5 on Hyperliquid", ok: yatirildi },
+        { ad: "Enable trading", alt: "one free signature; the key cannot withdraw", ok: !!(H && hazirMi()) },
+      ]);
+    }
     if (salt) { anaDugme.textContent = "Read-only view (no trading)"; anaDugme.disabled = true; return; }
     if (!kim) { anaDugme.textContent = "Connect wallet to trade"; return; }
     if (!H) { anaDugme.textContent = hesapHata ? "Account could not be read" : "Reading your Hyperliquid account…"; anaDugme.disabled = true; return; }
@@ -463,7 +494,7 @@ export async function ciz({ param, cuzdan }) {
     el("div", { sinif: "hl-alan" }, [el("label", { yazi: "Leverage" }), el("div", { sinif: "hl-kal" }, [kalGirdi, kalYazi]), el("div", { sinif: "hl-kal" }, [modSec, el("span")]), kalIpucu]),
     el("label", { sinif: "hl-kutu", attr: { for: "hl-azalt" } }, [azaltKutu, el("span", { yazi: "Reduce only (only makes an open position smaller)" })]),
     tpslSatir, tpslAlan,
-    ucretKutu, ayrinti("📟 Pulse HUD · holding cost, risk vs normal moves, fill estimate", kask.kutu), riskSatir, yatirKutu, onayAciklama, anaDugme, onizle, durum, zincirNotu,
+    ucretKutu, ayrinti("📟 Pulse HUD · holding cost, risk vs normal moves, fill estimate", kask.kutu), riskSatir, kurulum, yatirKutu, onayAciklama, anaDugme, onizle, durum, zincirNotu,
     ayrinti("How does this work?", el("div", { sinif: "ikincil", yazi: "Your wallet signs each order (a signature, not a transaction: no gas). The order goes straight to Hyperliquid, which matches it, holds your margin and settles it. A market order is sent as an immediate-or-cancel limit " + (hl.KAYMA * 100) + "% through the current price, the way Hyperliquid's own app does it. The first time, you approve ARC PULSE's 0.05% fee once and create a trading key for this device. Take profit / stop loss are market orders that Hyperliquid sends when the mark price reaches them (up to 10% slippage), reduce only. The liquidation price shown before you confirm is an approximation from Hyperliquid's formula; Hyperliquid's own figure is in the Positions table once the position is open." })),
   ]));
 
@@ -694,6 +725,15 @@ export async function ciz({ param, cuzdan }) {
   });
 
   grafikPanel.classList.add("hl-g"); formPanel.classList.add("hl-f"); hesapPanel.classList.add("hl-h");
+  {
+    const git = (y) => { yon = y; yonCiz(); girdi(); formPanel.scrollIntoView({ behavior: "smooth", block: "start" }); };
+    const dock = el("div", { sinif: "hl-dock" }, [
+      el("button", { attr: { type: "button" }, yazi: "Long", on: { click: () => git("alis") } }),
+      el("button", { attr: { type: "button" }, yazi: "Short", on: { click: () => git("satis") } })]);
+    document.body.append(dock);   /* on <body>: the page's entrance transform would trap a fixed bar inside the content */
+    const temizlik = () => setTimeout(() => { if (!kap.isConnected) { dock.remove(); window.removeEventListener("hashchange", temizlik); } }, 0);
+    window.addEventListener("hashchange", temizlik);
+  }
   kap.append(el("div", { sinif: "hl-izgara" }, [grafikPanel, formPanel, hesapPanel]));
   if (kim && !salt) { para = paraPaneli({ kim, cuzdan, hesapYukle: () => hesapYukle() }); kap.append(para.panel); }
   if (kim) kap.append(gecmisPaneli({ kim }));
