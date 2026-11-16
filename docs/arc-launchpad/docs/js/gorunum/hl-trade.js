@@ -27,6 +27,7 @@ import { paraPaneli } from "./hl-para.js";
 import { gecmisPaneli } from "./hl-gecmis.js";
 import { islemlereBol, kapananGorunum, fonlamaGorunum } from "./hl-islemler.js";
 import { kitapPaneli } from "./hl-kitap.js";
+import * as Y from "../hl-yatir.js";
 import { kaskPaneli } from "./hl-kask.js";
 import { fuzePaneli } from "./hl-fuze.js";
 import { grafikPaneli } from "./hl-grafik.js";
@@ -39,6 +40,7 @@ const RISK_ANAHTAR = "hl-risk-onay-v1";
 const HL_APP = "https://app.hyperliquid.xyz";
 
 const STIL =
+  ".hl-cuzdan{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 12px;padding:10px 12px;border-radius:12px;background:#15121f;border:1px solid #2e2650;font-size:13px;color:var(--yazi-2)}" +
   ".hl-nerede{display:grid;gap:6px;padding:10px 12px;border-radius:12px;background:#121a2a;border:1px solid #1f3352;font-size:12.5px;line-height:1.5;color:var(--yazi-2)}" +
   ".hl-link{all:unset;cursor:pointer;color:#b9a6ff;text-decoration:underline}" +
   ".hl-bakiye span:last-child{color:var(--yazi-1);font-weight:600}" +
@@ -606,6 +608,9 @@ export async function ciz({ param, cuzdan }) {
         rakam("P&L today", gunKz == null ? "…" : isr(gunKz), gunKz > 0 ? "hl-art" : gunKz < 0 ? "hl-eks" : "", "Hyperliquid's figure"),
         rakam("Available", usd(H.cekilebilir), "", "to trade or withdraw"),
         rakam("Margin in use", usd(H.teminat))]),
+      cuzdanUsdc && cuzdanUsdc.length ? el("div", { sinif: "hl-cuzdan" }, [
+        el("div", { yazi: "In your wallet, not on Hyperliquid yet: " + cuzdanUsdc.map((x) => usd(x.m) + " " + x.k.sembol + " on " + x.k.ad).join(" · ") }),
+        el("button", { sinif: "dugme dugme--marka dugme--kucuk", attr: { type: "button" }, yazi: "Move " + usd(cuzdanUsdc[0].m) + " from " + cuzdanUsdc[0].k.ad + " to Hyperliquid", on: { click: () => { if (para) para.doldur(cuzdanUsdc[0].k.id, Math.floor(cuzdanUsdc[0].m * 100) / 100); } } })]) : null,
       el("div", { sinif: "hl-nerede" }, [
         el("div", { yazi: "This money is in your own Hyperliquid account at " + kim.slice(0, 6) + "…" + kim.slice(-4) + ", held by Hyperliquid, not by ARC PULSE. Wallet apps (MetaMask and others) do not show Hyperliquid balances; app.hyperliquid.xyz shows the same figure." }),
         !salt && ajanHazir() ? el("div", {}, ["Orders here are signed by this device's trading key, so your wallet does not pop up for each one. The key can open and close positions only: it cannot withdraw or transfer money. ",
@@ -771,6 +776,16 @@ export async function ciz({ param, cuzdan }) {
   }
 
   let hesapSekme = "poz", kapanan = null, fonlar = null, gunKz = null, gunKzZaman = 0;
+  /* 16 Nov 2026 (owner: "Arc'taki 29 doları neden görmüyor"): USDC in the wallet on the deposit chains, not yet on Hyperliquid */
+  let cuzdanUsdc = null, cuzdanZaman = 0;
+  async function cuzdanUsdcOku() {
+    if (!kim || salt || Date.now() - cuzdanZaman < 120000) return;
+    cuzdanZaman = Date.now();
+    const zaman = (p) => Promise.race([p, new Promise((_, r) => setTimeout(() => r(new Error("timeout")), 8000))]);
+    const l = await Promise.all(Y.KAYNAKLAR.map((k) => zaman(Y.bakiyeOku(k, kim)).then((m) => ({ k, m: Number(m) || 0 })).catch(() => ({ k, m: 0 }))));
+    cuzdanUsdc = l.filter((x) => x.m >= 1).sort((a, b) => b.m - a.m);
+    if (!hesapGovde.querySelector(".hl-onizle")) hesapCiz();
+  }
   async function gecmisYukle() {
     if (!kim) return;
     try {
@@ -790,7 +805,7 @@ export async function ciz({ param, cuzdan }) {
     } catch (e) { /* stays unknown */ }
   }
   async function hesapYukle() {
-    gunKzYukle();
+    gunKzYukle(); cuzdanUsdcOku();
     if (hesapSekme === "kap" || hesapSekme === "fon") gecmisYukle();
     if (!kim) { hesapCiz(); formGuncelle(); return; }
     try {
