@@ -26,6 +26,7 @@ import * as hl from "../hl.js";
 import { paraPaneli } from "./hl-para.js";
 import { gecmisPaneli } from "./hl-gecmis.js";
 import { islemlereBol, kapananGorunum, fonlamaGorunum } from "./hl-islemler.js";
+import { kitapPaneli } from "./hl-kitap.js";
 import { kaskPaneli } from "./hl-kask.js";
 import { fuzePaneli } from "./hl-fuze.js";
 import { grafikPaneli } from "./hl-grafik.js";
@@ -38,6 +39,19 @@ const RISK_ANAHTAR = "hl-risk-onay-v1";
 const HL_APP = "https://app.hyperliquid.xyz";
 
 const STIL =
+  ".hl-cip{display:grid;grid-template-columns:repeat(auto-fit,minmax(44px,1fr));gap:6px}" +
+  ".hl-cip button{height:34px;border-radius:9px;border:1px solid var(--cizgi-guclu);background:var(--yuzey-2);color:var(--yazi-1);font:600 13px var(--yazi-tipi);cursor:pointer}" +
+  ".hl-cip button[aria-pressed=true]{border-color:var(--marka);background:var(--marka-zemin)}" +
+  ".hl-kapat{color:#ff9aa5!important;border-color:var(--satis-cizgi)!important}" +
+  ".hl-sayfa .hl-izgara{grid-template-columns:minmax(0,1.6fr) 250px minmax(300px,1fr);grid-template-areas:'g k f' 'h h f'}" +
+  ".hl-izgara>.hl-k{grid-area:k;align-self:stretch}" +
+  "@media (max-width:1280px){.hl-sayfa .hl-izgara{grid-template-columns:minmax(0,1.5fr) minmax(300px,1fr);grid-template-areas:'g f' 'k f' 'h f'}}" +
+  "@media (max-width:900px){.hl-sayfa .hl-izgara{grid-template-columns:minmax(0,1fr)!important;grid-template-areas:'h' 'g' 'k' 'f'!important}}" +
+  ".hl-perde{position:fixed;inset:0;z-index:120;background:rgba(5,5,9,.62);display:flex;align-items:flex-end}.hl-perde[hidden]{display:none}" +
+  ".hl-perde__sayfa{width:100%;max-height:90vh;overflow:auto;background:#14141b;border-top:1px solid var(--cizgi-guclu);border-radius:24px 24px 0 0;padding:10px 10px calc(16px + env(safe-area-inset-bottom,0px))}" +
+  ".hl-perde__tutamak{width:40px;height:5px;border-radius:3px;background:#34343f;margin:0 auto 10px}" +
+  ".hl-perde__kapat{all:unset;cursor:pointer;float:right;width:34px;height:34px;border-radius:10px;background:var(--yuzey-3);display:grid;place-items:center;color:var(--yazi-2)}" +
+  ".hl-perde .hl-f{border:0;background:transparent}.hl-perde [hidden]{display:none!important}" +
   /* 16 Nov 2026: on phones the account (positions, trades) comes first, then the chart, then the form */
   "@media (max-width:900px){.hl-sayfa .hl-izgara{grid-template-areas:'h' 'g' 'f'}}" +
   ".hl-hesap-ozet{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}" +
@@ -341,6 +355,7 @@ export async function ciz({ param, cuzdan }) {
   function formGuncelle() {
     const kal = Math.round(Number(kalGirdi.value) || 1);
     kalYazi.textContent = kal + "×";
+    try { kalCiplerCiz(); } catch (e) { /* the chips are built after the first call */ }
     if (P.yalnizIzole) { modSec.value = "isolated"; modSec.disabled = true; } else modSec.disabled = false;
     const simdiki = K && K.leverage ? K.leverage.value + "× " + K.leverage.type : null;
     kalIpucu.textContent = "Up to " + P.maxKal + "× on " + P.ad + (P.yalnizIzole ? " (isolated only)" : "") + ". Bigger positions get less." + (simdiki ? " Your " + P.ad + " setting now: " + simdiki + "." : "");
@@ -501,10 +516,22 @@ export async function ciz({ param, cuzdan }) {
   /* 16 Nov 2026: closed by default everywhere (the tool strip and this line open it); opens itself from a Target Radar card */
   const fuzeYeri = aim === "long" || aim === "short" ? fuze.kutu : ayrinti("🎯 Aim assist · 🔮 Time Machine 1 & 2 — size, stop and target from your risk, then the odds", fuze.kutu);
   fuze.hesapla();
+  /* 16 Nov 2026 redesign: 25/50/75/100% of what the account can open at this leverage; leverage in one tap */
+  const payCipler = el("div", { sinif: "hl-cip" }, [25, 50, 75, 100].map((p) => el("button", { attr: { type: "button" }, yazi: p + "%", on: { click: () => {
+    if (!H) { durumYaz(kim ? "Reading your account…" : "Connect your wallet to size by your balance.", "hata"); return; }
+    const kal = Math.round(Number(kalGirdi.value) || 1);
+    const tavan = Math.max(0, H.cekilebilir) * kal * 0.97;   /* 3% left for fees and price moves */
+    tutarGirdi.value = String(Math.floor(tavan * p / 100 * 100) / 100); girdi();
+  } } })));
+  const kalCipler = el("div", { sinif: "hl-cip" });
+  const kalCiplerCiz = () => kalCipler.replaceChildren(...[1, 3, 5, 10, 20, 50].filter((k) => k <= P.maxKal).concat(P.maxKal > 50 || ![1, 3, 5, 10, 20, 50].includes(P.maxKal) ? [P.maxKal] : []).map((k) =>
+    el("button", { attr: { type: "button", "aria-pressed": String(Number(kalGirdi.value) === k) }, yazi: k + "×", on: { click: () => { kalGirdi.value = String(k); kalOynandi = true; girdi(); kalCiplerCiz(); } } })));
+  kalCiplerCiz();
+  kalGirdi.addEventListener("input", kalCiplerCiz);
   const formPanel = panel("Place an order", el("div", { sinif: "yigin yigin--sik" }, [
     fuzeYeri, yonDug, turDug, limitAlan,
-    el("div", { sinif: "hl-alan" }, [el("label", { yazi: "Size (USD)" }), tutarGirdi, tutarIpucu]),
-    el("div", { sinif: "hl-alan" }, [el("label", { yazi: "Leverage" }), el("div", { sinif: "hl-kal" }, [kalGirdi, kalYazi]), el("div", { sinif: "hl-kal" }, [modSec, el("span")]), kalIpucu]),
+    el("div", { sinif: "hl-alan" }, [el("label", { yazi: "Size (USD)" }), tutarGirdi, payCipler, tutarIpucu]),
+    el("div", { sinif: "hl-alan" }, [el("label", { yazi: "Leverage" }), kalCipler, el("div", { sinif: "hl-kal" }, [kalGirdi, kalYazi]), el("div", { sinif: "hl-kal" }, [modSec, el("span")]), kalIpucu]),
     el("label", { sinif: "hl-kutu", attr: { for: "hl-azalt" } }, [azaltKutu, el("span", { yazi: "Reduce only (only makes an open position smaller)" })]),
     tpslSatir, tpslAlan,
     ucretKutu, ayrinti("📟 Pulse HUD · holding cost, risk vs normal moves, fill estimate", kask.kutu), riskSatir, kurulum, yatirKutu, onayAciklama, anaDugme, onizle, durum, zincirNotu,
@@ -591,6 +618,22 @@ export async function ciz({ param, cuzdan }) {
             return hl.emirSonucu(y, p.coin);
           }, "Confirm close", uzun ? "dugme--satis" : "dugme--alis");
         });
+        kapat.classList.add("hl-kapat");
+        /* 16 Nov 2026: close half at market, the same order as Close with half the size */
+        const yarim = el("button", { sinif: "dugme dugme--sade dugme--kucuk", attr: { type: "button" }, yazi: "Close 50%" });
+        yarim.addEventListener("click", () => {
+          if (salt || !m) return;
+          if (!hazirMi()) { durumYaz("Enable trading on ARC PULSE first (order form).", "hata"); return; }
+          const yari = hl.boyutYaz(Math.abs(szi) / 2, m.szDec);
+          if (!(Number(yari) > 0) || Number(yari) * mark < hl.EN_AZ_USD) { durumYaz("Half of this position is under Hyperliquid's $" + hl.EN_AZ_USD + " minimum: use Close.", "hata"); return; }
+          satirOnay(pozKap, "Close half: " + yari + " " + p.coin + " at market (at most " + (hl.KAYMA * 100) + "% from " + fiyat(mark) + "). Fees: Hyperliquid's + ARC PULSE 0.05%.", async () => {
+            const mids = await hl.ortaFiyatlar();
+            const mid = Number(mids[p.coin]) || mark;
+            const px = mid * (uzun ? 1 - hl.KAYMA : 1 + hl.KAYMA);
+            const y = await hl.l1Gonder(hl.emirEylemi({ a: m.i, alis: !uzun, px: hl.fiyatYaz(px, m.szDec), sz: yari, azalt: true, tif: "Ioc" }), imzaci());
+            return hl.emirSonucu(y, p.coin);
+          }, "Confirm: close half", uzun ? "dugme--satis" : "dugme--alis");
+        });
         const tpslDug = el("button", { sinif: "dugme dugme--sade dugme--kucuk", attr: { type: "button" }, yazi: "TP/SL" });
         tpslDug.addEventListener("click", () => {
           if (salt || !m) return;
@@ -626,7 +669,7 @@ export async function ciz({ param, cuzdan }) {
             const tp = tet.filter((o) => /Take Profit/i.test(o.orderType)).map((o) => fiyat(Number(o.triggerPx)));
             const sl = tet.filter((o) => /Stop/i.test(o.orderType)).map((o) => fiyat(Number(o.triggerPx)));
             return el("td", { sinif: "sayi", attr: { "data-et": "TP / SL" } }, [el("span", { sinif: tp.length ? "hl-art" : "", yazi: tp.join(", ") || "–" }), " / ", el("span", { sinif: sl.length ? "hl-eks" : "", yazi: sl.join(", ") || "–" })]); })(),
-          el("td", { sinif: "hl-tam" }, salt ? [] : [el("span", { attr: { style: "display:inline-flex;gap:6px" } }, [tpslDug, kapat])]),
+          el("td", { sinif: "hl-tam" }, salt ? [] : [el("span", { attr: { style: "display:inline-flex;gap:6px;flex-wrap:wrap" } }, [tpslDug, yarim, kapat])]),
         ]);
       })));
       pozKap.prepend(el("div", { sinif: "hl-sarmal" }, [t]));
@@ -767,21 +810,36 @@ export async function ciz({ param, cuzdan }) {
     grafikBaslik.textContent = P.ad + "-USD";
     zincirNotu.hidden = true; durumYaz("");
     try { history.replaceState(null, "", "#/perps/trade?coin=" + encodeURIComponent(P.ad) + (salt ? "&as=" + kim : "")); } catch (e) { /* not allowed: the hash stays */ }
-    olcCiz(); grafikYukle(); girdi(); fuze.hesapla();
+    olcCiz(); grafikYukle(); girdi(); fuze.hesapla(); kitap.yenile(); kalCiplerCiz();
     if (kim) hl.kaldiracOku(kim, P.ad).then((k) => { if (P === yeni) { K = k; if (K && K.leverage) { kalGirdi.value = String(Math.min(P.maxKal, K.leverage.value)); if (!P.yalnizIzole) modSec.value = K.leverage.type === "isolated" ? "isolated" : "cross"; } formGuncelle(); } });
   });
 
   grafikPanel.classList.add("hl-g"); formPanel.classList.add("hl-f"); hesapPanel.classList.add("hl-h");
+  const kitap = kitapPaneli({ hl, P: () => P, fiyat, sec: (px) => { tur = "limit"; turCiz(); limitAlan.hidden = false; limitGirdi.value = hl.fiyatYaz(px, P.szDec); girdi(); } });
+  kitap.panel.classList.add("hl-k");
   {
-    const git = (y) => { yon = y; yonCiz(); girdi(); formPanel.scrollIntoView({ behavior: "smooth", block: "start" }); };
+    const yerTutucu = document.createComment("order form");
+    const perde = el("div", { sinif: "hl-perde", attr: { hidden: true, role: "dialog", "aria-label": "Place an order" } });
+    const kapatS = el("button", { sinif: "hl-perde__kapat", attr: { type: "button", "aria-label": "Close" }, yazi: "✕" });
+    const sayfa = el("div", { sinif: "hl-perde__sayfa" }, [kapatS, el("div", { sinif: "hl-perde__tutamak" })]);
+    perde.append(sayfa);
+    const sayfaKapat = () => { if (yerTutucu.parentNode) yerTutucu.replaceWith(formPanel); perde.hidden = true; };
+    kapatS.addEventListener("click", sayfaKapat);
+    perde.addEventListener("click", (e) => { if (e.target === perde) sayfaKapat(); });
+    document.body.append(perde);
+    const git = (y) => {
+      yon = y; yonCiz(); girdi();
+      if (window.matchMedia("(max-width: 860px)").matches) { if (!yerTutucu.parentNode) formPanel.replaceWith(yerTutucu); sayfa.append(formPanel); perde.hidden = false; }
+      else formPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+    };
     const dock = el("div", { sinif: "hl-dock" }, [
       el("button", { attr: { type: "button" }, yazi: "Long", on: { click: () => git("alis") } }),
       el("button", { attr: { type: "button" }, yazi: "Short", on: { click: () => git("satis") } })]);
     document.body.append(dock);   /* on <body>: the page's entrance transform would trap a fixed bar inside the content */
-    const temizlik = () => setTimeout(() => { if (!kap.isConnected) { dock.remove(); window.removeEventListener("hashchange", temizlik); } }, 0);
+    const temizlik = () => setTimeout(() => { if (!kap.isConnected) { dock.remove(); perde.remove(); window.removeEventListener("hashchange", temizlik); } }, 0);
     window.addEventListener("hashchange", temizlik);
   }
-  kap.append(el("div", { sinif: "hl-izgara" }, [grafikPanel, formPanel, hesapPanel]));
+  kap.append(el("div", { sinif: "hl-izgara" }, [grafikPanel, kitap.panel, formPanel, hesapPanel]));
   if (kim && !salt) { para = paraPaneli({ kim, cuzdan, hesapYukle: () => hesapYukle() }); kap.append(para.panel); }
   if (kim) kap.append(gecmisPaneli({ kim }));
   kap.append(panel("About trading here", el("div", { sinif: "yigin yigin--sik" }, [
