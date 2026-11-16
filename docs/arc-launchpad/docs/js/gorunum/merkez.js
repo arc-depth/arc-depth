@@ -1153,7 +1153,9 @@ export async function ciz({ param, kayit } = {}) {
       const p = new JsonRpcProvider(ag.rpc, ag.id, { staticNetwork: true });
       const oft = new Contract(ikiz, OFT_ABI, p);
       const miktar = BigInt(Math.round(Number(satTutar.value))) * 10n ** 18n;
-      if ((await oft.balanceOf(ben)) < miktar) return durum("You hold less than that on " + ag.ad + ".");
+      const eldeki = await oft.balanceOf(ben).catch(() => 0n);   // no twin on this chain yet: nothing is held here
+      if (eldeki === 0n) return durum("You hold no " + (await new Contract(t, ["function symbol() view returns (string)"], arc).symbol().catch(() => "tokens")) + " on " + ag.ad + ". Pick the chain where you hold it (your balance is shown next to each chain), e.g. Arc.");
+      if (eldeki < miktar) return durum("You hold less than that on " + ag.ad + ".");
       let asgari = 0n;
       if (tur === 0 && V2) {
         const st = await egri.zincirdenDurum({ Contract, AbiCoder, keccak256 }, arc, VT().launchpad, PM, t);

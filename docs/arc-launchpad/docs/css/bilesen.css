@@ -730,3 +730,10 @@ textarea.girdi { height: auto; min-height: 84px; padding: var(--bosluk-3); resiz
   .cuzdan-tutamak { display: block; width: 40px; height: 5px; border-radius: 3px; background: #34343f; margin: 0 auto 2px; }
 }
 
+
+/* 16 Nov 2026 (owner: "şeffaf dağınık"): the wallet menu on a solid panel, above every fixed bar */
+.hesap-menu { position: fixed; z-index: 1500; min-width: 240px; padding: 6px; display: flex; flex-direction: column; gap: 2px; background: #16161e; border: 1px solid var(--cizgi-guclu); border-radius: 14px; box-shadow: 0 16px 40px rgba(0,0,0,.6); }
+.hesap-menu__adres { padding: 8px 12px 10px; font-size: 12.5px; color: var(--yazi-3); border-bottom: 1px solid var(--cizgi); margin-bottom: 4px; }
+.hesap-menu__oge { all: unset; box-sizing: border-box; width: 100%; padding: 11px 12px; border-radius: 10px; font-size: 14.5px; color: var(--yazi-1); cursor: pointer; }
+.hesap-menu__oge:hover, .hesap-menu__oge:focus-visible { background: var(--yuzey-3); }
+.hesap-menu__oge--kirmizi { color: #ff9aa5; }

@@ -450,15 +450,15 @@ function hesapMenusu() {
   const h = cuzdan.hesap();
   const kapat = () => { menu.remove(); document.removeEventListener("click", disari, true); };
   const disari = (e) => { if (!menu.contains(e.target) && e.target !== kCuzdanDugme) kapat(); };
-  const satir = (yazi, f) => el("button", { sinif: "dugme dugme--sade", attr: { type: "button", style: "width:100%;text-align:left" }, yazi, on: { click: async () => { await f(); } } });
+  const satir = (yazi, f, tehlike) => el("button", { sinif: "hesap-menu__oge" + (tehlike ? " hesap-menu__oge--kirmizi" : ""), attr: { type: "button", role: "menuitem" }, yazi, on: { click: async () => { await f(); } } });
   const r = kCuzdanDugme.getBoundingClientRect();
-  const menu = el("div", { sinif: "hesap-menu kart", attr: { role: "menu", style:
-    "position:fixed;z-index:60;min-width:220px;padding:6px;top:" + Math.round(r.bottom + 6) + "px;right:" + Math.max(8, Math.round(innerWidth - r.right)) + "px" } }, [
-    el("div", { sinif: "mono yazi--kucuk yazi--sessiz", attr: { style: "padding:6px 10px" }, yazi: h.slice(0, 10) + "…" + h.slice(-8) }),
+  const menu = el("div", { sinif: "hesap-menu", attr: { role: "menu", style:
+    "top:" + Math.round(r.bottom + 6) + "px;right:" + Math.max(8, Math.round(innerWidth - r.right)) + "px" } }, [
+    el("div", { sinif: "hesap-menu__adres mono", yazi: h.slice(0, 10) + "…" + h.slice(-8) }),
     satir("Portfolio", () => { kapat(); location.hash = "#/portfoy"; }),
     satir("Copy address", async () => { try { await navigator.clipboard.writeText(h); } catch (e) { /* clipboard blocked */ } kapat(); }),
-    satir("Disconnect", async () => { kapat(); await cuzdan.kes(); }),
-    satir("Disconnect and forget this device", async () => { kapat(); await cuzdan.unut(); }),
+    satir("Disconnect", async () => { kapat(); await cuzdan.kes(); }, true),
+    satir("Disconnect and forget this device", async () => { kapat(); await cuzdan.unut(); }, true),
     mobilMi() ? satir(gorunumOku() === "masaustu" ? "Phone layout" : "Desktop layout", () => { kapat(); gorunumDegistir(); }) : null,
   ]);
   document.body.append(menu);
@@ -553,6 +553,26 @@ function cuzdanSec() {
   if (ilk) ilk.focus();
 }
 window.addEventListener("cuzdan-yok", cuzdanSec);
+
+/* 16 Nov 2026: after a deploy an open tab keeps running the scripts it loaded; when the publish marker (veri/surum.json, rewritten by every publish) changes, a slim bar offers a refresh (checked at most every 2 minutes, on navigation and when the tab returns) */
+{
+  let ilkEtiket = null, sonKontrol = 0, gosterildi = false;
+  const etiketOku = () => fetch(new URL("veri/surum.json", location.href), { cache: "no-store" }).then((r) => r.ok ? r.json() : null).then((j) => j && j.t).catch(() => null);
+  etiketOku().then((e) => { ilkEtiket = e; });
+  const kontrol = async () => {
+    if (gosterildi || !ilkEtiket || Date.now() - sonKontrol < 120000) return;
+    sonKontrol = Date.now();
+    const e = await etiketOku();
+    if (!e || e === ilkEtiket) return;
+    gosterildi = true;
+    const bar = el("button", { attr: { type: "button", style: "position:fixed;left:50%;transform:translateX(-50%);top:64px;z-index:2000;padding:10px 16px;border-radius:999px;border:1px solid var(--marka-cizgi);background:#1c1730;color:#e6deff;font:600 13.5px var(--yazi-tipi);box-shadow:0 8px 24px rgba(0,0,0,.45);cursor:pointer" }, yazi: "A new version of ARC PULSE is out · tap to refresh" });
+    bar.addEventListener("click", () => location.reload());
+    document.body.append(bar);
+  };
+  window.addEventListener("hashchange", kontrol);
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") kontrol(); });
+  setInterval(kontrol, 300000);
+}
 
 /* ---- boot ----------------------------------------------------------- */
 
