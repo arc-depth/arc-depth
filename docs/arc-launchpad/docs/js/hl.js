@@ -456,25 +456,30 @@ export async function arcaCekTeklif(user, miktar) {
   if (!q.details) throw new Error("No route to Arc right now (" + (q.message || "relay.link") + ").");
   return q;
 }
-export async function arcaCekGonder(user, q, durum = () => {}) {
+/* a phone wallet (WalletConnect) shows a request only while its app is open: after 15 s of silence, say where to look */
+async function bekleyenImza(t, durum, ne) {
+  const z = setTimeout(() => durum(ne + " — open your wallet app: the signature request is waiting there."), 15000);
+  try { return await cuzdan.imzalaTipli(t); } catch (e) { throw imzaHatasi(e); } finally { clearTimeout(z); }
+}
+export async function arcaCekGonder(user, q, durum = () => {}, devam = async () => {}) {
   const zid = parseInt(zincirHex(), 16);
   for (const adim of q.steps) for (const it of adim.items || []) {
     const d = it.data || {};
     if (adim.kind === "signature" && d.sign) {
       durum("Sign 1 of 2 in your wallet (links the withdrawal to your order, moves nothing)…");
-      let sig;
-      try { sig = await cuzdan.imzalaTipli({ domain: { ...d.sign.domain, chainId: zid }, types: d.sign.types, primaryType: d.sign.primaryType, message: d.sign.value }); } catch (e) { throw imzaHatasi(e); }
+      const sig = await bekleyenImza({ domain: { ...d.sign.domain, chainId: zid }, types: d.sign.types, primaryType: d.sign.primaryType, message: d.sign.value }, durum, "Signature 1 of 2");
       const u = new URL(RELAY_API + d.post.endpoint); u.searchParams.set("signature", sig);
       const r = await fetch(u, { method: d.post.method || "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...d.post.body, signatureChainId: zid }) });
       if (!r.ok) throw new Error("relay.link did not accept the link signature (HTTP " + r.status + "). Nothing was sent.");
     } else if (adim.kind === "transaction" && d.action) {
+      /* the second request goes out on a tap: a phone wallet then opens for it instead of waiting unseen */
+      await devam();
       durum("Sign 2 of 2 in your wallet (sends the USDC from Hyperliquid)…");
       const p = d.action.parameters;
       const action = { type: d.action.type, signatureChainId: "0x" + zid.toString(16), ...p };
       const t = { domain: { name: "HyperliquidSignTransaction", version: "1", chainId: zid, verifyingContract: SIFIR }, types: d.eip712Types, primaryType: d.eip712PrimaryType, message: p };
       sonEylem = { action, nonce: d.nonce };
-      let sig;
-      try { sig = await cuzdan.imzalaTipli(t); } catch (e) { throw imzaHatasi(e); }
+      const sig = await bekleyenImza(t, durum, "Signature 2 of 2");
       await gonder(action, d.nonce, sig);
       /* follow relay until it has paid on Arc (or give up waiting; the money is then on its way) */
       if (it.check) {

@@ -129,7 +129,10 @@ export function paraPaneli({ kim, cuzdan, hesapYukle }) {
         evet.disabled = true; hayir.disabled = true;
         try {
           const q2 = await hl.arcaCekTeklif(kim, a);   // a fresh quote: the first one may be a minute old
-          const s = await hl.arcaCekGonder(kim, q2, (m) => yaz(cDurum, m));
+          const s = await hl.arcaCekGonder(kim, q2, (m) => yaz(cDurum, m), () => new Promise((tamam) => {
+            const b = el("button", { sinif: "dugme dugme--marka", attr: { type: "button", style: "width:100%;margin-top:8px" }, yazi: "Step 2 of 2: sign to send the USDC", on: { click: () => { b.remove(); tamam(); } } });
+            yaz(cDurum, "Signature 1 of 2 done ✓ Tap the button to sign the transfer."); cDurum.after(b);
+          }));
           yaz(cDurum, s === "arrived" ? "Done ✓ ≈ " + usd(Number(q2.details.currencyOut.amountFormatted)) + " USDC is in your wallet on Arc." : "Sent ✓ relay.link is paying it out on Arc; it usually lands within a minute.", "ok");
           cekOnay.hidden = true; cekMiktar.value = "";
           setTimeout(hesapYukle, 1500);
