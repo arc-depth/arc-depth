@@ -261,3 +261,18 @@ export async function adresBaytlari(adres) {
  * (the ARCP page shows that panel as "coming"). The previous token's Solana sell path — the
  * wallet's own LayerZero send to the gate on Arc with the sale as the OFT compose — is in git
  * history (b8caf2f) and is the pattern to reuse for ARCP's twin. */
+
+/// 16 Nov 2026: how many of an SPL token (`mint`) the Solana address `sahip` holds, raw units. Checks the
+/// associated account under both token programs (classic and Token-2022, which pump.fun tokens use); reads the
+/// account itself (amount: u64 at byte 64) because publicnode refuses the indexed balance calls.
+export async function splBakiye(sahip, mint) {
+  const { Connection, PublicKey, TOKEN_PROGRAM_ID, getAssociatedTokenAddressSync } = await vendor();
+  const conn = new Connection(SOL.rpc, "confirmed");
+  let top = 0n;
+  for (const prog of [TOKEN_PROGRAM_ID, new PublicKey("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb")]) {
+    const ata = getAssociatedTokenAddressSync(new PublicKey(mint), new PublicKey(sahip), false, prog);
+    const h = await conn.getAccountInfo(ata).catch(() => null);
+    if (h && h.data.length >= 72) top += new DataView(h.data.buffer, h.data.byteOffset).getBigUint64(64, true);
+  }
+  return top;
+}
