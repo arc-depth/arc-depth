@@ -375,6 +375,22 @@ function alKutusu(t) {
   let sonTeklif = null, sayac = 0;
 
   const ag = () => evmler().find((a) => a.anahtar === kaynak.value);
+  const bakiye = {};   // chain key -> dollars held there (the chain's dollar token)
+  const bakiyeOku = async () => {
+    const k = cuzdan.hesap(); if (!k) return;
+    const zaman = (p) => Promise.race([p, new Promise((_, r) => setTimeout(() => r(new Error("t")), 8000))]);
+    await Promise.all(evmler().map(async (a) => {
+      try {
+        const r = await zaman(rpcPost(a, { jsonrpc: "2.0", id: 1, method: "eth_call", params: [{ to: a.dolar, data: "0x70a08231" + k.toLowerCase().slice(2).padStart(64, "0") }, "latest"] }));
+        const ham = r && r.result && r.result !== "0x" ? BigInt(r.result) : 0n;
+        bakiye[a.anahtar] = Number(ham / 10n ** BigInt(a.anahtar === "bsc" ? 12 : 0)) / 1e6;
+      } catch (e) { /* unknown */ }
+    }));
+    for (const o of kaynak.options) { const a = evmler().find((x) => x.anahtar === o.value); if (a && bakiye[a.anahtar] != null) o.textContent = a.ad + " · " + (a.dolarSembol || "USDC") + " · $" + bakiye[a.anahtar].toFixed(2); }
+    const enIyi = Object.entries(bakiye).sort((x, y) => y[1] - x[1])[0];
+    if (enIyi && enIyi[1] >= 1 && (bakiye[kaynak.value] || 0) < Number(tutar.value || 0)) { kaynak.value = enIyi[0]; }
+    teklif();
+  };
   const alici = () => t.zincir.k === "solana" ? solAlici.value.trim() : (cuzdan.hesap() || UCRET_ALICI);
   async function teklif() {
     const bu = ++sayac;
@@ -390,7 +406,14 @@ function alKutusu(t) {
         destinationCurrency: t.adres, amount: dolarHam(ag(), usd).toString(), tradeType: "EXACT_INPUT", refundTo: kim,
         appFees: [{ recipient: UCRET_ALICI, fee: UCRET_BPS }] }) }).then((x) => x.json());
       if (bu !== sayac) return;
-      if (!q.details) { temizle(ozet).append(el("div", {}, ["No route right now: " + (q.message || "try another amount")])); return; }
+      if (!q.details) {
+        const var_ = bakiye[ag().anahtar];
+        const enIyi = Object.entries(bakiye).sort((x, y) => y[1] - x[1])[0];
+        const ipucu = var_ != null && var_ < usd
+          ? "You have $" + var_.toFixed(2) + " " + (ag().dolarSembol || "USDC") + " on " + ag().ad + ", less than $" + usd + "." + (enIyi && enIyi[1] >= usd ? " Pay from " + (evmler().find((a) => a.anahtar === enIyi[0]) || {}).ad + " instead (you have $" + enIyi[1].toFixed(2) + " there)." : " Lower the amount or add funds.")
+          : "No route right now: " + (q.message || "try another amount");
+        temizle(ozet).append(el("div", {}, [ipucu])); return;
+      }
       sonTeklif = q;
       const d = q.details, f = q.fees || {};
       const satir = (a, b) => el("div", {}, [el("span", { attr: { style: "opacity:.7" }, yazi: a }), el("b", { yazi: b })]);
@@ -401,19 +424,21 @@ function alKutusu(t) {
         satir("ARC PULSE fee (0.5%)", para(f.app && f.app.amountUsd)),
         el("div", { sinif: "vt-k", attr: { style: "display:block;padding-top:2px" }, yazi: "0.20% buys and burns ARCP · 0.15% developer pool · 0.10% marketing · 0.05% founder" }),
         satir("Network + route", para(Number((f.relayer && f.relayer.amountUsd) || 0) + Number((f.gas && f.gas.amountUsd) || 0))),
-        satir("Time", "~" + (d.timeEstimate || 1) + "s"));
+        satir("Time", "~" + (d.timeEstimate || 1) + "s"),
+        bakiye[ag().anahtar] != null && bakiye[ag().anahtar] < usd ? el("div", { sinif: "vt-uyari", attr: { style: "display:block" }, yazi: "You have $" + bakiye[ag().anahtar].toFixed(2) + " on " + ag().ad + ": not enough for $" + usd + ". Lower the amount to $" + Math.floor(bakiye[ag().anahtar]) + " or less." }) : "");
     } catch (e) { if (bu === sayac) temizle(ozet).append(el("div", {}, ["Route service unavailable"])); }
   }
   let zaman = null;
   const yeniden = () => { clearTimeout(zaman); zaman = setTimeout(teklif, 400); };
   for (const x of [kaynak, tutar, solAlici]) x.addEventListener("input", yeniden);
   kaynak.addEventListener("change", yeniden);
+  bakiyeOku();
 
   dugme.addEventListener("click", async () => {
     if (dugme._mesgul) return;
     dugme._mesgul = true; dugme.disabled = true;
     try {
-      if (!cuzdan.hesap()) { await cuzdan.bagla(); dugme.textContent = "Buy " + t.sembol; await teklif(); return; }
+      if (!cuzdan.hesap()) { await cuzdan.bagla(); dugme.textContent = "Buy " + t.sembol; await bakiyeOku(); return; }
       await teklif();
       const q = sonTeklif;
       if (!q) { durum.textContent = "No route to send."; return; }
