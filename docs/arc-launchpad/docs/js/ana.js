@@ -416,8 +416,17 @@ async function ciz() {
   const bu = ++sonCizim;
   temizle(kIcerik).append(iskelet(4));
 
+  /* 16 Nov 2026: a tab left open across a publish can hold old scripts next to new ones, and then a page's module
+     fails to load ("Importing a module script failed"). Reload once, quietly, instead of showing the error. */
+  const yeniden = (e) => {
+    if (!/module script|dynamically imported module|Importing a module|error loading dynamically|import.*failed/i.test(String(e && e.message))) return false;
+    let son = 0; try { son = Number(sessionStorage.getItem("arcpulse-modul-yenile")) || 0; } catch (x) { /* blocked */ }
+    if (Date.now() - son < 60000) return false;
+    try { sessionStorage.setItem("arcpulse-modul-yenile", String(Date.now())); } catch (x) { /* blocked */ }
+    location.reload(); return true;
+  };
   try {
-    const mod = await yukle();
+    const mod = await yukle().catch((e) => { if (yeniden(e)) return new Promise(() => {}); throw e; });
     if (bu !== sonCizim) return;
     const parca = await mod.ciz({ kayit, param, cuzdan });
     if (bu !== sonCizim) return;
