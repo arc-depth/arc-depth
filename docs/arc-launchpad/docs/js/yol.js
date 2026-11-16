@@ -181,6 +181,9 @@ export const YOLLAR = [
     ozet: "Perps from your own wallet: compare perp DEXes, trade Hyperliquid with Pulse HUD, Target Radar, the Time Machine and alerts.",
     kaynak: "veri/perps.json (scripts/perps-radar.js: Hyperliquid, Aster, Lighter, dYdX, Orderly, Paradex public APIs)"
   },
+  /* 16 Nov 2026: Feed — who is buying what, live; follow wallets (list kept in the browser); buy the same in one tap */
+  { yol: "akis", ad: "Feed", kisa: "Feed", grup: "kesif", ikon: "kivilcim", durum: "canli",
+    ozet: "Big buys and sells across chains, live from the chain. Follow wallets and buy the same in one tap, from your own wallet.", kaynak: "GeckoTerminal pool trades (public)" },
   /* 15 Nov 2026: the perps cockpit pages, shown in the rail under Perps Radar (they live inside the perps route) */
   { yol: "perps-trade", ebeveyn: "perps", site: "#/perps/trade", ad: "Trade perps", kisa: "Trade perps", grup: "kesif", ikon: "grafik", durum: "canli",
     ozet: "Hyperliquid perps from your own wallet, with Pulse HUD, Aim assist and the Time Machine (10,000 possible futures before you trade).", kaynak: "Hyperliquid public API" },

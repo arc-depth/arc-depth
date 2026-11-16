@@ -343,7 +343,7 @@ async function makbuz(ag, hash) {
   throw new Error("No receipt yet for " + hash + " on " + ag.ad + ". Do NOT pay again; check it in an explorer first.");
 }
 
-function alKutusu(t) {
+function alKutusu(t, onTutar) {
   const perde = el("div", { sinif: "vt-perde", on: { click: (e) => { if (e.target === perde) perde.remove(); } } });
   /* a chain relay cannot route to: the token's facts and its chart on its own chain, no payment form */
   if (!t.zincir.relay) {
@@ -367,7 +367,7 @@ function alKutusu(t) {
   const ben = cuzdan.hesap();
   const kaynak = el("select", {}, evmler().map((a) => el("option", { attr: { value: a.anahtar, selected: a.anahtar === (t.zincir.k === "solana" ? "base" : t.zincir.k) ? true : null }, yazi: a.ad + " · " + (a.dolarSembol || "USDC") })));
   if (!evmler().some((a) => a.anahtar === kaynak.value)) kaynak.value = "base";
-  const tutar = el("input", { attr: { type: "number", min: "1", step: "1", value: "20" } });
+  const tutar = el("input", { attr: { type: "number", min: "1", step: "1", value: String(onTutar || 20) } });
   const solAlici = el("input", { attr: { placeholder: "Your Solana address", autocomplete: "off" } });
   const ozet = el("div", { sinif: "vt-ozet" }, [el("div", {}, ["Enter an amount"])]);
   const durum = el("div", { sinif: "vt-durum" });

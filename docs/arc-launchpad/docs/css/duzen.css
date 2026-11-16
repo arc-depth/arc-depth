@@ -344,3 +344,9 @@
 .sayfa-ust h1 { font-size: 22px; margin: 0; letter-spacing: -.01em; }
 .sayfa-ust__alt { font-size: 13px; color: var(--yazi-3); }
 @media (max-width: 860px) { .sayfa-ust h1 { font-size: 20px; } }
+
+/* 16 Nov 2026: the Feed chip in the phone header (desktop has Feed in the top nav) */
+.ust-akis { display: none; align-items: center; height: 40px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--cizgi-guclu); color: var(--yazi-1); font-size: 13px; font-weight: 700; text-decoration: none; flex: none; white-space: nowrap; }
+.ust-akis[aria-current="page"] { border-color: var(--marka-cizgi); background: var(--marka-zemin); }
+@media (max-width: 860px) { .ust-akis { display: inline-flex; } }
+@media (max-width: 430px) { .ust-akis { width: 40px; padding: 0; justify-content: center; font-size: 0; } .ust-akis::before { content: "🔥"; font-size: 17px; } }
