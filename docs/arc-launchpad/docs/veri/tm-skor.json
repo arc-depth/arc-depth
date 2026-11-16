@@ -1,13 +1,65 @@
 {
- "guncellendi": "2026-11-16T19:42:10.641Z",
- "tahminSayisi": 280,
- "sonuclanan": 0,
+ "guncellendi": "2026-11-16T21:42:04.851Z",
+ "tahminSayisi": 320,
+ "sonuclanan": 40,
  "kurulum": {
   "1:1": {
-   "n": 0
+   "n": 20,
+   "brierModel": 0.7069,
+   "brierTaban": 0.6117,
+   "beceri": -0.1557,
+   "n2": 0,
+   "brierTM2": null,
+   "ortTahmin": [
+    34.4,
+    34.3,
+    31.3
+   ],
+   "gercekOran": [
+    0,
+    5,
+    95
+   ],
+   "guvenilirlik": [
+    {
+     "aralik": "30-40%",
+     "n": 20,
+     "tahmin": 34.4,
+     "gercek": 0
+    }
+   ]
   },
   "2:1": {
-   "n": 0
+   "n": 20,
+   "brierModel": 0.3837,
+   "brierTaban": 0.33,
+   "beceri": -0.1627,
+   "n2": 0,
+   "brierTM2": null,
+   "ortTahmin": [
+    10.9,
+    36.3,
+    52.8
+   ],
+   "gercekOran": [
+    0,
+    5,
+    95
+   ],
+   "guvenilirlik": [
+    {
+     "aralik": "0-10%",
+     "n": 3,
+     "tahmin": 9.6,
+     "gercek": 0
+    },
+    {
+     "aralik": "10-20%",
+     "n": 17,
+     "tahmin": 11.1,
+     "gercek": 0
+    }
+   ]
   }
  }
 }
