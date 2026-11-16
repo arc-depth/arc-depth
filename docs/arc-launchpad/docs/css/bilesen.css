@@ -740,3 +740,33 @@ textarea.girdi { height: auto; min-height: 84px; padding: var(--bosluk-3); resiz
 
 /* 16 Nov 2026: the invite bar on a solid panel too (its "kart" class has no style) */
 .davet-cubuk { background: #16161e; border: 1px solid var(--cizgi-guclu); border-radius: 14px; padding: 10px 14px; box-shadow: 0 16px 40px rgba(0,0,0,.6); }
+
+/* 16 Nov 2026: compact launch card */
+.tk { gap: 10px; padding: 14px; }
+.tk .tk__ust { align-items: center; }
+.tk .jeton { min-width: 0; }
+.tk .jeton__logo { width: 40px; height: 40px; font-size: 12px; flex: none; }
+.tk .jeton__yazi { min-width: 0; }
+.tk .jeton__ad { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tk__sag { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; flex: none; }
+.tk .tk__deger { font-size: 20px; line-height: 1.1; }
+.tk .tk__yuzde { font-size: 12px; padding: 1px 7px; }
+.tk .tk__yuzde.artis { color: var(--alis); }
+.tk .tk__yuzde.dusus { color: var(--satis); }
+.tk .tk__yuzde.sabit { color: var(--yazi-3); }
+.tk__meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 12px; color: var(--yazi-3); }
+.tk__ayr { opacity: .6; }
+.tk__noktalar { display: inline-flex; gap: 3px; }
+.tk__nokta { width: 8px; height: 8px; border-radius: 50%; background: var(--z); }
+.tk .tk__cubuk { height: 4px; }
+.tk .jeton-kart__olcumler { gap: 8px; }
+.tk .jeton-kart__olcum .dg { font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tk__ac { border-top: 1px solid var(--cizgi); padding-top: 8px; font-size: 12px; color: var(--yazi-2); }
+.tk__ac > summary { cursor: pointer; color: var(--yazi-3); list-style: none; }
+.tk__ac > summary::-webkit-details-marker { display: none; }
+.tk__ac > summary::after { content: " ▾"; }
+.tk__ac[open] > summary::after { content: " ▴"; }
+.tk__ac[open] { display: flex; flex-direction: column; gap: 6px; }
+.tk__kalemler { display: flex; flex-direction: column; gap: 3px; margin-top: 6px; }
+.tk__kalem { display: flex; justify-content: space-between; gap: 8px; }
+.tk__kalem b { font-family: var(--yazi-tipi-mono); color: var(--yazi-1); font-weight: 600; }

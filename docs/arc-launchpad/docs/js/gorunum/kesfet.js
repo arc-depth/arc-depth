@@ -72,17 +72,30 @@ const RENK = { Arc: "#7c5cff", Base: "#0052ff", Arbitrum: "#28a0f0", Ethereum: "
   Monad: "#836ef9", HyperEVM: "#50e3c2", Robinhood: "#ccff00", Elysium: "#c6f86b", Solana: "#14f195", Sui: "#4da2ff", Aptos: "#2ed8a7" };
 const zincirCipi = (z) => el("span", { sinif: "tk__zincir", attr: { style: "--z:" + (RENK[z] || "#888") }, yazi: z });
 
+/* 16 Nov 2026 (owner: "bu da çok kötü duruyor"): the launch card was a tall block — ten big chain chips, "$2.00e-8",
+   a cut-off price and "$0.00" for every empty vault. Now: one compact header (value + change on the right), a line
+   with where it launched and small chain dots, readable prices, and the vault breakdown folded (non-empty ones only). */
+const tkFiyat = (x) => {
+  if (x == null || !isFinite(x) || x <= 0) return "—";
+  if (x >= 1) return "$" + x.toFixed(2);
+  if (x >= 0.001) return "$" + x.toPrecision(4).replace(/0+$/, "");
+  const ALT = "₀₁₂₃₄₅₆₇₈₉", t = x.toFixed(24).slice(2), n = t.match(/^0*/)[0].length;
+  return "$0.0" + String(n).split("").map((d) => ALT[d]).join("") + t.slice(n, n + 3).replace(/0+$/, "");
+};
+const zincirNokta = (z) => el("span", { sinif: "tk__nokta", attr: { style: "--z:" + (RENK[z] || "#888"), title: z } });
 function teminatKarti(s, cfg) {
   const yeni = Date.now() / 1000 - s.zaman < 3600;
-  const nereden = el("div", { sinif: "yazi yazi--kucuk yazi--sessiz", yazi: "launched from …" });
+  const nereden = el("span", { sinif: "tk__nereden", yazi: "…" });
   const zincirler = el("div", { sinif: "tk__zincirler" }, [el("span", { sinif: "etiket", yazi: "…" })]);
+  const noktalar = el("span", { sinif: "tk__noktalar" });
+  const zincirSay = el("span", { yazi: "" });
   const deger = el("span", { sinif: "tk__deger", yazi: "—" });
   const degisim = el("span", { sinif: "tk__yuzde sabit", yazi: "…" });
   const cubuk = el("i");
   const ilk = el("div", { sinif: "dg", yazi: "—" });
   const destek = el("div", { sinif: "dg", yazi: "—" });
   const fiyat = el("div", { sinif: "dg", yazi: "—" });
-  const kalemler = el("div", { sinif: "yazi yazi--kucuk yazi--sessiz", yazi: "reading the vaults…" });
+  const kalemler = el("div", { sinif: "tk__kalemler", yazi: "reading the vaults…" });
   const olc = (et, dg) => el("div", { sinif: "jeton-kart__olcum" }, [el("div", { sinif: "et", yazi: et }), dg]);
   const kart = el("a", { sinif: "jeton-kart tk", attr: { href: "#/terminal?t=" + s.token } }, [
     el("div", { sinif: "tk__ust" }, [
@@ -90,15 +103,17 @@ function teminatKarti(s, cfg) {
         el("div", { sinif: "jeton__logo jeton__logo--bos", yazi: (s.sembol || "?").slice(0, 3).toUpperCase() }),
         el("div", { sinif: "jeton__yazi" }, [el("div", { sinif: "jeton__sembol", yazi: s.sembol || "?" }), el("div", { sinif: "jeton__ad", yazi: (s.ad || "") + "  · #" + s.no }), turRozeti(s.token)]),
       ]),
-      yeni ? el("span", { sinif: "tk__yeni", yazi: "NEW" }) : el("span"),
+      el("div", { sinif: "tk__sag" }, [yeni ? el("span", { sinif: "tk__yeni", yazi: "NEW" }) : "", deger, degisim]),
     ]),
-    nereden,
-    el("div", { sinif: "tk__buyuk" }, [deger, degisim]),
+    el("div", { sinif: "tk__meta" }, [nereden, el("span", { sinif: "tk__ayr", yazi: "·" }), noktalar, zincirSay]),
     el("div", { sinif: "tk__cubuk", attr: { title: "collateral now against what it started with" } }, [cubuk]),
-    el("div", { sinif: "jeton-kart__olcumler" }, [olc("Started with", ilk), olc("Backing / token", destek), olc("Price / token", fiyat)]),
-    el("div", { sinif: "yazi yazi--kucuk yazi--sessiz", yazi: "Trades on" }),
-    zincirler,
-    kalemler,
+    el("div", { sinif: "jeton-kart__olcumler" }, [olc("Started with", ilk), olc("Backing", destek), olc("Price", fiyat)]),
+    el("details", { sinif: "tk__ac", on: { click: (e) => e.stopPropagation() } }, [
+      el("summary", { yazi: "Where the backing is", on: { click: (e) => e.stopPropagation() } }),
+      kalemler,
+      el("div", { sinif: "yazi yazi--kucuk yazi--sessiz", yazi: "Trades on" }),
+      zincirler,
+    ]),
   ]);
   let onceki = null;
   const doldur = async () => {
@@ -108,7 +123,9 @@ function teminatKarti(s, cfg) {
       if (tz.status === "fulfilled") {
         const ely = zincirCipi("Elysium"); ely.title = "Buy from an Elysium wallet; delivered to the same address on Arc";
         zincirler.replaceChildren(...tz.value.zincirler.map(zincirCipi), ely);
-        cikisZinciri(s.token, tz.value.adapter, s.zaman, cfg).then((c) => { nereden.replaceChildren(el("span", { yazi: "launched from " }), zincirCipi(c || "Arc")); })
+        noktalar.replaceChildren(...[...tz.value.zincirler, "Elysium"].map(zincirNokta));
+        zincirSay.textContent = (tz.value.zincirler.length + 1) + " chains";
+        cikisZinciri(s.token, tz.value.adapter, s.zaman, cfg).then((c) => { nereden.textContent = "Launched on " + (c || "Arc"); })
           .catch(() => { nereden.textContent = ""; });
       } else { zincirler.replaceChildren(el("span", { sinif: "etiket etiket--uyari", yazi: "could not read" })); nereden.textContent = ""; }
     }
@@ -123,10 +140,15 @@ function teminatKarti(s, cfg) {
     kart.classList.toggle("tk--dusus", yon(t.degisim) === "dusus");
     cubuk.style.width = Math.max(2, Math.min(100, (t.simdi / Math.max(t.ilk, 1e-9)) * 50)) + "%";   // half-way = where it started
     ilk.textContent = para(t.ilk);
-    if (t.arz > 0) destek.textContent = kucukPara(t.simdi / t.arz);
-    if (hf.status === "fulfilled" && Number.isFinite(hf.value) && hf.value > 0) fiyat.textContent = kucukPara(hf.value);
-    kalemler.textContent = t.kalemler.map((k) => k.zincirAd + " " + (k.deger == null ? "price n/a" : para(k.deger)) + (k.kaynak === "last auction" ? " (last auction)" : k.kaynak === "on its way" ? " (on its way)" : "")).join(" · ") +
-      (t.bekleyen > 0.000001 ? " · waiting to be bought " + para(t.bekleyen) : "") + (t.hatalar.length ? " · unreadable: " + t.hatalar.join("; ") : "");
+    if (t.arz > 0) destek.textContent = tkFiyat(t.simdi / t.arz);
+    if (hf.status === "fulfilled" && Number.isFinite(hf.value) && hf.value > 0) fiyat.textContent = tkFiyat(hf.value);
+    const dolu = t.kalemler.filter((k) => k.deger == null || k.deger >= 0.005);
+    kalemler.replaceChildren(...[
+      ...dolu.map((k) => el("div", { sinif: "tk__kalem" }, [el("span", { yazi: k.zincirAd + " vault" + (k.kaynak === "last auction" ? " (last auction)" : k.kaynak === "on its way" ? " (on its way)" : "") }), el("b", { yazi: k.deger == null ? "price n/a" : para(k.deger) })])),
+      t.bekleyen > 0.000001 ? el("div", { sinif: "tk__kalem" }, [el("span", { yazi: "Waiting to be bought" }), el("b", { yazi: para(t.bekleyen) })]) : "",
+      !dolu.length && !(t.bekleyen > 0.000001) ? el("div", { yazi: "Vaults are empty right now." }) : "",
+      t.hatalar.length ? el("div", { yazi: "Unreadable: " + t.hatalar.join("; ") }) : "",
+    ].filter(Boolean));
   };
   doldur();
   /* live: the vaults are read again every minute while the card is on screen */
