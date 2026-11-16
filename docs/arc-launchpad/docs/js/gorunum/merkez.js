@@ -1313,6 +1313,86 @@ export async function ciz({ param, kayit } = {}) {
   satDugme.addEventListener("click", tekSefer(satDugme, () => gonder(0)));
   itfaDugme.addEventListener("click", tekSefer(itfaDugme, () => gonder(1)));
 
+  /* 16 Nov 2026 redesign (approved demo, screen 5): ?gomu=1 with a token returns only the trade box, for the token
+     page to embed (right column on desktop, bottom sheet on a phone). The SAME inputs, buttons and handlers as
+     below (alTutar/alDugme, satTutar/satDugme/itfaDugme, zincirSec, kayma); only the layout is new: Buy | Sell
+     tabs, quick amounts, a live "you receive" line from the pool curve, one big button. */
+  if (ticaretModu && param && param.get("gomu") === "1") {
+    const tAdr = token.value.trim();
+    let sym = "", st = null, stZaman = 0, taraf = (param.get("taraf") === "sat" ? "sat" : "al");
+    new Contract(tAdr, ["function symbol() view returns (string)"], arc).symbol().then((x) => { sym = x || ""; ciz(); }).catch(() => {});
+    const durumOku = async () => {
+      if (!V2) return null;
+      if (st && Date.now() - stZaman < 20000) return st;
+      try { await ayarSec(tAdr); st = await egri.zincirdenDurum({ Contract, AbiCoder, keccak256 }, arc, VT().launchpad, PM, tAdr); stZaman = Date.now(); } catch (e) { /* the quote line just stays empty */ }
+      return st;
+    };
+    const kisaltT = (n) => n >= 1e9 ? (n / 1e9).toFixed(2) + "B" : n >= 1e6 ? (n / 1e6).toFixed(2) + "M" : n >= 1e3 ? (n / 1e3).toFixed(1) + "K" : n.toFixed(0);
+    const sekAl = el("button", { attr: { type: "button" }, yazi: "Buy" }), sekSat = el("button", { attr: { type: "button" }, yazi: "Sell" });
+    const teklif = el("div", { sinif: "tb-teklif" });
+    const ciplerAl = el("div", { sinif: "tb-cip" }, [10, 25, 50, 100].map((v) => { const b = el("button", { attr: { type: "button" }, yazi: "$" + v }); b.addEventListener("click", () => { alTutar.value = String(v); guncelle(); }); return b; }));
+    const ciplerSat = el("div", { sinif: "tb-cip" }, [100000, 1000000, 10000000].map((v) => { const b = el("button", { attr: { type: "button" }, yazi: kisaltT(v) }); b.addEventListener("click", () => { satTutar.value = String(v); guncelle(); }); return b; }));
+    alTutar.classList.add("tb-buyuk"); satTutar.classList.add("tb-buyuk");
+    alDugme.className = "tb-ana tb-ana--al"; satDugme.className = "tb-ana tb-ana--sat"; itfaDugme.className = "dugme dugme--sade";
+    const alGorunum = el("div", { sinif: "tb-gor" }, [
+      el("label", { sinif: "tb-et", yazi: "Pay from" }), zincirSec,
+      el("div", { sinif: "tb-tutar" }, [el("span", { yazi: "$" }), alTutar]), ciplerAl]);
+    const satGorunum = el("div", { sinif: "tb-gor" }, [
+      el("div", { sinif: "tb-tutar" }, [satTutar, el("span", { sinif: "tb-birim", yazi: "tokens" })]), ciplerSat,
+      el("div", { sinif: "tb-not", yazi: "Sells the tokens you hold on the chain picked under Buy. Redeem takes your share of the collateral basket instead of selling." })]);
+    const guncelle = async () => {
+      const al = taraf === "al";
+      alDugme.textContent = "Buy $" + (Number(alTutar.value) || 0) + (sym ? " of " + sym : "");
+      satDugme.textContent = "Sell " + kisaltT(Number(satTutar.value) || 0) + (sym ? " " + sym : "");
+      const s0 = await durumOku();
+      if (!s0) { teklif.textContent = ""; return; }
+      if (al) { const e = egri.alim(s0, Number(alTutar.value) || 0); teklif.replaceChildren(el("span", { yazi: "You receive" }), el("b", { yazi: "≈ " + kisaltT(e.token) + (sym ? " " + sym : "") }), el("span", { yazi: "Price impact" }), el("b", { yazi: "+" + (e.etki * 100).toFixed(2) + "%" }), el("span", { yazi: "Fees" }), el("b", { yazi: "$" + e.ucret.toFixed(2) + " (2.2% + " + (s0.vergi * 100).toFixed(0) + "% collateral tax)" })); }
+      else { const e = egri.satim(s0, Number(satTutar.value) || 0); teklif.replaceChildren(el("span", { yazi: "You receive" }), el("b", { yazi: "≈ $" + e.dolar.toFixed(2) }), el("span", { yazi: "Price impact" }), el("b", { yazi: (e.etki * 100).toFixed(2) + "%" }), el("span", { yazi: "Fees" }), el("b", { yazi: "$" + e.ucret.toFixed(2) })); }
+    };
+    alTutar.addEventListener("input", guncelle); satTutar.addEventListener("input", guncelle);
+    const ciz = () => {
+      const al = taraf === "al";
+      sekAl.setAttribute("aria-selected", String(al)); sekSat.setAttribute("aria-selected", String(!al));
+      alGorunum.hidden = !al; satGorunum.hidden = al;
+      alDugme.hidden = !al; alDurum.hidden = !al; satDugme.hidden = al; satDurum.hidden = al;
+      itfaDugme.style.display = al ? "none" : "";   /* .dugme sets display, so [hidden] alone does not hide it */
+      guncelle();
+    };
+    sekAl.addEventListener("click", () => { taraf = "al"; ciz(); }); sekSat.addEventListener("click", () => { taraf = "sat"; ciz(); });
+    if (!document.getElementById("tb-stil")) document.head.append(el("style", { attr: { id: "tb-stil" }, yazi: `
+.tb{display:flex;flex-direction:column;gap:12px}
+.tb-sekme{display:grid;grid-template-columns:1fr 1fr;padding:4px;border-radius:14px;background:var(--yuzey-0);border:1px solid var(--cizgi-guclu)}
+.tb-sekme button{height:40px;border-radius:10px;border:0;background:transparent;color:var(--yazi-2);font:700 15px var(--yazi-tipi);cursor:pointer}
+.tb-sekme button:first-child[aria-selected=true]{background:var(--alis);color:#04150e}
+.tb-sekme button:last-child[aria-selected=true]{background:var(--satis);color:#2a0509}
+.tb-gor{display:flex;flex-direction:column;gap:10px}.tb-gor[hidden]{display:none}
+.tb-et{font-size:12px;color:var(--yazi-3)}
+.tb-tutar{display:flex;align-items:center;gap:6px;padding:0 14px;height:64px;border-radius:14px;background:var(--yuzey-0);border:1px solid var(--cizgi-guclu);font-size:30px;font-weight:700}
+.tb-tutar:focus-within{border-color:var(--marka-cizgi)}
+.tb-tutar span{color:var(--yazi-3)}.tb-tutar .tb-birim{font-size:14px;font-weight:500}
+.tb-buyuk{all:unset;flex:1;min-width:0;font:700 30px var(--yazi-tipi);color:var(--yazi-1);font-variant-numeric:tabular-nums}
+.tb-cip{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:8px}
+.tb-cip button{height:42px;border-radius:12px;border:1px solid var(--cizgi-guclu);background:var(--yuzey-2);color:var(--yazi-1);font:600 14px var(--yazi-tipi);cursor:pointer}
+.tb-cip button:hover{border-color:var(--alis-cizgi)}
+.tb-teklif{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;padding:12px;border-radius:14px;background:var(--yuzey-0);border:1px solid var(--cizgi);font-size:13px;font-variant-numeric:tabular-nums}
+.tb-teklif:empty{display:none}.tb-teklif span{color:var(--yazi-3)}.tb-teklif b{text-align:right;font-weight:600}
+.tb-ana{height:56px;border-radius:16px;border:0;font:700 17px var(--yazi-tipi);cursor:pointer;width:100%}
+.tb-ana--al{background:var(--alis);color:#04150e}.tb-ana--sat{background:var(--satis);color:#2a0509}
+.tb-ana[hidden]{display:none}.tb-ana:disabled{opacity:.6}
+.tb-kayma{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:12.5px;color:var(--yazi-3)}
+.tb-kayma input{width:70px;height:32px}
+.tb-not{font-size:12px;color:var(--yazi-3);line-height:1.5}
+` }));
+    const kutu = el("div", { sinif: "tb" }, [
+      el("div", { sinif: "tb-sekme", attr: { role: "tablist" } }, [sekAl, sekSat]),
+      alGorunum, satGorunum, teklif, alDugme, alDurum, satDugme, itfaDugme, satDurum,
+      el("div", { sinif: "tb-kayma" }, [el("span", { yazi: "Slippage limit (%)" }), kayma]),
+      el("div", { sinif: "tb-not", yazi: "One pool on Arc, the same price from every chain. Memecoins are risky: buy only what you can afford to lose." }),
+      el("a", { sinif: "tb-not", attr: { href: "#/merkez?t=" + tAdr }, yazi: "Move tokens, limit orders and upkeep →" })]);
+    ciz();
+    return kutu;
+  }
+
   /* 16 Nov 2026 (owner): with a token, Buy and Sell come first, each under its own heading; the founder's product
      type and the slippage limit move below them. The same controls and handlers, only their order changes. */
   const altBaslik = (y) => el("h3", { attr: { style: "margin:6px 0 0;font-size:15px" }, yazi: y });
