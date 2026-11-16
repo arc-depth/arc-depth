@@ -457,6 +457,13 @@ function alKutusu(t) {
 
 /* ---- page ----------------------------------------------------------- */
 /** The hottest tokens on our chains as a strip of cards (Discover shows it); a tap opens the buy box. */
+/** 16 Nov 2026: the Home board's Trending / New tabs: the same feed and filters as Market, plus Market's buy box */
+export async function trendListe(adet = 15) {
+  if (!document.getElementById("vt-stil")) document.head.append(el("style", { attr: { id: "vt-stil" }, yazi: STIL }));
+  const [d] = await Promise.all([veri(null), bizimSetYukle().then((s) => { bizimSet = s; }).catch(() => {})]);
+  return { trend: suz(d.trend.filter((t) => t.likidite >= ESIK)).slice(0, adet), yeni: suz(d.yeni.filter((t) => t.likidite >= ESIK_YENI)).slice(0, adet), al: alKutusu };
+}
+
 export async function trendSeridi(adet = 6) {
   if (!document.getElementById("vt-stil")) document.head.append(el("style", { attr: { id: "vt-stil" }, yazi: STIL }));
   const [d] = await Promise.all([veri(null), bizimSetYukle().then((s) => { bizimSet = s; }).catch(() => {})]);

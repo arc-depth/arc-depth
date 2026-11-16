@@ -147,13 +147,18 @@ export async function ciz({ param }) {
   const arama = ((param && param.get("q")) || "").trim().toLowerCase();
   const uyar = (x) => !arama || [x.ad, x.sembol, x.simge, x.token].join(" ").toLowerCase().includes(arama);
 
-  kap.append(sayfaUst("Discover", "Collateral-backed tokens: one pool on Arc, reachable from thirteen chains", [
+  /* 16 Nov 2026 redesign (approved demo): Home is one live board (Trending / New / ARC PULSE / Perps); the cover,
+     the perps banner and the card grids stay for a search (?q=) or a chain (?zincir=) */
+  const zkAna = String((param && param.get("zincir")) || "").trim();
+  const tahtaModu = !arama && !zkAna;
+  if (tahtaModu) { const { anaTahta } = await import("./ana-tahta.js"); kap.dataset.icindekilerYok = "1"; kap.append(anaTahta()); }
+  if (!tahtaModu) kap.append(sayfaUst("Discover", "Collateral-backed tokens: one pool on Arc, reachable from thirteen chains", [
     el("a", { sinif: "dugme dugme--marka", attr: { href: "#/olustur" } }, [
       el("span", { html: ikon("arti", "yol-oge__ikon") }), el("span", { yazi: "Create a token" })]),
   ]));
 
   /* 15 Nov 2026: the perps cockpit, announced where everyone lands (phones reach the rail only through More) */
-  if (!arama) kap.append(el("a", { attr: { href: "#/perps/trade", style: "display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;border:1px solid var(--marka);border-radius:16px;padding:12px 14px;background:linear-gradient(90deg,rgba(124,92,255,.14),rgba(46,229,157,.08));color:inherit;text-decoration:none" } }, [
+  if (!arama && !tahtaModu) kap.append(el("a", { attr: { href: "#/perps/trade", style: "display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;border:1px solid var(--marka);border-radius:16px;padding:12px 14px;background:linear-gradient(90deg,rgba(124,92,255,.14),rgba(46,229,157,.08));color:inherit;text-decoration:none" } }, [
     el("div", {}, [el("div", { attr: { style: "font-size:12px;letter-spacing:.06em;color:var(--marka);font-weight:700" }, yazi: "NEW · PERPS COCKPIT" }),
       el("b", { attr: { style: "display:block;font-size:16px;margin-top:2px" }, yazi: "Trade Hyperliquid perps with what perp sites don't show" }),
       el("div", { sinif: "ikincil", attr: { style: "font-size:13px" }, yazi: "📟 Pulse HUD · 🔮 Time Machine (10,000 futures) · 🎯 Aim assist · 🛰️ Target Radar · 🔔 Alerts" })]),
@@ -174,7 +179,7 @@ export async function ciz({ param }) {
   const ZAD = { arc: "Arc", base: "Base", solana: "Solana", bsc: "BNB Chain", robinhood: "Robinhood", arbitrum: "Arbitrum", ethereum: "Ethereum",
     avalanche: "Avalanche", monad: "Monad", hyperevm: "HyperEVM", sui: "Sui", aptos: "Aptos", elysium: "Elysium" };
   const zAd = ZAD[zk] || null;
-  {
+  if (!tahtaModu) {
     const ic = el("div", { sinif: "tr-izgara" }, [el("div", { sinif: "ucuncul", yazi: "Loading the newest launches…" })]);
     kap.append(el("div", { sinif: "yigin yigin--sik" }, [el("div", { sinif: "bolum-baslik" }, [
       el("h2", {}, [arama ? "Launches matching “" + arama + "”" : zAd ? "Just launched on " + zAd : "Just launched", el("span", { sinif: "tk__canli", attr: { style: "margin-left:10px;font-size:12px" }, yazi: "live" })]),
@@ -194,7 +199,7 @@ export async function ciz({ param }) {
   }
 
   /* the hottest tokens on our chains right now, bought from any chain (Market); never blocks the page */
-  if (!arama) {
+  if (!arama && !tahtaModu) {
     const yer = el("div");
     kap.append(el("div", { sinif: "yigin yigin--sik" }, [el("div", { sinif: "bolum-baslik" }, [el("h2", { yazi: "Hot right now on 11 chains" }),
       el("a", { sinif: "dugme dugme--sade dugme--kucuk", attr: { href: "#/vitrin" }, yazi: "Open Market →" })]), yer]));
