@@ -194,8 +194,37 @@ export async function ciz({ param }) {
             kutuCiz("sat"); if (window.matchMedia("(max-width: 860px)").matches) sayfaAc(); } } })]);
       }
     } catch (e) { /* storage blocked */ }
+    /* 17 Nov 2026 (owner sold GTA6, the USDC stayed in the phone's Solana account): USDC sitting in the device Solana
+       account gets a one-tap "Move to Arc" card (no ARC PULSE fee: it is the visitor's own money moving) */
+    const usdcKart = el("div");
+    try {
+      if (t.zincir.k === "solana" && localStorage.getItem("arcpulse-sol-cihaz")) (async () => {
+        const m = await import("../solana-ikiz.js"); const dev = await m.cihazAdresi();
+        const ham = BigInt(await m.splBakiye(dev, "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v") || 0);
+        if (ham < 1000000n) return;
+        const yaz = el("div", { sinif: "k", attr: { style: "margin-top:6px" } });
+        const dug = el("button", { sinif: "dugme dugme--marka dugme--kucuk", attr: { type: "button" }, yazi: "Move to Arc", on: { click: async () => {
+          dug.disabled = true;
+          try {
+            if (!cuzdan.hesap()) await cuzdan.bagla();
+            const sb = await fetch("https://solana-rpc.publicnode.com", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "getBalance", params: [dev] }) }).then((r) => r.json());
+            if (((sb.result && sb.result.value) || 0) < 1500000) throw new Error("this Solana account has too little SOL for the network fee");
+            yaz.textContent = "Finding the route…";
+            const q = await fetch(V.RELAY + "/quote", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ user: dev, recipient: cuzdan.hesap(), originChainId: 792703809, destinationChainId: 5042, originCurrency: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", destinationCurrency: "0x3600000000000000000000000000000000000000", amount: ham.toString(), tradeType: "EXACT_INPUT", refundTo: dev }) }).then((r) => r.json());
+            if (!q.steps || !q.steps.length) throw new Error(q.message || "no route right now");
+            yaz.textContent = "Sending ≈ " + Number(q.details.currencyOut.amountFormatted).toFixed(2) + " USDC to Arc…";
+            for (const a of q.steps) for (const it of a.items || []) { if (a.kind !== "transaction") continue; await m.cihazRelayAdimi(it.data); }
+            yaz.textContent = "Sent ✓ ≈ " + Number(q.details.currencyOut.amountFormatted).toFixed(2) + " USDC arrives on Arc at " + cuzdan.hesap().slice(0, 6) + "…, usually within a minute.";
+            dug.remove();
+          } catch (e) { yaz.textContent = "Not moved: " + ((e && (e.shortMessage || e.message)) || e) + ". Your USDC is safe where it is."; dug.disabled = false; }
+        } } });
+        usdcKart.replaceWith(el("div", { sinif: "bx-kart", attr: { style: "padding:12px 14px;margin-bottom:10px;border-color:var(--marka,#7c5cff)" } }, [
+          el("div", { attr: { style: "font-weight:600;margin-bottom:4px" }, yazi: (Number(ham) / 1e6).toFixed(2) + " USDC is in your ARC PULSE Solana account" }),
+          el("div", { sinif: "k", attr: { style: "margin-bottom:8px" }, yazi: "Move it to Arc as USDC, to your connected wallet. No ARC PULSE fee; Solana's network fee is paid from this account." }), dug, yaz]));
+      })().catch(() => {});
+    } catch (e) { /* storage blocked */ }
     orta.replaceChildren(
-      geri, bagUyari,
+      geri, usdcKart, bagUyari,
       el("div", { sinif: "bx-kart" }, [
         el("div", { sinif: "bx-ust" }, [logo(t), el("div", { attr: { style: "min-width:0" } }, [el("h1", { yazi: t.sembol }), el("div", { sinif: "k", yazi: (t.ad && t.ad !== t.sembol ? t.ad + " · " : "") + t.zincir.ad + (t.dex ? " · " + t.dex : "") + " · " + t.adres.slice(0, 6) + "…" + t.adres.slice(-4) })]),
           el("div", { sinif: "bx-fiyat" }, [el("b", { yazi: fiyatYaz(Number(t.fiyat)) }), yuzde(t.degisim == null ? null : Number(t.degisim))])]),

@@ -320,6 +320,21 @@ export async function relayAdimi(data) {
   return imza;
 }
 
+/** 17 Nov 2026: run relay's Solana step from THIS DEVICE's Solana account, whatever other Solana wallet is around
+    (e.g. moving the device account's USDC to Arc) */
+export async function cihazRelayAdimi(data) {
+  const { Connection, TransactionInstruction, PublicKey, Buffer } = await vendor();
+  const ben = await cihazAdresi();
+  const conn = new Connection(SOL.rpc, "confirmed");
+  const ixs = data.instructions.map((i) => new TransactionInstruction({ programId: new PublicKey(i.programId), data: Buffer.from(i.data, "hex"),
+    keys: i.keys.map((k) => ({ pubkey: new PublicKey(k.pubkey), isSigner: k.isSigner, isWritable: k.isWritable })) }));
+  const tx = await v0(conn, new PublicKey(ben), ixs, data.addressLookupTableAddresses || []);
+  const imzali = await cihazImzala(tx);
+  const imza = await conn.sendRawTransaction(imzali.serialize(), { skipPreflight: false });
+  await onayBekle(imza);
+  return imza;
+}
+
 /// Twins this Solana wallet holds for `token20` (6 decimals).
 export async function ikizBakiye(sahip, token20) {
   const { Connection, PublicKey, TOKEN_PROGRAM_ID, getAssociatedTokenAddressSync } = await vendor();
