@@ -60,8 +60,13 @@ export async function ciz() {
     el("p", {}, ["Tokens moving across 13 chains that passed our safety checks. Buy with USDC or any chain's gas token, from your own wallet. ", guncel])]));
   const SEKME = [["trend", "Trending"], ["yeni", "New"], ["yukselen", "Gainers"], ["izlenen", "Watchlist"]];
   let sekme = "trend", zincir = "", veri = null;
-  let izlenen = new Set(); try { izlenen = new Set(JSON.parse(localStorage.getItem(IZLE) || "[]")); } catch (e) { /* blocked */ }
-  const izleKaydet = () => { try { localStorage.setItem(IZLE, JSON.stringify([...izlenen])); } catch (e) { /* blocked */ } };
+  /* 17 Nov 2026: the watchlist keeps each token's own card data, so a token that drops off the list stays watched
+     (with a live price); kept in this browser only. Older lists held only keys. */
+  const izlenen = new Map();
+  try { for (const x of JSON.parse(localStorage.getItem(IZLE) || "[]")) { if (typeof x === "string") { const [z, a] = x.split(":"); izlenen.set(x, { z, a, sembol: a.slice(0, 6) }); } else if (x && x.z && x.a) izlenen.set(x.z + ":" + x.a.toLowerCase(), x); } } catch (e) { /* blocked */ }
+  const izleKaydet = () => { try { localStorage.setItem(IZLE, JSON.stringify([...izlenen.values()])); } catch (e) { /* blocked */ } };
+  const izleKart = (t) => ({ z: t.z, a: t.a, sembol: t.sembol, ad: t.ad, resim: t.resim, havuz: t.havuz, fiyat: t.fiyat });
+  const disarida = new Map();   // watched tokens not on the list now: stub rows, prices filled live
   const sekmeBar = el("div", { sinif: "ht-sekme", attr: { role: "tablist" } });
   const cipBar = el("div", { sinif: "ht-cip" });
   const ara = el("input", { sinif: "ht-ara", attr: { type: "search", placeholder: "Search name, symbol or address", "aria-label": "Search tokens" } });
@@ -76,7 +81,7 @@ export async function ciz() {
     const g = t.guvenlik || { durum: "yok", notlar: [] };
     const rozet = el("span", { sinif: "ht-rozet ht-rozet--" + g.durum, attr: { title: g.durum === "temiz" ? "Passed the safety checks (" + (g.kaynak || "") + ")" : g.notlar.join("; ") }, yazi: g.durum === "temiz" ? "✓ checked" : g.durum === "uyari" ? "⚠ note" : "? unchecked" });
     const yildiz = el("button", { sinif: "ht-yildiz", attr: { type: "button", "aria-pressed": String(izlenen.has(k)), "aria-label": "Watch " + t.sembol }, yazi: "★", on: { click: (e) => {
-      e.preventDefault(); e.stopPropagation(); izlenen.has(k) ? izlenen.delete(k) : izlenen.add(k); izleKaydet(); yildiz.setAttribute("aria-pressed", String(izlenen.has(k))); if (sekme === "izlenen") ciz_(); } } });
+      e.preventDefault(); e.stopPropagation(); izlenen.has(k) ? izlenen.delete(k) : izlenen.set(k, izleKart(t)); izleKaydet(); yildiz.setAttribute("aria-pressed", String(izlenen.has(k))); if (sekme === "izlenen") ciz_(); } } });
     const al = TAKASSIZ.has(t.z) ? "" : el("button", { sinif: "ht-al", attr: { type: "button" }, yazi: "Buy", on: { click: (e) => { e.preventDefault(); e.stopPropagation(); location.hash = "#/terminal?z=" + t.z + "&a=" + t.a + "&yon=al"; } } });
     const d = t.d24;
     const link = TAKASSIZ.has(t.z) ? { href: "https://www.geckoterminal.com/" + GECKO_AG[t.z] + "/pools/" + t.havuz, target: "_blank", rel: "noopener" } : { href: "#/terminal?z=" + t.z + "&a=" + t.a };
@@ -93,6 +98,11 @@ export async function ciz() {
     cipBar.replaceChildren(...ZINCIR.map(([k, ad]) => el("button", { attr: { type: "button", "aria-pressed": String(zincir === k) }, yazi: ad, on: { click: () => { zincir = k; ciz_(); } } })));
     if (!veri) return;
     let l = veri.tokenler.slice();
+    if (sekme === "izlenen") {
+      /* watched tokens that are not on the list right now come from the watchlist itself */
+      const listede = new Set(l.map((t) => t.z + ":" + t.a.toLowerCase()));
+      for (const [k, x] of izlenen) if (!listede.has(k)) { if (!disarida.has(k)) disarida.set(k, { ...x, d24: null, guvenlik: { durum: "yok", notlar: ["off the list right now: not rechecked"] } }); l.push(disarida.get(k)); }
+    }
     if (zincir) l = l.filter((t) => t.z === zincir);
     const q = ara.value.trim().toLowerCase();
     if (q) l = l.filter((t) => [t.sembol, t.ad, t.a].join(" ").toLowerCase().includes(q));
@@ -101,7 +111,7 @@ export async function ciz() {
     else if (sekme === "yukselen") l = l.filter((t) => t.d24 > 0).sort((a, b) => b.d24 - a.d24);
     else l = l.filter((t) => izlenen.has(t.z + ":" + t.a.toLowerCase()));
     if (!l.length) {
-      liste.replaceChildren(el("div", { sinif: "ht-bos", yazi: sekme === "izlenen" ? "Tap ★ on any token to watch it here (kept in this browser only)." : q ? "No token matches “" + ara.value.trim() + "”." : "No token here right now. The list refreshes every hour." }));
+      liste.replaceChildren(el("div", { sinif: "ht-bos", yazi: sekme === "izlenen" ? "Tap ★ on any token to watch it here (kept in this browser only)." : q ? "No token matches “" + ara.value.trim() + "”." : "No token here right now. New movers are added every 15 minutes." }));
       return;
     }
     liste.replaceChildren(...l.slice(0, 100).map(satir));
@@ -120,14 +130,20 @@ export async function ciz() {
   /* live prices: GeckoTerminal's multi-token call, 30 tokens a call, a few calls a minute (free limit) */
   const canli = async () => {
     if (!kok.isConnected) return;
+    /* watched tokens that are off the list go FIRST (they have no hourly figures at all), then the list by chain */
+    const listede = new Set(veri.tokenler.map((t) => t.z + ":" + t.a.toLowerCase()));
+    const dis = {};
+    for (const [k, x] of izlenen) if (!listede.has(k)) { if (!disarida.has(k)) disarida.set(k, { ...x, d24: null, guvenlik: { durum: "yok", notlar: ["off the list right now: not rechecked"] } }); (dis[x.z] = dis[x.z] || []).push(disarida.get(k)); }
     const gruplar = {};
     for (const t of veri.tokenler) (gruplar[t.z] = gruplar[t.z] || []).push(t);
-    for (const [z, l] of Object.entries(gruplar)) {
+    for (const [z, l] of [...Object.entries(dis), ...Object.entries(gruplar)]) {
       for (let i = 0; i < l.length; i += 30) {
         if (!kok.isConnected) return;
         try {
           const j = await fetch("https://api.geckoterminal.com/api/v2/networks/" + GECKO_AG[z] + "/tokens/multi/" + l.slice(i, i + 30).map((t) => t.a).join(","), { headers: { accept: "application/json" } }).then((r) => r.json());
-          for (const d of j.data || []) { const a = d.attributes, t = l.find((x) => x.a.toLowerCase() === String(a.address).toLowerCase()); if (t && Number(a.price_usd) > 0) { const eski = t.fiyat; t.fiyat = Number(a.price_usd); if (t.d24 != null && eski > 0) t.d24 = ((1 + t.d24 / 100) * t.fiyat / eski - 1) * 100; } }
+          for (const d of j.data || []) { const a = d.attributes, t = l.find((x) => x.a.toLowerCase() === String(a.address).toLowerCase()); if (t && Number(a.price_usd) > 0) { const eski = t.fiyat; t.fiyat = Number(a.price_usd); if (t.d24 != null && eski > 0) t.d24 = ((1 + t.d24 / 100) * t.fiyat / eski - 1) * 100;
+            if (disarida.has(t.z + ":" + t.a.toLowerCase())) { t.mcap = Number(a.market_cap_usd || a.fdv_usd) || t.mcap; t.likidite = Number(a.total_reserve_in_usd) || t.likidite; t.hacim = Number(a.volume_usd && a.volume_usd.h24) || t.hacim; if (!t.resim && a.image_url && !/missing/.test(a.image_url)) t.resim = a.image_url; } } }
+          if (dis[z] === l) ciz_();   // the watched ones show at once
         } catch (e) { /* keep the hourly price */ }
         await new Promise((r) => setTimeout(r, 2500));
       }
