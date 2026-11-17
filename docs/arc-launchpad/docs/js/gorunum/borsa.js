@@ -426,7 +426,10 @@ export async function ciz({ param }) {
       girdi = el("input", { attr: { type: "number", inputmode: "decimal", min: "0", step: "any", placeholder: "0", "aria-label": "Tokens to sell" } });
       govde.push(solSatir(), el("label", { sinif: "bx-et", yazi: "Amount to sell (" + t.sembol + " on " + t.zincir.ad + ")" }), girdi, elde,
         el("div", { sinif: "bx-cip" }, [25, 50, 75, 100].map((p) => el("button", { attr: { type: "button" }, yazi: p + "%", on: { click: () => { if (tokHam == null) return; const x = (tokHam * BigInt(p)) / 100n; girdi.value = String(Number(x / 10n ** BigInt(Math.max(0, ondalik - 6))) / 1e6); yeniden(); } } }))),
-        sol ? (alim = el("select", { attr: { "aria-label": "Receive" } }, [el("option", { attr: { value: "solana" }, yazi: "Receive USDC on Solana (same wallet)" }), el("option", { attr: { value: "arc" }, yazi: "Receive USDC on Arc (your EVM address)" })])) : "",
+        sol ? (alim = el("select", { attr: { "aria-label": "Receive" } }, [el("option", { attr: { value: "solana" }, yazi: "Receive USDC on Solana (same wallet)" }), el("option", { attr: { value: "arc" }, yazi: "Receive USDC on Arc (your EVM address)" })]),
+          /* 17 Nov 2026 (owner: sold, but "para USDC olmadı" — it went to the phone's Solana account): with an EVM wallet
+             connected and the site's own Solana account, the USDC comes to Arc by default */
+          (cuzdan.hesap() && cihazMi() ? (alim.value = "arc") : 0), alim) : "",
         sol ? "" : el("div", { sinif: "bx-not", yazi: "You receive USDC on Arc, at your same address." }));
       if (alim) alim.addEventListener("change", yeniden);
     }
