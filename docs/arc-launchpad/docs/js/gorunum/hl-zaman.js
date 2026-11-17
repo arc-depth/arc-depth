@@ -155,6 +155,9 @@ export function zamanMakinesi({ plan, fiyat }) {
       el("div", { sinif: "tm__m", yazi: "Where the price ends after " + ufuk + "h if nothing closes the trade (middle 90% of futures): " + fiyat(serbest.aralik.p05) + " – " + fiyat(serbest.aralik.p95) + " (half of them between " + fiyat(serbest.aralik.p25) + " and " + fiyat(serbest.aralik.p75) + ")." }),
       ...katlar.map((k) => el("div", { sinif: "tm__m", yazi: k })),
       mod === 2 ? null : el("div", { sinif: "tm__n", yazi: "Without the forward-looking layers (past volatility only) the same plan gives " + Math.round((sade.tp / sade.n) * 100) + " / " + Math.round((sade.sl / sade.n) * 100) + " / " + Math.round((sade.hic / sade.n) * 100) + (fark ? " — the forward inputs move take-profit-first by " + (fark > 0 ? "+" : "") + fark + "." : ".") }),
+      /* 17 Nov 2026 (perps test review: trades closed by hand at 8 h had been judged over 24 h): the odds hold only for
+         keeping the trade for the whole horizon */
+      el("div", { sinif: "tm__m", yazi: "These odds assume you keep the trade for up to " + ufuk + " h. If you will close it sooner by hand, pick that horizon above: the odds change with time." }),
       el("div", { sinif: "tm__n", yazi: trackRecord(S) }),
       el("div", { sinif: "tm__n", yazi: (mod === 2 ? "Replays of past moves after similar charts, not a forecast and not advice." : "Odds from a model of possible futures, not a forecast of the price and not advice. The model has no view on direction.") + " News it cannot see can change everything. Runs in your browser; your plan is not sent anywhere." })].filter(Boolean));
   });
