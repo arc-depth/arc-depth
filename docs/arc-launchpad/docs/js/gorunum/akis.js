@@ -20,6 +20,18 @@ const GECKO_AG = { arc: "arc", elysium: "elysium", solana: "solana", base: "base
 /* Sui and Aptos tokens: relay does not reach them, so they open on GeckoTerminal instead of our swap card */
 const TAKASSIZ = new Set(["sui", "aptos"]);
 const IZLE = "arcpulse-izlenen-tokenler";
+/* 17 Nov 2026 (owner: "illa GeckoTerminal mi olacak"): live prices from DexScreener (free, no key, ~300 calls a minute,
+   30 tokens a call), shaped like GeckoTerminal's multi-token answer so the code that reads it stays the same.
+   GeckoTerminal is left for the hourly candles the Time Machines need. Per token: its deepest pair. */
+async function dsMulti(z, adresler) {
+  const l = await fetch("https://api.dexscreener.com/tokens/v1/" + z + "/" + adresler.join(",")).then((r) => (r.ok ? r.json() : [])).catch(() => []);
+  const en = new Map();
+  for (const p of Array.isArray(l) ? l : []) {
+    const a = String(p.baseToken && p.baseToken.address || ""), liq = Number(p.liquidity && p.liquidity.usd) || 0;
+    if (a && (!en.has(a.toLowerCase()) || en.get(a.toLowerCase()).liq < liq)) en.set(a.toLowerCase(), { liq, p });
+  }
+  return { data: [...en.values()].map(({ liq, p }) => ({ attributes: { address: p.baseToken.address, price_usd: p.priceUsd, total_reserve_in_usd: liq, volume_usd: { h24: p.volume && p.volume.h24 }, market_cap_usd: p.marketCap || p.fdv, image_url: p.info && p.info.imageUrl } })) };
+}
 const STIL = `
 .ht{display:flex;flex-direction:column;gap:12px;min-width:0;max-width:760px;margin:0 auto}
 .ht-ust h1{margin:0;font-size:24px}.ht-ust p{margin:4px 0 0;color:var(--yazi-3);font-size:13.5px;line-height:1.45}
@@ -75,7 +87,7 @@ export async function ciz() {
     const gr = {}; for (const k of tw.kayitlar || []) (gr[k.token.z] = gr[k.token.z] || new Map()).set(k.token.a.toLowerCase(), k.token);
     for (const [z, m] of Object.entries(gr)) {
       try {
-        const j = await fetch("https://api.geckoterminal.com/api/v2/networks/" + GECKO_AG[z] + "/tokens/multi/" + [...m.keys()].slice(0, 30).join(","), { headers: { accept: "application/json" } }).then((r) => r.json());
+        const j = await dsMulti(z, [...m.keys()].slice(0, 30));
         for (const d of j.data || []) { const a = d.attributes; const p = Number(a.price_usd); for (const k of tw.kayitlar) if (k.token.z === z && k.token.a.toLowerCase() === String(a.address).toLowerCase() && p > 0) k.token.fiyat = p; }
       } catch (e) { /* keep the price we saw */ }
     }
@@ -180,12 +192,12 @@ export async function ciz() {
       for (let i = 0; i < l.length; i += 30) {
         if (!kok.isConnected) return;
         try {
-          const j = await fetch("https://api.geckoterminal.com/api/v2/networks/" + GECKO_AG[z] + "/tokens/multi/" + l.slice(i, i + 30).map((t) => t.a).join(","), { headers: { accept: "application/json" } }).then((r) => r.json());
+          const j = await dsMulti(z, l.slice(i, i + 30).map((t) => t.a));
           for (const d of j.data || []) { const a = d.attributes, t = l.find((x) => x.a.toLowerCase() === String(a.address).toLowerCase()); if (t && Number(a.price_usd) > 0) { const eski = t.fiyat; t.fiyat = Number(a.price_usd); if (t.d24 != null && eski > 0) t.d24 = ((1 + t.d24 / 100) * t.fiyat / eski - 1) * 100;
             if (disarida.has(t.z + ":" + t.a.toLowerCase())) { t.mcap = Number(a.market_cap_usd || a.fdv_usd) || t.mcap; t.likidite = Number(a.total_reserve_in_usd) || t.likidite; t.hacim = Number(a.volume_usd && a.volume_usd.h24) || t.hacim; if (!t.resim && a.image_url && !/missing/.test(a.image_url)) t.resim = a.image_url; } } }
           if (dis[z] === l) ciz_();   // the watched ones show at once
         } catch (e) { /* keep the hourly price */ }
-        await new Promise((r) => setTimeout(r, 2500));
+        await new Promise((r) => setTimeout(r, 400));
       }
     }
     ciz_();

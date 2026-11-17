@@ -669,9 +669,11 @@ export async function ciz({ param }) {
       /* our list is up to an hour old: read the pool's live figures now (price, liquidity, 24 h change), so the chart
          header, the swap card's cost line and the Time Machines' plan all use today's price (17 Nov: BLOB showed a 16%
          "cost" that was only an hour-old price) */
-      V.gecko("/networks/" + hizli.zincir.gecko + "/pools/" + hizli.havuz + "?include=base_token,network").then((l) => {
-        const c = (l || []).find((x) => x.adres.toLowerCase() === hizli.adres.toLowerCase()); if (!c) return;
-        Object.assign(hizli, { fiyat: c.fiyat, likidite: c.likidite, hacim: c.hacim, degisim: c.degisim, fdv: c.fdv, islem: c.islem });
+      /* DexScreener (17 Nov): plenty of free calls, so this never competes with the chart's and Time Machine's */
+      fetch("https://api.dexscreener.com/latest/dex/pairs/" + hizli.zincir.k + "/" + hizli.havuz).then((r) => r.json()).then((j) => {
+        const p = j && (j.pairs || [])[0]; if (!p || !(Number(p.priceUsd) > 0)) return;
+        const c = { fiyat: Number(p.priceUsd), likidite: Number(p.liquidity && p.liquidity.usd) || hizli.likidite, hacim: Number(p.volume && p.volume.h24) || hizli.hacim, degisim: p.priceChange ? Number(p.priceChange.h24) : hizli.degisim, fdv: Number(p.marketCap || p.fdv) || hizli.fdv, islem: p.txns && p.txns.h24 ? p.txns.h24.buys + p.txns.h24.sells : hizli.islem };
+        Object.assign(hizli, c);
         if (secili === hizli) ortaCiz();
       }).catch(() => {});
       /* the page shows now; the market lists fill in behind it */
