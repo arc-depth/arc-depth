@@ -58,8 +58,45 @@ export async function ciz() {
   const guncel = el("span");
   kok.append(el("div", { sinif: "ht-ust" }, [el("h1", { yazi: "Hot tokens" }),
     el("p", {}, ["Tokens moving across 13 chains that passed our safety checks. Buy with USDC or any chain's gas token, from your own wallet. ", guncel])]));
-  const SEKME = [["trend", "Trending"], ["yeni", "New"], ["yukselen", "Gainers"], ["izlenen", "Watchlist"]];
+  const SEKME = [["trend", "Trending"], ["yeni", "New"], ["yukselen", "Gainers"], ["tweet", "Tweeted"], ["izlenen", "Watchlist"]];
   let sekme = "trend", zincir = "", veri = null;
+  /* 17 Nov 2026 (owner: "tek bir tweeti tokenleri uçuran kişilerin tweetlerini takip et"): Tweeted — tokens named in posts
+     by accounts whose single post moves prices (scripts/tweet-radar.js -> veri/tweet-tokenler.json). Each card: who, when,
+     an excerpt with a link to the post, how the token was matched, and the price change since we first saw it. */
+  let tw = null, twYukleniyor = false;
+  const ESLESME = { ca: "contract address in the post", cashtag: "$ticker in the post", isim: "named in the post", kelime: "launched after the post, named after it" };
+  const ne = (ms) => { const d = (Date.now() - ms) / 60000; return d < 60 ? Math.max(1, Math.round(d)) + "m ago" : d < 1440 ? Math.round(d / 60) + "h ago" : Math.round(d / 1440) + "d ago"; };
+  async function tweetYukle() {
+    if (twYukleniyor) return; twYukleniyor = true;
+    try { tw = await fetch("veri/tweet-tokenler.json?t=" + Math.floor(Date.now() / 60000)).then((r) => r.json()); } catch (e) { tw = { kayitlar: [], hata: true }; }
+    /* live prices for the tokens in it (one multi-token call per chain) */
+    const gr = {}; for (const k of tw.kayitlar || []) (gr[k.token.z] = gr[k.token.z] || new Map()).set(k.token.a.toLowerCase(), k.token);
+    for (const [z, m] of Object.entries(gr)) {
+      try {
+        const j = await fetch("https://api.geckoterminal.com/api/v2/networks/" + GECKO_AG[z] + "/tokens/multi/" + [...m.keys()].slice(0, 30).join(","), { headers: { accept: "application/json" } }).then((r) => r.json());
+        for (const d of j.data || []) { const a = d.attributes; const p = Number(a.price_usd); for (const k of tw.kayitlar) if (k.token.z === z && k.token.a.toLowerCase() === String(a.address).toLowerCase() && p > 0) k.token.fiyat = p; }
+      } catch (e) { /* keep the price we saw */ }
+    }
+    twYukleniyor = false; if (sekme === "tweet") ciz_();
+  }
+  function tweetCiz() {
+    if (!tw) { liste.replaceChildren(el("div", { sinif: "ht-bos", yazi: "Loading posts…" })); tweetYukle(); return; }
+    let l = (tw.kayitlar || []).slice();
+    if (zincir) l = l.filter((k) => k.token.z === zincir);
+    const q = ara.value.trim().toLowerCase();
+    if (q) l = l.filter((k) => [k.yazar, k.metin, k.token.sembol, k.token.ad, k.token.a].join(" ").toLowerCase().includes(q));
+    const ust = tw.okuma === "paused" ? el("div", { sinif: "ht-bos", yazi: "Reading posts is paused right now; the cards below are the latest we saw." }) : "";
+    if (!l.length) { liste.replaceChildren(...[ust, el("div", { sinif: "ht-bos", yazi: "No token named in the watched accounts' posts in the last 72 hours. They are checked every few minutes." })].filter(Boolean)); return; }
+    liste.replaceChildren(...[ust].filter(Boolean), ...l.slice(0, 60).map((k) => {
+      const t = { ...k.token, guvenlik: k.guvenlik, d24: k.token.fiyatIlk > 0 && k.token.fiyat > 0 ? (k.token.fiyat / k.token.fiyatIlk - 1) * 100 : null };
+      return el("div", { attr: { style: "border-bottom:1px solid var(--cizgi)" } }, [
+        el("div", { attr: { style: "padding:12px 14px 0;font-size:13px;color:var(--yazi-3)" } }, [
+          el("a", { attr: { href: "https://x.com/" + k.yazar, target: "_blank", rel: "noopener", style: "color:var(--yazi-1);font-weight:700;text-decoration:none" }, yazi: "@" + k.yazar }),
+          " · " + ne(Date.parse(k.zaman)) + " · " + (ESLESME[k.tur] || k.tur) + (k.tur === "kelime" ? " (“" + k.ipucu + "”)" : "") + " · % = since we saw it",
+          el("div", { attr: { style: "color:var(--yazi-2);margin-top:4px;line-height:1.4" } }, ["“" + k.metin + (k.metin.length >= 200 ? "…" : "") + "” ", el("a", { attr: { href: k.url, target: "_blank", rel: "noopener" }, yazi: "View post ↗" })])]),
+        satir(t)]);
+    }));
+  }
   /* 17 Nov 2026: the watchlist keeps each token's own card data, so a token that drops off the list stays watched
      (with a live price); kept in this browser only. Older lists held only keys. */
   const izlenen = new Map();
@@ -98,6 +135,7 @@ export async function ciz() {
     cipBar.replaceChildren(...ZINCIR.map(([k, ad]) => el("button", { attr: { type: "button", "aria-pressed": String(zincir === k) }, yazi: ad, on: { click: () => { zincir = k; ciz_(); } } })));
     if (!veri) return;
     let l = veri.tokenler.slice();
+    if (sekme === "tweet") { tweetCiz(); return; }
     if (sekme === "izlenen") {
       /* watched tokens that are not on the list right now come from the watchlist itself */
       const listede = new Set(l.map((t) => t.z + ":" + t.a.toLowerCase()));
