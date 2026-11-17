@@ -651,6 +651,30 @@ export async function ciz({ param }) {
   orta.append(el("div", { sinif: "bx-kart bx-bos", yazi: "Pick a market on the left." }));
   listeCiz();
   dolarBakiyeleri();
+  /* 17 Nov 2026 (owner: a Hot tokens tap "throws me somewhere unrelated"): a token linked from Hot tokens opens AT ONCE from
+     our own list (veri/pulse-liste.json: pool, price, liquidity), before the slow trending lists — those are many calls to
+     the free data service, and when it was busy the token lookup failed and the phone fell back to the market list. */
+  const yonSat = param && param.get("yon") === "sat", yonAl = param && param.get("yon") === "al";   // 17 Nov: Hot tokens' Buy
+  const za = param && param.get("z"), aa = param && param.get("a");
+  let hizli = null;
+  if (za && aa) {
+    try {
+      const L = await fetch(new URL("../../veri/pulse-liste.json", import.meta.url).href + "?t=" + Math.floor(Date.now() / 300000)).then((r) => (r.ok ? r.json() : null));
+      const h = L && (L.tokenler || []).find((x) => x.z === za && x.a.toLowerCase() === aa.toLowerCase()), z = h && V.ZINCIRLER.find((x) => x.k === za);
+      if (h && z && h.havuz) hizli = { zincir: z, adres: h.a, sembol: h.sembol, ad: h.ad || h.sembol, karar: h.karar, resim: h.resim, fiyat: h.fiyat, fdv: h.mcap, hacim: h.hacim, degisim: h.d24, islem: h.islem, likidite: h.likidite, havuz: h.havuz, dex: h.dex || "", kuruldu: h.kuruldu };
+    } catch (e) { /* fall back to the lookup below */ }
+    if (hizli) {
+      /* select it once the page is on screen (the pool's swaps only load for an attached page) */
+      { let n = 0; const b = () => { if (kok.isConnected) { sec(hizli); if (yonSat || yonAl) { kutuCiz(yonSat ? "sat" : "al"); if (window.matchMedia("(max-width: 860px)").matches) sayfaAc(); } } else if (++n < 100) setTimeout(b, 100); }; b(); }
+      /* the page shows now; the market lists fill in behind it */
+      (async () => {
+        try { const d = await V.veri(null); piyasa = { trend: V.suz(d.trend.filter((t) => t.likidite >= V.ESIK)), yeni: V.suz(d.yeni.filter((t) => t.likidite >= V.ESIK_YENI)) }; } catch (e) { /* the token is open anyway */ }
+        listeCiz();
+        for (const k of ["base", "solana", "bsc", "ethereum"]) { if (!kok.isConnected) break; await zincirYukle(k); await new Promise((x) => setTimeout(x, 4000)); }
+      })();
+      return kok;
+    }
+  }
   try {
     const d = await V.veri(null);
     piyasa = { trend: V.suz(d.trend.filter((t) => t.likidite >= V.ESIK)), yeni: V.suz(d.yeni.filter((t) => t.likidite >= V.ESIK_YENI)) };
@@ -659,7 +683,6 @@ export async function ciz({ param }) {
   /* the big chains' own lists, one after another (the free data service allows ~30 calls a minute) */
   (async () => { for (const k of ["base", "solana", "bsc", "ethereum"]) { if (!kok.isConnected && zv.solana) break; await zincirYukle(k); await new Promise((x) => setTimeout(x, 4000)); } })();
   /* the market from the link (?z=&a=), or the last one picked on this device, or the top trending one (desktop) */
-  const za = param && param.get("z"), aa = param && param.get("a");
   let ilk = null;
   const tum = [...piyasa.trend, ...piyasa.yeni];
   if (za && aa) ilk = tum.find((t) => t.zincir.k === za && t.adres.toLowerCase() === aa.toLowerCase());
@@ -668,7 +691,6 @@ export async function ciz({ param }) {
     const z = V.ZINCIRLER.find((x) => x.k === za);
     if (z) { const l = await V.gecko("/networks/" + z.gecko + "/tokens/" + aa + "/pools?include=base_token,network&page=1").catch(() => []); ilk = l.find((t) => t.adres.toLowerCase() === aa.toLowerCase()) || null; }
   }
-  const yonSat = param && param.get("yon") === "sat", yonAl = param && param.get("yon") === "al";   // 17 Nov: Hot tokens' Buy
   if (!ilk) { try { const s = JSON.parse(localStorage.getItem("arcpulse-borsa-son") || "null"); if (s) ilk = tum.find((t) => t.zincir.k === s.z && t.adres.toLowerCase() === s.a.toLowerCase()); } catch (e) { /* none */ } }
   const ekrandaSec = (t) => { let n = 0; const b = () => { if (kok.isConnected) { sec(t); if ((yonSat || yonAl) && t === ilk) { kutuCiz(yonSat ? "sat" : "al"); if (window.matchMedia("(max-width: 860px)").matches) sayfaAc(); } } else if (++n < 100) setTimeout(b, 100); }; b(); };
   if (ilk && (za || !window.matchMedia("(max-width: 860px)").matches)) ekrandaSec(ilk);
