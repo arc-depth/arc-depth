@@ -107,7 +107,7 @@ export async function ciz() {
         el("div", { attr: { style: "padding:12px 14px 0;font-size:13px;color:var(--yazi-3)" } }, [
           el("a", { attr: { href: "https://x.com/" + k.yazar, target: "_blank", rel: "noopener", style: "color:var(--yazi-1);font-weight:700;text-decoration:none" }, yazi: "@" + k.yazar }),
           " · " + ne(Date.parse(k.zaman)) + " · " + (ESLESME[k.tur] || k.tur) + (k.tur === "kelime" ? " (“" + k.ipucu + "”)" : "") + " · % = since we saw it",
-          el("div", { attr: { style: "color:var(--yazi-2);margin-top:4px;line-height:1.4" } }, ["“" + k.metin + (k.metin.length >= 200 ? "…" : "") + "” ", el("a", { attr: { href: k.url, target: "_blank", rel: "noopener" }, yazi: "View post ↗" })])]),
+          el("div", { attr: { style: "color:var(--yazi-2);margin-top:4px;line-height:1.4" } }, ["“" + k.metin.replace(/(fuck|shit|bitch|cunt|dick|pussy|bastard|motherf)w*/gi, (w) => w[0] + "***") + (k.metin.length >= 200 ? "…" : "") + "” ", el("a", { attr: { href: k.url, target: "_blank", rel: "noopener" }, yazi: "View post ↗" })])]),
         satir(t)]);
     }));
   }
