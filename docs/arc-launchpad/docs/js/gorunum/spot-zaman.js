@@ -39,14 +39,14 @@ function mumlar(t) {
   const anahtar = "stm:" + k;
   const p = (async () => {
     try { const c = JSON.parse(localStorage.getItem(anahtar) || "null"); if (c && Date.now() - c.t < 15 * 60000 && c.m && c.m.length) return c.m; } catch (e) { /* none */ }
-    for (let i = 0; i < 4; i++) {
-      const j = await fetch(GECKO + "/networks/" + GECKO_AG[t.z] + "/pools/" + t.havuz + "/ohlcv/hour?aggregate=1&limit=1000&currency=usd", { headers: { accept: "application/json" } }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+    for (let i = 0; i < 2; i++) {   // two quick tries; then our own hourly snapshot takes over (spotGirdiAnlik)
+      const j = await fetch(GECKO + "/networks/" + GECKO_AG[t.z] + "/pools/" + t.havuz + "/ohlcv/hour?aggregate=1&limit=1000&currency=usd", { headers: { accept: "application/json" }, signal: AbortSignal.timeout(8000) }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
       if (j && j.data) {
         const m = (j.data.attributes.ohlcv_list || []).map((y) => [y[0] * 1000, +y[1], +y[2], +y[3], +y[4], +y[5]]).sort((a, b) => a[0] - b[0]);
         try { localStorage.setItem(anahtar, JSON.stringify({ t: Date.now(), m })); } catch (e) { /* full */ }
         return m;
       }
-      await new Promise((x) => setTimeout(x, 3000 * (i + 1)));
+      await new Promise((x) => setTimeout(x, 2500));
     }
     return null;
   })();
@@ -54,6 +54,14 @@ function mumlar(t) {
   return p;
 }
 
+let _anlik = null;
+const anlikOku = () => (_anlik = _anlik || fetch(new URL("../../veri/spot-tm-anlik.json", import.meta.url).href + "?t=" + Math.floor(Date.now() / 600000)).then((r) => (r.ok ? r.json() : null)).catch(() => null));
+/** No live history: the token's inputs from our hourly snapshot (veri/spot-tm-anlik.json) + the pooled moves of its age class. */
+export function spotGirdiAnlik(x, H) {
+  const [sigma, durum, saat, stop, sinifAd, sonMum] = x, S = H && H.sinif && H.sinif[sinifAd];
+  if (!S) return null;
+  return { sigma, artik: S.artik, durum: S.durum, zOrt: S.zOrt, simdiDurum: durum || null, kaynak: "anlik", sinif: sinifAd, cokus24: S.cokus24, saat, stop, sonMum };
+}
 /** Everything the engine needs, from the token's candles and the pool. */
 export function spotGirdi(m, H) {
   const r = [], z = [], durumOwn = [];
@@ -133,12 +141,18 @@ export function spotZamanMakinesi({ t, fiyat }) {
     c.setLineDash([]);
   }
   calistir.addEventListener("click", async () => {
-    calistir.disabled = true; calistir.textContent = "Reading this token's hourly history… (a busy data service can take up to 30 s)";
+    calistir.disabled = true; calistir.textContent = "Reading the history…";
     const [m, H] = await Promise.all([mumlar(t), havuzOku()]);
     const bitir = (yazi) => { calistir.disabled = false; calistir.textContent = "🔮 Run the Time Machine (10,000 futures)"; if (yazi) metin.replaceChildren(el("div", { sinif: "stm__m stm__u", yazi })); };
-    if (!m) return bitir("This token's price history could not be read right now (the free data service may be busy). Try again in a minute.");
-    if (m.length < 6) return bitir("This token's pool has too little hourly history yet (needs 6 hours).");
-    const D = spotGirdi(m, H);
+    let D = null;
+    if (m && m.length >= 6) D = spotGirdi(m, H);
+    else {
+      /* the live history could not be read (the data service is busy or not reachable from this connection): use our
+         hourly snapshot of this token + the moves of similar tokens */
+      const A = await anlikOku(), x = A && A.t && A.t[t.z + ":" + t.havuz];
+      D = x ? spotGirdiAnlik(x, H) : null;
+      if (!D) return bitir(m ? "This token's pool has too little hourly history yet (needs 6 hours)." : "This token's price history could not be read right now and it is not in our hourly snapshot yet. Try again in a few minutes.");
+    }
     if (!D.artik) return bitir("The pooled inputs could not be loaded. Try again in a minute.");
     const giris = Number(t.fiyat) > 0 ? Number(t.fiyat) : m[m.length - 1][4];
     const stop = Math.min(0.4, D.stop * gen), sl = giris * (1 - stop), tp = giris * (1 + 2 * stop);
@@ -174,6 +188,7 @@ export function spotZamanMakinesi({ t, fiyat }) {
     if (diger) satir.push(el("div", { sinif: "stm__m", yazi: (mod === 2 ? "Time Machine 1" : "Time Machine 2") + " gives the same plan " + uc(diger) + " (TP first / stop first / neither, before the crash share)." }));
     satir.push(el("div", { sinif: "stm__m", yazi: "Where the price ends after " + ufuk + "h if nothing closes the trade (middle 90% of futures): " + fiyat(serbest.aralik.p05) + " – " + fiyat(serbest.aralik.p95) + "." }));
     satir.push(el("div", { sinif: "stm__m", yazi: "Volatility forecast: " + (D.sigma * 100).toFixed(1) + "% an hour. Moves drawn from " + (D.kaynak === "own" ? "this token's own " + D.saat + " hours" : "Hot tokens of the same age (this one has " + D.saat + " hours of its own)") + "." }));
+    if (D.kaynak === "anlik") satir.push(el("div", { sinif: "stm__n stm__u", yazi: "The live price history could not be read from this connection, so this used our hourly snapshot of the token (" + Math.max(0, Math.round((Date.now() / 1000 - D.sonMum) / 60)) + " min old)." }));
     satir.push(el("div", { sinif: "stm__n", yazi: "Crash share: from tokens still listed only — tokens that already died are missing, so the real risk is higher. These odds assume you hold for up to " + ufuk + " h." }));
     satir.push(el("div", { sinif: "stm__n", yazi: "Odds from a model, not a forecast and not advice. Memecoins can go to zero in minutes. Runs in your browser; nothing is sent." }));
     metin.replaceChildren(...satir);
