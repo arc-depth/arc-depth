@@ -65,8 +65,10 @@ export async function bakiye(v, evmAdr, solAdr) {
     if (v.ag === SOL_AG) {
       if (!solAdr) return null;
       if (v.yerel) { const r = await zaman(solRpc("getBalance", [solAdr])); return BigInt((r.result && r.result.value) || 0); }
-      const r = await zaman(solRpc("getTokenAccountsByOwner", [solAdr, { mint: v.adres }, { encoding: "jsonParsed" }]));
-      return ((r.result && r.result.value) || []).reduce((a, x) => a + BigInt(x.account.data.parsed.info.tokenAmount.amount), 0n);
+      /* 17 Nov 2026: the free RPC now refuses "all token accounts of an owner" (needs a paid token) and the swap card showed
+         0 USDC; read the token's own account address instead, like the rest of the site (solana-ikiz.js splBakiye) */
+      const m = await import("./solana-ikiz.js");
+      return BigInt(await zaman(m.splBakiye(solAdr, v.adres), 12000));
     }
     if (!evmAdr) return null;
     const r = v.yerel
