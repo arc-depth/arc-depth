@@ -2,7 +2,7 @@
  * gorunum/akis.js — Hot tokens (#/akis). 17 Nov 2026, replaces the Feed of 16 Nov (owner: "feed saçma sapan bir şey …
  * fomoya yakın bir şey yapacağız … Feed'in yerine geçsin").
  *
- * One list of tokens worth looking at, across 7 chains, that every visitor can trade by hand from their own wallet — and
+ * One list of tokens worth looking at, across 13 chains (17 Nov: Arc, Elysium, Avalanche, HyperEVM, Sui, Aptos added), that every visitor can trade by hand from their own wallet — and
  * the same list the spot test bot picks from. WHICH TOKENS: scripts/pulse-liste.js, hourly, writes veri/pulse-liste.json:
  * GeckoTerminal trending + new pools, a market floor (liquidity, volume, age) and a safety gate (RugCheck on Solana;
  * GoPlus + honeypot.is on EVM). Tokens that fail are not shown; lesser findings show as a warning on the card.
@@ -13,9 +13,12 @@
 import { el } from "../ui.js";
 import { fiyatYaz } from "./portfoy-ust.js";
 
-const ZINCIR = [["", "All chains"], ["solana", "Solana"], ["base", "Base"], ["bsc", "BNB"], ["ethereum", "Ethereum"], ["arbitrum", "Arbitrum"], ["monad", "Monad"], ["robinhood", "Robinhood"]];
+const ZINCIR = [["", "All chains"], ["arc", "Arc"], ["elysium", "Elysium"], ["solana", "Solana"], ["base", "Base"], ["bsc", "BNB"], ["ethereum", "Ethereum"], ["arbitrum", "Arbitrum"],
+  ["avalanche", "Avalanche"], ["monad", "Monad"], ["hyperevm", "HyperEVM"], ["robinhood", "Robinhood"], ["sui", "Sui"], ["aptos", "Aptos"]];
 const ZAD = Object.fromEntries(ZINCIR.slice(1));
-const GECKO_AG = { solana: "solana", base: "base", bsc: "bsc", ethereum: "eth", arbitrum: "arbitrum", monad: "monad", robinhood: "robinhood" };
+const GECKO_AG = { arc: "arc", elysium: "elysium", solana: "solana", base: "base", bsc: "bsc", ethereum: "eth", arbitrum: "arbitrum", avalanche: "avax", monad: "monad", hyperevm: "hyperevm", robinhood: "robinhood", sui: "sui-network", aptos: "aptos" };
+/* Sui and Aptos tokens: relay does not reach them, so they open on GeckoTerminal instead of our swap card */
+const TAKASSIZ = new Set(["sui", "aptos"]);
 const IZLE = "arcpulse-izlenen-tokenler";
 const STIL = `
 .ht{display:flex;flex-direction:column;gap:12px;min-width:0;max-width:760px;margin:0 auto}
@@ -54,7 +57,7 @@ export async function ciz() {
   const kok = el("div", { sinif: "ht" }); kok.dataset.icindekilerYok = "1";
   const guncel = el("span");
   kok.append(el("div", { sinif: "ht-ust" }, [el("h1", { yazi: "Hot tokens" }),
-    el("p", {}, ["Tokens moving across 7 chains that passed our safety checks. Buy with USDC or any chain's gas token, from your own wallet. ", guncel])]));
+    el("p", {}, ["Tokens moving across 13 chains that passed our safety checks. Buy with USDC or any chain's gas token, from your own wallet. ", guncel])]));
   const SEKME = [["trend", "Trending"], ["yeni", "New"], ["yukselen", "Gainers"], ["izlenen", "Watchlist"]];
   let sekme = "trend", zincir = "", veri = null;
   let izlenen = new Set(); try { izlenen = new Set(JSON.parse(localStorage.getItem(IZLE) || "[]")); } catch (e) { /* blocked */ }
@@ -74,12 +77,13 @@ export async function ciz() {
     const rozet = el("span", { sinif: "ht-rozet ht-rozet--" + g.durum, attr: { title: g.durum === "temiz" ? "Passed the safety checks (" + (g.kaynak || "") + ")" : g.notlar.join("; ") }, yazi: g.durum === "temiz" ? "✓ checked" : g.durum === "uyari" ? "⚠ note" : "? unchecked" });
     const yildiz = el("button", { sinif: "ht-yildiz", attr: { type: "button", "aria-pressed": String(izlenen.has(k)), "aria-label": "Watch " + t.sembol }, yazi: "★", on: { click: (e) => {
       e.preventDefault(); e.stopPropagation(); izlenen.has(k) ? izlenen.delete(k) : izlenen.add(k); izleKaydet(); yildiz.setAttribute("aria-pressed", String(izlenen.has(k))); if (sekme === "izlenen") ciz_(); } } });
-    const al = el("button", { sinif: "ht-al", attr: { type: "button" }, yazi: "Buy", on: { click: (e) => { e.preventDefault(); e.stopPropagation(); location.hash = "#/terminal?z=" + t.z + "&a=" + t.a + "&yon=al"; } } });
+    const al = TAKASSIZ.has(t.z) ? "" : el("button", { sinif: "ht-al", attr: { type: "button" }, yazi: "Buy", on: { click: (e) => { e.preventDefault(); e.stopPropagation(); location.hash = "#/terminal?z=" + t.z + "&a=" + t.a + "&yon=al"; } } });
     const d = t.d24;
-    return el("a", { sinif: "ht-satir", attr: { href: "#/terminal?z=" + t.z + "&a=" + t.a } }, [
+    const link = TAKASSIZ.has(t.z) ? { href: "https://www.geckoterminal.com/" + GECKO_AG[t.z] + "/pools/" + t.havuz, target: "_blank", rel: "noopener" } : { href: "#/terminal?z=" + t.z + "&a=" + t.a };
+    return el("a", { sinif: "ht-satir", attr: link }, [
       logo,
       el("span", { sinif: "ht-ad" }, [el("b", {}, [el("span", { attr: { style: "overflow:hidden;text-overflow:ellipsis" }, yazi: t.sembol }), rozet]),
-        el("small", { yazi: ZAD[t.z] + " · MC " + kisa(t.mcap) + " · Liq " + kisa(t.likidite) + " · Vol " + kisa(t.hacim) + (t.yeni ? " · " + yasYaz(t.yasSaat) + " old" : "") }),
+        el("small", { yazi: ZAD[t.z] + " · MC " + kisa(t.mcap) + " · Liq " + kisa(t.likidite) + " · Vol " + kisa(t.hacim) + (t.yeni ? " · " + yasYaz(t.yasSaat) + " old" : "") + (TAKASSIZ.has(t.z) ? " · chart only, trade in a " + ZAD[t.z] + " wallet" : "") }),
         g.durum === "uyari" ? el("div", { sinif: "ht-not", yazi: "⚠ " + g.notlar.join(" · ") }) : ""]),
       el("span", { sinif: "ht-sag" }, [el("span", { sinif: "ht-fiyat" }, [el("b", { yazi: fiyatYaz(Number(t.fiyat)) }),
         el("span", { sinif: d > 0 ? "ht-art" : d < 0 ? "ht-eks" : "", yazi: d == null ? "—" : (d > 0 ? "+" : "") + d.toFixed(1) + "%" })]), al, yildiz])]);

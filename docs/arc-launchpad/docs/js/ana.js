@@ -156,7 +156,7 @@ function ustYoluCiz() {
   kUstYol.append(
     el("a", { sinif: "ust-cip", attr: { href: "presale.html", title: "ARCP 2 presale on Arc" }, veri: { yol: "presale" } }, [el("i", { attr: { "aria-hidden": "true" } }), el("span", { sinif: "ust-cip__uzun", yazi: "ARCP presale" }), el("span", { sinif: "ust-cip__kisa", yazi: "Presale" })]),
     /* 16 Nov 2026: Feed on phones (the bottom bar is full): a small chip in the header; desktop has it in the top nav */
-    el("a", { sinif: "ust-akis", attr: { href: "#/akis", title: "Hot tokens: checked tokens across 7 chains" }, veri: { yol: "akis" }, yazi: "🔥 Hot" }),
+    el("a", { sinif: "ust-akis", attr: { href: "#/akis", title: "Hot tokens: checked tokens across 13 chains" }, veri: { yol: "akis" }, yazi: "🔥 Hot" }),
     el("a", { sinif: "ust-daha", attr: { href: "#/daha", "aria-label": "More: every module" }, veri: { yol: "daha" }, html: ikon("daha", "yol-oge__ikon") }));
 }
 
