@@ -666,6 +666,14 @@ export async function ciz({ param }) {
     if (hizli) {
       /* select it once the page is on screen (the pool's swaps only load for an attached page) */
       { let n = 0; const b = () => { if (kok.isConnected) { sec(hizli); if (yonSat || yonAl) { kutuCiz(yonSat ? "sat" : "al"); if (window.matchMedia("(max-width: 860px)").matches) sayfaAc(); } } else if (++n < 100) setTimeout(b, 100); }; b(); }
+      /* our list is up to an hour old: read the pool's live figures now (price, liquidity, 24 h change), so the chart
+         header, the swap card's cost line and the Time Machines' plan all use today's price (17 Nov: BLOB showed a 16%
+         "cost" that was only an hour-old price) */
+      V.gecko("/networks/" + hizli.zincir.gecko + "/pools/" + hizli.havuz + "?include=base_token,network").then((l) => {
+        const c = (l || []).find((x) => x.adres.toLowerCase() === hizli.adres.toLowerCase()); if (!c) return;
+        Object.assign(hizli, { fiyat: c.fiyat, likidite: c.likidite, hacim: c.hacim, degisim: c.degisim, fdv: c.fdv, islem: c.islem });
+        if (secili === hizli) ortaCiz();
+      }).catch(() => {});
       /* the page shows now; the market lists fill in behind it */
       (async () => {
         try { const d = await V.veri(null); piyasa = { trend: V.suz(d.trend.filter((t) => t.likidite >= V.ESIK)), yeni: V.suz(d.yeni.filter((t) => t.likidite >= V.ESIK_YENI)) }; } catch (e) { /* the token is open anyway */ }
