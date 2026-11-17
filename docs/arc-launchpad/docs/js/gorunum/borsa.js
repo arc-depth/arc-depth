@@ -339,6 +339,11 @@ export async function ciz({ param }) {
             kutuCiz(taraf);
           } catch (e) { durum.textContent = "Not linked yet: " + ((e && (e.shortMessage || e.message)) || "unknown error") + " — your tokens are still safe in the old account."; durum.scrollIntoView({ block: "center" }); bagla.disabled = false; }
         } } }) : "";
+        /* 17 Nov 2026 (owner: "dışarıdan gelen kullanıcı o linki bilmez, otomatik yapmalı"): the move starts by itself the
+           first time the trade box is on screen — the visitor only answers the wallet's prompts. Once per page load. */
+        if (bagla && !window.__arcpulseOtoTasi) setTimeout(() => {
+          if (!window.__arcpulseOtoTasi && bagla.isConnected && bagla.offsetParent && !bagla.disabled) { window.__arcpulseOtoTasi = true; bagla.click(); }
+        }, 600);
         return el("div", { sinif: "bx-elde" }, ["Your ", t.sembol, " goes to your ARC PULSE Solana account on this phone", solAdres() ? " (" + solAdres().slice(0, 4) + "…" + solAdres().slice(-4) + ")" : "", ". Back it up once: without a backup, clearing this browser loses it. ", el("div", { attr: { style: "display:flex;gap:6px;margin-top:6px;flex-wrap:wrap" } }, [bagla, yedekDug, kendi])]);
       }
       const giris = el("input", { attr: { placeholder: "Your Solana address (where tokens go)", autocomplete: "off", spellcheck: "false", "aria-label": "Your Solana address" } });
