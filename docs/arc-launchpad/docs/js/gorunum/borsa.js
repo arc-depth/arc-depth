@@ -13,6 +13,7 @@ import { el } from "../ui.js";
 import { cuzdan } from "../cuzdan.js";
 import { rpcPost } from "../ag-okur.js";
 import { fiyatYaz } from "./portfoy-ust.js";
+import * as TV from "../takas-varlik.js";
 
 const GECKO = "https://api.geckoterminal.com/api/v2";
 const STIL = `
@@ -66,6 +67,20 @@ const STIL = `
 .bx-perde{position:fixed;inset:0;z-index:120;background:rgba(5,5,9,.62);display:flex;align-items:flex-end}.bx-perde[hidden]{display:none}
 .bx-perde>.bx-sag{display:block!important;width:100%;max-height:88vh;overflow:auto;border-radius:22px 22px 0 0;background:#14141b;border:0;border-top:1px solid var(--cizgi-guclu)}
 .bx-dock{display:none}
+/* 17 Nov 2026: the swap card (pay / receive, token pickers) */
+.tk-kart{background:var(--yuzey-0);border:1px solid var(--cizgi);border-radius:16px;padding:12px 14px}
+.tk-kart--al{background:var(--yuzey-2)}
+.tk-et{font-size:12.5px;color:var(--yazi-3);margin-bottom:4px}
+.tk-sat{display:flex;align-items:center;gap:10px}
+.bx-kutu .tk-sat input{flex:1;min-width:0;width:auto;border:0;background:transparent;height:46px;padding:0;font-size:30px;font-weight:700;font-variant-numeric:tabular-nums}
+.bx-kutu .tk-sat input:focus{outline:none}
+.tk-cikti{flex:1;min-width:0;font-size:30px;font-weight:700;font-variant-numeric:tabular-nums;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:46px}
+.tk-cip{display:inline-flex;align-items:center;gap:8px;height:44px;padding:0 12px 0 6px;border-radius:999px;border:1px solid var(--cizgi-guclu);background:var(--yuzey-1);color:var(--yazi-1);font:700 15px var(--yazi-tipi);cursor:pointer;flex:none;max-width:60%}
+.tk-cip:not(.tk-cip--sabit)::after{content:"▾";font-size:11px;opacity:.6}
+.tk-cip--sabit{cursor:default}.tk-cip>img,.tk-cip>i{width:28px!important;height:28px!important;border-radius:50%!important}
+.tk-cip-ad{display:flex;flex-direction:column;line-height:1.1;text-align:left}.tk-cip-ad small{font-size:10.5px;font-weight:500;color:var(--yazi-3)}
+.tk-alt{display:flex;justify-content:space-between;gap:8px;font-size:12.5px;color:var(--yazi-3);margin-top:2px;min-height:1.2em}
+.tk-cevir{align-self:center;margin:-14px 0;position:relative;z-index:1;width:40px;height:40px;border-radius:12px;border:4px solid var(--yuzey-1);background:var(--yuzey-2);color:var(--yazi-1);cursor:pointer;font-size:17px;line-height:1}
 @media (max-width:1180px){.bx{grid-template-columns:300px minmax(0,1fr)}.bx-sag{grid-column:2}.bx-kutu{position:static}}
 @media (max-width:860px){
   .bx{grid-template-columns:minmax(0,1fr)}.bx-sag{grid-column:auto}
@@ -262,6 +277,14 @@ export async function ciz({ param }) {
   }
 
   let _solM = null;
+  /* 17 Nov 2026 (owner: "USDC ile ödeyeceğiz, USDC ile alacağız, ama isteyen istediği gas tokeniyle alıp satacak, tıpkı
+     resimdeki gibi, ama yollar doğru olmalı"): the box is a swap card — "You pay" (amount + token picker: every chain's
+     USDC and gas token) over "You receive" (the market's token; on Sell, a picker of the same assets). Routes are relay.link
+     quotes; the cost line uses the POOL's price (GeckoTerminal), not relay's rounded USD figure (17 Nov: relay rounds
+     tiny prices to 6 decimals — BONK showed a fake 17% loss on buy and a fake 17% gain on sell). */
+  const VL = TV.varliklar(V.evmler());
+  const vBul = (k) => VL.find((x) => x.k === k) || null;
+  const vb = {}, vf = {};   // raw balances, USD prices, by asset key
   function kutuCiz(taraf) {
     const t = secili;
     const tokenAg = V.evmler().find((a) => a.id === t.zincir.relay);
@@ -272,21 +295,24 @@ export async function ciz({ param }) {
     const durum = el("div", { sinif: "bx-durum", attr: { role: "status" } });
     const ana = el("button", { sinif: "bx-ana " + (taraf === "al" ? "bx-ana--al" : "bx-ana--sat"), attr: { type: "button" }, yazi: cuzdan.hesap() ? (taraf === "al" ? "Buy " : "Sell ") + t.sembol : "Connect wallet" });
     const kapat = el("button", { sinif: "dugme dugme--sade dugme--kucuk", attr: { type: "button", style: "align-self:flex-end" }, yazi: "Close", on: { click: () => sayfaKapat() } });
-    let son = null, sayac = 0, girdi, kaynak = null, tokHam = null, ondalik = Number(t.karar || (t.zincir.k === "solana" ? 6 : 18));
-    /* 16 Nov 2026 (owner: "cüzdan bakiyesini ve kaç token olduğunu yazmıyor"): what you hold of this token shows on both
-       tabs; Solana tokens get a Solana address (connected Solana wallet, or typed and kept on this device), buy straight
-       to it, and sell with a Solana wallet (Phantom, Solflare…) through relay.link. */
+    let son = null, sayac = 0, girdi, tokHam = null, ondalik = Number(t.karar || (t.zincir.k === "solana" ? 6 : 18));
     const sol = t.zincir.k === "solana";
     const SOL_ANAHTAR = "arcpulse-sol-adres";
     const solGecerli = (a) => /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(String(a || "").trim());
     const solAdres = () => { if (_solM && _solM.solanaCuzdan.hesap()) return _solM.solanaCuzdan.hesap(); try { const a = localStorage.getItem(SOL_ANAHTAR); return solGecerli(a) ? a : null; } catch (e) { return null; } };
     const elde = el("div", { sinif: "bx-elde", yazi: "" });
-    /* 16 Nov 2026 (owner: "solanada usdc var"): Solana tokens trade against USDC on Solana too — pay from it, and
-       receive the sale in it (same wallet, no bridge). Signed by the Solana wallet. */
-    const SOL_USDC = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
-    const SOL_AG = { anahtar: "solana", ad: "Solana", id: 792703809, dolar: SOL_USDC, dolarSembol: "USDC" };
-    const kaynakAg = () => (kaynak && kaynak.value === "solana" ? SOL_AG : V.evmler().find((a) => a.anahtar === (kaynak ? kaynak.value : "arc")));
-    let alim = null;   // the sell's receive-to select (Solana tokens)
+    const SOL_USDC = TV.SOL_USDC, SOL_AG = TV.SOL_AG;
+    const cihazMi = () => { try { return localStorage.getItem("arcpulse-sol-adres-cihaz") === "1"; } catch (e) { return false; } };
+    /* the pay asset (Buy) and the receive asset (Sell): the last pick on this browser, else the best dollar balance */
+    const varsayilanOde = () => {
+      const s = vBul(TV.sonSecim("ode")); if (s) return s;
+      const simdiki = cuzdan.zincirId() ? V.evmler().find((a) => a.id === parseInt(cuzdan.zincirId(), 16)) : null;
+      if (simdiki && bakiye[simdiki.anahtar] >= 10) return vBul(simdiki.anahtar + ":dolar");
+      const enIyi = Object.entries(bakiye).sort((x, y) => y[1] - x[1])[0];
+      return vBul((enIyi && enIyi[1] >= 1 ? enIyi[0] : "arc") + ":dolar") || vBul("arc:dolar");
+    };
+    let odeme = varsayilanOde();
+    let alinan = vBul(TV.sonSecim("al")) || vBul(sol && !(cuzdan.hesap() && cihazMi()) ? "solana:dolar" : "arc:dolar");
     const eldeYaz = async () => {
       if (sol) {
         const a = solAdres();
@@ -296,7 +322,11 @@ export async function ciz({ param }) {
           const m = _solM || (_solM = await import("../solana-ikiz.js"));
           const [h, u] = await Promise.all([m.splBakiye(a, t.adres), m.splBakiye(a, SOL_USDC).catch(() => null)]);
           tokHam = h;
-          if (u != null) { bakiye.solana = Number(u) / 1e6; if (kaynak) { const o = [...kaynak.options].find((x) => x.value === "solana"); if (o) o.textContent = "Solana · USDC · $" + bakiye.solana.toFixed(2); if (bakiye.solana >= 1 && !(bakiye[kaynak.value] >= 1)) { kaynak.value = "solana"; yeniden(); } } }
+          if (u != null) {
+            bakiye.solana = Number(u) / 1e6;
+            /* the visitor holds dollars on Solana but none where the box pointed: pay from Solana (unless they picked) */
+            if (taraf === "al" && !TV.sonSecim("ode") && odeme.dolar && !(bakiye[odeme.ag.anahtar] >= 1) && bakiye.solana >= 1) { odeme = vBul("solana:dolar"); odemeCiz(); yeniden(); }
+          }
         } catch (e) { tokHam = null; elde.textContent = "Could not read your Solana balance."; return; }
       } else {
         if (!cuzdan.hesap()) { elde.textContent = "Connect your wallet to see what you hold."; tokHam = null; return; }
@@ -308,6 +338,8 @@ export async function ciz({ param }) {
       if (adet > 0) import("../cuzdan-varlik.js").then((M) => M.hatirla({ z: t.zincir.k, a: t.adres, s: t.sembol, d: ondalik, g: t.resim })).catch(() => {});
       elde.replaceChildren("You hold ", el("b", { yazi: adet.toLocaleString("en-US", { maximumFractionDigits: adet >= 1 ? 2 : 6 }) + " " + t.sembol }),
         Number(t.fiyat) > 0 ? " ≈ $" + (adet * Number(t.fiyat)).toFixed(2) : "", " on " + t.zincir.ad);
+      if (taraf === "al") alBakiye.textContent = "Balance " + adet.toLocaleString("en-US", { maximumFractionDigits: adet >= 1 ? 2 : 6 }) + " · " + t.zincir.ad;
+      if (taraf === "sat") bakiyeYaz.textContent = "Balance " + adet.toLocaleString("en-US", { maximumFractionDigits: adet >= 1 ? 2 : 6 });
     };
     /* 16 Nov 2026 (owner: "kullanıcı hangi ağda olursa olsun sadece Buy basmalı"; decision: a device account): a visitor
        with no Solana address of their own gets one made on this phone the first time a Solana token is quoted, and the
@@ -326,9 +358,21 @@ export async function ciz({ param }) {
       a = await m.cihazAdresi(); try { localStorage.setItem(SOL_ANAHTAR, a); localStorage.setItem("arcpulse-sol-adres-cihaz", "1"); localStorage.setItem("arcpulse-sol-tur", "cihaz"); } catch (e) { /* blocked */ }
       return a;
     };
-    const cihazMi = () => { try { return localStorage.getItem("arcpulse-sol-adres-cihaz") === "1"; } catch (e) { return false; } };
+    /* SOL for Solana's network fee, $0.50, paid from an EVM asset (USDC or that chain's gas token) */
+    const yarimDolarHam = async (v) => { if (v.dolar) return V.dolarHam(v.ag, 0.5); const p = vf[v.k] || await TV.fiyat(v); if (!p) throw new Error("no price for " + v.sembol); return TV.hamYap((0.5 / p).toFixed(v.ondalik), v.ondalik); };
+    const solUcretiGonder = async (v, sa) => {
+      const g = await fetch(V.RELAY + "/quote", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ user: cuzdan.hesap(), recipient: sa, originChainId: v.ag.id, destinationChainId: 792703809, originCurrency: v.adres, destinationCurrency: TV.SOL_YEREL, amount: (await yarimDolarHam(v)).toString(), tradeType: "EXACT_INPUT", refundTo: cuzdan.hesap() }) }).then((r) => r.json());
+      if (!g.steps || !g.steps.length) throw new Error("The SOL route is unavailable right now (" + (g.message || "no route") + "). Try again in a minute.");
+      for (const a2 of g.steps) for (const i2 of a2.items || []) { if (a2.kind !== "transaction") continue; const h2 = await cuzdan.agdaGonder(v.ag, { to: i2.data.to, data: i2.data.data, value: "0x" + BigInt(i2.data.value || 0).toString(16) }); await V.makbuz(v.ag, h2); }
+    };
+    const enIyiDolar = () => { const ag0 = V.evmler().filter((x) => bakiye[x.anahtar] >= 0.6).sort((x, y) => bakiye[y.anahtar] - bakiye[x.anahtar])[0]; return ag0 ? vBul(ag0.anahtar + ":dolar") : null; };
+    const solBakiyeBekle = async (sa, en, yaz) => {
+      for (let i = 0; i < 30; i++) { await new Promise((r) => setTimeout(r, 3000)); if (yaz) durum.textContent = yaz + " (" + ((i + 1) * 3) + "s)"; const b2 = await fetch("https://solana-rpc.publicnode.com", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "getBalance", params: [sa] }) }).then((r) => r.json()).catch(() => null); if (b2 && b2.result && b2.result.value >= en) return true; }
+      return false;
+    };
+    const solBakiye = (a) => fetch("https://solana-rpc.publicnode.com", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "getBalance", params: [a] }) }).then((r) => r.json()).then((j) => (j.result && j.result.value) || 0);
     const solSatir = () => {
-      if (!sol) return "";
+      if (!sol && !(taraf === "sat" && alinan && alinan.ag === SOL_AG)) return "";
       if (!solAdres() || cihazMi()) {
         const yedekDug = el("button", { sinif: "dugme dugme--sade dugme--kucuk", attr: { type: "button" }, yazi: "Back up", on: { click: async () => {
           const m = _solM || (_solM = await import("../solana-ikiz.js"));
@@ -337,7 +381,8 @@ export async function ciz({ param }) {
         const kendi = el("button", { sinif: "dugme dugme--sade dugme--kucuk", attr: { type: "button" }, yazi: "Use my own Solana address", on: { click: () => {
           try { localStorage.removeItem("arcpulse-sol-adres-cihaz"); localStorage.removeItem(SOL_ANAHTAR); } catch (e) { /* blocked */ } kutuCiz(taraf); } } });
         let bagli = false; try { bagli = localStorage.getItem("arcpulse-sol-tur") === "bagli" && !!solAdres(); } catch (e) { /* blocked */ }
-        if (bagli || (!solAdres() && cuzdan.hesap())) return el("div", { sinif: "bx-elde" }, ["Your ", t.sembol, " goes to your ARC PULSE Solana account linked to your wallet", solAdres() ? " (" + solAdres().slice(0, 4) + "…" + solAdres().slice(-4) + ")" : "", ". The same wallet opens it on any phone: nothing to back up. ", el("div", { attr: { style: "margin-top:6px" } }, [kendi])]);
+        const ne = sol ? t.sembol : alinan.sembol;
+        if (bagli || (!solAdres() && cuzdan.hesap())) return el("div", { sinif: "bx-elde" }, ["Your ", ne, " goes to your ARC PULSE Solana account linked to your wallet", solAdres() ? " (" + solAdres().slice(0, 4) + "…" + solAdres().slice(-4) + ")" : "", ". The same wallet opens it on any phone: nothing to back up. ", el("div", { attr: { style: "margin-top:6px" } }, [kendi])]);
         /* an older device-only account: one tap links it to the wallet (moves its tokens; then nothing depends on this phone) */
         const bagla = cuzdan.hesap() && solAdres() ? el("button", { sinif: "dugme dugme--marka dugme--kucuk", attr: { type: "button" }, yazi: "Link to my wallet (nothing to back up)", on: { click: async () => {
           bagla.disabled = true;
@@ -346,22 +391,17 @@ export async function ciz({ param }) {
             durum.textContent = "One free signature in your wallet opens your wallet-linked Solana account…";
             const hedef = (await m.bagliHesap(cuzdan.hesap(), (x) => cuzdan.imzala(x))).adres;
             const kaynakAdr = solAdres();
-            const bk = await fetch("https://solana-rpc.publicnode.com", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "getBalance", params: [kaynakAdr] }) }).then((r) => r.json());
-            if (((bk.result && bk.result.value) || 0) < 1000000) {
+            if ((await solBakiye(kaynakAdr)) < 1000000) {
               /* 17 Nov 2026: the balances may not be read yet when the box was opened from the page card: read them first */
-              const enIyiAg = () => V.evmler().filter((x) => bakiye[x.anahtar] >= 0.6).sort((x, y) => bakiye[y.anahtar] - bakiye[x.anahtar])[0];
-              let ag0 = enIyiAg(); if (!ag0) { durum.textContent = "Reading your balances…"; await dolarBakiyeleri(); ag0 = enIyiAg(); }
-              if (!ag0) throw new Error("Moving needs about $0.50 of SOL for Solana's fee, and no chain in your wallet has $0.60 of USDC.");
+              let v0 = enIyiDolar(); if (!v0) { durum.textContent = "Reading your balances…"; await dolarBakiyeleri(); v0 = enIyiDolar(); }
+              if (!v0) throw new Error("Moving needs about $0.50 of SOL for Solana's fee, and no chain in your wallet has $0.60 of USDC.");
               durum.textContent = "$0.50 of SOL for Solana's fee (once). Confirm in your wallet…";
-              const g = await fetch(V.RELAY + "/quote", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ user: cuzdan.hesap(), recipient: kaynakAdr, originChainId: ag0.id, destinationChainId: 792703809, originCurrency: ag0.dolar, destinationCurrency: "11111111111111111111111111111111", amount: V.dolarHam(ag0, 0.5).toString(), tradeType: "EXACT_INPUT", refundTo: cuzdan.hesap() }) }).then((r) => r.json());
-              if (!g.steps || !g.steps.length) throw new Error("The SOL route is unavailable right now (" + (g.message || "no route") + "). Try again in a minute.");
-              for (const a2 of g.steps || []) for (const i2 of a2.items || []) { if (a2.kind !== "transaction") continue; const h2 = await cuzdan.agdaGonder(ag0, { to: i2.data.to, data: i2.data.data, value: "0x" + BigInt(i2.data.value || 0).toString(16) }); await V.makbuz(ag0, h2); }
-              for (let i = 0; i < 30; i++) { await new Promise((r) => setTimeout(r, 3000)); durum.textContent = "Waiting for the SOL on Solana… (" + ((i + 1) * 3) + "s)"; const b2 = await fetch("https://solana-rpc.publicnode.com", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "getBalance", params: [kaynakAdr] }) }).then((r) => r.json()).catch(() => null); if (b2 && b2.result && b2.result.value >= 1000000) break; }
-              { const b3 = await fetch("https://solana-rpc.publicnode.com", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "getBalance", params: [kaynakAdr] }) }).then((r) => r.json()).catch(() => null);
-                if (!(b3 && b3.result && b3.result.value >= 1000000)) throw new Error("The SOL for the fee has not arrived yet. Wait a minute and tap Link again (no second signature needed)."); }
+              await solUcretiGonder(v0, kaynakAdr);
+              await solBakiyeBekle(kaynakAdr, 1000000, "Waiting for the SOL on Solana…");
+              if ((await solBakiye(kaynakAdr).catch(() => 0)) < 1000000) throw new Error("The SOL for the fee has not arrived yet. Wait a minute and tap Link again (no second signature needed).");
             }
             const M = await import("../cuzdan-varlik.js");
-            const mintler = [...new Set([t.adres, ...M.hatirlanan().filter((x) => x.z === "solana").map((x) => x.a)])];
+            const mintler = [...new Set([...(sol ? [t.adres] : []), ...M.hatirlanan().filter((x) => x.z === "solana").map((x) => x.a)])];
             await m.cihazdanBagliyaTasi(hedef, mintler, (x) => { durum.textContent = x; });
             try { localStorage.setItem(SOL_ANAHTAR, hedef); localStorage.setItem("arcpulse-sol-tur", "bagli"); localStorage.setItem("arcpulse-sol-tasindi", "1"); } catch (e) { /* blocked */ }
             durum.textContent = "Done ✓ your Solana tokens are in the account linked to your wallet (" + hedef.slice(0, 4) + "…" + hedef.slice(-4) + ").";
@@ -373,7 +413,7 @@ export async function ciz({ param }) {
         if (bagla && !window.__arcpulseOtoTasi) setTimeout(() => {
           if (!window.__arcpulseOtoTasi && bagla.isConnected && bagla.offsetParent && !bagla.disabled) { window.__arcpulseOtoTasi = true; bagla.click(); }
         }, 600);
-        return el("div", { sinif: "bx-elde" }, ["Your ", t.sembol, " goes to your ARC PULSE Solana account on this phone", solAdres() ? " (" + solAdres().slice(0, 4) + "…" + solAdres().slice(-4) + ")" : "", ". Back it up once: without a backup, clearing this browser loses it. ", el("div", { attr: { style: "display:flex;gap:6px;margin-top:6px;flex-wrap:wrap" } }, [bagla, yedekDug, kendi])]);
+        return el("div", { sinif: "bx-elde" }, ["Your ", ne, " goes to your ARC PULSE Solana account on this phone", solAdres() ? " (" + solAdres().slice(0, 4) + "…" + solAdres().slice(-4) + ")" : "", ". Back it up once: without a backup, clearing this browser loses it. ", el("div", { attr: { style: "display:flex;gap:6px;margin-top:6px;flex-wrap:wrap" } }, [bagla, yedekDug, kendi])]);
       }
       const giris = el("input", { attr: { placeholder: "Your Solana address (where tokens go)", autocomplete: "off", spellcheck: "false", "aria-label": "Your Solana address" } });
       giris.value = solAdres() || "";
@@ -387,33 +427,73 @@ export async function ciz({ param }) {
       return el("div", { sinif: "bx-sol" }, [el("label", { sinif: "bx-et", yazi: "Solana address (kept on this device only)" }), giris, yb, bag]);
     };
 
+    /* ---- the swap card ---- */
+    const usdYaz = el("span"), bakiyeYaz = el("span"), alBakiye = el("span"), cikti = el("div", { sinif: "tk-cikti", yazi: "0" }), ciktiUsd = el("span");
+    const odemeCip = el("button", { sinif: "tk-cip", attr: { type: "button", "aria-label": "Choose what you pay with" } });
+    const alinanCip = el("button", { sinif: "tk-cip", attr: { type: "button", "aria-label": "Choose what you receive" } });
+    const tokenCip = el("span", { sinif: "tk-cip tk-cip--sabit" }, [logo(t), el("span", { yazi: t.sembol })]);
+    const cipIcerik = (v) => [TV.ikon(v, 28), el("span", { sinif: "tk-cip-ad" }, [el("b", { yazi: v.sembol }), el("small", { yazi: v.ag.ad })])];
+    const odemeCiz = () => {
+      odemeCip.replaceChildren(...cipIcerik(odeme));
+      const b = vb[odeme.k];
+      const p = vf[odeme.k];
+      bakiyeYaz.textContent = b == null ? (cuzdan.hesap() ? "Reading balance…" : "") : "Balance " + TV.sayiYaz(b, odeme.ondalik) + (p != null && b > 0n ? " ($" + (Number(b) / 10 ** odeme.ondalik * p).toFixed(2) + ")" : "");
+    };
+    /* 17 Nov 2026 (owner: "bakiyeleri de göstersin"): the receive side shows what you already hold of it too */
+    const alinanCiz = () => { alinanCip.replaceChildren(...cipIcerik(alinan)); const b = vb[alinan.k]; alBakiye.textContent = b == null ? (alinan.ag === SOL_AG ? "to your Solana account" : "to your wallet") : "Balance " + TV.sayiYaz(b, alinan.ondalik) + " · " + alinan.ag.ad; };
+    const usdGuncelle = () => {
+      if (taraf === "al") { const p = vf[odeme.k]; const n = Number(girdi.value); usdYaz.textContent = p != null && n > 0 ? "≈ $" + (n * p).toFixed(2) : ""; }
+      else { const n = Number(girdi.value), p = Number(t.fiyat); usdYaz.textContent = p > 0 && n > 0 ? "≈ $" + (n * p).toFixed(2) : ""; }
+    };
+    /* balances + prices of every asset, for the picker and the chip */
+    const varlikOku = async () => {
+      const e = cuzdan.hesap(), s = solAdres();
+      await Promise.all(VL.map(async (v) => { const [b, p] = await Promise.all([TV.bakiye(v, e, s), TV.fiyat(v)]); if (b != null) vb[v.k] = b; if (p != null) vf[v.k] = p; }));
+      if (secAcik) secAcik.yenile();
+      odemeCiz(); if (taraf === "sat") alinanCiz(); usdGuncelle();
+    };
+    let secAcik = null;
+    odemeCip.addEventListener("click", () => {
+      secAcik = TV.secici({ baslik: "Pay with", liste: VL, bakiyeler: vb, fiyatlar: vf, secili: odeme, sec: async (v) => {
+        /* keep the same dollar value when the asset changes: 10 USDC must not become 10 ETH */
+        const eskiUsd = Number(girdi.value) * (vf[odeme.k] || (odeme.dolar ? 1 : 0));
+        odeme = v; TV.secimKaydet("ode", v.k); odemeCiz(); secAcik = null;
+        const p = vf[v.k] || await TV.fiyat(v); if (p) vf[v.k] = p;
+        if (eskiUsd > 0 && p) girdi.value = String(Number((eskiUsd / p).toPrecision(v.dolar ? 6 : 4)));
+        usdGuncelle(); yeniden();
+      } });
+    });
+    alinanCip.addEventListener("click", () => {
+      secAcik = TV.secici({ baslik: "Receive", liste: VL, bakiyeler: vb, fiyatlar: vf, secili: alinan, sec: (v) => { alinan = v; TV.secimKaydet("al", v.k); secAcik = null; kutuCiz("sat"); } });
+    });
+
     const teklifSatir = (a, b) => [el("span", { yazi: a }), el("b", { yazi: b })];
     async function teklif() {
       const bu = ++sayac; son = null;
       const kim = cuzdan.hesap() || V.UCRET_ALICI;
-      let govde;
+      let govde, girisUsd = null;
       if (taraf === "al") {
-        const usd = Number(girdi.value), ag = kaynakAg();
-        if (!(usd >= 1)) { teklifK.replaceChildren(...teklifSatir("At least $1", "")); return; }
+        const v = odeme, ham = TV.hamYap(girdi.value, v.ondalik);
+        if (!(ham > 0n)) { teklifK.replaceChildren(...teklifSatir("Enter an amount", "")); cikti.textContent = "0"; ciktiUsd.textContent = ""; return; }
+        const p = vf[v.k] != null ? vf[v.k] : await TV.fiyat(v); if (p != null) vf[v.k] = p;
+        girisUsd = p != null ? Number(ham) / 10 ** v.ondalik * p : null;
+        if (girisUsd != null && girisUsd < 1) { teklifK.replaceChildren(...teklifSatir("At least $1", "")); return; }
         let alici = sol ? solAdres() : kim;
         if (sol && !alici) { try { alici = await cihazHazirla(); eldeYaz(); } catch (e) { teklifK.replaceChildren(el("span", { sinif: "uyari", yazi: "This browser cannot make a Solana account (" + ((e && e.message) || e) + "). Type a Solana address above." })); return; } }
-        const odeyen = ag === SOL_AG ? solAdres() : kim;
-        if (ag === SOL_AG && !odeyen) { teklifK.replaceChildren(el("span", { sinif: "uyari", yazi: "Connect your Solana wallet above to pay from Solana." })); return; }
-        govde = { user: odeyen, recipient: alici, originChainId: ag.id, destinationChainId: t.zincir.relay, originCurrency: ag.dolar, destinationCurrency: t.adres, amount: (ag === SOL_AG ? BigInt(Math.round(usd * 1e6)) : V.dolarHam(ag, usd)).toString(), tradeType: "EXACT_INPUT", refundTo: odeyen, appFees: [{ recipient: V.UCRET_ALICI, fee: V.UCRET_BPS }] };
+        const odeyen = v.ag === SOL_AG ? solAdres() : kim;
+        if (v.ag === SOL_AG && !odeyen) { teklifK.replaceChildren(el("span", { sinif: "uyari", yazi: "Connect your Solana wallet above to pay from Solana." })); return; }
+        govde = { user: odeyen, recipient: alici, originChainId: v.ag.id, destinationChainId: t.zincir.relay, originCurrency: v.adres, destinationCurrency: t.adres, amount: ham.toString(), tradeType: "EXACT_INPUT", refundTo: odeyen, appFees: [{ recipient: V.UCRET_ALICI, fee: V.UCRET_BPS }] };
       } else {
         if (!tokenAg && !sol) { teklifK.replaceChildren(el("span", { sinif: "uyari", yazi: "Selling " + t.zincir.ad + " tokens from here is not available yet." })); return; }
         const adet = Number(girdi.value);
-        if (!(adet > 0)) { teklifK.replaceChildren(...teklifSatir("Enter how many to sell", "")); return; }
-        if (sol) {
-          const sa = solAdres();
-          if (!sa) { teklifK.replaceChildren(el("span", { sinif: "uyari", yazi: "Connect your Solana wallet above to sell." })); return; }
-          const hamS = BigInt(Math.floor(adet * 10 ** Math.min(ondalik, 6))) * 10n ** BigInt(Math.max(0, ondalik - 6));
-          const solaGel = !alim || alim.value === "solana";
-          govde = { user: sa, recipient: solaGel ? sa : (cuzdan.hesap() || V.UCRET_ALICI), originChainId: 792703809, destinationChainId: solaGel ? 792703809 : 5042, originCurrency: t.adres, destinationCurrency: solaGel ? SOL_USDC : "0x3600000000000000000000000000000000000000", amount: hamS.toString(), tradeType: "EXACT_INPUT", refundTo: sa, appFees: [{ recipient: V.UCRET_ALICI, fee: V.UCRET_BPS }] };
-        } else {
-        const ham = BigInt(Math.floor(adet * 1e6)) * 10n ** BigInt(Math.max(0, ondalik - 6));
-        govde = { user: kim, recipient: kim, originChainId: t.zincir.relay, destinationChainId: 5042, originCurrency: t.adres, destinationCurrency: "0x3600000000000000000000000000000000000000", amount: ham.toString(), tradeType: "EXACT_INPUT", refundTo: kim, appFees: [{ recipient: V.UCRET_ALICI, fee: V.UCRET_BPS }] };
-        }
+        if (!(adet > 0)) { teklifK.replaceChildren(...teklifSatir("Enter how many to sell", "")); cikti.textContent = "0"; ciktiUsd.textContent = ""; return; }
+        if (Number(t.fiyat) > 0) girisUsd = adet * Number(t.fiyat);
+        const ham = TV.hamYap(girdi.value, ondalik);
+        let alici = alinan.ag === SOL_AG ? solAdres() : kim;
+        if (alinan.ag === SOL_AG && !alici) { try { alici = await cihazHazirla(); } catch (e) { teklifK.replaceChildren(el("span", { sinif: "uyari", yazi: "Add a Solana address to receive on Solana." })); return; } }
+        const kaynakAdr = sol ? solAdres() : kim;
+        if (sol && !kaynakAdr) { teklifK.replaceChildren(el("span", { sinif: "uyari", yazi: "Connect your Solana wallet above to sell." })); return; }
+        govde = { user: kaynakAdr, recipient: alici, originChainId: sol ? 792703809 : t.zincir.relay, destinationChainId: alinan.ag.id, originCurrency: t.adres, destinationCurrency: alinan.adres, amount: ham.toString(), tradeType: "EXACT_INPUT", refundTo: kaynakAdr, appFees: [{ recipient: V.UCRET_ALICI, fee: V.UCRET_BPS }] };
       }
       teklifK.replaceChildren(...teklifSatir("Finding the best route…", ""));
       try {
@@ -421,70 +501,88 @@ export async function ciz({ param }) {
         if (bu !== sayac) return;
         if (!q.details) {
           let neden = q.message || "no route";
-          if (taraf === "al") { const ag = kaynakAg(), var_ = bakiye[ag.anahtar]; if (var_ != null && var_ < Number(girdi.value)) neden = "You have $" + var_.toFixed(2) + " on " + ag.ad + "."; }
-          teklifK.replaceChildren(el("span", { sinif: "uyari", yazi: "No route right now: " + neden })); return;
+          if (taraf === "al" && vb[odeme.k] != null && vb[odeme.k] < TV.hamYap(girdi.value, odeme.ondalik)) neden = "you have " + TV.sayiYaz(vb[odeme.k], odeme.ondalik) + " " + odeme.sembol + " on " + odeme.ag.ad + ".";
+          teklifK.replaceChildren(el("span", { sinif: "uyari", yazi: "No route right now: " + neden })); cikti.textContent = "—"; return;
         }
         son = q; const d = q.details, f = q.fees || {};
-        const ag = taraf === "al" ? kaynakAg() : (tokenAg || SOL_AG);
+        const outN = Number(d.currencyOut.amountFormatted);
+        /* the value out: by the POOL's price for the market token, by $1 / relay's price for USDC and gas tokens */
+        let cikisUsd;
+        if (taraf === "al") cikisUsd = Number(t.fiyat) > 0 ? outN * Number(t.fiyat) : Number(d.currencyOut.amountUsd);
+        else { const p = vf[alinan.k] != null ? vf[alinan.k] : await TV.fiyat(alinan); cikisUsd = p != null ? outN * p : Number(d.currencyOut.amountUsd); }
+        if (girisUsd == null) girisUsd = Number(d.currencyIn.amountUsd);
+        const kayip = girisUsd > 0 ? 1 - cikisUsd / girisUsd : null;
+        cikti.textContent = outN.toLocaleString("en-US", { maximumFractionDigits: outN >= 1000 ? 0 : outN >= 1 ? 4 : 8 });
+        ciktiUsd.textContent = cikisUsd > 0 ? "≈ $" + cikisUsd.toFixed(2) : "";
+        const yetersiz = taraf === "al" && vb[odeme.k] != null && vb[odeme.k] < TV.hamYap(girdi.value, odeme.ondalik);
         teklifK.replaceChildren(
-          ...teklifSatir("You pay", Number(d.currencyIn.amountFormatted).toLocaleString("en-US", { maximumFractionDigits: 4 }) + " " + d.currencyIn.currency.symbol + " on " + ag.ad),
-          ...teklifSatir("You get", "≈ " + Number(d.currencyOut.amountFormatted).toLocaleString("en-US", { maximumFractionDigits: 4 }) + " " + d.currencyOut.currency.symbol + (taraf === "al" ? " on " + t.zincir.ad : sol && (!alim || alim.value === "solana") ? " on Solana" : " on Arc")),
-          ...teklifSatir("Worth", "$" + Number(d.currencyOut.amountUsd).toFixed(2)),
+          ...teklifSatir("You pay", Number(d.currencyIn.amountFormatted).toLocaleString("en-US", { maximumFractionDigits: 6 }) + " " + d.currencyIn.currency.symbol + " on " + (taraf === "al" ? odeme.ag.ad : t.zincir.ad)),
+          ...teklifSatir("You get", "≈ " + cikti.textContent + " " + d.currencyOut.currency.symbol + " on " + (taraf === "al" ? t.zincir.ad : alinan.ag.ad)),
           ...teklifSatir("Route", V.rotaYazi(q, t)),
           ...teklifSatir("Route + gas", "$" + (Number((f.relayer && f.relayer.amountUsd) || 0) + Number((f.gas && f.gas.amountUsd) || 0)).toFixed(3)),
-          ...teklifSatir("ARC PULSE fee (0.5%)", "$" + Number((f.app && f.app.amountUsd) || 0).toFixed(3)),
-          taraf === "al" && bakiye[ag.anahtar] != null && bakiye[ag.anahtar] < Number(girdi.value) ? el("span", { sinif: "uyari", yazi: "You have $" + bakiye[ag.anahtar].toFixed(2) + " on " + ag.ad + ": not enough." }) : el("span"));
+          ...teklifSatir("ARC PULSE fee (0.5%)", "$" + (girisUsd * 0.005).toFixed(3)),
+          ...(kayip != null ? teklifSatir("Total cost (price impact + fees)", (kayip * 100).toFixed(1) + "%") : []),
+          kayip != null && kayip > 0.05 ? el("span", { sinif: "uyari", yazi: "High cost for this size: " + (kayip * 100).toFixed(1) + "%. A bridge to " + (taraf === "al" ? t.zincir.ad : alinan.ag.ad) + " has a fixed fee — a larger amount, or paying on the same chain, costs less." }) : el("span"),
+          yetersiz ? el("span", { sinif: "uyari", yazi: "You have " + TV.sayiYaz(vb[odeme.k], odeme.ondalik) + " " + odeme.sembol + " on " + odeme.ag.ad + ": not enough." }) : el("span"));
       } catch (e) { if (bu === sayac) teklifK.replaceChildren(el("span", { sinif: "uyari", yazi: "Route service unavailable, try again." })); }
     }
     let gec = null; const yeniden = () => { clearTimeout(gec); gec = setTimeout(teklif, 400); };
 
     const govde = [el("div", { sinif: "bx-tab", attr: { role: "tablist" } }, [tabAl, tabSat])];
+    const cevir = el("button", { sinif: "tk-cevir", attr: { type: "button", "aria-label": taraf === "al" ? "Switch to sell" : "Switch to buy" }, yazi: "↓", on: { click: () => kutuCiz(taraf === "al" ? "sat" : "al") } });
+    girdi = el("input", { attr: { type: "text", inputmode: "decimal", autocomplete: "off", placeholder: "0", "aria-label": taraf === "al" ? "Amount to pay" : "Tokens to sell" } });
+    girdi.addEventListener("input", () => { girdi.value = girdi.value.replace(",", ".").replace(/[^\d.]/g, "").replace(/(\..*)\./g, "$1"); usdGuncelle(); yeniden(); });
+    const yuzdeCip = (p) => el("button", { attr: { type: "button" }, yazi: p === 100 ? "Max" : p + "%", on: { click: async () => {
+      if (taraf === "al") {
+        if (vb[odeme.k] == null) { durum.textContent = cuzdan.hesap() ? "Reading your balance…" : "Connect your wallet to use your balance."; await varlikOku(); durum.textContent = ""; if (vb[odeme.k] == null) return; }
+        let x = (vb[odeme.k] * BigInt(p)) / 100n;
+        const kalan = TV.hamYap(String(TV.yedek(odeme)), odeme.ondalik);   // gas the visitor still needs on that chain
+        if (p === 100 && kalan > 0n) x = x > kalan ? x - kalan : 0n;
+        girdi.value = TV.sayiYaz(x, odeme.ondalik, odeme.ondalik).replace(/,/g, "");
+        if (p === 100 && kalan > 0n) durum.textContent = "Max keeps " + TV.yedek(odeme) + " " + odeme.sembol + " for the network fee.";
+      } else {
+        if (tokHam == null) return;
+        const x = (tokHam * BigInt(p)) / 100n; girdi.value = String(Number(x / 10n ** BigInt(Math.max(0, ondalik - 6))) / 1e6);
+      }
+      usdGuncelle(); yeniden();
+    } } });
     if (taraf === "al") {
-      kaynak = el("select", { attr: { "aria-label": "Pay from" } }, [...(sol ? [SOL_AG] : []), ...V.evmler()].map((a) => el("option", { attr: { value: a.anahtar }, yazi: a.ad + " · " + (a.dolarSembol || "USDC") + (bakiye[a.anahtar] != null ? " · $" + bakiye[a.anahtar].toFixed(2) : "") })));
-      const enIyi = Object.entries(bakiye).sort((x, y) => y[1] - x[1])[0];
-      kaynak.value = enIyi && enIyi[1] >= 1 ? enIyi[0] : "arc";
-      /* 16 Nov 2026 (owner: "işlem açmak için ağ değiştirmesin"): pay from the network the wallet is already on when it
-         holds enough there ($10, the default amount) — then no network switch is asked at all */
-      { const simdiki = cuzdan.zincirId() ? V.evmler().find((a) => a.id === parseInt(cuzdan.zincirId(), 16)) : null;
-        if (simdiki && bakiye[simdiki.anahtar] >= 10) kaynak.value = simdiki.anahtar; }
-      girdi = el("input", { attr: { type: "number", inputmode: "decimal", min: "1", step: "1", value: "10", "aria-label": "Amount in USD" } });
-      govde.push(solSatir(), elde, el("label", { sinif: "bx-et", yazi: "Pay from (your balance)" }), kaynak, el("label", { sinif: "bx-et", yazi: "Amount (USD)" }), girdi,
-        el("div", { sinif: "bx-cip" }, [10, 25, 50, 100].map((v) => el("button", { attr: { type: "button" }, yazi: "$" + v, on: { click: () => { girdi.value = String(v); yeniden(); } } }))));
-      kaynak.addEventListener("change", yeniden);
+      girdi.value = odeme.dolar ? "10" : "";
+      alBakiye.textContent = "on " + t.zincir.ad;
+      govde.push(solSatir(), elde,
+        el("div", { sinif: "tk-kart" }, [el("div", { sinif: "tk-et", yazi: "You pay" }), el("div", { sinif: "tk-sat" }, [girdi, odemeCip]), el("div", { sinif: "tk-alt" }, [usdYaz, bakiyeYaz])]),
+        cevir,
+        el("div", { sinif: "tk-kart tk-kart--al" }, [el("div", { sinif: "tk-et", yazi: "You receive" }), el("div", { sinif: "tk-sat" }, [cikti, tokenCip]), el("div", { sinif: "tk-alt" }, [ciktiUsd, alBakiye])]),
+        el("div", { sinif: "bx-cip" }, [25, 50, 75, 100].map(yuzdeCip)));
+      odemeCiz();
     } else {
-      girdi = el("input", { attr: { type: "number", inputmode: "decimal", min: "0", step: "any", placeholder: "0", "aria-label": "Tokens to sell" } });
-      govde.push(solSatir(), el("label", { sinif: "bx-et", yazi: "Amount to sell (" + t.sembol + " on " + t.zincir.ad + ")" }), girdi, elde,
-        el("div", { sinif: "bx-cip" }, [25, 50, 75, 100].map((p) => el("button", { attr: { type: "button" }, yazi: p + "%", on: { click: () => { if (tokHam == null) return; const x = (tokHam * BigInt(p)) / 100n; girdi.value = String(Number(x / 10n ** BigInt(Math.max(0, ondalik - 6))) / 1e6); yeniden(); } } }))),
-        sol ? (alim = el("select", { attr: { "aria-label": "Receive" } }, [el("option", { attr: { value: "solana" }, yazi: "Receive USDC on Solana (same wallet)" }), el("option", { attr: { value: "arc" }, yazi: "Receive USDC on Arc (your EVM address)" })]),
-          /* 17 Nov 2026 (owner: sold, but "para USDC olmadı" — it went to the phone's Solana account): with an EVM wallet
-             connected and the site's own Solana account, the USDC comes to Arc by default */
-          (cuzdan.hesap() && cihazMi() ? (alim.value = "arc") : 0), alim) : "",
-        sol ? "" : el("div", { sinif: "bx-not", yazi: "You receive USDC on Arc, at your same address." }));
-      if (alim) alim.addEventListener("change", yeniden);
+      govde.push(solSatir(), elde,
+        el("div", { sinif: "tk-kart" }, [el("div", { sinif: "tk-et", yazi: "You sell" }), el("div", { sinif: "tk-sat" }, [girdi, tokenCip]), el("div", { sinif: "tk-alt" }, [usdYaz, bakiyeYaz])]),
+        cevir,
+        el("div", { sinif: "tk-kart tk-kart--al" }, [el("div", { sinif: "tk-et", yazi: "You receive" }), el("div", { sinif: "tk-sat" }, [cikti, alinanCip]), el("div", { sinif: "tk-alt" }, [ciktiUsd, alBakiye])]),
+        el("div", { sinif: "bx-cip" }, [25, 50, 75, 100].map(yuzdeCip)));
+      alinanCiz();
     }
     eldeYaz();
-    girdi.addEventListener("input", yeniden);
+    varlikOku();
     ana.addEventListener("click", async () => {
       if (ana._m) return; ana._m = true; ana.disabled = true;
       try {
-        const solYalniz = (sol && taraf === "sat" && (!alim || alim.value === "solana")) || (taraf === "al" && kaynak && kaynak.value === "solana");
+        const solYalniz = (sol && taraf === "sat" && alinan.ag === SOL_AG) || (taraf === "al" && odeme.ag === SOL_AG);
         if (!cuzdan.hesap() && !solYalniz) { await cuzdan.bagla(); await dolarBakiyeleri(); kutuCiz(taraf); return; }
-        if ((sol && taraf === "sat") || (taraf === "al" && kaynak && kaynak.value === "solana")) {
+        if ((sol && taraf === "sat") || (taraf === "al" && odeme.ag === SOL_AG)) {
           const m = _solM || (_solM = await import("../solana-ikiz.js"));
           if (!m.solanaCuzdan.hesap()) { durum.textContent = "Connect your Solana wallet…"; await m.solanaCuzdan.baglan(); }
           /* the device account pays its own Solana fee: when it has no SOL (the first buy's top-up was skipped), add $0.50
              of SOL from the EVM wallet first — one confirm, once */
           if (taraf === "sat" && cihazMi() && cuzdan.hesap()) {
             const sa = solAdres();
-            const bk = await fetch("https://solana-rpc.publicnode.com", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "getBalance", params: [sa] }) }).then((r) => r.json()).catch(() => null);
-            if (bk && ((bk.result && bk.result.value) || 0) < 1000000) {
-              const ag0 = V.evmler().filter((x) => bakiye[x.anahtar] >= 0.6).sort((x, y) => bakiye[y.anahtar] - bakiye[x.anahtar])[0];
-              if (!ag0) throw new Error("Your Solana account needs about $0.50 of SOL for the network fee, and no chain in your wallet has $0.60 of USDC to send it.");
+            if ((await solBakiye(sa).catch(() => null)) < 1000000) {
+              const v0 = enIyiDolar();
+              if (!v0) throw new Error("Your Solana account needs about $0.50 of SOL for the network fee, and no chain in your wallet has $0.60 of USDC to send it.");
               durum.textContent = "First: $0.50 of SOL to your Solana account for the network fee (once). Confirm in your wallet…";
-              const g = await fetch(V.RELAY + "/quote", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ user: cuzdan.hesap(), recipient: sa, originChainId: ag0.id, destinationChainId: 792703809, originCurrency: ag0.dolar, destinationCurrency: "11111111111111111111111111111111", amount: V.dolarHam(ag0, 0.5).toString(), tradeType: "EXACT_INPUT", refundTo: cuzdan.hesap() }) }).then((r) => r.json());
-              if (!g.steps) throw new Error("Could not send SOL for the fee: " + (g.message || "no route"));
-              for (const a2 of g.steps) for (const i2 of a2.items || []) { if (a2.kind !== "transaction") continue; const h2 = await cuzdan.agdaGonder(ag0, { to: i2.data.to, data: i2.data.data, value: "0x" + BigInt(i2.data.value || 0).toString(16) }); await V.makbuz(ag0, h2); }
-              for (let i = 0; i < 30; i++) { await new Promise((r) => setTimeout(r, 3000)); const b2 = await fetch("https://solana-rpc.publicnode.com", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "getBalance", params: [sa] }) }).then((r) => r.json()).catch(() => null); durum.textContent = "Waiting for the SOL on Solana… (" + ((i + 1) * 3) + "s)"; if (b2 && b2.result && b2.result.value >= 1000000) break; }
+              await solUcretiGonder(v0, sa);
+              await solBakiyeBekle(sa, 1000000, "Waiting for the SOL on Solana…");
             }
           }
           await teklif();
@@ -495,13 +593,13 @@ export async function ciz({ param }) {
             await m.relayAdimi(it.data);
           }
           if (taraf === "al") import("../cuzdan-varlik.js").then((M) => M.hatirla({ z: t.zincir.k, a: t.adres, s: t.sembol, d: ondalik, g: t.resim })).catch(() => {});
-        durum.textContent = taraf === "al" ? "Paid ✓ " + t.sembol + " arrives in your Solana wallet, usually within a minute." : (!alim || alim.value === "solana") ? "Sold ✓ USDC arrives in your Solana wallet, usually within a minute." : "Sold ✓ USDC arrives on Arc at " + cuzdan.hesap().slice(0, 6) + "…, usually within a minute.";
-          setTimeout(() => { eldeYaz(); }, 15000);
+          durum.textContent = taraf === "al" ? "Paid ✓ " + t.sembol + " arrives on " + t.zincir.ad + ", usually within a minute." : "Sold ✓ " + alinan.sembol + " arrives on " + alinan.ag.ad + (alinan.ag === SOL_AG ? " in your Solana account" : " at " + (cuzdan.hesap() || "").slice(0, 6) + "…") + ", usually within a minute.";
+          setTimeout(() => { eldeYaz(); varlikOku(); }, 15000);
           return;
         }
         await teklif();
         const q = son; if (!q) { durum.textContent = "No route to send."; return; }
-        const ag = taraf === "al" ? kaynakAg() : tokenAg;
+        const ag = taraf === "al" ? odeme.ag : tokenAg;
         for (const adim of q.steps) for (const it of adim.items || []) {
           if (adim.kind !== "transaction") continue;
           durum.textContent = (adim.id === "approve" ? "Approve " : "Confirm ") + "in your wallet…";
@@ -509,25 +607,24 @@ export async function ciz({ param }) {
           const h = await cuzdan.agdaGonder(ag, { to: d.to, data: d.data, value: "0x" + BigInt(d.value || 0).toString(16) });
           if ((await V.makbuz(ag, h)) !== 1) throw new Error("Reverted: " + h);
         }
-        if (sol && taraf === "al" && cihazMi() && ag !== SOL_AG) {
+        /* a Solana token bought into the device account: $0.50 of SOL for its future sell fees, paid with the same asset */
+        if (sol && taraf === "al" && cihazMi() && odeme.ag !== SOL_AG) {
           try {
             const sa = solAdres();
-            const bk = await fetch("https://solana-rpc.publicnode.com", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "getBalance", params: [sa] }) }).then((r) => r.json());
-            if (((bk.result && bk.result.value) || 0) < 3000000) {   // under 0.003 SOL
+            if ((await solBakiye(sa)) < 3000000) {   // under 0.003 SOL
               durum.textContent = "One more confirm: $0.50 of SOL to your Solana account, for its future sell fees (first time only)…";
-              const g = await fetch(V.RELAY + "/quote", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ user: cuzdan.hesap(), recipient: sa, originChainId: ag.id, destinationChainId: 792703809, originCurrency: ag.dolar, destinationCurrency: "11111111111111111111111111111111", amount: V.dolarHam(ag, 0.5).toString(), tradeType: "EXACT_INPUT", refundTo: cuzdan.hesap() }) }).then((r) => r.json());
-              for (const a2 of g.steps || []) for (const i2 of a2.items || []) { if (a2.kind !== "transaction") continue; const h2 = await cuzdan.agdaGonder(ag, { to: i2.data.to, data: i2.data.data, value: "0x" + BigInt(i2.data.value || 0).toString(16) }); await V.makbuz(ag, h2); }
+              await solUcretiGonder(odeme, sa);
             }
           } catch (e) { /* the buy went through; the SOL for fees can be added later */ }
         }
         if (taraf === "al") import("../cuzdan-varlik.js").then((M) => M.hatirla({ z: t.zincir.k, a: t.adres, s: t.sembol, d: ondalik, g: t.resim })).catch(() => {});
-        durum.textContent = taraf === "al" ? "Paid ✓ " + t.sembol + " arrives on " + t.zincir.ad + (sol ? " at " + solAdres().slice(0, 6) + "…" : "") + ", usually within a minute." : "Sold ✓ USDC arrives on Arc, usually within a minute.";
-        setTimeout(() => { dolarBakiyeleri().then(() => {}); eldeYaz(); }, 20000);
+        durum.textContent = taraf === "al" ? "Paid ✓ " + t.sembol + " arrives on " + t.zincir.ad + (sol ? " at " + solAdres().slice(0, 6) + "…" : "") + ", usually within a minute." : "Sold ✓ " + alinan.sembol + " arrives on " + alinan.ag.ad + ", usually within a minute.";
+        setTimeout(() => { dolarBakiyeleri().then(() => {}); eldeYaz(); varlikOku(); }, 20000);
       } catch (e) { durum.textContent = (e && (e.shortMessage || e.message)) || "Could not send."; }
       finally { ana._m = false; ana.disabled = false; }
     });
     sag.replaceChildren(el("div", { sinif: "bx-kutu" }, [kapat, ...govde, teklifK, ana, durum,
-      el("div", { sinif: "bx-not", yazi: "Routed by relay.link through the DEXes holding the liquidity. Your wallet signs; ARC PULSE never holds your funds. 0.5% ARC PULSE fee." })]));
+      el("div", { sinif: "bx-not", yazi: "Pay or receive in USDC or any chain's gas token. Routed by relay.link through the DEXes holding the liquidity. Your wallet signs; ARC PULSE never holds your funds. 0.5% ARC PULSE fee." })]));
     kapat.style.display = window.matchMedia("(max-width: 860px)").matches ? "" : "none";
     teklif();
   }
