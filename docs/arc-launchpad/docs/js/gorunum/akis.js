@@ -58,7 +58,9 @@ export async function ciz() {
   const guncel = el("span");
   kok.append(el("div", { sinif: "ht-ust" }, [el("h1", { yazi: "Hot tokens" }),
     el("p", {}, ["Tokens moving across 13 chains that passed our safety checks. Buy with USDC or any chain's gas token, from your own wallet. ", guncel])]));
-  const SEKME = [["trend", "Trending"], ["yeni", "New"], ["yukselen", "Gainers"], ["tweet", "Tweeted"], ["izlenen", "Watchlist"]];
+  /* 17 Nov 2026 (owner): the tab is "Hotweet", after Watchlist where the owner marked it — it will hold more than posts
+     (e.g. the same movers' wallets on chain) */
+  const SEKME = [["trend", "Trending"], ["yeni", "New"], ["yukselen", "Gainers"], ["izlenen", "Watchlist"], ["tweet", "Hotweet"]];
   let sekme = "trend", zincir = "", veri = null;
   /* 17 Nov 2026 (owner: "tek bir tweeti tokenleri uçuran kişilerin tweetlerini takip et"): Tweeted — tokens named in posts
      by accounts whose single post moves prices (scripts/tweet-radar.js -> veri/tweet-tokenler.json). Each card: who, when,
