@@ -34,8 +34,22 @@ const _mum = new Map();
 function mumlar(t) {
   const k = t.z + ":" + t.havuz, x = _mum.get(k);
   if (x && Date.now() - x.t < 300000) return x.p;
-  const p = fetch(GECKO + "/networks/" + GECKO_AG[t.z] + "/pools/" + t.havuz + "/ohlcv/hour?aggregate=1&limit=1000&currency=usd", { headers: { accept: "application/json" } })
-    .then((r) => r.json()).then((j) => (j.data.attributes.ohlcv_list || []).map((y) => [y[0] * 1000, +y[1], +y[2], +y[3], +y[4], +y[5]]).sort((a, b) => a[0] - b[0])).catch(() => null);
+  /* 17 Nov 2026 (owner: "bazılarında Time Machine çalışmıyor"): the free data service refuses calls when busy (the Trade
+     page makes many): wait and ask again, three times; a good answer is kept 15 min in this browser */
+  const anahtar = "stm:" + k;
+  const p = (async () => {
+    try { const c = JSON.parse(localStorage.getItem(anahtar) || "null"); if (c && Date.now() - c.t < 15 * 60000 && c.m && c.m.length) return c.m; } catch (e) { /* none */ }
+    for (let i = 0; i < 4; i++) {
+      const j = await fetch(GECKO + "/networks/" + GECKO_AG[t.z] + "/pools/" + t.havuz + "/ohlcv/hour?aggregate=1&limit=1000&currency=usd", { headers: { accept: "application/json" } }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+      if (j && j.data) {
+        const m = (j.data.attributes.ohlcv_list || []).map((y) => [y[0] * 1000, +y[1], +y[2], +y[3], +y[4], +y[5]]).sort((a, b) => a[0] - b[0]);
+        try { localStorage.setItem(anahtar, JSON.stringify({ t: Date.now(), m })); } catch (e) { /* full */ }
+        return m;
+      }
+      await new Promise((x) => setTimeout(x, 3000 * (i + 1)));
+    }
+    return null;
+  })();
   _mum.set(k, { t: Date.now(), p });
   return p;
 }
@@ -119,7 +133,7 @@ export function spotZamanMakinesi({ t, fiyat }) {
     c.setLineDash([]);
   }
   calistir.addEventListener("click", async () => {
-    calistir.disabled = true; calistir.textContent = "Reading this token's hourly history…";
+    calistir.disabled = true; calistir.textContent = "Reading this token's hourly history… (a busy data service can take up to 30 s)";
     const [m, H] = await Promise.all([mumlar(t), havuzOku()]);
     const bitir = (yazi) => { calistir.disabled = false; calistir.textContent = "🔮 Run the Time Machine (10,000 futures)"; if (yazi) metin.replaceChildren(el("div", { sinif: "stm__m stm__u", yazi })); };
     if (!m) return bitir("This token's price history could not be read right now (the free data service may be busy). Try again in a minute.");

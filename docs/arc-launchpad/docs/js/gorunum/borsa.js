@@ -263,7 +263,7 @@ export async function ciz({ param }) {
               el("span", { yazi: (a.tx_from_address || "").slice(0, 6) + "…" + (a.tx_from_address || "").slice(-4) }), el("span", { yazi: "$" + Number(a.volume_in_usd).toLocaleString("en-US", { maximumFractionDigits: 0 }) }), el("span", { yazi: fiyatYaz(px) })]); }));
       } catch (e) { islemler.replaceChildren(el("div", { sinif: "bx-bos", yazi: "Swaps could not be loaded right now." })); }
     };
-    yukle(); islemZaman = setInterval(yukle, 20000);
+    yukle(); islemZaman = setInterval(yukle, 45000);   // 17 Nov: was 20 s; saves the free data limit for the Time Machine
   }
 
   /* the Buy / Sell box: relay.link quotes through the DEXes with the liquidity; the wallet signs */
@@ -677,8 +677,7 @@ export async function ciz({ param }) {
       /* the page shows now; the market lists fill in behind it */
       (async () => {
         try { const d = await V.veri(null); piyasa = { trend: V.suz(d.trend.filter((t) => t.likidite >= V.ESIK)), yeni: V.suz(d.yeni.filter((t) => t.likidite >= V.ESIK_YENI)) }; } catch (e) { /* the token is open anyway */ }
-        listeCiz();
-        for (const k of ["base", "solana", "bsc", "ethereum"]) { if (!kok.isConnected) break; await zincirYukle(k); await new Promise((x) => setTimeout(x, 4000)); }
+        listeCiz();   // (17 Nov: the per-chain lists are not loaded here — they ate the free limit the Time Machine needs)
       })();
       return kok;
     }
