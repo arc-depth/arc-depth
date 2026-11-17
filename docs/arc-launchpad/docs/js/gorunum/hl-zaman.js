@@ -56,9 +56,10 @@ export function zamanMakinesi({ plan, fiyat }) {
   ufukCiz();
   const ACIK = {
     1: "Time Machine 1 · forward model: 10,000 possible futures from this market's forecast volatility, options pricing, scheduled events and liquidation levels. It takes no view on direction.",
+    3: "Time Machine 3 · AI model: Kronos, an open-source AI model trained on candlestick charts from many exchanges, reads the last 256 hourly candles of this market and writes 20 possible next 24 hours. Experimental: its accuracy is being measured in public and is not proven yet.",
     2: "Time Machine 2 · chart setups: finds the past hours of this market whose 1 h chart looked like now (RSI, trend, Bollinger, volume, MACD) and replays what really followed, scaled to today's volatility, 10,000 times. Direction comes from those past moves.",
   };
-  const modCiz = () => { modK.replaceChildren(...[[1, "Time Machine 1 · Forward model"], [2, "Time Machine 2 · Chart setups 📈"]].map(([k, ad]) => el("button", { sinif: "dugme dugme--sade dugme--kucuk", attr: { type: "button", "aria-pressed": String(mod === k), style: "flex:1 1 140px;min-width:0;white-space:normal" }, yazi: ad, on: { click: () => { mod = k; modCiz(); } } }))); aciklama.textContent = ACIK[mod]; };
+  const modCiz = () => { modK.replaceChildren(...[[1, "Time Machine 1 · Forward model"], [2, "Time Machine 2 · Chart setups 📈"], [3, "Time Machine 3 · AI model 🤖 beta"]].map(([k, ad]) => el("button", { sinif: "dugme dugme--sade dugme--kucuk", attr: { type: "button", "aria-pressed": String(mod === k), style: "flex:1 1 140px;min-width:0;white-space:normal" }, yazi: ad, on: { click: () => { mod = k; modCiz(); } } }))); aciklama.textContent = ACIK[mod]; calistir.textContent = mod === 3 ? "🤖 Run Time Machine 3" : "🔮 Run the Time Machine (10,000 futures)"; };
   modCiz();
 
   let anim = 0;
@@ -94,6 +95,7 @@ export function zamanMakinesi({ plan, fiyat }) {
   calistir.addEventListener("click", async () => {
     const pl = plan();
     if (!pl) { metin.replaceChildren(el("div", { sinif: "tm__m tm__u", yazi: "Set up a plan in Aim assist first (amount, stop distance, take profit)." })); return; }
+    if (mod === 3) return kronosCalistir(pl);
     calistir.disabled = true; calistir.textContent = "Loading this market's forward inputs…";
     const [D, I, S] = await Promise.all([oku("tm/" + pl.coin + ".json"), oku("tm/index.json"), oku("tm-skor.json")]);
     if (!D || !D.artik) { calistir.disabled = false; calistir.textContent = "🔮 Run the Time Machine (10,000 futures)"; metin.replaceChildren(el("div", { sinif: "tm__m tm__u", yazi: "The Time Machine covers markets with at least $1M daily volume; " + pl.coin + " has no forward inputs yet." })); return; }
@@ -161,7 +163,83 @@ export function zamanMakinesi({ plan, fiyat }) {
       el("div", { sinif: "tm__n", yazi: trackRecord(S) }),
       el("div", { sinif: "tm__n", yazi: (mod === 2 ? "Replays of past moves after similar charts, not a forecast and not advice." : "Odds from a model of possible futures, not a forecast of the price and not advice. The model has no view on direction.") + " News it cannot see can change everything. Runs in your browser; your plan is not sent anywhere." })].filter(Boolean));
   });
+  /* 17 Nov 2026 (owner: "show it on the site"): Time Machine 3 = Kronos (github.com/shiyu-coder/Kronos, MIT).
+     The model runs on our machine every 2 hours (C:/kronos/golge.py) and publishes veri/kronos.json: per market,
+     20 sampled 24 h paths of hourly close/high/low as ln(price / price at forecast). Here they are re-based to the
+     plan's entry and checked against its TP / stop hour by hour. If one hour's range touches both, it counts as
+     the stop (the hourly candle cannot say which came first): the cautious reading. */
+  async function kronosCalistir(pl) {
+    calistir.disabled = true; calistir.textContent = "Loading the AI model's forecast…";
+    const [K, S] = await Promise.all([oku("kronos.json"), oku("kronos-skor.json")]);
+    const k = K && K.coinler && K.coinler[pl.coin];
+    calistir.disabled = false; calistir.textContent = "🤖 Run Time Machine 3";
+    if (!k) {
+      const liste = K && K.coinler ? Object.keys(K.coinler).join(", ") : "";
+      metin.replaceChildren(el("div", { sinif: "tm__m tm__u", yazi: "Time Machine 3 covers the most traded markets for now" + (liste ? " (" + liste + ")" : "") + "; " + pl.coin + " is not one of them. Use Time Machine 1 or 2." }));
+      return;
+    }
+    const H = Math.min(ufuk, k.kap[0].length);
+    const xTp = pl.tp != null ? Math.log(pl.tp / pl.giris) : null, xSl = pl.sl != null ? Math.log(pl.sl / pl.giris) : null;
+    /* the forecast started from k.c0, the plan starts from the entry: shift every path by the move since then */
+    const kay = Math.log(k.c0 / pl.giris);
+    const ust = [xTp, xSl].find((v) => v != null && v > 0), alt = [xTp, xSl].find((v) => v != null && v < 0);
+    const yollar = [];
+    let nTp = 0, nSl = 0, nHic = 0;
+    for (let i = 0; i < k.kap.length; i++) {
+      const y = [0];
+      let s = "-";
+      for (let t = 0; t < H; t++) {
+        const ustDeg = ust != null && k.yuk[i][t] + kay >= ust, altDeg = alt != null && k.dus[i][t] + kay <= alt;
+        if (ustDeg || altDeg) {
+          s = (ustDeg && ust === xSl) || (altDeg && alt === xSl) ? "sl" : "tp";
+          y.push(s === "sl" ? xSl : xTp);
+          break;
+        }
+        y.push(k.kap[i][t] + kay);
+      }
+      if (s === "tp") nTp++; else if (s === "sl") nSl++; else nHic++;
+      yollar.push({ s, y });
+    }
+    const n = yollar.length;
+    kutu.querySelector(".tm__tuval").hidden = false;
+    cancelAnimationFrame(anim);
+    const sonuc3 = { yollar, xTp, xSl };
+    const secili = ufuk;
+    const bas = performance.now();
+    const kare = (z) => {
+      const i = Math.min(1, (z - bas) / 900);
+      ufuk = H; ciz(sonuc3, pl.giris, pl.tp, pl.sl, i); ufuk = secili;
+      sayac.replaceChildren(String(Math.round(i * n)), el("small", { yazi: "AI futures · " + H + "h" }));
+      if (i < 1) anim = requestAnimationFrame(kare);
+    };
+    anim = requestAnimationFrame(kare);
+    sonuc.replaceChildren(
+      el("div", {}, [el("b", { sinif: "hl-art", yazi: nTp + "" }), el("small", { yazi: "of " + n + " hit take profit first" })]),
+      el("div", {}, [el("b", { sinif: "hl-eks", yazi: nSl + "" }), el("small", { yazi: "of " + n + " hit the stop first" })]),
+      el("div", {}, [el("b", { yazi: nHic + "" }), el("small", { yazi: "of " + n + " neither in " + H + "h" })]));
+    const yas = Math.max(0, Math.round((Date.now() - Date.parse(k.an)) / 60000));
+    const yp = (v) => Math.round(v * 100) + "%";
+    const son = (a) => fiyat(pl.giris * Math.exp(Math.log1p(a[H - 1]) + kay));
+    metin.replaceChildren(...[
+      secili > H ? el("div", { sinif: "tm__m tm__u", yazi: "The AI model looks " + H + " h ahead at most, so the " + secili + " h horizon is shown as " + H + " h." }) : null,
+      el("div", { sinif: "tm__m", yazi: "Paths going up: " + yp(k.yukari["1"]) + " after 1 h, " + yp(k.yukari["4"]) + " after 4 h, " + yp(k.yukari["24"]) + " after 24 h (from the price when the forecast was made)." }),
+      el("div", { sinif: "tm__m", yazi: "Where the price ends after " + H + "h (middle 80% of the model's paths): " + son(k.p10) + " – " + son(k.p90) + ", middle path " + son(k.p50) + "." }),
+      el("div", { sinif: "tm__m", yazi: "Forecast made " + (yas < 120 ? yas + " min" : Math.round(yas / 60) + " h") + " ago from " + fiyat(k.c0) + "; the paths are moved to your entry. A new forecast comes every 2 hours." }),
+      k.yukari["24"] >= 0.9 || k.yukari["24"] <= 0.1 ? el("div", { sinif: "tm__m tm__u", yazi: "The model is very one-sided here. AI models like this are often overconfident; check the track record below before trusting it." }) : null,
+      el("div", { sinif: "tm__n", yazi: "Only " + n + " paths, so each one is " + Math.round(100 / n) + " points out of 100. If one hourly candle touches both the stop and the take profit, it counts as the stop." }),
+      el("div", { sinif: "tm__n", yazi: kronosKayit(S) }),
+      el("div", { sinif: "tm__n", yazi: "Experimental AI forecast, not advice. The model sees only this market's candles: no news, no order book. Your plan stays in your browser." }),
+    ].filter(Boolean));
+  }
+
   return { kutu };
+}
+
+function kronosKayit(S) {
+  const y = S && S.yon && S.yon["24s"];
+  if (!y || !y.n) return "Track record: every forecast is saved before the outcome is known and scored 24 h later (veri/kronos-skor.json). The first scores appear after the first day.";
+  const r = S.aralik_p10_p90_24s;
+  return "Track record so far (" + y.n + " scored 24 h forecasts): direction Brier " + y.brier + " (0.25 = coin flip, lower is better), right side " + Math.round(y.isabet * 100) + "% of the time" + (r != null ? "; the middle-80% range held " + Math.round(r * 100) + "% of outcomes (should be about 80%)." : ".");
 }
 
 function trackRecord(S) {
