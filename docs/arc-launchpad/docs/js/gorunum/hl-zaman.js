@@ -110,15 +110,20 @@ export function zamanMakinesi({ plan, fiyat }) {
     const tam = mod === 2 ? iki : bir, diger = mod === 2 ? bir : iki;
     const sade = simule(girdiHazirla(D, I, { giris: pl.giris, tp: pl.tp, sl: pl.sl, saat: ufuk, n: 10000, ornek: 0, katman: { iv: false, mevsim: false, olay: false, likit: false } }));
     /* where the price could be after the horizon, ignoring the plan (no TP / SL stopping the paths) */
-    const serbest = mod === 2 && g2 ? simule({ ...g2, tp: null, sl: null, n: 5000, ornek: 0 }) : simule(girdiHazirla(D, I, { giris: pl.giris, tp: null, sl: null, saat: ufuk, n: 5000, ornek: 0 }));
+    /* (18 Nov 2026: 400 of its paths are kept to draw the middle path and the p10 / p90 ends on the chart) */
+    const serbest = mod === 2 && g2 ? simule({ ...g2, tp: null, sl: null, n: 5000, ornek: 400 }) : simule(girdiHazirla(D, I, { giris: pl.giris, tp: null, sl: null, saat: ufuk, n: 5000, ornek: 400 }));
+    const yuzde = (t, q) => { const a = serbest.yollar.map((y) => y.y[Math.min(t, y.y.length - 1)]).sort((x, z) => x - z); return a[Math.floor(q * (a.length - 1))]; };
+    const medyan = Array.from({ length: ufuk + 1 }, (_, t) => yuzde(t, 0.5));
+    const mum = await sonMumlar(pl.coin);
     calistir.disabled = false; calistir.textContent = "🔮 Run again";
     kutu.querySelector(".tm__tuval").hidden = false;
-    /* draw the paths in over ~1.2 s while the counter runs up */
+    /* 18 Nov 2026 (owner: "make the others like the AI model"): same chart as Time Machine 3 — real candles, the
+       futures fanning out of now (coloured by which level they hit first), the middle path in gold, p10 / p90 */
     cancelAnimationFrame(anim);
     const bas = performance.now();
     const kare = (z) => {
-      const i = Math.min(1, (z - bas) / 1200);
-      ciz(tam, pl.giris, pl.tp, pl.sl, i);
+      const i = Math.min(1, (z - bas) / 1600);
+      kronosCiz({ tuval, mum, yollar: tam.yollar, medyan, H: ufuk, giris: pl.giris, xTp: tam.xTp, xSl: tam.xSl, p10: yuzde(ufuk, 0.1), p90: yuzde(ufuk, 0.9), fiyat, ilerleme: i, an: z, rozet: mod === 2 ? "TIME MACHINE 2" : "TIME MACHINE 1" });
       sayac.replaceChildren(Math.round(i * 10000).toLocaleString("en-US"), el("small", { yazi: "futures · " + ufuk + "h" }));
       if (i < 1) anim = requestAnimationFrame(kare);
     };
@@ -251,7 +256,7 @@ async function sonMumlar(coin, bitis) {
 /* 18 Nov 2026 (owner: "make the AI model showier, on a chart, the same size as the others"): real candles on the
    left, the model's futures fanning out of a glowing "now" point on the right, the middle path in gold, the
    middle-80% end range and the plan's TP / stop marked on a price axis. Same box as Time Machine 1 and 2. */
-function kronosCiz({ tuval, mum, yollar, medyan, H, giris, xTp, xSl, p10, p90, fiyat, ilerleme, an }) {
+function kronosCiz({ tuval, mum, yollar, medyan, H, giris, xTp, xSl, p10, p90, fiyat, ilerleme, an, rozet = "KRONOS AI" }) {
   const k = tuval.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
   tuval.width = Math.max(1, Math.round(k.width * dpr)); tuval.height = Math.max(1, Math.round(k.height * dpr));
   const c = tuval.getContext("2d"); c.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -295,9 +300,11 @@ function kronosCiz({ tuval, mum, yollar, medyan, H, giris, xTp, xSl, p10, p90, f
   /* the futures, drawn outward from now as the animation runs */
   const sinir = ilerleme * H;
   c.save(); c.globalCompositeOperation = "lighter"; c.lineWidth = 1.1;
+  /* many paths (Time Machine 1 and 2 draw 180): fainter lines, no glow per line (it would slow phones down) */
+  const cok = yollar.length > 60, saydam = Math.max(0.12, Math.min(0.55, 10 / yollar.length));
   for (const y of yollar) {
     const renk = y.s === "tp" ? yesil : y.s === "sl" ? kirmizi : camgobegi;
-    c.strokeStyle = renk; c.shadowColor = renk; c.shadowBlur = 6; c.globalAlpha = 0.55;
+    c.strokeStyle = renk; c.shadowColor = renk; c.shadowBlur = cok ? 0 : 6; c.globalAlpha = saydam;
     c.beginPath();
     for (let t = 0; t < y.y.length && t <= sinir + 1; t++) {
       const tt = Math.min(t, sinir), px = X(tt);
@@ -337,7 +344,7 @@ function kronosCiz({ tuval, mum, yollar, medyan, H, giris, xTp, xSl, p10, p90, f
     etiket(medyan[medyan.length - 1], altin, "median " + fiyat(giris * Math.exp(medyan[medyan.length - 1])));
   }
   c.fillStyle = "rgba(255,255,255,.55)"; c.font = "600 10px system-ui,sans-serif";
-  c.fillText("KRONOS AI", w - eksen - 62, 14);
+  c.textAlign = "right"; c.fillText(rozet, w - eksen - 4, 14); c.textAlign = "left";
 }
 
 /* 18 Nov 2026 (owner: "write under the Time Machine, in small text, what it means"): a plain-language reading of
