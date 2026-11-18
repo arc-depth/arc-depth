@@ -59,7 +59,8 @@ export function karnePaneli({ mumGetir, ad }) {
       ]);
       govde.replaceChildren(...[
         el("div", { sinif: "ik__n", attr: { style: "border-left:2px solid var(--marka);padding-left:8px;color:var(--yazi-2)" }, yazi: "📝 " + ozet }),
-        simdi.length ? el("div", { sinif: "ik__simdi" }, simdi.map(sinyal)) : null,
+        /* the four with the best record here; the rest are in the table */
+        simdi.length ? el("div", { sinif: "ik__simdi" }, simdi.slice(0, 4).map(sinyal)) : null,
         el("div", { sinif: "ik__tablo" }, [tablo]),
         el("div", { sinif: "ik__n", yazi: "How to read it: \"Right\" = how often the price moved the indicator's way over the next 24 h when it signalled on " + simdiAd + " in the last " + k.gun + " days. The coin itself moved " + bps(k.tabanBps) + " per 24 h on average in that time, so a short or long bias can look good just because of that." }),
         el("div", { sinif: "ik__n", yazi: "Why a scorecard and not one more indicator: we tested 18 classic indicators on 20 Hyperliquid markets over ~200 days and none worked in both halves. Trend signals won while prices rose; mean reversion (RSI, Bollinger, MFI) won while they fell. What works changes with the market, so check it here before you trust one. Hourly signals overlap, so the counts look bigger than they are. Not advice." }),
