@@ -32,7 +32,7 @@ const medyan = (a) => { const s = a.filter((x) => Number.isFinite(x)).sort((x, y
 let _havuz = null;
 const havuzOku = () => (_havuz = _havuz || fetch(new URL("../../veri/spot-tm-havuz.json", import.meta.url).href + "?t=" + Math.floor(Date.now() / 3600e3)).then((r) => (r.ok ? r.json() : null)).catch(() => null));
 const _mum = new Map();
-function mumlar(t) {
+export function mumlar(t) {
   const k = t.z + ":" + t.havuz, x = _mum.get(k);
   if (x && Date.now() - x.t < 300000) return x.p;
   /* 17 Nov 2026 (owner: "bazılarında Time Machine çalışmıyor"): the free data service refuses calls when busy (the Trade

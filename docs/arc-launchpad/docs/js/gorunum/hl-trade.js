@@ -30,6 +30,7 @@ import { kitapPaneli } from "./hl-kitap.js";
 import * as Y from "../hl-yatir.js";
 import { kaskPaneli } from "./hl-kask.js";
 import { fuzePaneli } from "./hl-fuze.js";
+import { karnePaneli } from "./karne.js";
 import { grafikPaneli } from "./hl-grafik.js";
 
 const RISK = "Perpetual futures use leverage and can lose more than you expect quickly. You can lose more than you deposit quickly with leverage. " +
@@ -538,6 +539,8 @@ export async function ciz({ param, cuzdan }) {
   /* 16 Nov 2026: closed by default everywhere (the tool strip and this line open it); opens itself from a Target Radar card */
   const fuzeYeri = aim === "long" || aim === "short" ? fuze.kutu : ayrinti("🎯 Aim assist · 🔮 Time Machine 1 & 2 — size, stop and target from your risk, then the odds", fuze.kutu);
   fuze.hesapla();
+  /* 18 Nov 2026: indicator scorecard of this market (1 h candles of the last ~42 days, scored in the browser) */
+  const karne = karnePaneli({ ad: () => P.ad, mumGetir: async () => { const son = Date.now(); const r = await hl.bilgi({ type: "candleSnapshot", req: { coin: P.ad, interval: "1h", startTime: son - 1000 * 3600e3, endTime: son } }); return (r || []).map((x) => ({ t: x.t, o: +x.o, h: +x.h, l: +x.l, c: +x.c, v: +x.v })); } });
   /* 16 Nov 2026 redesign: 25/50/75/100% of what the account can open at this leverage; leverage in one tap */
   const payCipler = el("div", { sinif: "hl-cip" }, [25, 50, 75, 100].map((p) => el("button", { attr: { type: "button" }, yazi: p + "%", on: { click: () => {
     if (!H) { durumYaz(kim ? "Reading your account…" : "Connect your wallet to size by your balance.", "hata"); return; }
@@ -551,7 +554,7 @@ export async function ciz({ param, cuzdan }) {
   kalCiplerCiz();
   kalGirdi.addEventListener("input", kalCiplerCiz);
   const formPanel = panel("Place an order", el("div", { sinif: "yigin yigin--sik" }, [
-    fuzeYeri, yonDug, turDug, limitAlan,
+    fuzeYeri, karne.kutu, yonDug, turDug, limitAlan,
     el("div", { sinif: "hl-alan" }, [el("label", { yazi: "Size (USD)" }), tutarGirdi, payCipler, tutarIpucu]),
     el("div", { sinif: "hl-alan" }, [el("label", { yazi: "Leverage" }), kalCipler, el("div", { sinif: "hl-kal" }, [kalGirdi, kalYazi]), el("div", { sinif: "hl-kal" }, [modSec, el("span")]), kalIpucu]),
     el("label", { sinif: "hl-kutu", attr: { for: "hl-azalt" } }, [azaltKutu, el("span", { yazi: "Reduce only (only makes an open position smaller)" })]),
@@ -853,7 +856,7 @@ export async function ciz({ param, cuzdan }) {
     grafikBaslik.textContent = P.ad + "-USD";
     zincirNotu.hidden = true; durumYaz("");
     try { history.replaceState(null, "", "#/perps/trade?coin=" + encodeURIComponent(P.ad) + (salt ? "&as=" + kim : "")); } catch (e) { /* not allowed: the hash stays */ }
-    olcCiz(); grafikYukle(); girdi(); fuze.hesapla(); kitap.yenile(); kalCiplerCiz();
+    olcCiz(); grafikYukle(); girdi(); fuze.hesapla(); kitap.yenile(); kalCiplerCiz(); karne.yenile();
     if (kim) hl.kaldiracOku(kim, P.ad).then((k) => { if (P === yeni) { K = k; if (K && K.leverage) { kalGirdi.value = String(Math.min(P.maxKal, K.leverage.value)); if (!P.yalnizIzole) modSec.value = K.leverage.type === "isolated" ? "isolated" : "cross"; } formGuncelle(); } });
   });
 
