@@ -19,7 +19,9 @@ export function kronosCiz({ tuval, mum, yollar, medyan, H, giris, xTp, xSl, p10,
   const yesil = css.getPropertyValue("--alis").trim() || "#2bd38b", kirmizi = css.getPropertyValue("--satis").trim() || "#ff6b5a";
   const camgobegi = "#38e1ff", altin = "#ffc94a";
   const lm = mum.map((m) => ({ o: Math.log(m.o / giris), h: Math.log(m.h / giris), l: Math.log(m.l / giris), c: Math.log(m.c / giris) }));
-  let lo = Math.min(0, p10), hi = Math.max(0, p90);
+  /* the scale follows the paths, candles and plan lines; p10 / p90 can sit beyond them (memecoins: -55% / +96%), their
+     labels then stay pinned to the edge so the paths are not squeezed into a thin band */
+  let lo = 0, hi = 0;
   for (const v of [xTp, xSl]) if (v != null) { lo = Math.min(lo, v); hi = Math.max(hi, v); }
   for (const m of lm) { lo = Math.min(lo, m.l); hi = Math.max(hi, m.h); }
   for (const y of yollar) for (const v of y.y) { lo = Math.min(lo, v); hi = Math.max(hi, v); }
