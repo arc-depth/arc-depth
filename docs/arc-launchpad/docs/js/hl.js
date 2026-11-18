@@ -52,9 +52,21 @@ const SIFIR = "0x0000000000000000000000000000000000000000";
 /* ---- reads ---------------------------------------------------------- */
 
 export async function bilgi(govde) {
-  const r = await fetch(API + "/info", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(govde), signal: AbortSignal.timeout(15000) });
-  if (!r.ok) throw new Error("Hyperliquid answered HTTP " + r.status);
-  return r.json();
+  /* 18 Nov 2026 daily perps review: the account is read with ~6 requests at once and one busy answer (HTTP 429) or a
+     network blip made the whole account unreadable. A busy or dropped request is now asked again twice, after 1.2 s
+     and 3 s; a timeout or any other error fails at once as before. */
+  for (let i = 0; ; i++) {
+    let r;
+    try {
+      r = await fetch(API + "/info", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(govde), signal: AbortSignal.timeout(15000) });
+    } catch (e) {
+      if (i < 2 && !(e && e.name === "TimeoutError")) { await new Promise((x) => setTimeout(x, i ? 3000 : 1200)); continue; }
+      throw e;
+    }
+    if (r.ok) return r.json();
+    if ((r.status === 429 || r.status >= 500) && i < 2) { await new Promise((x) => setTimeout(x, i ? 3000 : 1200)); continue; }
+    throw new Error("Hyperliquid answered HTTP " + r.status);
+  }
 }
 
 /** Every listed perp on the main order book (delisted ones dropped), with its live context. */
