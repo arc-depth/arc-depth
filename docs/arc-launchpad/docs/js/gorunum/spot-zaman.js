@@ -16,6 +16,7 @@
 import { el } from "../ui.js";
 import { simule } from "../tm-motor.js";
 import { hepsi, GEVSET, GEVSET_AD, durumYazi } from "../gosterge.js";
+import { kronosCiz, yorum } from "./zaman-ciz.js";
 
 const GECKO = "https://api.geckoterminal.com/api/v2";
 const GECKO_AG = { arc: "arc", elysium: "elysium", solana: "solana", base: "base", bsc: "bsc", ethereum: "eth", arbitrum: "arbitrum", avalanche: "avax", monad: "monad", hyperevm: "hyperevm", robinhood: "robinhood" };
@@ -23,7 +24,7 @@ const STIL =
   ".stm{display:grid;gap:8px;padding:12px 14px;min-width:0}.stm>*{min-width:0}.stm__bas{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}.stm__bas b{font-size:15px}" +
   ".stm__sec{display:flex;gap:6px;flex-wrap:wrap}.stm__sec button{height:30px;padding:0 10px;border-radius:999px;border:1px solid var(--cizgi-guclu);background:none;color:var(--yazi-2);font:600 12.5px var(--yazi-tipi);cursor:pointer}" +
   ".stm__sec button[aria-pressed=true]{border-color:var(--marka);color:var(--yazi-1);background:rgba(124,92,255,.14)}" +
-  ".stm__tuval{position:relative;height:200px;border-radius:10px;background:#0b1020;overflow:hidden}.stm__tuval canvas{width:100%;height:100%;display:block}" +
+  ".stm__tuval{position:relative;height:210px;border-radius:10px;background:#0b1020;overflow:hidden}.stm__tuval canvas{width:100%;height:100%;display:block}" +
   ".stm__sonuc{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}.stm__sonuc div{border:1px solid var(--cizgi);border-radius:10px;padding:6px 4px;text-align:center}" +
   ".stm__sonuc b{display:block;font-size:18px;font-variant-numeric:tabular-nums}.stm__sonuc small{font-size:11px;color:var(--yazi-3);line-height:1.2;display:block}" +
   ".stm__m{font-size:12.5px;line-height:1.45}.stm__n{font-size:11.5px;color:var(--yazi-3);line-height:1.45}.stm__u{color:#e0a100}";
@@ -107,7 +108,7 @@ export function spotZamanMakinesi({ t, fiyat }) {
   const calistir = el("button", { sinif: "dugme dugme--marka dugme--tam", attr: { type: "button" }, yazi: "🔮 Run the Time Machine (10,000 futures)" });
   const kutu = el("div", { sinif: "bx-kart stm", attr: { style: "margin-top:12px" } }, [
     el("div", { sinif: "stm__bas" }, [el("b", { yazi: "🔮 Time Machine 1 & 2" }), ufukK]), modK, aciklama,
-    el("div", { attr: { style: "display:flex;align-items:center;gap:8px;flex-wrap:wrap" } }, [el("span", { sinif: "stm__n", yazi: "Plan: buy now, take profit at 2× the stop. Stop:" }), genK]),
+    el("div", { attr: { style: "display:flex;align-items:center;gap:8px;flex-wrap:wrap" } }, [el("span", { sinif: "stm__n", yazi: "In short: it plays a buy forward through many possible futures and counts how often it would hit take profit before the stop. Plan: buy now, take profit at 2× the stop. Stop:" }), genK]),
     calistir, el("div", { sinif: "stm__tuval", attr: { hidden: true } }, [tuval]), sonuc, metin]);
   const ACIK = {
     1: "Time Machine 1 · forward model: 10,000 possible futures from this token's forecast volatility and fat-tailed moves (its own past, or similar tokens' when it is young). No view on direction.",
@@ -163,14 +164,19 @@ export function spotZamanMakinesi({ t, fiyat }) {
     const bir = simule({ ...temel, n: mod === 1 ? 10000 : 5000, ornek: mod === 1 ? 180 : 0 });
     const iki = an ? simule({ ...temel, analog: an, n: mod === 2 ? 10000 : 5000, ornek: mod === 2 ? 180 : 0 }) : null;
     const tam = mod === 2 ? iki : bir, diger = mod === 2 ? bir : iki;
-    const serbest = simule({ ...temel, tp: null, sl: null, analog: mod === 2 ? an : null, n: 5000, ornek: 0 });
+    /* (18 Nov 2026: 400 of its paths are kept for the middle path and p10 / p90 on the chart) */
+    const serbest = simule({ ...temel, tp: null, sl: null, analog: mod === 2 ? an : null, n: 5000, ornek: 400 });
+    const yuzde = (q2, q) => { const a = serbest.yollar.map((y) => y.y[Math.min(q2, y.y.length - 1)]).sort((x, z) => x - z); return a[Math.floor(q * (a.length - 1))]; };
+    const medyan = Array.from({ length: ufuk + 1 }, (_, q2) => yuzde(q2, 0.5));
+    const mum = m && m.length ? m.slice(-36).map((x) => ({ o: x[1], h: x[2], l: x[3], c: x[4] })) : [];
     /* the crash outcome: the pooled 24 h rate, scaled to the horizon; the rest share the model's odds */
     const pC = D.cokus24 != null ? Math.min(0.9, 1 - Math.pow(1 - D.cokus24, ufuk / 24)) : 0;
     const yz = (x) => Math.round((x / tam.n) * (1 - pC) * 100);
     bitir(); calistir.textContent = "🔮 Run again";
     kutu.querySelector(".stm__tuval").hidden = false;
     cancelAnimationFrame(anim); const bas = performance.now();
-    const kare = (q) => { const i = Math.min(1, (q - bas) / 1200); ciz(tam, i); if (i < 1) anim = requestAnimationFrame(kare); };
+    /* 18 Nov 2026 (owner: "make the Hot tokens one like the AI model too"): the shared chart of every Time Machine */
+    const kare = (q) => { const i = Math.min(1, (q - bas) / 1600); kronosCiz({ tuval, mum, yollar: tam.yollar, medyan, H: ufuk, giris, xTp: tam.xTp, xSl: tam.xSl, p10: yuzde(ufuk, 0.1), p90: yuzde(ufuk, 0.9), fiyat, ilerleme: i, an: q, rozet: mod === 2 ? "TIME MACHINE 2" : "TIME MACHINE 1" }); if (i < 1) anim = requestAnimationFrame(kare); };
     anim = requestAnimationFrame(kare);
     sonuc.replaceChildren(
       el("div", {}, [el("b", { sinif: "bx-art", yazi: String(yz(tam.tp)) }), el("small", { yazi: "of 100 hit take profit first" })]),
@@ -179,6 +185,8 @@ export function spotZamanMakinesi({ t, fiyat }) {
       el("div", {}, [el("b", { attr: { style: "color:#e0a100" }, yazi: pC > 0 && pC < 0.005 ? "<1" : String(Math.round(pC * 100)) }), el("small", { yazi: "of 100 crash (−80%)" })]));
     const uc = (r) => Math.round((r.tp / r.n) * 100) + " / " + Math.round((r.sl / r.n) * 100) + " / " + Math.round((r.hic / r.n) * 100);
     const satir = [];
+    satir.push(yorum({ tp: tam.tp * (1 - pC), sl: tam.sl * (1 - pC), hic: tam.hic * (1 - pC), n: tam.n, ufuk, pl: { alis: true, giris, tp, sl }, kaynak: mod === 2 ? "replays of similar past charts" : "simulated futures", sinif: "stm__n" }));
+    if (pC >= 0.01) satir.push(el("div", { sinif: "stm__n", yazi: "The other " + Math.round(pC * 100) + " of 100 are crashes (−80%, the rate seen in similar tokens within " + ufuk + " h): a crash can jump past the stop, so the real loss can be bigger than planned." }));
     satir.push(el("div", { sinif: "stm__m", yazi: "Plan: buy at " + fiyat(giris) + ", stop " + fiyat(sl) + " (−" + (stop * 100).toFixed(1) + "%), take profit " + fiyat(tp) + " (+" + (2 * stop * 100).toFixed(1) + "%)." }));
     if (mod === 2 && an) {
       const y = durumYazi(D.simdiDurum) || {};
