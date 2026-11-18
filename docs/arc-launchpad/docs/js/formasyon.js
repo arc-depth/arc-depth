@@ -162,7 +162,10 @@ export function tara(m, { W = 5, canli = false } = {}) {
     }
   }
   sonuc.sort((a, b) => a.kirilim - b.kirilim);
-  if (canli) for (const a of izle) sonuc.push({ tur: a.tur, ad: FORMASYON_AD[a.tur], yon: a.yon, kirilim: null, bas: a.bas, son: a.son, noktalar: a.noktalar, seviyeler: a.boyun ? { boyun: a.boyun(m.length - 1) } : { ust: a.ust(m.length - 1), alt: a.alt(m.length - 1) }, boy: a.boy });
+  /* still forming = not yet proven wrong: a neckline pattern whose price went past its stop, or a line pattern whose
+     price is already outside its lines (a break that came too late), is dropped */
+  const sonC = m.length ? m[m.length - 1].c : null;
+  if (canli) for (const a of izle.filter((a) => a.boyun ? (a.yon > 0 ? sonC > a.stop : sonC < a.stop) : sonC <= a.ust(m.length - 1) && sonC >= a.alt(m.length - 1))) sonuc.push({ tur: a.tur, ad: FORMASYON_AD[a.tur], yon: a.yon, kirilim: null, bas: a.bas, son: a.son, noktalar: a.noktalar, seviyeler: a.boyun ? { boyun: a.boyun(m.length - 1) } : { ust: a.ust(m.length - 1), alt: a.alt(m.length - 1) }, boy: a.boy });
   return sonuc;
 }
 
