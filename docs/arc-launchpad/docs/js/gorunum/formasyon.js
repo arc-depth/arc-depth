@@ -26,7 +26,7 @@ const ZD_AD = { "1h": "1 hour", "4h": "4 hours", "1d": "Daily", "1w": "Weekly", 
 const fiyat = (v) => (v == null ? "–" : "$" + (v >= 1000 ? Math.round(v).toLocaleString("en-US") : v >= 1 ? v.toFixed(v >= 100 ? 2 : 3) : Number(v).toPrecision(4)));
 
 /* the backtest in one line, and whether it is an edge (positive in both halves and > +0.1 R overall with n >= 30) */
-function karneYazi(f) {
+export function karneYazi(f) {
   const k = f.karne;
   if (!k || !k.tum) return { iyi: false, yazi: "No backtest for this pattern on this timeframe yet." };
   const r = (x) => (x ? (x.ortR >= 0 ? "+" : "") + x.ortR + "R" : "–");
@@ -37,7 +37,7 @@ function karneYazi(f) {
   return { iyi, yazi: bas + son };
 }
 
-function cizim(tuval, f) {
+export function cizim(tuval, f) {
   const k = tuval.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
   tuval.width = Math.max(1, Math.round(k.width * dpr)); tuval.height = Math.max(1, Math.round(k.height * dpr));
   const c = tuval.getContext("2d"); c.setTransform(dpr, 0, 0, dpr, 0, 0);

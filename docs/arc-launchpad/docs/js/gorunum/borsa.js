@@ -242,6 +242,9 @@ export async function ciz({ param }) {
     import("./spot-zaman.js").then((M) => { if (secili === t) tmYer.replaceWith(M.spotZamanMakinesi({ t: { ...t, z: t.zincir && t.zincir.k }, fiyat: (x) => fiyatYaz(Number(x)) }).kutu); }).catch(() => {});
     /* 18 Nov 2026: indicator scorecard of this token, from the same hourly history the Time Machine reads */
     const karneYer = el("div");
+    /* 18 Nov 2026: Pattern Hunter on this token (gorunum/formasyon-panel.js), from the same hourly history */
+    const formasyonYer = el("div");
+    Promise.all([import("./spot-zaman.js"), import("./formasyon-panel.js")]).then(([Z, P]) => { if (secili !== t) return; const tt = { ...t, z: t.zincir && t.zincir.k }; formasyonYer.replaceWith(P.formasyonPaneli({ ad: () => t.sembol, mumGetir: async () => { const m = await Z.mumlar(tt); return m ? m.map((x) => ({ t: x[0], o: x[1], h: x[2], l: x[3], c: x[4], v: x[5] })) : null; } }).kutu); }).catch(() => {});
     Promise.all([import("./spot-zaman.js"), import("./karne.js")]).then(([Z, K]) => { if (secili !== t) return; const tt = { ...t, z: t.zincir && t.zincir.k }; karneYer.replaceWith(K.karnePaneli({ ad: () => t.sembol, mumGetir: async () => { const m = await Z.mumlar(tt); return m ? m.map((x) => ({ t: x[0], o: x[1], h: x[2], l: x[3], c: x[4], v: x[5] })) : null; } }).kutu); }).catch(() => {});
     orta.replaceChildren(
       geri, usdcKart, bagUyari,
@@ -252,6 +255,7 @@ export async function ciz({ param }) {
       el("div", { sinif: "bx-kart bx-grafik" }, [el("iframe", { attr: { src: "https://www.geckoterminal.com/" + t.zincir.gecko + "/pools/" + t.havuz + "?embed=1&info=0&swaps=0&grayscale=0&light_chart=0", title: t.sembol + " chart", referrerpolicy: "no-referrer", loading: "lazy" } })]),
       tmYer,   /* 17 Nov 2026: the spot Time Machines (gorunum/spot-zaman.js), under the chart */
       karneYer,
+      formasyonYer,
       el("div", { sinif: "bx-kart bx-islem" }, [el("h3", { yazi: "Latest swaps in this pool" }), islemler]),
       el("p", { sinif: "bx-not", attr: { style: "margin:10px 2px" }, yazi: "A DEX has no order book: these are the pool's real swaps, from GeckoTerminal. Third-party token — not launched or checked by ARC PULSE. Memecoins are risky." }));
     clearInterval(islemZaman);
