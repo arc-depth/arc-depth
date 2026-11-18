@@ -33,6 +33,8 @@ export function karnePaneli({ mumGetir, ad }) {
     govde.replaceChildren(el("div", { sinif: "ik__n", yazi: "Scoring 18 indicators on " + simdiAd + "'s last 30 days…" }));
     try {
       const m = await mumGetir();
+      /* no answer from the data service is not the same as a young token: say which */
+      if (!m || !m.length) throw new Error("no history");
       const k = karne(m);
       if (!k) { govde.replaceChildren(el("div", { sinif: "ik__n", yazi: simdiAd + " does not have enough hourly history yet (needs about 11 days)." })); return; }
       const yuz = (x) => (x == null ? "–" : Math.round(x * 100) + "%");
