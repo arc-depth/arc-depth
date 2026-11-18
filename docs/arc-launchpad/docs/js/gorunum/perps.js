@@ -146,11 +146,13 @@ export async function ciz(ctx = {}) {
   if (ctx.param && ctx.param.get("alt") === "trade") return (await import("./hl-trade.js")).ciz(ctx);
   if (ctx.param && ctx.param.get("alt") === "targets") return (await import("./hl-hedef.js")).ciz(ctx);
   if (ctx.param && ctx.param.get("alt") === "alerts") return (await import("./hl-alarm.js")).ciz(ctx);
+  if (ctx.param && ctx.param.get("alt") === "patterns") return (await import("./formasyon.js")).ciz(ctx);
   if (!document.getElementById("pr-stil")) document.head.append(el("style", { attr: { id: "pr-stil" }, yazi: STIL }));
   const kap = el("div", { sinif: "yigin" });
   const turbo = el("img", { attr: { src: new URL("../../img/squad/turbo.svg", import.meta.url).href, alt: "", width: "84", height: "84", loading: "lazy" } });
   kap.append(sayfaUst("Perps Radar", "Where the volume is, across perp DEXes. Updated hourly.", [
     el("a", { sinif: "dugme dugme--sade", attr: { href: "#/perps/targets" }, yazi: "🎯 Target Radar" }),
+    el("a", { sinif: "dugme dugme--sade", attr: { href: "#/perps/patterns" }, yazi: "📐 Pattern Hunter" }),
     el("a", { sinif: "dugme dugme--sade", attr: { href: "#/perps/alerts" }, yazi: "🔔 Alerts" }),
     el("a", { sinif: "dugme dugme--marka", attr: { href: "#/perps/trade" }, yazi: "Trade Hyperliquid perps here" })]));
 

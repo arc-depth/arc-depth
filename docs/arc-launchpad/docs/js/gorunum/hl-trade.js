@@ -205,6 +205,7 @@ export async function ciz({ param, cuzdan }) {
     el("button", { sinif: "dugme dugme--sade dugme--kucuk", attr: { type: "button" }, yazi: "🎯 Aim assist", on: { click: git(".fz") } }),
     el("button", { sinif: "dugme dugme--sade dugme--kucuk", attr: { type: "button" }, yazi: "🔮 Time Machine 1 & 2", on: { click: git(".tm") } }),
     el("a", { sinif: "dugme dugme--sade dugme--kucuk", attr: { href: "#/perps/targets" }, yazi: "🛰️ Target Radar" }),
+    el("a", { sinif: "dugme dugme--sade dugme--kucuk", attr: { href: "#/perps/patterns" }, yazi: "📐 Patterns" }),
     el("a", { sinif: "dugme dugme--sade dugme--kucuk", attr: { href: "#/perps/alerts?coin=" + encodeURIComponent(param.get("coin") || "BTC") }, yazi: "🔔 Alerts" }),
     el("a", { sinif: "dugme dugme--sade dugme--kucuk", attr: { href: "#/perps" }, yazi: "📊 Perps Radar" })]));
 

@@ -56,6 +56,7 @@ export async function ciz() {
   document.title = "Target Radar — ARC PULSE";
   const kap = el("div", { sinif: "yigin" });
   kap.append(sayfaUst("Target Radar", "Unusual conditions across Hyperliquid's markets, scanned every hour. Each one says why it is listed.", [
+    el("a", { sinif: "dugme dugme--sade", attr: { href: "#/perps/patterns" }, yazi: "📐 Pattern Hunter" }),
     el("a", { sinif: "dugme dugme--sade", attr: { href: "#/perps/alerts" }, yazi: "🔔 Alerts" }),
     el("a", { sinif: "dugme dugme--sade", attr: { href: "#/perps" }, yazi: "Perps Radar" }),
     el("a", { sinif: "dugme dugme--marka", attr: { href: "#/perps/trade" }, yazi: "Trade" })]));
