@@ -46,7 +46,7 @@ export function zamanMakinesi({ plan, fiyat }) {
   const aciklama = el("div", { sinif: "tm__n" });
   const calistir = el("button", { sinif: "dugme dugme--marka dugme--tam", attr: { type: "button" }, yazi: "🔮 Run the Time Machine (10,000 futures)" });
   const kutu = el("div", { sinif: "tm" }, [
-    el("div", { sinif: "tm__bas" }, [el("b", { yazi: "🔮 Time Machine 1 & 2" }), ufukK]),
+    el("div", { sinif: "tm__bas" }, [el("b", { yazi: "🔮 Time Machine 1, 2 & 3" }), ufukK]),
     modK, aciklama,
     calistir,
     el("div", { sinif: "tm__tuval", attr: { hidden: true } }, [tuval, sayac]),
@@ -239,12 +239,12 @@ export function zamanMakinesi({ plan, fiyat }) {
 }
 
 /* last 36 closed-or-open hourly candles of the market, straight from Hyperliquid (public, no key) */
-async function sonMumlar(coin) {
+async function sonMumlar(coin, bitis) {
   try {
-    const son = Date.now();
+    const son = bitis || Date.now();
     const r = await fetch("https://api.hyperliquid.xyz/info", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ type: "candleSnapshot", req: { coin, interval: "1h", startTime: son - 40 * 3600e3, endTime: son } }) });
     const a = await r.json();
-    return (Array.isArray(a) ? a : []).map((x) => ({ o: +x.o, h: +x.h, l: +x.l, c: +x.c })).slice(-36);
+    return (Array.isArray(a) ? a : []).filter((x) => !bitis || x.t < bitis).map((x) => ({ o: +x.o, h: +x.h, l: +x.l, c: +x.c })).slice(-36);
   } catch (e) { return []; }
 }
 
@@ -267,10 +267,11 @@ function kronosCiz({ tuval, mum, yollar, medyan, H, giris, xTp, xSl, p10, p90, f
   const pad = (hi - lo) * 0.07 || 0.01; lo -= pad; hi += pad;
   const Y = (v) => ust + (1 - (v - lo) / (hi - lo)) * (h - ust - alt);
   const genis = w - sol - eksen;
-  const toplam = Math.max(1, lm.length) + H;
-  const adim = genis / toplam;
-  const xSimdi = sol + Math.max(1, lm.length) * adim;
-  const X = (t) => xSimdi + t * adim;              // t hours after now
+  /* candles get 42% of the width, the futures 58% (with 36 candles next to 24 hours the fan was squeezed) */
+  const xSimdi = sol + (lm.length ? genis * 0.42 : genis * 0.08);
+  const adim = lm.length ? (xSimdi - sol) / lm.length : 0;
+  const adimG = (sol + genis - xSimdi) / H;
+  const X = (t) => xSimdi + t * adimG;              // t hours after now
   /* background and a light grid */
   const zemin = c.createLinearGradient(0, 0, 0, h); zemin.addColorStop(0, "#0a1226"); zemin.addColorStop(1, "#050914");
   c.fillStyle = zemin; c.fillRect(0, 0, w, h);
