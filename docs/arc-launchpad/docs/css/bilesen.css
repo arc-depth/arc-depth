@@ -772,7 +772,7 @@ textarea.girdi { height: auto; min-height: 84px; padding: var(--bosluk-3); resiz
 .tk__kalem b { font-family: var(--yazi-tipi-mono); color: var(--yazi-1); font-weight: 600; }
 
 /* 16 Nov 2026: the Connect slot in the phone bar is a button */
-button.sekme-oge { background: none; border: 0; font: inherit; color: inherit; cursor: pointer; padding: 0; }
+button.sekme-oge { background: none; border: 0; font-family: inherit; line-height: inherit; cursor: pointer; padding: 0; }
 .tk__tur { display: inline-block; margin-top: 3px; font-size: 10px; font-weight: 700; letter-spacing: .04em; padding: 1px 7px; border-radius: 999px; background: var(--yuzey-2); color: var(--yazi-3); }
 
 /* 16 Nov 2026: the network on the wallet button and in its menu */

@@ -176,7 +176,7 @@ export async function ciz({ param }) {
      collateral, the counters and the Sui/Aptos tokens moved to their own page, #/kesfet?liste=1, linked under the board */
   const tahtaModu = !arama && !zkAna && !(param && param.get("liste"));
   if (tahtaModu) {
-    const { anaTahta } = await import("./ana-tahta.js"); kap.dataset.icindekilerYok = "1"; kap.append(anaTahta());
+    const { anaTahta } = await import("./ana-tahta.js"); kap.dataset.icindekilerYok = "1"; kap.append(el("h1", { sinif: "gizli-okunur", yazi: "Discover tokens on ARC PULSE" }), anaTahta());
     kap.append(el("a", { sinif: "dugme dugme--sade", attr: { href: "#/kesfet?liste=1", style: "align-self:center" }, yazi: "All ARC PULSE launches and their collateral →" }));
     return kap;
   }

@@ -108,6 +108,8 @@ export async function ciz({ param }) {
   if (!document.getElementById("vt-stil")) document.head.append(el("style", { attr: { id: "vt-stil" }, yazi: V.STIL }));
   if (!document.getElementById("bx-stil")) document.head.append(el("style", { attr: { id: "bx-stil" }, yazi: STIL }));
   const kok = el("div", { sinif: "bx", veri: { gorunum: "liste", icindekilerYok: "1" } });
+  /* 21 Nov 2026: the page needs a heading for screen readers and search; the board itself shows none */
+  kok.append(el("h1", { sinif: "gizli-okunur", yazi: "Trade tokens on 13 chains" }));
 
   /* ---------------- left: markets ---------------- */
   const ara = el("input", { sinif: "bx-ara", attr: { type: "search", placeholder: "Search token or paste address", "aria-label": "Search markets" } });

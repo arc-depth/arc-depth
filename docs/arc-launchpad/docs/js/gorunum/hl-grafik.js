@@ -82,7 +82,13 @@ export function grafikPaneli({ hl, P, fiyat }) {
     if (plan.sl) planCizgi.push(yatay(plan.sl, "#ff6b5a", "stop", L.LineStyle.Dashed));
     if (plan.tp) planCizgi.push(yatay(plan.tp, "#2bd38b", "target", L.LineStyle.Dashed));
   }
-  window.addEventListener("hl-plan", (e) => { if (e.detail && e.detail.coin === P().ad) { plan = e.detail; planCiz(); } });
+  window.addEventListener("hl-plan", (e) => { if (e.detail && e.detail.coin === P().ad) { plan = e.detail; planCiz(); seviyeAyikla(); } });
+  /* 21 Nov 2026: a trade plan drawn after the levels hides the levels that would stack on its labels */
+  function seviyeAyikla() {
+    if (!seriler || !plan) return;
+    const p = [plan.giris, plan.sl, plan.tp].filter((x) => x > 0);
+    cizgiler = cizgiler.filter((x) => { const f = x.options().price; if (p.some((q) => Math.abs(f / q - 1) < 0.004)) { seriler.mum.removePriceLine(x); return false; } return true; });
+  }
 
   async function yukle() {
     const no = ++sira, coin = P().ad, ar = aralik;
@@ -109,10 +115,13 @@ export function grafikPaneli({ hl, P, fiyat }) {
       cizgiler.forEach((x) => seriler.mum.removePriceLine(x)); cizgiler = [];
       const L = seriler.L, son = c[c.length - 1];
       const sv = G.seviyeler(h, l, c);
-      sv.destek.slice(0, 2).forEach((p) => cizgiler.push(yatay(p, "#9aa3b8", "support", L.LineStyle.SparseDotted)));
-      sv.direnc.slice(0, 2).forEach((p) => cizgiler.push(yatay(p, "#9aa3b8", "resistance", L.LineStyle.SparseDotted)));
+      /* 21 Nov 2026: a level closer than 0.4% to the price, the trade plan or another level is skipped, so the axis labels never stack */
+      const tutulan = [son, plan && plan.giris, plan && plan.sl, plan && plan.tp].filter((x) => x > 0);
+      const bosta = (p) => !tutulan.some((q) => Math.abs(p / q - 1) < 0.004) && tutulan.push(p);
+      sv.destek.slice(0, 2).filter(bosta).forEach((p) => cizgiler.push(yatay(p, "#9aa3b8", "support", L.LineStyle.SparseDotted)));
+      sv.direnc.slice(0, 2).filter(bosta).forEach((p) => cizgiler.push(yatay(p, "#9aa3b8", "resistance", L.LineStyle.SparseDotted)));
       if (D && D.likit) {
-        const buyuk = (a, ad) => (a || []).filter((x) => Math.abs(x[0] / son - 1) <= 0.12).sort((x, y) => y[1] - x[1]).slice(0, 2)
+        const buyuk = (a, ad) => (a || []).filter((x) => Math.abs(x[0] / son - 1) <= 0.12).sort((x, y) => y[1] - x[1]).filter((x) => bosta(x[0])).slice(0, 2)
           .forEach((x) => cizgiler.push(yatay(x[0], "#ff8a65", ad + " liq. $" + (x[1] >= 1e6 ? (x[1] / 1e6).toFixed(1) + "M" : Math.round(x[1] / 1e3) + "K"), L.LineStyle.Dotted)));
         buyuk(D.likit.uzun, "long"); buyuk(D.likit.kisa, "short");
       }

@@ -318,7 +318,7 @@ function osSlayt(o) {
   return el("a", { sinif: "vt-one vt-os", attr: { href: "presale.html", style: "text-decoration:none;color:inherit" } }, [
     el("div", { sinif: "vt-os-et" }, [el("i"), o.kuruldu ? "ARCP · LIVE ON ARC" : "ARCP PRESALE · " + baslik.toUpperCase()]),
     el("div", { sinif: "vt-one-ad", yazi: o.kuruldu ? "ARCP is trading on Arc" : "250,000,000 ARCP for $15,000" }),
-    el("div", { sinif: "vt-k", attr: { style: "margin-top:6px;font-size:14px" }, yazi: o.kuruldu ? "The token every ARC PULSE trade buys and burns. Stake it for USDC." :
+    el("div", { sinif: "vt-k", attr: { style: "margin-top:6px;font-size:14px" }, yazi: o.kuruldu ? "0.2% of every ARC PULSE trade is set aside to buy and burn it. Stake it for USDC." :
       "$10 to $250 per wallet. Every dollar goes into the pool as locked liquidity. Not filled in 30 days: everyone is refunded." }),
     o.kuruldu ? null : el("div", { sinif: "vt-os-cubuk" }, [el("i", { attr: { style: "width:" + Math.max(1.5, y) + "%" } })]),
     o.kuruldu ? null : el("div", { sinif: "vt-one-stat" }, [

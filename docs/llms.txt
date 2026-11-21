@@ -1,0 +1,46 @@
+# ARC PULSE
+
+> ARC PULSE is a non-custodial memecoin and token launchpad. Each ARC PULSE token trades in one Uniswap v4 pool on Arc, so every chain sees the same price, and a collateral basket that holders can redeem from sits behind every token. People can pay from 13 chains: Arc, Base, Solana, BNB Chain, Arbitrum, Ethereum, Avalanche, Monad, HyperEVM, Robinhood Chain, Elysium, Sui and Aptos. No accounts: users connect their own wallet.
+
+Key facts, as stated on the site:
+
+- Every ARC PULSE token has a fixed supply of 1,000,000,000 and no mint function. Liquidity is locked in the pool contract from block one.
+- The trade contracts have no owner, pause or proxy: fees, the liquidity lock and the anti-snipe rules cannot be changed.
+- Fees: 2% of the creator's first buy; 2.2% on every trade, of which 0.30% goes to the token's creator in USDC, plus the creator's chosen 1–5% collateral tax, which goes into the token's collateral basket.
+- 0.2% of every trade on an ARC PULSE pool token is set aside to buy ARCP from its pool on Arc and burn it.
+- Warp launches a memecoin on another launchpad the user picks, from their own wallet, for 0.5% of the first buy.
+- The contracts have not been externally audited; automated checks run against real mainnet state.
+- ARC PULSE keeps no accounts, no cookies, no analytics and no trackers.
+
+## Start here
+
+- [Home](https://arcpulse.app/arc-launchpad/docs/): what ARC PULSE is, live launch list, contracts and FAQ
+- [How to launch a memecoin on 13 chains](https://arcpulse.app/arc-launchpad/docs/launch-memecoin.html): step-by-step guide
+- [Warp: launch on any launchpad](https://arcpulse.app/arc-launchpad/docs/warp.html): launch through another launchpad from your own wallet
+- [Perps: trade Hyperliquid perps from your own wallet](https://arcpulse.app/arc-launchpad/docs/perps.html): order book, chart, size by risk, odds before you trade; 0.05% builder fee on top of Hyperliquid's fee
+- [Hot tokens](https://arcpulse.app/arc-launchpad/docs/hot-tokens.html): trending tokens on 13 chains, safety-checked hourly (RugCheck, GoPlus, honeypot.is)
+- [Pattern Hunter](https://arcpulse.app/arc-launchpad/docs/pattern-hunter.html): 12 classic chart patterns on the 50 most traded Hyperliquid markets, 1 hour to monthly, each with its backtest record
+- [App](https://arcpulse.app/arc-launchpad/docs/app.html): create, trade, Hot tokens, Hyperliquid perps, portfolio (needs JavaScript and a wallet for actions)
+
+## ARCP, the platform token
+
+- [ARCP: buy, stake and govern](https://arcpulse.app/arc-launchpad/docs/fathom.html)
+- [ARCP presale](https://arcpulse.app/arc-launchpad/docs/presale.html)
+
+## Community
+
+- [Pulse Squad: the mascots](https://arcpulse.app/arc-launchpad/docs/squad.html)
+- [ARC PULSE Designs: designer NFTs on Arc](https://arcpulse.app/arc-launchpad/docs/designs/)
+- [X: @ArcPulseApp](https://x.com/ArcPulseApp)
+
+## Policies
+
+- [Risk disclosure](https://arcpulse.app/arc-launchpad/docs/risk.html)
+- [Terms of use](https://arcpulse.app/arc-launchpad/docs/terms.html)
+- [Privacy](https://arcpulse.app/arc-launchpad/docs/privacy.html)
+- [Security contact](https://arcpulse.app/.well-known/security.txt)
+
+## Optional
+
+- [Arc Depth (DEPTH)](https://arcpulse.app/arc-launchpad/docs/depth.html)
+- [Source code](https://github.com/arc-depth/arc-depth)

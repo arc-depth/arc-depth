@@ -80,7 +80,7 @@ export async function ciz(arg) {
   const k = await fetch("veri/arcp2.json").then((x) => (x.ok ? x.json() : null)).catch(() => null);
   if (!k || !k.canli) return eskiCiz(arg);
   const kap = el("div", { sinif: "yigin" });
-  kap.append(sayfaUst("ARCP", "Arc Pulse — the token every ARC PULSE trade buys and burns, now in its second contract (ARCP 2)", [
+  kap.append(sayfaUst("ARCP", "Arc Pulse — the token ARC PULSE sets 0.2% of every trade aside to buy and burn, now in its second contract (ARCP 2)", [
     el("a", { sinif: "dugme dugme--marka", attr: { href: "presale.html" }, yazi: "Join the presale" })]));
   const ok = new YedekliOkur();
   const os = new Contract(k.onSatis, TUR_ABI, ok);
@@ -143,7 +143,7 @@ export async function ciz(arg) {
 
 async function eskiCiz() {
   const kap = el("div", { sinif: "yigin" });
-  kap.append(sayfaUst("ARCP", "Arc Pulse — the token every ARC PULSE trade buys and burns. One market on Arc, reachable from every chain"));
+  kap.append(sayfaUst("ARCP", "Arc Pulse — the token ARC PULSE sets 0.2% of every trade aside to buy and burn. One market on Arc, reachable from every chain"));
 
   /* ---- live tokenomics, read from Arc on every visit ---- */
   const tok = (x) => Math.round(x).toLocaleString("en-US");

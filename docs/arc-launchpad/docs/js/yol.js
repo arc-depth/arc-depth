@@ -224,7 +224,7 @@ export const YOLLAR = [
     grup: "kesif",
     ikon: "yildiz",
     durum: "canli",
-    ozet: "Twelve mascots, one per chain: who stands for which chain, which are live and when the next one comes.",
+    ozet: "Twelve mascots on twelve chains: who stands for which chain, which are live and when the next one comes.",
     kaynak: "docs/js/squad.js"
   },
   {
