@@ -1,22 +1,14 @@
 {
- "guncellendi": "2026-11-22T01:33:20.032Z",
+ "guncellendi": "2026-11-22T09:33:38.534Z",
  "kaynak": "Forex Factory weekly calendar (USD, high impact)",
  "olaylar": [
   {
-   "t": "2026-11-16T17:00:00.000Z",
-   "ad": "Fed Chairman Warsh Speaks"
+   "t": "2026-11-25T13:30:00.000Z",
+   "ad": "Core PCE Price Index m/m"
   },
   {
-   "t": "2026-11-17T13:30:00.000Z",
-   "ad": "Core Retail Sales m/m"
-  },
-  {
-   "t": "2026-11-17T13:30:00.000Z",
-   "ad": "Retail Sales m/m"
-  },
-  {
-   "t": "2026-11-18T19:00:00.000Z",
-   "ad": "FOMC Meeting Minutes"
+   "t": "2026-11-25T13:30:00.000Z",
+   "ad": "Prelim GDP q/q"
   }
  ]
 }
