@@ -1,63 +1,63 @@
 {
- "guncellendi": "2026-11-22T11:56:05.913Z",
- "tahminSayisi": 1360,
- "sonuclanan": 1080,
+ "guncellendi": "2026-11-22T13:57:02.461Z",
+ "tahminSayisi": 1400,
+ "sonuclanan": 1120,
  "kurulum": {
   "1:1": {
-   "n": 540,
-   "brierModel": 0.6974,
-   "brierTaban": 0.6712,
-   "beceri": -0.039,
-   "n2": 520,
-   "brierTM2": 0.7221,
+   "n": 560,
+   "brierModel": 0.6955,
+   "brierTaban": 0.6708,
+   "beceri": -0.0368,
+   "n2": 540,
+   "brierTM2": 0.7259,
    "ortTahmin": [
-    31.4,
-    31.6,
-    37
+    31.2,
+    31.5,
+    37.2
    ],
    "gercekOran": [
-    18.3,
-    42.6,
-    39.1
+    19.6,
+    41.1,
+    39.3
    ],
    "guvenilirlik": [
     {
      "aralik": "20-30%",
-     "n": 185,
+     "n": 204,
      "tahmin": 27.9,
-     "gercek": 14.1
+     "gercek": 17.6
     },
     {
      "aralik": "30-40%",
-     "n": 355,
+     "n": 356,
      "tahmin": 33.2,
-     "gercek": 20.6
+     "gercek": 20.8
     }
    ]
   },
   "2:1": {
-   "n": 540,
-   "brierModel": 0.5649,
-   "brierTaban": 0.5317,
-   "beceri": -0.0624,
-   "n2": 520,
-   "brierTM2": 0.6054,
+   "n": 560,
+   "brierModel": 0.5546,
+   "brierTaban": 0.5253,
+   "beceri": -0.0558,
+   "n2": 540,
+   "brierTM2": 0.5961,
    "ortTahmin": [
-    8.7,
-    33.3,
-    58.1
+    8.6,
+    33.2,
+    58.3
    ],
    "gercekOran": [
-    1.1,
-    43.5,
-    55.4
+    1.3,
+    42,
+    56.8
    ],
    "guvenilirlik": [
     {
      "aralik": "0-10%",
-     "n": 395,
-     "tahmin": 7.8,
-     "gercek": 0.8
+     "n": 415,
+     "tahmin": 7.7,
+     "gercek": 1
     },
     {
      "aralik": "10-20%",
