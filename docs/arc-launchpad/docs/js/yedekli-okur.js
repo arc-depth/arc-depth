@@ -28,13 +28,19 @@ const kucuk = (x) => String(x).toLowerCase();
 
 /* the archive of one contract's logs, fetched once per page load */
 const _arsiv = new Map();
+/* 23 Nov 2026 (scripts/site-denetim.js found pages asking for archives that do not exist: a 404 on every visit):
+   veri/olaylar/index.json lists the archives that exist and only those are fetched. If the index cannot be read,
+   every address is tried as before. */
+let _indeks = null;
+const indeksAl = () => _indeks || (_indeks = fetch("veri/olaylar/index.json", { cache: "no-cache" })
+  .then((r) => (r.ok ? r.json() : null)).then((j) => (j && Array.isArray(j.adresler) ? new Set(j.adresler.map(kucuk)) : null)).catch(() => null));
 function arsivAl(adres) {
   const k = kucuk(adres);
   if (!_arsiv.has(k)) {
-    _arsiv.set(k, fetch("veri/olaylar/" + k + ".json", { cache: "no-cache" })
+    _arsiv.set(k, indeksAl().then((ix) => (ix && !ix.has(k) ? null : fetch("veri/olaylar/" + k + ".json", { cache: "no-cache" })
       .then((r) => (r.ok ? r.json() : null))
       .then((j) => (j && Number.isInteger(j.sonBlok) && Array.isArray(j.loglar) ? j : null))
-      .catch(() => null));
+      .catch(() => null))));
   }
   return _arsiv.get(k);
 }
