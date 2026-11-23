@@ -44,11 +44,13 @@ const VARSAYILAN = "kesfet";
      Phone: a bottom bar of five equal columns (Discover, Trade, Create, Portfolio, More);
      More (#/daha) is quick access plus every group. Every route has a home in both, which
      scripts/ray-kapsami.js checks. */
-const ALT_BAR = ["kesfet", "terminal", "olustur", "perps-trade", "portfoy"];
+/* 23 Nov 2026 (owner: "trade de önemliymiş, orda 6 sekme olsun"): six slots — Home, Trade, Launch (raised), Perps, Portfolio, Radar (owner: "6. olarak radar koy"; #/radar: Launch Radar +
+   Perp Radar). The bar gives every slot an equal column (duzen.css .sekmebar). */
+const ALT_BAR = ["kesfet", "terminal", "olustur", "perps-trade", "portfoy", "radar"];
 /* 16 Nov 2026 redesign: the phone bar is Home, Trade, Launch (raised), Perps, Portfolio; More moved to the header */
-const ALT_AD = { kesfet: "Home", terminal: "Trade", olustur: "Launch", "perps-trade": "Perps", portfoy: "Portfolio" };
+const ALT_AD = { kesfet: "Home", radar: "Radar", terminal: "Trade", olustur: "Launch", "perps-trade": "Perps", portfoy: "Portfolio" };
 /* the desktop top navigation (the left rail is gone on desktop; every module stays in More, #/daha) */
-const UST_NAV = [["kesfet", "Discover", "#/kesfet"], ["terminal", "Trade", "#/terminal"], ["perps-trade", "Perps", "#/perps/trade"], ["akis", "Hot", "#/akis"], ["launch-radar", "Radar", "#/launch-radar"], ["olustur", "Launch", "#/olustur"], ["warp", "Warp", "#/warp"], ["portfoy", "Portfolio", "#/portfoy"], ["daha", "More", "#/daha"]];
+const UST_NAV = [["kesfet", "Discover", "#/kesfet"], ["terminal", "Trade", "#/terminal"], ["perps-trade", "Perps", "#/perps/trade"], ["akis", "Hot", "#/akis"], ["radar", "Radar", "#/radar"], ["olustur", "Launch", "#/olustur"], ["warp", "Warp", "#/warp"], ["portfoy", "Portfolio", "#/portfoy"], ["daha", "More", "#/daha"]];
 let kUstNav = null;
 function ustNavCiz() {
   if (!kUstNav) { kUstNav = el("nav", { sinif: "ust-nav", attr: { "aria-label": "Main" } }); const m = document.querySelector(".ustbar__marka"); if (m) m.after(kUstNav); }
@@ -116,7 +118,7 @@ function rayiCiz() {
   const nav = el("nav", { sinif: "ray__nav", attr: { "aria-label": "Main navigation" } });
   /* 16 Nov 2026 (owner: "platform hala çok acemi"): six main links on top, as a trading app has; every group stays
      below, folded, so nothing is removed. Portfolio only with a wallet connected. */
-  const ANA = [["kesfet", "Discover"], ["terminal", "Trade"], ["perps-trade", "Perps"], ["akis", "Hot"], ["launch-radar", "Launch Radar"], ["olustur", "Launch"], ["warp", "Warp"], ...(cuzdan.hesap() ? [["portfoy", "Portfolio"]] : [])];
+  const ANA = [["kesfet", "Discover"], ["terminal", "Trade"], ["perps-trade", "Perps"], ["akis", "Hot"], ["radar", "Radar"], ["olustur", "Launch"], ["warp", "Warp"], ...(cuzdan.hesap() ? [["portfoy", "Portfolio"]] : [])];
   const anaYollar = ANA.map(([k]) => k);
   nav.append(el("div", { sinif: "ray__grup ray__ana" }, ANA.map(([k, ad]) => { const y = yolBul(k); return y ? yolLinki({ ...y, ebeveyn: null, ad, durum: "canli" }) : null; }).filter(Boolean)));
   nav.append(el("div", { sinif: "ray__ayrac", yazi: "All sections" }));
@@ -249,7 +251,7 @@ function aramayiCiz() {
 }
 
 /* #/perps/trade|targets|alerts sit inside the "perps" route; their own rail entries are perps-trade etc. */
-const altYol = () => { const m = (location.hash || "").match(/^#\/perps\/(trade|targets|alerts)(?![\w-])/); return m ? "perps-" + m[1] : null; };
+const altYol = () => { const h = location.hash || ""; if (/^#\/(launch-radar|perp-radar)(?![\w-])/.test(h)) return "radar"; const m = h.match(/^#\/perps\/(trade|targets|alerts)(?![\w-])/); return m ? "perps-" + m[1] : null; };
 function etkinIsaretle(aktif) {
   const alt = altYol();
   for (const a of document.querySelectorAll("[data-yol]")) {
@@ -311,6 +313,8 @@ function hashiCoz() {
 const GORUNUMLER = {
   kesfet: () => import("./gorunum/kesfet.js"),
   akis: () => import("./gorunum/akis.js"),
+  radar: () => import("./gorunum/radar.js"),   // Radar tab: Launch Radar + Perp Radar under one switch (23 Nov 2026)
+  "perp-radar": () => import("./gorunum/perp-radar.js"),   // Perp Radar: Hyperliquid perps by four published rules (23 Nov 2026)
   "launch-radar": () => import("./gorunum/launch-radar.js"),   // Launch Radar: new tokens on 13 chains and their launchpads, five checks (23 Nov 2026)
   "pulse-wallet": () => import("./gorunum/pulse-wallet.js"),   // Pulse Wallet PREVIEW, in no menu until approved   // Feed: who buys what, follow wallets (16 Nov 2026)
   olustur: () => import("./gorunum/merkez.js"),   // the one-pool launch: 5 collateral slots, any chain

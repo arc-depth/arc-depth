@@ -188,7 +188,12 @@ export const YOLLAR = [
   { yol: "akis", ad: "Hot tokens", kisa: "Hot", grup: "kesif", ikon: "kivilcim", durum: "canli",
     ozet: "Tokens moving across 13 chains that passed safety checks. Buy with USDC or any chain's gas token, from your own wallet.", kaynak: "GeckoTerminal pools + RugCheck / GoPlus / honeypot.is, hourly (veri/pulse-liste.json)" },
   /* 23 Nov 2026 (owner: "Launch Radar 13 zincir olacak şekilde"): new and recent launches on 13 chains, by launchpad, five checks */
-  { yol: "launch-radar", ad: "Launch Radar", kisa: "Radar", grup: "kesif", ikon: "kivilcim", durum: "canli",
+  /* the Radar tab (phone bar slot 2, header "Radar"): Launch Radar and Perp Radar under one switch */
+  { yol: "radar", ad: "Radar", kisa: "Radar", grup: "kesif", ikon: "kivilcim", durum: "canli",
+    ozet: "Launch Radar (new tokens on 13 chains, five checks) and Perp Radar (Hyperliquid perps by four published rules) in one place.", kaynak: "veri/launch-radar.json + veri/perp-radar.json" },
+  { yol: "perp-radar", ebeveyn: "radar", site: "#/radar?tab=perp", ad: "Perp Radar", kisa: "Perp Radar", grup: "kesif", ikon: "grafik", durum: "canli",
+    ozet: "Every Hyperliquid perp run through Turtle breakouts, Connors RSI(2), Carver trend strength and the crowded-side check, each with its source and weak spot.", kaynak: "Hyperliquid public API, every 2 h (veri/perp-radar.json, scripts/perp-radar.js)" },
+  { yol: "launch-radar", ebeveyn: "radar", site: "#/radar", ad: "Launch Radar", kisa: "Launch Radar", grup: "kesif", ikon: "kivilcim", durum: "canli",
     ozet: "New and recently launched tokens on 13 chains and their launchpads, each run through five checks: safety, real demand, many wallets, liquidity depth, buyers vs sellers.", kaynak: "GeckoTerminal + DexScreener + RugCheck / GoPlus / honeypot.is, every 15 min (veri/launch-radar.json)" },
   /* 15 Nov 2026: the perps cockpit pages, shown in the rail under Perps Radar (they live inside the perps route) */
   { yol: "perps-trade", ebeveyn: "perps", site: "#/perps/trade", ad: "Trade perps", kisa: "Trade perps", grup: "kesif", ikon: "grafik", durum: "canli",
