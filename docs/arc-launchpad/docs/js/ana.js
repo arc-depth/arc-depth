@@ -48,7 +48,7 @@ const ALT_BAR = ["kesfet", "terminal", "olustur", "perps-trade", "portfoy"];
 /* 16 Nov 2026 redesign: the phone bar is Home, Trade, Launch (raised), Perps, Portfolio; More moved to the header */
 const ALT_AD = { kesfet: "Home", terminal: "Trade", olustur: "Launch", "perps-trade": "Perps", portfoy: "Portfolio" };
 /* the desktop top navigation (the left rail is gone on desktop; every module stays in More, #/daha) */
-const UST_NAV = [["kesfet", "Discover", "#/kesfet"], ["terminal", "Trade", "#/terminal"], ["perps-trade", "Perps", "#/perps/trade"], ["akis", "Hot", "#/akis"], ["olustur", "Launch", "#/olustur"], ["warp", "Warp", "#/warp"], ["portfoy", "Portfolio", "#/portfoy"], ["daha", "More", "#/daha"]];
+const UST_NAV = [["kesfet", "Discover", "#/kesfet"], ["terminal", "Trade", "#/terminal"], ["perps-trade", "Perps", "#/perps/trade"], ["akis", "Hot", "#/akis"], ["launch-radar", "Radar", "#/launch-radar"], ["olustur", "Launch", "#/olustur"], ["warp", "Warp", "#/warp"], ["portfoy", "Portfolio", "#/portfoy"], ["daha", "More", "#/daha"]];
 let kUstNav = null;
 function ustNavCiz() {
   if (!kUstNav) { kUstNav = el("nav", { sinif: "ust-nav", attr: { "aria-label": "Main" } }); const m = document.querySelector(".ustbar__marka"); if (m) m.after(kUstNav); }
@@ -116,7 +116,7 @@ function rayiCiz() {
   const nav = el("nav", { sinif: "ray__nav", attr: { "aria-label": "Main navigation" } });
   /* 16 Nov 2026 (owner: "platform hala çok acemi"): six main links on top, as a trading app has; every group stays
      below, folded, so nothing is removed. Portfolio only with a wallet connected. */
-  const ANA = [["kesfet", "Discover"], ["terminal", "Trade"], ["perps-trade", "Perps"], ["akis", "Hot"], ["olustur", "Launch"], ["warp", "Warp"], ...(cuzdan.hesap() ? [["portfoy", "Portfolio"]] : [])];
+  const ANA = [["kesfet", "Discover"], ["terminal", "Trade"], ["perps-trade", "Perps"], ["akis", "Hot"], ["launch-radar", "Launch Radar"], ["olustur", "Launch"], ["warp", "Warp"], ...(cuzdan.hesap() ? [["portfoy", "Portfolio"]] : [])];
   const anaYollar = ANA.map(([k]) => k);
   nav.append(el("div", { sinif: "ray__grup ray__ana" }, ANA.map(([k, ad]) => { const y = yolBul(k); return y ? yolLinki({ ...y, ebeveyn: null, ad, durum: "canli" }) : null; }).filter(Boolean)));
   nav.append(el("div", { sinif: "ray__ayrac", yazi: "All sections" }));
@@ -311,6 +311,7 @@ function hashiCoz() {
 const GORUNUMLER = {
   kesfet: () => import("./gorunum/kesfet.js"),
   akis: () => import("./gorunum/akis.js"),
+  "launch-radar": () => import("./gorunum/launch-radar.js"),   // Launch Radar: new tokens on 13 chains and their launchpads, five checks (23 Nov 2026)
   "pulse-wallet": () => import("./gorunum/pulse-wallet.js"),   // Pulse Wallet PREVIEW, in no menu until approved   // Feed: who buys what, follow wallets (16 Nov 2026)
   olustur: () => import("./gorunum/merkez.js"),   // the one-pool launch: 5 collateral slots, any chain
   merkez: () => import("./gorunum/merkez.js"),
