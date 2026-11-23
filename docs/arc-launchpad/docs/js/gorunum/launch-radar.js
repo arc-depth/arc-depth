@@ -167,8 +167,10 @@ export async function ciz() {
   function boyut() { const r = devicePixelRatio || 1; tuval.width = tuval.clientWidth * r; tuval.height = tuval.clientHeight * r; ctx.setTransform(r, 0, 0, r, 0, 0); }
   boyut(); addEventListener("resize", boyut);
   const hash = (s) => { let h = 2166136261; for (const c of s) h = Math.imul(h ^ c.charCodeAt(0), 16777619); return (h >>> 0) / 4294967296; };
+  let baglandi = false;   // the loop starts before the router attaches the page: wait for it, stop only once it is gone
+  const aktif = () => { if (kok.isConnected) baglandi = true; return kok.isConnected; };
   function radarCiz() {
-    if (!kok.isConnected) return;
+    if (!aktif()) { if (!baglandi) requestAnimationFrame(radarCiz); return; }
     if (tuval.clientWidth && tuval.width !== Math.round(tuval.clientWidth * (devicePixelRatio || 1))) boyut();   // sized once the page is attached
     const W = tuval.clientWidth, H = tuval.clientHeight, cx = W / 2, cy = H / 2, R = Math.min(W, H) * (W < 500 ? 0.38 : 0.45);
     if (!W) { requestAnimationFrame(radarCiz); return; }
@@ -238,7 +240,8 @@ export async function ciz() {
   }
   await yukle();
   const canli = async () => {
-    if (!kok.isConnected || !veri) return;
+    if (!aktif()) { if (!baglandi) setTimeout(canli, 1000); return; }
+    if (!veri) { setTimeout(canli, 5000); return; }
     const gor = filtreli().slice(0, 90), gr = {};
     for (const t of gor) (gr[t.z] = gr[t.z] || []).push(t);
     for (const [z, l] of Object.entries(gr)) for (let i = 0; i < l.length; i += 30) {
